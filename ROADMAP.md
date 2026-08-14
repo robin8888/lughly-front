@@ -422,17 +422,38 @@ revirtiendo la regla de "sin tests en el front" solo para los mapas.
 **Duración estimada**: 5-6 días
 **Objetivo**: Cliente puede publicar trabajos normales y urgentes
 
-### Día 12-13: PublishPage
-**Tareas**:
-- [ ] PublishPage (subasta inversa)
-  - Selector de oficio
-  - Título y descripción
-  - AI assistant para redacción
-  - Presupuesto orientativo
-  - Fecha límite
-  - PhotoPicker (4 fotos)
-- [ ] Molecule PhotoPicker
-- [ ] Hook useDraftJobStore
+### Día 12-13: PublishPage ✅ parcial (14 Agosto 2026)
+
+**Backend nuevo** — migración `20260814184317_jobs`:
+- [x] Modelo `Job` con los cuatro tipos del README y siete estados
+- [x] Modelo `JobPhoto`, hasta cuatro por trabajo
+- [x] `POST /v1/jobs` y `GET /v1/jobs`, restringidos a `CLIENT` con el guard
+
+**Front**:
+- [x] PublishPage: subasta inversa y reserva instantánea en la misma pantalla
+- [x] Selector de oficio, título, descripción, ciudad, presupuesto y fechas
+- [x] Molecule PhotoPicker (rejilla de 4)
+- [x] Hook `useDraftJobStore`, persistido
+- [ ] **Subida de las fotos**: falta `POST /v1/jobs/:id/photos`. Se eligen y
+      se ven, pero todavía no viajan; la pantalla lo avisa al publicar.
+- [ ] ~~Redacción asistida por IA~~ — necesita proveedor, clave y presupuesto:
+      es decisión de producto, no de esta pantalla
+
+**Decisiones**:
+
+- **El borrador vive en el móvil, no en la base.** Existe el estado `DRAFT`,
+  pero el trabajo se crea ya `OPEN`: guardar cada tecleo serían muchas filas
+  basura para algo que se publica o se descarta en la misma sesión.
+- **Las fotos no se persisten en el borrador.** Son URIs temporales que el
+  sistema borra cuando quiere; guardar la ruta solo serviría para que al
+  volver apareciesen rotas. La pantalla lo dice.
+- **El borrador se limpia solo al confirmar el servidor.** Borrarlo al pulsar
+  publicar dejaría al usuario sin texto y sin trabajo si falla la red.
+- **Sin fecha de cierre, la subasta dura 7 días.** Una subasta abierta para
+  siempre no le sirve a nadie.
+- Las dos validaciones cruzadas de la subasta (hace falta fecha de cierre, y
+  futura) son `refine` de zod, así que llegan al formulario con el campo
+  señalado y se pintan bajo el input correcto.
 
 ---
 

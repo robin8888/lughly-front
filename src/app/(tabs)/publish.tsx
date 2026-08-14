@@ -1,11 +1,12 @@
 /**
- * Tab Publicar (placeholder), solo para modo cliente.
+ * Tab Publicar, solo para modo cliente.
  * Texto del bloqueo: MobileApp.dc.html (`isPublicarDenied`).
  */
 
+import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { RoleGate } from '@/components/organisms/RoleGate'
-import { ComingSoonPage } from '@/pages/ComingSoonPage'
+import { PublishPage } from '@/pages/PublishPage'
 
 export default function PublishRoute() {
   const router = useRouter()
@@ -24,10 +25,21 @@ export default function PublishRoute() {
       ]}
       testID="publish-denied"
     >
-      <ComingSoonPage
-        title="Publicar"
-        roadmap="el Día 12 (Publicar trabajos)"
-        testID="publish-tab"
+      <PublishPage
+        onPublished={() => {
+          /**
+           * El detalle del trabajo aún no existe (Fase 10), así que se lleva
+           * a la lista, que sí. Avisar y navegar es mejor que dejar al
+           * usuario en el formulario ya vacío preguntándose si se envió.
+           */
+          Alert.alert(
+            'Trabajo publicado',
+            'Ya lo pueden ver los profesionales. Te avisaremos en cuanto recibas la primera puja.',
+          )
+          router.navigate('/jobs')
+        }}
+        onUrgent={() => router.navigate('/urgent')}
+        onBack={() => router.navigate('/inicio')}
       />
     </RoleGate>
   )
