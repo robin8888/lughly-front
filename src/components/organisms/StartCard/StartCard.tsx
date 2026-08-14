@@ -31,7 +31,7 @@ export function StartCard({ role, onPress, testID }: StartCardProps) {
   const copy = COPY[role]
 
   return (
-    <InfoCard variant="dark" style={styles.card} testID={testID}>
+    <InfoCard style={styles.card} testID={testID}>
       <Text style={styles.label}>05 · Empezar</Text>
       <Text style={styles.title}>{copy.title}</Text>
       <Button fullWidth onPress={onPress} testID="start-action">

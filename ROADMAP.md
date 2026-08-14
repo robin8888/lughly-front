@@ -379,13 +379,41 @@ resumir, pero exige llamar a un modelo y decidir cuándo se recalcula.
 
 ---
 
-### Día 11: Mapa de Cobertura
+### Día 11: Mapas ✅ (14 Agosto 2026)
+
+Especificación completa en `MAPS_MOBILE.md`. **No se usa react-native-maps ni
+Google Maps**: MapLibre con teselas de OpenFreeMap, sin cuenta ni clave.
+
 **Tareas**:
-- [ ] Integrar react-native-maps
-- [ ] Molecule CoverageMap
-  - Círculo de cobertura
-  - Marcador de ubicación del pro
-- [ ] Hook useCoverage (lógica de radio)
+- [x] `@maplibre/maplibre-react-native` + `expo-location`, con el permiso
+      solo "mientras se usa la app"
+- [x] `theme/map.ts` — la URL del estilo vive en un único sitio
+- [x] `utils/geo.ts` — `haversineKm`, `circleToPolygon`, `formatDistance`
+- [x] Organism `CoverageMap` — círculo geodésico, no una vista redonda
+- [x] Organism `ProsMap` — con agrupación desde el primer momento
+- [x] Molecule `MapAttribution` · Atom `MapMarker`
+- [x] Hook `useCoverage` · Hook `useUserLocation`
+- [x] `POST /v1/geocode` en el backend (Photon, sin clave en el cliente)
+- [x] `haversineKm` también en el backend, con los mismos casos de prueba
+- [x] Enganchados: `CoverageMap` en la ficha, `ProsMap` en el directorio
+- [ ] Deslizador de radio (1–50 km) — llega con Disponibilidad, Fase 6
+- [ ] **Development build con EAS**: lo tiene que lanzar el usuario
+
+**Tests**: 39 en el móvil y 7 en el backend. Se reinstaló jest para esto,
+revirtiendo la regla de "sin tests en el front" solo para los mapas.
+
+**Decisiones**:
+
+- El círculo es un polígono geodésico de 65 vértices. Un test comprueba que
+  todos caen al radio pedido con 1% de tolerancia, **y lo repite en Reikiavik**
+  (lat. 64°), que es donde un círculo dibujado con una vista deja de valer.
+- La agrupación va activada desde el principio, no cuando empiece a ir lento.
+- La atribución de OpenStreetMap no tiene prop para ocultarla: la exige la
+  licencia ODbL. Si se pudiera apagar, alguien la apagaría.
+- Los marcadores no llevan dirección ni datos personales en sus `properties`,
+  solo id, nombre y disponibilidad. Hay un test que lo fija.
+- El mapa del directorio se monta solo al pulsar "Mapa": mantenerlo vivo bajo
+  la lista gastaría teselas y batería sin que nadie lo mire.
 
 ---
 

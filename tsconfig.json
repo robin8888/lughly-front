@@ -2,6 +2,16 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    /**
+     * Ojo: declarar `types` **desactiva** la carga automática del resto de
+     * `@types`, así que aquí hay que listar todo lo que se use como global.
+     *
+     * - `jest`: `describe`, `it` y `expect` en los .test.tsx
+     * - `geojson`: el espacio de nombres `GeoJSON`, que antes llegaba de
+     *   rebote por los tipos de MapLibre y ya no, porque el paquete se carga
+     *   con `require` para poder sobrevivir sin el módulo nativo
+     */
+    "types": ["jest", "geojson"],
     "paths": {
       "@/*": ["./src/*"]
     }

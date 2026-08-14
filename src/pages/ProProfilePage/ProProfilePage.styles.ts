@@ -163,6 +163,11 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
     opacity: 0.85,
   },
+  /** Altura del mapa de cobertura. En el diseño web son 160 px. */
+  coverageMap: {
+    height: 180,
+    marginTop: 10,
+  },
   sectionNote: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

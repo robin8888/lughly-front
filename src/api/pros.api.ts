@@ -22,6 +22,12 @@ export interface ApiPro {
   bio: string | null
   /** Kilómetros desde el punto enviado; null si no se envió ubicación */
   distanceKm: number | null
+  /**
+   * Punto base para el mapa del directorio. Es la base de trabajo que el
+   * profesional declara, no su domicilio.
+   */
+  latitude: number | null
+  longitude: number | null
 }
 
 /**

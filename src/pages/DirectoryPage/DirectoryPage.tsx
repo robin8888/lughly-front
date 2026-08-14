@@ -13,6 +13,7 @@ import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { ProDirectoryCard } from '@/components/molecules/ProDirectoryCard'
+import { ProsMap } from '@/components/organisms/ProsMap'
 import { usePros } from '@/hooks/domain/usePros'
 import { searchTrades } from '@/utils/tradeSearch'
 import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
@@ -37,6 +38,7 @@ export function DirectoryPage({
   const [trade, setTrade] = useState(initialTrade ?? '')
   const [availableNow, setAvailableNow] = useState(false)
   const [query, setQuery] = useState('')
+  const [showMap, setShowMap] = useState(false)
 
   /**
    * La pestaña no se desmonta al salir de ella, así que el valor inicial solo
@@ -58,6 +60,16 @@ export function DirectoryPage({
   })
 
   const pros = data?.items ?? []
+
+  /**
+   * Solo se pueden pintar los que tienen punto base. Filtrarlo aquí y no
+   * dentro de `ProsMap` deja al mapa recibiendo coordenadas garantizadas, en
+   * vez de tener que decidir qué hacer con las que faltan.
+   */
+  const mappable = pros.filter(
+    (pro): pro is typeof pro & { latitude: number; longitude: number } =>
+      pro.latitude !== null && pro.longitude !== null,
+  )
 
   return (
     <View style={styles.screen} testID="directory-page">
@@ -131,6 +143,18 @@ export function DirectoryPage({
               testID="directory-trade"
             />
           </View>
+
+          <Pressable
+            onPress={() => setShowMap((value) => !value)}
+            testID="directory-toggle-map"
+            accessibilityRole="button"
+            accessibilityState={{ selected: showMap }}
+            style={[styles.chip, showMap && styles.chipActive]}
+          >
+            <Text style={[styles.chipText, showMap && styles.chipTextActive]}>
+              {showMap ? 'Lista' : 'Mapa'}
+            </Text>
+          </Pressable>
         </View>
 
         {isPending ? (
@@ -201,16 +225,47 @@ export function DirectoryPage({
               {isFetching ? ' · actualizando…' : ''}
             </Text>
 
-            <View style={styles.list}>
-              {pros.map((pro) => (
-                <ProDirectoryCard
-                  key={pro.id}
-                  pro={pro}
-                  onPress={() => onSelectPro(pro.id)}
-                  testID={`pro-${pro.id}`}
+            {showMap ? (
+              /**
+               * El mapa se monta solo cuando se pide (MAPS_MOBILE.md §7):
+               * mantenerlo vivo bajo la lista consumiría teselas y batería
+               * sin que nadie lo mire.
+               */
+              mappable.length > 0 ? (
+                <ProsMap
+                  pros={mappable}
+                  center={[mappable[0]!.longitude, mappable[0]!.latitude]}
+                  onSelectPro={onSelectPro}
+                  style={styles.map}
+                  testID="directory-map"
                 />
-              ))}
-            </View>
+              ) : (
+                <EmptyState
+                  title="Sin puntos que enseñar"
+                  message="Ninguno de estos profesionales ha fijado todavía su base de trabajo. Míralos en la lista."
+                  illustration="none"
+                  actions={[
+                    {
+                      label: 'Volver a la lista',
+                      onPress: () => setShowMap(false),
+                      testID: 'directory-back-to-list',
+                    },
+                  ]}
+                  testID="directory-map-empty"
+                />
+              )
+            ) : (
+              <View style={styles.list}>
+                {pros.map((pro) => (
+                  <ProDirectoryCard
+                    key={pro.id}
+                    pro={pro}
+                    onPress={() => onSelectPro(pro.id)}
+                    testID={`pro-${pro.id}`}
+                  />
+                ))}
+              </View>
+            )}
           </>
         )}
       </ScrollView>

@@ -7,11 +7,6 @@
     "icon": "./src/images/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "lughly",
-    "splash": {
-      "image": "./src/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#04070f"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -22,7 +17,6 @@
         "NSAllowsArbitraryLoads": false,
         "NSCameraUsageDescription": "Lughly necesita acceso a la cámara para tomar fotos de trabajos y documentos.",
         "NSPhotoLibraryUsageDescription": "Lughly necesita acceso a tus fotos para adjuntar imágenes de trabajos.",
-        "NSLocationWhenInUseUsageDescription": "Lughly usa tu ubicación para encontrar profesionales cercanos.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -38,8 +32,7 @@
         "WRITE_EXTERNAL_STORAGE",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
-      ],
-      "usesCleartextTraffic": false
+      ]
     },
     "web": {
       "favicon": "./src/images/favicon.png",
@@ -49,8 +42,24 @@
       "expo-router",
       "expo-secure-store",
       "expo-font",
-      "expo-splash-screen",
-      "expo-status-bar"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#04070f"
+        }
+      ],
+      "expo-status-bar",
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos tu ubicación para encontrar profesionales cerca de ti y calcular su tiempo de llegada.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

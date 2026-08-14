@@ -21,7 +21,7 @@ export function ReverseAuctionCard({
   testID,
 }: ReverseAuctionCardProps) {
   return (
-    <InfoCard variant="dark" style={styles.card} testID={testID}>
+    <InfoCard style={styles.card} testID={testID}>
       <Text style={styles.label}>03 · Subasta inversa</Text>
       <Text style={styles.title}>
         La puja más baja no gana automáticamente

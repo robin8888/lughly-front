@@ -31,6 +31,10 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent700,
     marginTop: 2,
   },
+  /** Alto del mapa del directorio: suficiente para leer la agrupación */
+  map: {
+    height: 420,
+  },
   content: {
     padding: 16,
     gap: 10,

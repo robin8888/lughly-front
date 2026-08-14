@@ -22,6 +22,7 @@ import { StarRating } from '@/components/atoms/StarRating'
 import { Tag } from '@/components/atoms/Tag'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { CoverageMap } from '@/components/organisms/CoverageMap'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { surchargesSummary } from '@/utils/surcharges'
@@ -200,6 +201,20 @@ export function ProProfilePage({
           <Text style={styles.sectionBody}>
             Se desplaza hasta {pro.radiusKm} km desde su base en {pro.city}.
           </Text>
+
+          {/**
+           * El mapa solo si hay punto base. Un profesional que no lo haya
+           * fijado se queda con la frase, que ya dice lo esencial.
+           */}
+          {pro.latitude !== null && pro.longitude !== null && (
+            <CoverageMap
+              center={[pro.longitude, pro.latitude]}
+              radiusKm={pro.radiusKm}
+              // El cliente lo mira, no lo edita: el radio es del profesional
+              style={styles.coverageMap}
+              testID="pro-coverage-map"
+            />
+          )}
         </View>
 
         <ReviewList proId={pro.id} proName={pro.name} testID="pro-reviews" />

@@ -27,12 +27,17 @@ const CELL = 14
 const LINE_WIDTH = 1
 
 /**
- * 6% del color de texto, y la capa al 50% → ~3% efectivo.
- * Se aplica el 6% en el trazo y el 50% en el contenedor, igual que el CSS,
- * para que el resultado sea idéntico y no una aproximación redondeada.
+ * Opacidad del trazo sobre el color de texto de la tarjeta.
+ *
+ * El diseño la deja en un 3% efectivo (6% de trazo con la capa al 50%), que
+ * en pantalla es indistinguible de una tarjeta lisa: 1,055:1 de contraste.
+ * Aquí va al 10% —1,206:1— a petición expresa: sigue leyéndose como textura
+ * de papel técnico, pero se ve.
+ *
+ * Si alguna vez compite con el contenido, este es el número que hay que
+ * bajar; no hace falta tocar nada más.
  */
-const LINE_OPACITY = 0.06
-const LAYER_OPACITY = 0.5
+const LINE_OPACITY = 0.1
 
 export interface CardGridProps {
   /** Color de las líneas: el color de texto de la tarjeta */
@@ -55,7 +60,7 @@ export function CardGrid({ color, radius = 0, testID }: CardGridProps) {
     <View
       style={[
         StyleSheet.absoluteFill,
-        { borderRadius: radius, overflow: 'hidden', opacity: LAYER_OPACITY },
+        { borderRadius: radius, overflow: 'hidden' },
       ]}
       pointerEvents="none"
       testID={testID}

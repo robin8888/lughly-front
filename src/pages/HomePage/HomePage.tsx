@@ -51,6 +51,7 @@ export function HomePage({
       >
         <HeroCard
           role={role}
+          variant="light"
           onPrimary={onPrimary}
           onSecondary={onSecondary}
           onUrgent={isClient ? onUrgent : undefined}

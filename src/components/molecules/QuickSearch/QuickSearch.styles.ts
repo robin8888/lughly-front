@@ -59,7 +59,13 @@ export const styles = StyleSheet.create({
   note: {
     fontFamily: theme.typography.fonts.body,
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
+    /**
+     * "Primero los cercanos que pueden ir ya." Va dentro del hero, que ahora
+     * es una tarjeta clara: el blanco al 60% del diseño era para el hero
+     * negro y aquí no se vería.
+     */
+    color: theme.colors.cardText,
+    opacity: 0.7,
     marginTop: 7,
   },
 })

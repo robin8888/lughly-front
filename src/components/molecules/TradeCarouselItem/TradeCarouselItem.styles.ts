@@ -27,7 +27,8 @@ export const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 20,
     marginTop: 8,
-    color: theme.colors.cardBg,
+    // El diseño lo pone en blanco porque la home era negra; ahora es clara
+    color: theme.colors.text,
     textAlign: 'center',
   },
 })

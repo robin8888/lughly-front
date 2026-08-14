@@ -11,8 +11,8 @@ export const styles = StyleSheet.create({
     fontSize: 12.5,
     letterSpacing: 0.66,
     textTransform: 'uppercase',
-    // Mismo tono que "03 · Subasta inversa": accent700 no se lee sobre #04070f
-    color: theme.colors.accent400,
+    // Va sobre el fondo claro de la página, así que el accent700 del diseño
+    color: theme.colors.accent700,
     marginBottom: 10,
   },
   list: {

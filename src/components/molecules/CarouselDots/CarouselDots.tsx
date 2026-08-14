@@ -41,9 +41,20 @@ export function CarouselDots({ onPressSlot, testID }: CarouselDotsProps) {
               height: active ? 7 : small ? 5 : 7,
               borderRadius: theme.radius.pill,
               opacity: small ? 0.45 : 1,
+              /**
+               * El inactivo va en oscuro: el diseño lo pone en blanco al 30%
+               * porque la home era negra, y sobre el fondo claro actual eso
+               * es invisible.
+               *
+               * Al 50% y no al 30%: son botones, y el 30% se quedaba en
+               * 1,88:1 sobre la página. Así llega a 3,13:1, que es más de lo
+               * que daba el original sobre negro (2,54:1). Los dos puntos
+               * exteriores siguen bajando de ahí con su `opacity: 0.45`, que
+               * es el desvanecido buscado por el diseño.
+               */
               backgroundColor: active
                 ? theme.colors.accent600
-                : 'rgba(255, 255, 255, 0.3)',
+                : 'rgba(29, 31, 32, 0.5)',
             }}
           />
         )

@@ -30,8 +30,8 @@ export function QuickSearch({ onSelect, testID }: QuickSearchProps) {
 
   return (
     <View style={styles.wrapper}>
+      {/* Variante clara: el hero dejó de ser una tarjeta negra */}
       <Input
-        variant="dark"
         value={query}
         onChangeText={setQuery}
         placeholder="¿Qué necesitas? Ej. cerrajero…"

@@ -9,8 +9,7 @@
  */
 
 import { useRef } from 'react'
-import { View, Text, Pressable } from 'react-native'
-import { BlurView } from 'expo-blur'
+import { View, Text } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Easing,
@@ -19,13 +18,11 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import { Chevron } from '@/components/atoms/Chevron'
 import { CarouselDots } from '@/components/molecules/CarouselDots'
 import { TradeCarouselItem } from '@/components/molecules/TradeCarouselItem'
 import { useCarousel } from '@/hooks/ui/useCarousel'
 import { useTrades } from '@/hooks/domain/useTrades'
 import type { TradeSlug } from '@/utils/trades'
-import { theme } from '@/theme'
 import { styles } from './TradesCarousel.styles'
 
 export interface TradesCarouselProps {
@@ -140,64 +137,80 @@ export function TradesCarousel({ onSelect, testID }: TradesCarouselProps) {
         </GestureDetector>
 
         {/*
-          Velos laterales: no se desenfoca cada imagen (eso obliga a
-          reprocesarla y se nota el retardo al llegar al centro), sino que se
-          desenfoca lo que PASA POR DEBAJO de estas dos franjas fijas. La
-          tarjeta central queda fuera de ellas y siempre nítida, sin cálculo
-          alguno al cambiar de oficio.
+          Velos laterales desenfocados, retirados el 14 Agosto 2026 por
+          petición. Se conservan comentados, igual que las flechas.
 
-          Dos capas por lado, la exterior más ancha e intensa, para que el
-          desenfoque no corte en seco.
+          Cómo funcionaban: no se desenfocaba cada imagen —eso obliga a
+          reprocesarla y se notaba el retardo al llegar al centro— sino lo
+          que PASABA POR DEBAJO de estas franjas fijas. Dos capas por lado,
+          la exterior más ancha e intensa, para que el desenfoque no cortase
+          en seco. Las laterales quedaban difuminadas y la central nítida.
+
+          Si vuelven: reactivar el import de `BlurView` de expo-blur y las
+          clases `veil`, `veilLeft*` y `veilRight*` de la hoja de estilos,
+          que siguen ahí comentadas.
+
+          <BlurView
+            intensity={38}
+            tint="light"
+            style={[styles.veil, styles.veilLeftOuter]}
+            pointerEvents="none"
+          />
+          <BlurView
+            intensity={18}
+            tint="light"
+            style={[styles.veil, styles.veilLeftInner]}
+            pointerEvents="none"
+          />
+          <BlurView
+            intensity={38}
+            tint="light"
+            style={[styles.veil, styles.veilRightOuter]}
+            pointerEvents="none"
+          />
+          <BlurView
+            intensity={18}
+            tint="light"
+            style={[styles.veil, styles.veilRightInner]}
+            pointerEvents="none"
+          />
         */}
-        <BlurView
-          intensity={38}
-          tint="dark"
-          style={[styles.veil, styles.veilLeftOuter]}
-          pointerEvents="none"
-        />
-        <BlurView
-          intensity={18}
-          tint="dark"
-          style={[styles.veil, styles.veilLeftInner]}
-          pointerEvents="none"
-        />
-        <BlurView
-          intensity={38}
-          tint="dark"
-          style={[styles.veil, styles.veilRightOuter]}
-          pointerEvents="none"
-        />
-        <BlurView
-          intensity={18}
-          tint="dark"
-          style={[styles.veil, styles.veilRightInner]}
-          pointerEvents="none"
-        />
       </View>
 
       <CarouselDots onPressSlot={goToSlot} testID="carousel-dots" />
 
-      <View style={styles.arrows}>
-        <Pressable
-          onPress={prev}
-          style={styles.arrow}
-          accessibilityRole="button"
-          accessibilityLabel="Anterior"
-          testID="carousel-prev"
-        >
-          <Chevron direction="left" color={theme.colors.text} />
-        </Pressable>
+      {/*
+        Flechas de navegación, retiradas el 14 Agosto 2026 por petición.
+        Se conservan comentadas por si se quieren recuperar; el carrusel se
+        maneja arrastrando y pulsando los puntos, así que no se pierde
+        ninguna forma de moverse.
 
-        <Pressable
-          onPress={next}
-          style={styles.arrow}
-          accessibilityRole="button"
-          accessibilityLabel="Siguiente"
-          testID="carousel-next"
-        >
-          <Chevron direction="right" color={theme.colors.text} />
-        </Pressable>
-      </View>
+        Si vuelven, hay que reactivar también en este fichero los imports de
+        `Pressable`, `Chevron` y `theme`, y en la hoja de estilos las clases
+        `arrows` y `arrow`, que siguen ahí.
+
+        <View style={styles.arrows}>
+          <Pressable
+            onPress={prev}
+            style={styles.arrow}
+            accessibilityRole="button"
+            accessibilityLabel="Anterior"
+            testID="carousel-prev"
+          >
+            <Chevron direction="left" color={theme.colors.text} />
+          </Pressable>
+
+          <Pressable
+            onPress={next}
+            style={styles.arrow}
+            accessibilityRole="button"
+            accessibilityLabel="Siguiente"
+            testID="carousel-next"
+          >
+            <Chevron direction="right" color={theme.colors.text} />
+          </Pressable>
+        </View>
+      */}
     </View>
   )
 }
