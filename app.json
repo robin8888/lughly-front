@@ -14,7 +14,11 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.lughly.app",
       "infoPlist": {
-        "NSAllowsArbitraryLoads": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true
+        },
+        "NSLocalNetworkUsageDescription": "Durante el desarrollo, la app se conecta al servidor de Lughly que corre en tu ordenador dentro de la misma red.",
         "NSCameraUsageDescription": "Lughly necesita acceso a la cámara para tomar fotos de trabajos y documentos.",
         "NSPhotoLibraryUsageDescription": "Lughly necesita acceso a tus fotos para adjuntar imágenes de trabajos.",
         "ITSAppUsesNonExemptEncryption": false
