@@ -1,0 +1,1 @@
+export { VerifyEmailNotice } from './VerifyEmailNotice'

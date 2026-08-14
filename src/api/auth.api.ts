@@ -1,0 +1,93 @@
+/**
+ * Endpoints de autenticación.
+ * Contrato: lughly-backend/src/modules/auth/auth.controller.ts
+ */
+
+import { apiRequest } from './http'
+import type { UserRole } from '@/stores/useAuthStore'
+
+export interface ApiUser {
+  id: string
+  email: string
+  name: string
+  role: UserRole
+  /** Identidad verificada por backoffice */
+  verified: boolean
+  /** Email confirmado por enlace */
+  emailVerified: boolean
+  /** Ruta de la foto de perfil, relativa a la API */
+  avatarUrl: string | null
+}
+
+export interface ApiSession {
+  user: ApiUser
+  accessToken: string
+  refreshToken: string
+  expiresIn: number
+}
+
+export interface RegisterPayload {
+  name: string
+  email: string
+  password: string
+  role: 'client' | 'pro'
+  trade?: string
+  hourlyRate?: string
+  city?: string
+  acceptTerms: boolean
+  acceptComms: boolean
+}
+
+export interface LoginPayload {
+  email: string
+  password: string
+}
+
+export const authApi = {
+  register: (payload: RegisterPayload) =>
+    apiRequest<ApiSession>('/v1/auth/register', {
+      method: 'POST',
+      body: payload,
+    }),
+
+  login: (payload: LoginPayload) =>
+    apiRequest<ApiSession>('/v1/auth/login', { method: 'POST', body: payload }),
+
+  logout: (refreshToken: string) =>
+    apiRequest<null>('/v1/auth/logout', {
+      method: 'POST',
+      body: { refreshToken },
+    }),
+
+  me: () => apiRequest<ApiUser>('/v1/auth/me', { auth: true }),
+
+  /**
+   * Pide el código de recuperación.
+   * La respuesta es idéntica exista o no la cuenta: el backend no revela
+   * quién está registrado, y la app no debe intentar deducirlo.
+   */
+  forgotPassword: (email: string) =>
+    apiRequest<{ accepted: true }>('/v1/auth/password/forgot', {
+      method: 'POST',
+      body: { email },
+    }),
+
+  resetPassword: (code: string, password: string) =>
+    apiRequest<{ changed: true }>('/v1/auth/password/reset', {
+      method: 'POST',
+      body: { code, password },
+    }),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiRequest<ApiSession>('/v1/me/password', {
+      method: 'PATCH',
+      body: { currentPassword, newPassword },
+      auth: true,
+    }),
+
+  resendVerification: () =>
+    apiRequest<{ sent: true }>('/v1/auth/email/verify/resend', {
+      method: 'POST',
+      auth: true,
+    }),
+}

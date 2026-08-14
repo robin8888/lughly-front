@@ -1,25 +1,67 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Lughly",
+    "slug": "lughly",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./src/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "lughly",
+    "splash": {
+      "image": "./src/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#04070f"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.lughly.app",
+      "infoPlist": {
+        "NSAllowsArbitraryLoads": false,
+        "NSCameraUsageDescription": "Lughly necesita acceso a la cámara para tomar fotos de trabajos y documentos.",
+        "NSPhotoLibraryUsageDescription": "Lughly necesita acceso a tus fotos para adjuntar imágenes de trabajos.",
+        "NSLocationWhenInUseUsageDescription": "Lughly usa tu ubicación para encontrar profesionales cercanos.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./src/images/android-icon-foreground.png",
+        "backgroundColor": "#04070f"
       },
-      "predictiveBackGestureEnabled": false
+      "package": "com.lughly.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "usesCleartextTraffic": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./src/images/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-splash-screen",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "d4bfcd1b-8f1c-4edc-b60f-f3f0b9820e93"
+      }
     }
   }
 }
