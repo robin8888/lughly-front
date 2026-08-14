@@ -434,8 +434,7 @@ revirtiendo la regla de "sin tests en el front" solo para los mapas.
 - [x] Selector de oficio, título, descripción, ciudad, presupuesto y fechas
 - [x] Molecule PhotoPicker (rejilla de 4)
 - [x] Hook `useDraftJobStore`, persistido
-- [ ] **Subida de las fotos**: falta `POST /v1/jobs/:id/photos`. Se eligen y
-      se ven, pero todavía no viajan; la pantalla lo avisa al publicar.
+- [x] `POST /v1/jobs/:id/photos` y las fotos enganchadas al formulario
 - [ ] ~~Redacción asistida por IA~~ — necesita proveedor, clave y presupuesto:
       es decisión de producto, no de esta pantalla
 
@@ -454,6 +453,16 @@ revirtiendo la regla de "sin tests en el front" solo para los mapas.
 - Las dos validaciones cruzadas de la subasta (hace falta fecha de cierre, y
   futura) son `refine` de zod, así que llegan al formulario con el campo
   señalado y se pintan bajo el input correcto.
+- **Si una foto falla, el trabajo sigue publicado.** Deshacer la publicación
+  por una imagen sería peor: el usuario ya lo ha escrito todo y quiere que se
+  vea. Se publica, se dice cuántas no subieron y se sigue. Añadirlas después
+  es un toque; volver a escribirlo todo, no.
+- Las fotos se suben **en serie**: el servidor las numera por orden de
+  llegada, y en paralelo el orden que vería el profesional no sería el que
+  eligió el cliente.
+- **Las fotos de trabajo exigen sesión para verse; los avatares no.** Una
+  foto de perfil se enseña en un directorio abierto; la de una avería muestra
+  el interior de la casa de alguien.
 
 ---
 

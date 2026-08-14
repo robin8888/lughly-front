@@ -33,6 +33,14 @@ export interface AvatarResponse {
   avatarUrl: string
 }
 
+export interface JobPhotoResponse {
+  id: string
+  /** Ruta relativa desde la que se sirve; exige sesión para descargarla */
+  url: string
+  position: number
+  sizeBytes: number
+}
+
 export interface DocumentResponse {
   id: string
   type: DocumentType
@@ -107,6 +115,13 @@ async function uploadMultipart<T>(
 export const uploadApi = {
   avatar: (file: UploadFile, accessToken: string) =>
     uploadMultipart<AvatarResponse>('/v1/me/avatar', file, accessToken),
+
+  /**
+   * Una foto de un trabajo. El servidor admite cuatro por trabajo y las
+   * numera por orden de llegada, así que se suben de una en una y en orden.
+   */
+  jobPhoto: (jobId: string, file: UploadFile, accessToken: string) =>
+    uploadMultipart<JobPhotoResponse>(`/v1/jobs/${jobId}/photos`, file, accessToken),
 
   document: (
     file: UploadFile,

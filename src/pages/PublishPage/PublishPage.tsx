@@ -16,7 +16,7 @@
  */
 
 import { useState } from 'react'
-import { View, Text, ScrollView, Pressable, Alert } from 'react-native'
+import { View, Text, ScrollView, Pressable } from 'react-native'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { FormField } from '@/components/molecules/FormField'
@@ -46,7 +46,8 @@ function isoDateIn(days: number): string {
 }
 
 export interface PublishPageProps {
-  onPublished: (jobId: string) => void
+  /** `photosFailed` es 0 salvo que alguna foto no llegara; el trabajo se publica igual */
+  onPublished: (jobId: string, photosFailed: number) => void
   onUrgent: () => void
   onBack: () => void
 }
@@ -54,9 +55,11 @@ export interface PublishPageProps {
 export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps) {
   const draft = useJobDraft()
   const update = useDraftJobStore((s) => s.update)
-  const { publish, isPublishing, fieldErrors, formError, reset } = usePublishJob()
+  const { publish, isPublishing, isUploadingPhotos, fieldErrors, formError, reset } =
+    usePublishJob()
 
   const [photos, setPhotos] = useState<PickedImage[]>([])
+  const isBusy = isPublishing || isUploadingPhotos
 
   const isAuction = draft.type === 'AUCTION'
 
@@ -65,35 +68,29 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
 
     const budget = Number(draft.maxBudget.replace(',', '.'))
 
-    const job = await publish({
-      type: draft.type,
-      tradeSlug: draft.tradeSlug,
-      title: draft.title.trim(),
-      description: draft.description.trim(),
-      city: draft.city.trim(),
-      ...(draft.maxBudget !== '' && Number.isFinite(budget) && { maxBudget: budget }),
-      ...(draft.preferredDate !== '' && { preferredDate: draft.preferredDate }),
-      ...(isAuction && {
-        // Si no eligió fecha, se cierra en una semana: es lo que espera
-        // quien publica y evita subastas abiertas para siempre.
-        biddingEndsAt: new Date(
-          draft.biddingEndsAt || isoDateIn(DEFAULT_AUCTION_DAYS),
-        ).toISOString(),
-      }),
-    })
+    const outcome = await publish(
+      {
+        type: draft.type,
+        tradeSlug: draft.tradeSlug,
+        title: draft.title.trim(),
+        description: draft.description.trim(),
+        city: draft.city.trim(),
+        ...(draft.maxBudget !== '' && Number.isFinite(budget) && { maxBudget: budget }),
+        ...(draft.preferredDate !== '' && { preferredDate: draft.preferredDate }),
+        ...(isAuction && {
+          // Si no eligió fecha, se cierra en una semana: es lo que espera
+          // quien publica y evita subastas abiertas para siempre.
+          biddingEndsAt: new Date(
+            draft.biddingEndsAt || isoDateIn(DEFAULT_AUCTION_DAYS),
+          ).toISOString(),
+        }),
+      },
+      photos,
+    )
 
-    if (!job) return
+    if (!outcome) return
 
-    if (photos.length > 0) {
-      // Las fotos se suben aparte, contra el trabajo ya creado: hasta que no
-      // existe no hay id al que asociarlas. Llega en el siguiente paso.
-      Alert.alert(
-        'Trabajo publicado',
-        'Las fotos todavía no se envían: esa parte llega en el siguiente paso del roadmap.',
-      )
-    }
-
-    onPublished(job.id)
+    onPublished(outcome.job.id, outcome.photosFailed)
   }
 
   const canPublish =
@@ -172,7 +169,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
             value={draft.title}
             onChangeText={(value) => update({ title: value })}
             placeholder="Ej. Reparar fuga bajo el fregadero"
-            editable={!isPublishing}
+            editable={!isBusy}
             testID="publish-title"
           />
         </FormField>
@@ -189,7 +186,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
             multiline
             numberOfLines={4}
             style={styles.textarea}
-            editable={!isPublishing}
+            editable={!isBusy}
             testID="publish-description"
           />
         </FormField>
@@ -199,7 +196,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
             value={draft.city}
             onChangeText={(value) => update({ city: value })}
             placeholder="Ej. Madrid"
-            editable={!isPublishing}
+            editable={!isBusy}
             testID="publish-city"
           />
         </FormField>
@@ -214,7 +211,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
             onChangeText={(value) => update({ maxBudget: value.replace(/[^0-9.,]/g, '') })}
             placeholder="Ej. 300"
             keyboardType="numeric"
-            editable={!isPublishing}
+            editable={!isBusy}
             testID="publish-budget"
           />
         </FormField>
@@ -228,7 +225,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
             value={draft.preferredDate}
             onChangeText={(value) => update({ preferredDate: value })}
             placeholder={isoDateIn(3)}
-            editable={!isPublishing}
+            editable={!isBusy}
             testID="publish-date"
           />
         </FormField>
@@ -243,7 +240,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
               value={draft.biddingEndsAt}
               onChangeText={(value) => update({ biddingEndsAt: value })}
               placeholder={isoDateIn(DEFAULT_AUCTION_DAYS)}
-              editable={!isPublishing}
+              editable={!isBusy}
               testID="publish-bidding-ends"
             />
           </FormField>
@@ -256,7 +253,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
           <PhotoPicker
             value={photos}
             onChange={setPhotos}
-            disabled={isPublishing}
+            disabled={isBusy}
             testID="publish-photos"
           />
         </FormField>
@@ -268,7 +265,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
 
         <Button
           fullWidth
-          loading={isPublishing}
+          loading={isBusy}
           disabled={!canPublish}
           onPress={() => void handlePublish()}
           style={styles.submit}
