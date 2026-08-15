@@ -627,6 +627,77 @@ NIF o un CIF, si es autónomo o empresa.
 
 ---
 
+## 🎯 Asignación de trabajos por el empleador ⏳ (siguiente)
+
+Cuando el profesional que elige el cliente trabaja para alguien, entre los dos
+hay un tercero. Esto define quién recibe qué y en qué orden.
+
+**El modelo, en una frase**: el cliente elige a la persona, pero quien recibe
+el encargo es su empresa —salvo en urgencias, donde la empresa ha dejado dicho
+de antemano cuándo puede ir esa persona.
+
+### Contratación normal (presupuesto directo y reserva)
+
+- El cliente busca por oficio y elige a un trabajador del listado.
+- **El aviso de "te han elegido" le llega al empleador, no al trabajador.**
+  Es coherente con lo ya construido: quien contrata, presupuesta, factura y
+  cobra es el empleador, y el importe no lo ve el trabajador.
+- El empleador decide: asigna el trabajo a esa persona, o manda el
+  presupuesto al cliente si lo ha pedido.
+- **El trabajador solo se entera cuando el empleador se lo asigna.** Recibe
+  el trabajo con dirección y hora; el importe no.
+
+### Urgencias: el empleador no puede estar de guardia
+
+Una urgencia se decide en minutos. Si hubiera que esperar a que el empleador
+la reparta, se perdería, y tenerlo de guardia con cada trabajador no es un
+sistema, es una persona sin dormir.
+
+- El empleador declara por adelantado, para cada trabajador, **qué días y en
+  qué horario** puede atender urgencias.
+- Dentro de esa ventana el trabajador **aparece disponible** en el listado y
+  **el cliente le asigna la urgencia directamente**, sin intermediario.
+- Al asignar la ventana, el empleador **fija también la tarifa**.
+
+### Lo que ya está y sirve
+
+- `Employer` + `ProProfile.employerId`: quién trabaja para quién.
+- `ProTrade`: oficios y tarifas por oficio, que el empleador ya edita.
+- `Job` con sus cuatro rutas y `awardedProId`.
+- `ProProfile.busyWithJobId`: atendiendo una urgencia, no le llegan más.
+- Los muros del empleado: no puja, no ve importes, no ve su tarifa.
+
+### Lo que falta
+
+- [ ] Modelo de ventanas de disponibilidad para urgencias, por trabajador,
+      con su tarifa. Se solapa con `Availability` (Fase 6): conviene que sea
+      la misma tabla con un dueño distinto —el empleador— y no dos.
+- [ ] `availableNow` de un empleado deja de ser suyo. Hoy es un interruptor
+      que él enciende; con esto pasa a derivarse de la ventana que le puso su
+      empresa, o el empleado podría ponerse disponible cuando le apetezca.
+- [ ] Estado intermedio del trabajo: elegido por el cliente → pendiente de
+      que el empleador asigne → asignado. Hoy se pasa de OPEN a AWARDED de
+      una vez.
+- [ ] Notificaciones. Hoy no hay ninguna en el proyecto: esto es lo primero
+      que las necesita de verdad.
+- [ ] Pantalla del empleador: encargos entrantes, a quién se los asigna.
+- [ ] Pantalla del trabajador: lo que le han asignado, con dirección y hora
+      y sin importes.
+
+### Decisiones pendientes (bloquean el diseño)
+
+1. **¿Puede el empleador mandar a otro trabajador distinto del que eligió el
+   cliente?** El cliente eligió a Luis mirando sus valoraciones. Si va Marta,
+   ¿se le avisa?, ¿puede rechazar? Cambia el flujo entero y la confianza del
+   directorio.
+2. **La tarifa de urgencia, ¿sustituye a la del oficio o es una aparte?** Y
+   los recargos ya existentes (sábado +20%, domingo/festivo +35%, nocturno
+   +25%) ¿se aplican encima de ella?
+3. **Si el empleador no responde**, ¿cuánto se espera antes de liberar al
+   cliente? En urgencias hay 30 minutos; en presupuesto directo no hay plazo.
+
+---
+
 ## 🎯 Fase 6: Calendario y Disponibilidad (Pro)
 
 **Duración estimada**: 4-5 días
