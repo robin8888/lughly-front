@@ -17,6 +17,7 @@ import { ReverseAuctionCard } from '@/components/organisms/ReverseAuctionCard'
 import { FeaturedPros } from '@/components/organisms/FeaturedPros'
 import { StartCard } from '@/components/organisms/StartCard'
 import type { TradeSlug } from '@/utils/trades'
+import { useUser } from '@/stores/useAuthStore'
 import { styles } from './HomePage.styles'
 
 export interface HomePageProps {
@@ -39,6 +40,7 @@ export function HomePage({
   const isClient = role === 'client'
   // Al bajar el scroll, la barra inferior se encoge
   const onScroll = useNavScrollHandler()
+  const user = useUser()
 
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page">
@@ -52,6 +54,7 @@ export function HomePage({
         <HeroCard
           role={role}
           variant="light"
+          userName={user?.name}
           onPrimary={onPrimary}
           onSecondary={onSecondary}
           onUrgent={isClient ? onUrgent : undefined}

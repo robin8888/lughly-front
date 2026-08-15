@@ -28,9 +28,18 @@ export default function AccountRoute() {
       ? [
           { label: 'Mensajes', comingSoon: true },
           { label: 'Panel profesional', comingSoon: true },
+          /**
+           * Los oficios de un empleado los pone su empresa, y empleados de
+           * un empleado no existen. Las dos pantallas se lo explicarían,
+           * pero es mejor no llevarle a una puerta cerrada.
+           */
           ...(isEmployee
             ? []
             : [
+                {
+                  label: 'Mis oficios',
+                  onPress: () => router.navigate('/oficios'),
+                },
                 {
                   label: 'Mis trabajadores',
                   onPress: () => router.navigate('/empleados'),

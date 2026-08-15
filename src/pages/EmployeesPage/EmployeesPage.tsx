@@ -24,6 +24,7 @@ import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { Picker } from '@/components/molecules/Picker'
+import { TradeRatesField, type TradeRate } from '@/components/molecules/TradeRatesField'
 import {
   useEmployees,
   useEmployer,
@@ -40,9 +41,7 @@ const EMPTY_FORM = {
   email: '',
   phone: '',
   nationalId: '',
-  tradeSlug: '',
   city: '',
-  hourlyRate: '',
 }
 
 const EMPTY_EMPLOYER_FORM = {
@@ -205,23 +204,24 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
 
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [trades, setTrades] = useState<TradeRate[]>([])
 
   const employees = data?.items ?? []
 
   const set = (patch: Partial<typeof EMPTY_FORM>) =>
     setForm((current) => ({ ...current, ...patch }))
 
-  const rate = Number(form.hourlyRate.replace(',', '.'))
+  /** La coma decimal es lo que se teclea aquí */
+  const rateOf = (value: string) => Number(value.replace(',', '.'))
 
   const canSubmit =
     form.name.trim().length >= 3 &&
     form.email.trim() !== '' &&
     form.phone.trim() !== '' &&
     form.nationalId.trim() !== '' &&
-    form.tradeSlug !== '' &&
+    trades.length > 0 &&
+    trades.every((trade) => rateOf(trade.hourlyRate) > 0) &&
     form.city.trim().length >= 2 &&
-    Number.isFinite(rate) &&
-    rate > 0 &&
     !isCreating
 
   const handleCreate = async () => {
@@ -232,14 +232,17 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
       email: form.email.trim(),
       phone: form.phone.trim(),
       nationalId: form.nationalId.trim(),
-      tradeSlug: form.tradeSlug,
+      trades: trades.map((trade) => ({
+        slug: trade.slug,
+        hourlyRate: rateOf(trade.hourlyRate),
+      })),
       city: form.city.trim(),
-      hourlyRate: rate,
     })
 
     if (!employee) return
 
     setForm(EMPTY_FORM)
+    setTrades([])
     setOpen(false)
 
     Alert.alert(
@@ -360,7 +363,8 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
                       </View>
 
                       <Text style={styles.employeeMeta}>
-                        {employee.tradeLabel} · {employee.city}
+                        {employee.trades.map((trade) => trade.label).join(' · ')} ·{' '}
+                        {employee.city}
                       </Text>
                       <Text style={styles.employeeContact}>
                         {employee.email}
@@ -458,14 +462,16 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
                   />
                 </FormField>
 
-                <FormField label="Oficio" error={fieldErrors.tradeSlug}>
-                  <Picker
-                    options={TRADE_OPTIONS}
-                    value={form.tradeSlug}
-                    onChange={(value) => set({ tradeSlug: value })}
-                    placeholder="Elige el oficio"
-                    title="¿Qué hace este trabajador?"
-                    testID="employee-trade"
+                <FormField
+                  label="Oficios y tarifas"
+                  hint="La tarifa es la tuya, no su sueldo: es lo que cobras por su hora de trabajo. Él no la verá."
+                  error={fieldErrors.trades}
+                >
+                  <TradeRatesField
+                    value={trades}
+                    onChange={setTrades}
+                    disabled={isCreating}
+                    testID="employee-trades"
                   />
                 </FormField>
 
@@ -476,23 +482,6 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
                     placeholder="Ej. Madrid"
                     editable={!isCreating}
                     testID="employee-city"
-                  />
-                </FormField>
-
-                <FormField
-                  label="Tarifa por hora (€)"
-                  hint="Es tu tarifa, no su sueldo: es lo que cobras tú por su hora de trabajo. Él no la verá."
-                  error={fieldErrors.hourlyRate}
-                >
-                  <Input
-                    value={form.hourlyRate}
-                    onChangeText={(value) =>
-                      set({ hourlyRate: value.replace(/[^0-9.,]/g, '') })
-                    }
-                    placeholder="Ej. 30"
-                    keyboardType="numeric"
-                    editable={!isCreating}
-                    testID="employee-rate"
                   />
                 </FormField>
 

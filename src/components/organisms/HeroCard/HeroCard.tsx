@@ -34,6 +34,12 @@ const COPY = {
 export interface HeroCardProps {
   role: 'client' | 'pro'
   /**
+   * Nombre de quien ha entrado, encima del titular. No es decoración: es lo
+   * que distingue "una app" de "mi app", y el sitio donde se comprueba de un
+   * vistazo con qué cuenta se está trabajando cuando alguien tiene dos.
+   */
+  userName?: string | null
+  /**
    * Paleta de la tarjeta. Debe corresponderse con el fondo de la pantalla:
    * `dark` sobre la home negra del cliente, `light` sobre la home clara del
    * profesional. Por defecto la del diseño original.
@@ -50,6 +56,7 @@ export interface HeroCardProps {
 
 export function HeroCard({
   role,
+  userName,
   variant = 'dark',
   onPrimary,
   onSecondary,
@@ -70,6 +77,12 @@ export function HeroCard({
           Nuevo · Subastas inversas con pago protegido
         </Text>
       </View>
+
+      {userName ? (
+        <Text style={[styles.userName, palette.userName]} numberOfLines={2}>
+          {userName}
+        </Text>
+      ) : null}
 
       <Text style={[styles.title, palette.title]}>{copy.title}</Text>
       <Text style={[styles.body, palette.body]}>{copy.body}</Text>

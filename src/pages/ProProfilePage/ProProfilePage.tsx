@@ -212,6 +212,24 @@ export function ProProfilePage({
           </Text>
         )}
 
+        {/**
+         * Con más de un oficio hay más de un precio, y el titular solo puede
+         * enseñar uno. Aquí van todos: quien viene buscando limpieza puede
+         * descubrir que además pasea perros, y necesita saber a cuánto.
+         */}
+        {pro.trades.length > 1 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Lo que hace y a qué precio</Text>
+
+            {pro.trades.map((trade) => (
+              <View key={trade.slug} style={styles.tradeRow}>
+                <Text style={styles.tradeLabel}>{trade.label}</Text>
+                <Text style={styles.tradeRate}>{trade.hourlyRate} €/h</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recargos</Text>
           <Text style={styles.sectionBody}>{surchargesSummary()}</Text>

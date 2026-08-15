@@ -27,6 +27,8 @@ export interface ProDirectoryCardProps {
 }
 
 export function ProDirectoryCard({ pro, onPress, testID }: ProDirectoryCardProps) {
+  const otherTrades = pro.trades.filter((trade) => trade.slug !== pro.trade)
+
   return (
     <Pressable onPress={onPress} testID={testID} accessibilityRole="button">
       <InfoCard>
@@ -96,11 +98,25 @@ export function ProDirectoryCard({ pro, onPress, testID }: ProDirectoryCardProps
           </Text>
         )}
 
-        {pro.verified && (
+        {/**
+         * Los demás oficios que ejerce. El de la cabecera ya está dicho
+         * arriba con su precio, así que repetirlo aquí sería ruido; los
+         * otros importan porque el cliente que busca limpieza puede
+         * necesitar además quien le cuide al perro.
+         */}
+        {(otherTrades.length > 0 || pro.verified) && (
           <View style={styles.tags}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Identidad verificada</Text>
-            </View>
+            {otherTrades.map((trade) => (
+              <View key={trade.slug} style={styles.tag}>
+                <Text style={styles.tagText}>{trade.label}</Text>
+              </View>
+            ))}
+
+            {pro.verified && (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>Identidad verificada</Text>
+              </View>
+            )}
           </View>
         )}
       </InfoCard>

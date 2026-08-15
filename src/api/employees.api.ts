@@ -26,8 +26,11 @@ export interface ApiEmployee {
   name: string
   email: string
   phone: string | null
+  /** Su oficio principal, el que encabeza su ficha */
   trade: string
   tradeLabel: string
+  /** Todos los que ejerce. Sin tarifa: el empleado no la ve. */
+  trades: { slug: string; label: string }[]
   city: string
   /** Ha subido su documento y backoffice lo aprobó */
   identityVerified: boolean
@@ -49,13 +52,12 @@ export interface CreateEmployeePayload {
   email: string
   phone: string
   nationalId: string
-  tradeSlug: string
+  /** Sus oficios, con la tarifa que cobra la empresa por cada uno */
+  trades: { slug: string; hourlyRate: number }[]
   city: string
   radiusKm?: number
   latitude?: number
   longitude?: number
-  /** La fija el empleador: el trabajador no conoce su tarifa */
-  hourlyRate: number
 }
 
 export const employeesApi = {

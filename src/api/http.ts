@@ -14,7 +14,7 @@ import { API_BASE_URL, API_TIMEOUT_MS } from './config'
 import { ApiError, NetworkError, type ApiErrorBody } from './ApiError'
 
 export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
   /** Adjunta el access token y renueva la sesión si caduca */
   auth?: boolean

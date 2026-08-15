@@ -16,7 +16,7 @@ import { employeesApi } from '@/api/employees.api'
 import { useAuthStore, type User } from '@/stores/useAuthStore'
 import { useRoleStore } from '@/stores/useRoleStore'
 import { toFieldErrors, type FieldErrors } from '@/utils/formErrors'
-import { getTrade } from '@/utils/trades'
+import { getTrade, getTradeLabel } from '@/utils/trades'
 import { toAuthErrorState } from './useAuthError'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -38,9 +38,14 @@ export const registerSchema = z
       .max(MAX_PASSWORD_LENGTH, `Máximo ${MAX_PASSWORD_LENGTH} caracteres`),
     phone: z.string().optional(),
     role: z.enum(['client', 'pro']),
-    /** Solo profesionales */
-    trade: z.string().optional(),
-    hourlyRate: z.string().optional(),
+    /**
+     * Solo profesionales: los oficios que ejerce, con la tarifa de cada uno.
+     * Una persona que limpia casas también puede cuidar mascotas, y no cobra
+     * lo mismo por las dos cosas.
+     */
+    trades: z
+      .array(z.object({ slug: z.string(), hourlyRate: z.string() }))
+      .default([]),
     city: z.string().optional(),
     acceptTerms: z.boolean(),
     acceptComms: z.boolean(),
@@ -68,21 +73,33 @@ export const registerSchema = z
 
     if (data.role !== 'pro') return
 
-    if (!data.trade || !getTrade(data.trade)) {
+    if (data.trades.length === 0) {
       ctx.addIssue({
         code: 'custom',
-        path: ['trade'],
-        message: 'Elige tu oficio principal',
+        path: ['trades'],
+        message: 'Elige al menos un oficio',
       })
     }
 
-    const rate = Number((data.hourlyRate ?? '').replace(',', '.'))
-    if (!data.hourlyRate || Number.isNaN(rate) || rate <= 0) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['hourlyRate'],
-        message: 'Indica una tarifa orientativa en €/h',
-      })
+    for (const [index, trade] of data.trades.entries()) {
+      if (!getTrade(trade.slug)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['trades', index, 'slug'],
+          message: 'Ese oficio no existe',
+        })
+      }
+
+      // La coma decimal es lo que teclea la gente aquí
+      const rate = Number(trade.hourlyRate.replace(',', '.'))
+
+      if (!trade.hourlyRate || Number.isNaN(rate) || rate <= 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['trades', index, 'hourlyRate'],
+          message: `Indica lo que cobras por hora en ${getTradeLabel(trade.slug).toLowerCase()}`,
+        })
+      }
     }
 
     if (!data.city || data.city.trim().length < 2) {
@@ -189,8 +206,7 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
           password: parsed.data.password,
           phone: parsed.data.phone,
           role: parsed.data.role,
-          trade: parsed.data.trade,
-          hourlyRate: parsed.data.hourlyRate,
+          trades: parsed.data.trades,
           city: parsed.data.city,
           acceptTerms: parsed.data.acceptTerms,
           acceptComms: parsed.data.acceptComms,

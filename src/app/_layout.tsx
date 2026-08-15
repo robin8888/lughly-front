@@ -104,6 +104,7 @@ export default function RootLayout() {
           <Stack.Protected guard={isAuthenticated && !mustChangePassword}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="empleados" />
+            <Stack.Screen name="oficios" />
             <Stack.Screen name="pro/[id]" />
           </Stack.Protected>
 
@@ -111,7 +112,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" />
             <Stack.Screen name="recuperar" />
           </Stack.Protected>
-          </Stack>
+        </Stack>
 
         {/*
           La barra va fuera del Stack, no dentro del navegador de pestañas:

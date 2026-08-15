@@ -171,6 +171,28 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
     opacity: 0.85,
   },
+  /** Una línea por oficio: nombre a la izquierda, precio a la derecha */
+  tradeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.divider,
+  },
+  tradeLabel: {
+    flex: 1,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+  },
+  tradeRate: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
+  },
+
   /** Altura del mapa de cobertura. En el diseño web son 160 px. */
   coverageMap: {
     height: 180,

@@ -46,6 +46,21 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.body,
     fontSize: 12,
   },
+  /**
+   * El nombre de quien ha entrado, encima del titular. Mismo cuerpo que el
+   * título y en azul: forma con él un bloque de dos líneas, "Robin / Encuentra
+   * tu próximo trabajo", en vez de parecer una etiqueta suelta.
+   *
+   * No lleva `marginBottom`: se lo pone el título con su `marginTop`, y
+   * duplicarlo separaría las dos mitades de la misma frase.
+   */
+  userName: {
+    fontFamily: theme.typography.fonts.heading,
+    fontSize: 29,
+    lineHeight: 32.5,
+    textTransform: 'uppercase',
+    marginTop: 12,
+  },
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: 29,
@@ -94,6 +109,7 @@ interface HeroPalette {
   brand: TextStyle
   tag: ViewStyle
   tagText: TextStyle
+  userName: TextStyle
   title: TextStyle
   body: TextStyle
   actionSecondary: ViewStyle
@@ -108,6 +124,12 @@ export const palettes: Record<HeroVariant, HeroPalette> = {
       borderColor: theme.colors.accent600,
     },
     tagText: { color: theme.colors.accent300 },
+    /**
+     * `accent300` y no el azul de marca: sobre el negro de la home del
+     * cliente, `accent` se queda en 2,4:1 y el nombre no se lee. Es el mismo
+     * azul de la app aclarado hasta que contrasta.
+     */
+    userName: { color: theme.colors.accent300 },
     title: { color: theme.colors.cardBg },
     body: { color: 'rgba(255, 255, 255, 0.75)' },
     actionSecondary: { borderColor: 'rgba(255, 255, 255, 0.4)' },
@@ -124,6 +146,8 @@ export const palettes: Record<HeroVariant, HeroPalette> = {
       borderColor: theme.colors.accent600,
     },
     tagText: { color: theme.colors.accent700 },
+    /** Sobre claro es el 700 el que contrasta, igual que el resto de rótulos */
+    userName: { color: theme.colors.accent700 },
     title: { color: theme.colors.cardText },
     // 0.8 y no 0.75: sobre claro el mismo porcentaje se lee más lavado.
     body: { color: 'rgba(28, 43, 51, 0.8)' },

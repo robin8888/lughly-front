@@ -21,6 +21,7 @@ function makePro(n: number, availableNow = false): ProsMapPro {
     tradeLabel: 'Fontanería',
     city: 'Madrid',
     hourlyRate: 28,
+    trades: [{ slug: 'fontaneria', label: 'Fontanería', hourlyRate: 28 }],
     rating: 4.5,
     reviewCount: 10,
     completedJobs: 20,

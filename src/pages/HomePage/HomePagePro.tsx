@@ -31,6 +31,7 @@ import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
 import { useEmployer } from '@/hooks/domain/useEmployees'
 import { theme } from '@/theme'
+import { useUser } from '@/stores/useAuthStore'
 import { styles } from './HomePagePro.styles'
 
 export interface HomePageProProps {
@@ -48,6 +49,7 @@ export function HomePagePro({
   onManageEmployees,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
+  const user = useUser()
   const { data: pro, isPending, isError } = useProProfile(userId)
   const { setAvailableNow, isSaving } = useAvailableNow(userId)
 
@@ -83,6 +85,7 @@ export function HomePagePro({
         <HeroCard
           role="pro"
           variant="light"
+          userName={user?.name}
           onPrimary={onPrimary}
           onSecondary={onSecondary}
           testID="home-pro-hero"
@@ -166,8 +169,22 @@ export function HomePagePro({
                   />
                 ) : (
                   <StatCard
-                    label="Tu tarifa"
-                    value={`${pro.hourlyRate} €/h`}
+                    label={pro.trades.length > 1 ? 'Tus tarifas' : 'Tu tarifa'}
+                    /**
+                     * Con varios oficios no cabe un precio por cada uno, así
+                     * que se enseña el más bajo como "desde". Decir solo el
+                     * del principal daría a entender que es el único.
+                     */
+                    value={
+                      pro.trades.length > 1
+                        ? `desde ${Math.min(...pro.trades.map((t) => t.hourlyRate))} €/h`
+                        : `${pro.hourlyRate} €/h`
+                    }
+                    hint={
+                      pro.trades.length > 1
+                        ? `en ${pro.trades.length} oficios`
+                        : undefined
+                    }
                     testID="stat-rate"
                   />
                 )}

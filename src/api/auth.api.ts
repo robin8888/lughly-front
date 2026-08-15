@@ -39,8 +39,8 @@ export interface RegisterPayload {
   /** Para que el cliente pueda llamar; opcional en el alta */
   phone?: string
   role: 'client' | 'pro'
-  trade?: string
-  hourlyRate?: string
+  /** Los oficios que ejerce, con la tarifa de cada uno. Solo profesionales. */
+  trades?: { slug: string; hourlyRate: string }[]
   city?: string
   acceptTerms: boolean
   acceptComms: boolean

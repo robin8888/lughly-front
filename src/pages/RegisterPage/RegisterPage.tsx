@@ -21,7 +21,8 @@ import { useRegistrationUploads } from '@/hooks/auth/useRegistrationUploads'
 import { useAuthStore } from '@/stores/useAuthStore'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import type { IdentityKind } from '@/api'
-import { TRADE_OPTIONS, isRegulatedTrade } from '@/utils/trades'
+import { TradeRatesField, type TradeRate } from '@/components/molecules/TradeRatesField'
+import { isRegulatedTrade } from '@/utils/trades'
 import { styles } from './RegisterPage.styles'
 
 const ROLE_OPTIONS = [
@@ -61,8 +62,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   const [taxId, setTaxId] = useState('')
   const [legalName, setLegalName] = useState('')
   const [acceptsStaffResponsibility, setAcceptsStaffResponsibility] = useState(false)
-  const [trade, setTrade] = useState<string | null>(null)
-  const [hourlyRate, setHourlyRate] = useState('')
+  const [trades, setTrades] = useState<TradeRate[]>([])
   const [city, setCity] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [acceptComms, setAcceptComms] = useState(false)
@@ -85,6 +85,13 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
   const isPro = role === 'pro'
+
+  /**
+   * Los errores de los oficios llegan con la ruta anidada del array, que
+   * `toFieldErrors` aplana a la clave `trades`. Con uno basta: el usuario
+   * arregla el que le señalan y vuelve a intentarlo.
+   */
+  const tradesError = fieldErrors.trades
   const isPassport = identityKind === 'PASSPORT'
   const isBusy = isLoading || isUploading
 
@@ -95,8 +102,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
       password,
       phone,
       role,
-      trade: trade ?? undefined,
-      hourlyRate,
+      trades,
       city,
       acceptTerms,
       acceptComms,
@@ -365,40 +371,20 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
            * aquí. Si no es de ningún oficio concreto, "Otros oficios".
            */}
           <FormField
-            label="Oficio principal"
+            label="Oficios que ejerces"
             helper={
               hasStaff
-                ? 'El tuyo, el que ejerces. A los oficios de tus trabajadores no hace falta que les des de alta aquí: salen solos cuando los añadas.'
-                : undefined
+                ? 'Los tuyos, los que ejerces tú. Los de tus trabajadores no hace falta declararlos: salen solos cuando los des de alta.'
+                : 'Puedes añadir todos los que hagas de verdad. El primero encabeza tu ficha cuando el cliente no busca un oficio concreto.'
             }
-            error={fieldErrors.trade}
-            testID="register-trade-field"
+            error={tradesError}
+            testID="register-trades-field"
           >
-            <Picker
-              options={TRADE_OPTIONS}
-              value={trade}
-              onChange={setTrade}
-              placeholder="Elige tu oficio"
-              title="Oficio principal"
-              error={Boolean(fieldErrors.trade)}
+            <TradeRatesField
+              value={trades}
+              onChange={setTrades}
               disabled={isLoading}
-              testID="register-trade"
-            />
-          </FormField>
-
-          <FormField
-            label="Tarifa orientativa (€/h)"
-            error={fieldErrors.hourlyRate}
-            testID="register-rate-field"
-          >
-            <Input
-              value={hourlyRate}
-              onChangeText={setHourlyRate}
-              placeholder="Ej. 25"
-              keyboardType="decimal-pad"
-              error={Boolean(fieldErrors.hourlyRate)}
-              editable={!isLoading}
-              testID="register-rate"
+              testID="register-trades"
             />
           </FormField>
 
@@ -421,7 +407,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
           <FormField
             label="Habilitación profesional (si tu oficio es regulado)"
             helper={
-              trade && isRegulatedTrade(trade)
+              trades.some((entry) => isRegulatedTrade(entry.slug))
                 ? 'Tu oficio está regulado: sin el certificado aprobado no podrás pujar. Puedes subirlo ahora o más tarde.'
                 : 'Opcional. Súbela si tu oficio la requiere.'
             }

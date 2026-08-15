@@ -5,6 +5,13 @@
 
 import { apiRequest } from './http'
 
+/** Un oficio del profesional, con lo que cobra por él. */
+export interface ApiProTrade {
+  slug: string
+  label: string
+  hourlyRate: number
+}
+
 export interface ApiPro {
   id: string
   name: string
@@ -12,7 +19,13 @@ export interface ApiPro {
   trade: string
   tradeLabel: string
   city: string
+  /**
+   * El precio del oficio al que responde esta tarjeta —el buscado si se
+   * filtró, y si no el principal—, no una media de todos los suyos.
+   */
   hourlyRate: number
+  /** Todos los que ejerce, en su orden, para las etiquetas de la tarjeta */
+  trades: ApiProTrade[]
   rating: number
   reviewCount: number
   completedJobs: number
@@ -142,6 +155,11 @@ function toQueryString(filters: ProsFilters | ProReviewsFilters): string {
   return query ? `?${query}` : ''
 }
 
+/** Respuesta de PUT /v1/pro/trades */
+export interface SetTradesPayload {
+  trades: { slug: string; hourlyRate: number }[]
+}
+
 export const prosApi = {
   list: (filters: ProsFilters = {}) =>
     apiRequest<ProsPage>(`/v1/pros${toQueryString(filters)}`),
@@ -161,6 +179,21 @@ export const prosApi = {
       `/v1/pros/coverage?trade=${encodeURIComponent(trade)}&lat=${lat}&lng=${lng}`,
       { auth: true },
     ),
+
+  /** Los oficios propios, para editarlos */
+  myTrades: () => apiRequest<ApiProTrade[]>('/v1/pro/trades', { auth: true }),
+
+  /**
+   * Guarda la lista completa. No hay "añadir" ni "quitar" sueltos: entre dos
+   * peticiones podría quedarse sin ningún oficio, y sin oficio se desaparece
+   * del directorio.
+   */
+  setMyTrades: (payload: SetTradesPayload) =>
+    apiRequest<ApiProTrade[]>('/v1/pro/trades', {
+      method: 'PUT',
+      auth: true,
+      body: payload,
+    }),
 
   /**
    * Activa o desactiva "disponible ahora" en el perfil propio.
