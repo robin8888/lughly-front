@@ -71,6 +71,25 @@ export function JobCard({ job, onPress, testID }: JobCardProps) {
             <Text style={styles.deadline}>{timeLeftLabel(job.biddingEndsAt)}</Text>
           )}
         </View>
+
+        {/**
+         * Las pujas solo tienen sentido en una subasta: una reserva
+         * instantánea es a tarifa fija y una urgencia se acepta, no se puja.
+         */}
+        {job.type === 'AUCTION' && (
+          <Text style={styles.bids}>
+            {job.bidCount === 0 ? (
+              'Sin pujas todavía'
+            ) : (
+              <>
+                {job.bidCount} {job.bidCount === 1 ? 'puja' : 'pujas'} · la más baja{' '}
+                {job.lowestBid !== null && (
+                  <Money amount={job.lowestBid} size="small" style={styles.lowest} />
+                )}
+              </>
+            )}
+          </Text>
+        )}
       </InfoCard>
     </Pressable>
   )

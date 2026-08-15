@@ -2,11 +2,8 @@
  * MyJobsPage
  * Los trabajos que ha publicado el cliente (MobileApp.dc.html, `isMisTrabajos`).
  *
- * Del diseño faltan dos bloques, y no por descuido:
+ * Del diseño falta un bloque, y no por descuido:
  *
- * - **Número de pujas y puja más baja**: no existe el modelo `Bid`. Poner
- *   "0 pujas" sería indistinguible de un trabajo que de verdad no ha
- *   recibido ninguna.
  * - **Historial con valoraciones**: hace falta que un trabajo llegue a
  *   terminarse, y el flujo de hitos es de la Fase 10.
  *
@@ -104,8 +101,8 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
             </Button>
 
             <Text style={styles.pending}>
-              Las pujas recibidas y el historial de trabajos terminados llegan
-              en las siguientes fases del roadmap.
+              El historial de trabajos terminados llega en las siguientes
+              fases del roadmap.
             </Text>
           </>
         )}

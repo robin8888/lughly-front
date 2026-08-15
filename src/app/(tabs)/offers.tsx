@@ -1,5 +1,5 @@
 /**
- * Tab Ofertas (placeholder), solo para modo profesional.
+ * Tab Ofertas, solo para modo profesional.
  *
  * Un cliente que llegue aquí y no tenga cuenta profesional no puede cambiar
  * de modo: se le explica, en vez de ofrecerle un botón que no haría nada.
@@ -7,7 +7,7 @@
 
 import { useRouter } from 'expo-router'
 import { RoleGate } from '@/components/organisms/RoleGate'
-import { ComingSoonPage } from '@/pages/ComingSoonPage'
+import { OffersPage } from '@/pages/OffersPage'
 
 export default function OffersRoute() {
   const router = useRouter()
@@ -27,11 +27,7 @@ export default function OffersRoute() {
       unavailableMessage="Tu cuenta es de cliente. Para pujar hace falta darse de alta como profesional y verificar la identidad."
       testID="offers-denied"
     >
-      <ComingSoonPage
-        title="Ofertas"
-        roadmap="la Fase 6 (Subastas)"
-        testID="offers-tab"
-      />
+      <OffersPage onBack={() => router.navigate('/inicio')} />
     </RoleGate>
   )
 }

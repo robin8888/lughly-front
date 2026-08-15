@@ -29,6 +29,10 @@ export interface ApiJob {
   preferredDate: string | null
   biddingEndsAt: string | null
   photoCount: number
+  /** Pujas vivas recibidas */
+  bidCount: number
+  /** La más baja de las vivas; null si aún no hay ninguna */
+  lowestBid: number | null
   createdAt: string
 }
 

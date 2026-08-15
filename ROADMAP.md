@@ -506,15 +506,42 @@ revirtiendo la regla de "sin tests en el front" solo para los mapas.
 
 **Duración estimada**: 4-5 días
 
-### Día 17-18: OffersPage (Pro)
-**Tareas**:
-- [ ] OffersPage
-  - Lista de subastas disponibles
-  - Filtro por oficio
-  - Orden por cercanía
-  - Indicador de distancia
-- [ ] Organism AuctionList
-- [ ] Molecule AuctionCard
+### Día 17-18: OffersPage (Pro) ✅ (15 Agosto 2026)
+
+**Backend nuevo** — migración `20260815073602_bids`:
+- [x] Modelo `Bid` con importe, plazo y condiciones
+- [x] `GET /v1/jobs/open` y `POST /v1/jobs/:id/bids`, restringidos a `PRO`
+- [x] `GET /v1/jobs` del cliente ahora trae `bidCount` y `lowestBid`
+
+**Front**:
+- [x] OffersPage con la lista de subastas abiertas
+- [x] Filtro por oficio (por defecto, el suyo)
+- [x] Organism AuctionCard, con el formulario de puja plegado dentro
+- [x] "Mis trabajos" ya enseña pujas recibidas y la más baja
+- [ ] ~~Orden por cercanía e indicador de distancia~~ — el trabajo solo
+      guarda ciudad; su punto exacto es la dirección, y esa no se enseña a
+      quien todavía no ha ganado la subasta
+
+**Decisiones**:
+
+- **Una puja por profesional**, con unicidad en la base. Volver a pujar
+  corrige la suya; no apila otra. Si no, alguien podría inundar una subasta
+  y el cliente vería la misma cara diez veces.
+- **Se enseña la puja más baja, nunca de quién es.** Es una subasta inversa:
+  ocultar por dónde van los demás no protege a nadie, solo hace pujar a
+  ciegas.
+- **El formulario de puja va dentro de la tarjeta**, no en otra pantalla.
+  Pujar es comparar presupuesto máximo, puja más baja y plazo: sacarlo fuera
+  obligaría a memorizar esos tres números o a ir y volver.
+- El profesional no ve la dirección ni el nombre del cliente. Eso se entrega
+  al adjudicado.
+
+**FALTA una regla del README (§3)**: sin cuenta de cobro verificada
+(NIF + Stripe) no se debería poder pujar. Stripe no existe todavía, así que
+hoy cualquier profesional puede. Anotado en `place-bid.use-case.ts`.
+
+**Pendiente**: pantalla de detalle de la subasta con las fotos. La tarjeta
+dice cuántas hay pero no las enseña.
 
 ---
 

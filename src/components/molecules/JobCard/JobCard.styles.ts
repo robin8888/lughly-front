@@ -90,6 +90,18 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.cardText,
   },
+  bids: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+    opacity: 0.8,
+    marginTop: 6,
+  },
+  lowest: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+  },
   deadline: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
