@@ -33,11 +33,23 @@ export interface ApiJob {
 }
 
 export interface CreateJobPayload {
-  type: 'AUCTION' | 'INSTANT'
+  /**
+   * `QUOTE` no está: un presupuesto directo se pide a un profesional
+   * concreto desde su ficha, no se publica al aire.
+   */
+  type: 'AUCTION' | 'INSTANT' | 'URGENT'
   tradeSlug: string
   title: string
   description: string
   city: string
+  /**
+   * Obligatorios en una urgencia y opcionales en el resto: solo se avisa a
+   * quien cubre la dirección con su radio, así que sin punto no hay a quién
+   * avisar. En una subasta no hace falta hasta adjudicar.
+   */
+  addressLine?: string
+  latitude?: number
+  longitude?: number
   maxBudget?: number
   preferredDate?: string
   /** Obligatorio en subasta; el servidor lo exige */

@@ -95,6 +95,16 @@ export interface ProReviewsFilters {
   offset?: number
 }
 
+/** Respuesta de GET /v1/pros/coverage */
+export interface ApiCoverage {
+  /** Cuántos profesionales recibirían el aviso ahora mismo */
+  available: number
+  /** Del oficio y dentro del radio, pero no disponibles en este momento */
+  offline: number
+  /** Distancia al más cercano de los disponibles, en km */
+  nearestKm: number | null
+}
+
 /** Respuesta de PATCH /v1/pro/available-now */
 export interface AvailabilityState {
   availableNow: boolean
@@ -135,6 +145,17 @@ export const prosApi = {
 
   reviews: (id: string, filters: ProReviewsFilters = {}) =>
     apiRequest<ProReviewsPage>(`/v1/pros/${id}/reviews${toQueryString(filters)}`),
+
+  /**
+   * A cuántos llegaría una urgencia en ese punto. Devuelve números, no la
+   * lista: quién está disponible y dónde no es asunto de quien aún no ha
+   * contratado.
+   */
+  coverage: (trade: string, lat: number, lng: number) =>
+    apiRequest<ApiCoverage>(
+      `/v1/pros/coverage?trade=${encodeURIComponent(trade)}&lat=${lat}&lng=${lng}`,
+      { auth: true },
+    ),
 
   /**
    * Activa o desactiva "disponible ahora" en el perfil propio.

@@ -466,16 +466,31 @@ revirtiendo la regla de "sin tests en el front" solo para los mapas.
 
 ---
 
-### Día 14-15: UrgencyPage
+### Día 14-15: UrgencyPage ✅ (15 Agosto 2026)
 **Tareas**:
-- [ ] UrgencyPage
-  - Oficio
-  - Dirección con indicador de cobertura
-  - Descripción breve
-  - PhotoPicker
-  - Recargo automático +25-50%
-- [ ] Organism CoverageIndicator
-- [ ] Hook useSurcharge
+- [x] UrgencyPage: oficio, dirección, descripción, fotos y aviso de recargo
+- [x] Organism CoverageIndicator, con la cobertura en vivo
+- [x] Hook `useAddressCoverage` — geocodifica y cuenta, con espera de 700 ms
+- [x] Backend: tipo `URGENT` al publicar y `GET /v1/pros/coverage`
+- [ ] ~~Hook useSurcharge~~ — los porcentajes ya están en
+      `utils/surcharges.ts`; el cálculo sobre un importe llega con la
+      reserva instantánea (Fase 7), que es donde hay importe que calcular
+
+**Decisiones**:
+
+- **La dirección es obligatoria aquí y opcional al publicar normal.** Solo se
+  avisa a quien la cubre con su radio (README §7): sin punto no hay a quién
+  avisar. Lo valida el servidor, no solo el formulario.
+- **Se dice si hay alguien ANTES de escribir la descripción.** Rellenar un
+  formulario entero con una fuga en casa para descubrir al final que nadie
+  cubre tu calle sería cruel. Y si no hay nadie, el mensaje es honesto y trae
+  salida —publicarlo como trabajo normal—, que es lo que pide el README.
+- **La cobertura devuelve números, nunca la lista.** Una lista de nombres
+  sería una forma cómoda de rastrear a los profesionales.
+- **No se consulta en cada tecla**: se esperan 700 ms desde la última.
+  "C", "Ca", "Cal" son peticiones inútiles al geocodificador.
+- El formulario es más corto a propósito: quien tiene una urgencia no está
+  para elegir presupuesto máximo ni fecha preferida.
 
 ---
 

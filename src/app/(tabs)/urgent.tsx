@@ -1,11 +1,12 @@
 /**
- * Tab Urgente (placeholder), solo para modo cliente.
+ * Tab Urgente, solo para modo cliente.
  * Texto del bloqueo: MobileApp.dc.html (`isUrgenciaDenied`).
  */
 
+import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { RoleGate } from '@/components/organisms/RoleGate'
-import { ComingSoonPage } from '@/pages/ComingSoonPage'
+import { UrgencyPage } from '@/pages/UrgencyPage'
 
 export default function UrgentRoute() {
   const router = useRouter()
@@ -23,16 +24,24 @@ export default function UrgentRoute() {
         },
         {
           label: 'Activar "disponible ahora"',
-          onPress: () => router.navigate('/schedule'),
-          testID: 'urgent-denied-schedule',
+          onPress: () => router.navigate('/inicio'),
+          testID: 'urgent-denied-available',
         },
       ]}
       testID="urgent-denied"
     >
-      <ComingSoonPage
-        title="Urgente"
-        roadmap="la Fase 5 (Urgencias)"
-        testID="urgent-tab"
+      <UrgencyPage
+        onPublished={(_jobId, photosFailed) => {
+          Alert.alert(
+            'Aviso enviado',
+            photosFailed > 0
+              ? `Ya estamos avisando a los profesionales disponibles. ${photosFailed === 1 ? 'Una foto no se pudo enviar' : `${photosFailed} fotos no se pudieron enviar`}.`
+              : 'Ya estamos avisando a los profesionales disponibles de tu zona. Cada uno tiene 30 minutos para aceptar.',
+          )
+          router.navigate('/jobs')
+        }}
+        onPublishNormal={() => router.navigate('/publish')}
+        onBack={() => router.navigate('/inicio')}
       />
     </RoleGate>
   )

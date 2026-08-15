@@ -1,13 +1,13 @@
 /**
- * Tab Mis trabajos (placeholder), solo para modo cliente.
+ * Tab Mis trabajos, solo para modo cliente.
  *
  * Son los trabajos que uno ha CONTRATADO. Los que un profesional ejecuta
- * viven en su panel, que es otra pantalla.
+ * viven en su agenda, que es otra pantalla.
  */
 
 import { useRouter } from 'expo-router'
 import { RoleGate } from '@/components/organisms/RoleGate'
-import { ComingSoonPage } from '@/pages/ComingSoonPage'
+import { MyJobsPage } from '@/pages/MyJobsPage'
 
 export default function JobsRoute() {
   const router = useRouter()
@@ -26,10 +26,9 @@ export default function JobsRoute() {
       ]}
       testID="jobs-denied"
     >
-      <ComingSoonPage
-        title="Mis trabajos"
-        roadmap="la Fase 7 (Mi actividad)"
-        testID="jobs-tab"
+      <MyJobsPage
+        onPublish={() => router.navigate('/publish')}
+        onBack={() => router.navigate('/inicio')}
       />
     </RoleGate>
   )
