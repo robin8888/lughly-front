@@ -27,16 +27,58 @@ export type CoverageState =
   | { status: 'failed' }
   | { status: 'ready'; match: ApiGeocodeMatch; coverage: ApiCoverage }
 
+/**
+ * @param point Si el cliente compartió su ubicación, sus coordenadas. Con
+ *   ellas no se geocodifica nada: son más exactas que traducir un texto, y
+ *   el texto pasa a ser la aclaración para el profesional (piso, puerta).
+ */
 export function useAddressCoverage(
   address: string,
   trade: string,
+  point?: { lat: number; lng: number; label: string; city: string | null } | null,
 ): CoverageState {
   const [state, setState] = useState<CoverageState>({ status: 'idle' })
 
   useEffect(() => {
     const query = address.trim()
 
-    if (query.length < MIN_QUERY || trade === '') {
+    if (trade === '') {
+      setState({ status: 'idle' })
+      return
+    }
+
+    // Con posición compartida se salta la geocodificación por completo
+    if (point) {
+      let cancelled = false
+      setState({ status: 'searching' })
+
+      void (async () => {
+        try {
+          const coverage = await prosApi.coverage(trade, point.lat, point.lng)
+          if (cancelled) return
+
+          setState({
+            status: 'ready',
+            match: {
+              label: query || point.label,
+              lat: point.lat,
+              lng: point.lng,
+              city: point.city,
+              postcode: null,
+            },
+            coverage,
+          })
+        } catch {
+          if (!cancelled) setState({ status: 'failed' })
+        }
+      })()
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    if (query.length < MIN_QUERY) {
       setState({ status: 'idle' })
       return
     }
@@ -75,7 +117,7 @@ export function useAddressCoverage(
       cancelled = true
       clearTimeout(timer)
     }
-  }, [address, trade])
+  }, [address, trade, point])
 
   return state
 }

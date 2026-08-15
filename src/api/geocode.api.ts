@@ -27,4 +27,16 @@ export const geocodeApi = {
       auth: true,
       body: { query },
     }),
+
+  /**
+   * Coordenadas → dirección legible, para cuando el cliente comparte su
+   * ubicación en una urgencia. `match` es null si no hay nada reconocible
+   * en ese punto.
+   */
+  reverse: (lat: number, lng: number) =>
+    apiRequest<{ match: ApiGeocodeMatch | null }>('/v1/geocode/reverse', {
+      method: 'POST',
+      auth: true,
+      body: { lat, lng },
+    }),
 }

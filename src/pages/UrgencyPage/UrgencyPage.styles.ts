@@ -58,6 +58,28 @@ export const styles = StyleSheet.create({
     minHeight: 88,
     textAlignVertical: 'top',
   },
+  shareLink: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+    textDecorationLine: 'underline',
+    marginTop: 6,
+  },
+  shareNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.text,
+    opacity: 0.7,
+    marginTop: 5,
+  },
+  shareError: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.error,
+    marginTop: 5,
+  },
   alternative: {
     marginTop: 10,
     marginBottom: 4,

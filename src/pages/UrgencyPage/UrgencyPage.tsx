@@ -27,6 +27,10 @@ import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { CoverageIndicator } from '@/components/organisms/CoverageIndicator'
 import { useAddressCoverage } from '@/hooks/domain/useAddressCoverage'
 import { usePublishJob } from '@/hooks/domain/usePublishJob'
+import {
+  useShareLocation,
+  type SharedLocation,
+} from '@/hooks/domain/useShareLocation'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import { TRADE_OPTIONS } from '@/utils/trades'
 import { URGENCY_SURCHARGE } from '@/utils/surcharges'
@@ -53,7 +57,15 @@ export function UrgencyPage({
   const [description, setDescription] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
 
-  const coverage = useAddressCoverage(address, trade)
+  /**
+   * Si el cliente comparte su ubicación, mandan estas coordenadas y no lo
+   * que ponga en el campo: el GPS es más exacto que traducir un texto, y el
+   * texto pasa a ser la aclaración —piso, puerta— que el GPS no puede dar.
+   */
+  const [shared, setShared] = useState<SharedLocation | null>(null)
+  const { status: shareStatus, share } = useShareLocation()
+
+  const coverage = useAddressCoverage(address, trade, shared)
   const { publish, isPublishing, isUploadingPhotos, fieldErrors, formError, reset } =
     usePublishJob()
 
@@ -69,6 +81,17 @@ export function UrgencyPage({
    */
   const canPublish =
     trade !== '' && description.trim().length >= 20 && located !== null && !isBusy
+
+  const handleShareLocation = async () => {
+    const position = await share()
+    if (!position) return
+
+    setShared(position)
+
+    // Se rellena el campo con lo que devuelva el mapa, pero editable: el
+    // cliente añade el piso y la puerta, que es lo que el GPS no sabe.
+    if (position.label !== '') setAddress(position.label)
+  }
 
   const handlePublish = async () => {
     if (!located) return
@@ -138,6 +161,35 @@ export function UrgencyPage({
             editable={!isBusy}
             testID="urgency-address"
           />
+
+          <Pressable
+            onPress={() => void handleShareLocation()}
+            disabled={isBusy || shareStatus === 'locating'}
+            accessibilityRole="button"
+            testID="urgency-share-location"
+          >
+            <Text style={styles.shareLink}>
+              {shareStatus === 'locating'
+                ? 'Buscando dónde estás…'
+                : shared
+                  ? 'Usar otra vez mi ubicación'
+                  : 'No sé la dirección: usar mi ubicación'}
+            </Text>
+          </Pressable>
+
+          {shareStatus === 'denied' && (
+            <Text style={styles.shareError}>
+              No hemos podido acceder a tu ubicación. Puedes activarla en los
+              ajustes del móvil, o escribir la dirección a mano.
+            </Text>
+          )}
+
+          {shared && (
+            <Text style={styles.shareNote}>
+              Usando tu ubicación. El GPS acierta la calle, no el piso:
+              añade el piso y la puerta al texto para que sepan dónde llamar.
+            </Text>
+          )}
         </FormField>
 
         <CoverageIndicator state={coverage} testID="urgency-coverage" />
