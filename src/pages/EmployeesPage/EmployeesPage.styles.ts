@@ -119,6 +119,20 @@ export const styles = StyleSheet.create({
     marginTop: 6,
   },
 
+  /**
+   * Discreto y al final de la tarjeta: es la acción que menos se usa y la
+   * única que no se puede deshacer desde aquí.
+   */
+  remove: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.urgency,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+
   add: {
     marginTop: 16,
   },

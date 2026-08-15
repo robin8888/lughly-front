@@ -29,6 +29,7 @@ import {
   useEmployees,
   useEmployer,
   useCreateEmployee,
+  useRemoveEmployee,
   useBecomeEmployer,
 } from '@/hooks/domain/useEmployees'
 import type { LegalForm } from '@/api/employees.api'
@@ -201,6 +202,7 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
    */
   const { data, isPending, isError, refetch } = useEmployees(employer !== null)
   const { create, isCreating, fieldErrors, formError, reset } = useCreateEmployee()
+  const { remove, isRemoving, resetRemove } = useRemoveEmployee()
 
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -259,6 +261,38 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
       <Text style={styles.title}>Mis trabajadores</Text>
     </View>
   )
+
+  /**
+   * Se pregunta antes: dar de baja cierra su cuenta y le echa de la app en
+   * ese momento. El texto dice qué pasa con lo que ya hizo, porque es la
+   * duda razonable de quien va a pulsar.
+   */
+  const confirmRemove = (id: string, name: string) => {
+    resetRemove()
+
+    Alert.alert(
+      `Dar de baja a ${name}`,
+      'Dejará de aparecer en el directorio y no podrá entrar. Sus valoraciones y los trabajos que hizo se quedan como están: son de los clientes que los contrataron.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Dar de baja',
+          style: 'destructive',
+          onPress: () => {
+            void remove(id).then(({ ok, error }) => {
+              if (ok) return
+
+              // El motivo del servidor tal cual: casi siempre es accionable
+              Alert.alert(
+                'No se ha podido dar de baja',
+                error ?? 'Inténtalo de nuevo en un momento.',
+              )
+            })
+          },
+        },
+      ],
+    )
+  }
 
   if (loadingEmployer) {
     return (
@@ -384,6 +418,15 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
                           y no puede aceptar urgencias.
                         </Text>
                       )}
+
+                      <Pressable
+                        onPress={() => confirmRemove(employee.id, employee.name)}
+                        disabled={isRemoving}
+                        accessibilityRole="button"
+                        testID={`employee-remove-${employee.id}`}
+                      >
+                        <Text style={styles.remove}>Dar de baja</Text>
+                      </Pressable>
                     </InfoCard>
                   ))}
                 </View>

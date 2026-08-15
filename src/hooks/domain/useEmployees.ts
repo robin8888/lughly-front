@@ -81,6 +81,47 @@ export function useCreateEmployee() {
   }
 }
 
+export function useRemoveEmployee() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => employeesApi.remove(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: employeesQueryKey() })
+      // Sus oficios dejan de contar para los que cubre la empresa
+      void queryClient.invalidateQueries({ queryKey: employerQueryKey() })
+    },
+  })
+
+  return {
+    /**
+     * Devuelve el motivo, no lo deja en el estado del hook.
+     *
+     * Quien llama lo hace desde el `onPress` de un diálogo, y ese cierre ya
+     * capturó el estado de antes: leerlo de ahí enseñaría siempre el error
+     * anterior, o ninguno. El motivo importa —"está atendiendo una urgencia"
+     * se puede resolver, "no se ha podido" no dice nada—, así que viaja con
+     * la respuesta.
+     */
+    remove: async (id: string): Promise<{ ok: boolean; error: string | null }> => {
+      try {
+        await mutation.mutateAsync(id)
+        return { ok: true, error: null }
+      } catch (error) {
+        return {
+          ok: false,
+          error:
+            error instanceof NetworkError || error instanceof ApiError
+              ? error.message
+              : null,
+        }
+      }
+    },
+    isRemoving: mutation.isPending,
+    resetRemove: () => mutation.reset(),
+  }
+}
+
 export function useBecomeEmployer() {
   const queryClient = useQueryClient()
 

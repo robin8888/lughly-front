@@ -79,4 +79,12 @@ export const employeesApi = {
       auth: true,
       body: payload,
     }),
+
+  /**
+   * Da de baja al trabajador. La cuenta no se borra: sus valoraciones son de
+   * los clientes que las escribieron y los trabajos que hizo son parte del
+   * historial de esos trabajos.
+   */
+  remove: (id: string) =>
+    apiRequest<null>(`/v1/employees/${id}`, { method: 'DELETE', auth: true }),
 }
