@@ -28,6 +28,11 @@ export interface ApiPro {
    */
   latitude: number | null
   longitude: number | null
+  /**
+   * Para quién trabaja. Encabeza la tarjeta: es a quien se contrata, quien
+   * pone el precio y quien factura. Null si trabaja por su cuenta.
+   */
+  employerName: string | null
 }
 
 /**

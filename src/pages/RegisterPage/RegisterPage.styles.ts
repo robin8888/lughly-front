@@ -38,6 +38,26 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing[3],
   },
+  /**
+   * Trabajadores a cargo. Va en su propio recuadro, como los consentimientos:
+   * es una decisión con consecuencias —quien la marca responde de otras
+   * personas— y no debe leerse como un campo más del formulario.
+   */
+  staffBox: {
+    paddingVertical: theme.spacing[4],
+    paddingHorizontal: theme.spacing[4],
+    borderWidth: 1,
+    borderColor: theme.colors.divider,
+    borderRadius: theme.radius.lg,
+    marginBottom: theme.spacing[3],
+  },
+  staffFields: {
+    marginTop: theme.spacing[4],
+    paddingTop: theme.spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+  },
+
   /** Dos caras del documento, una al lado de la otra (como en el diseño) */
   documentRow: {
     flexDirection: 'row',

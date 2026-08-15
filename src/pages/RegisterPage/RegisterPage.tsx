@@ -35,6 +35,16 @@ const IDENTITY_OPTIONS = [
   { value: 'PASSPORT', label: 'Pasaporte (1 página)' },
 ]
 
+/**
+ * Autónomo o empresa. No es un rol distinto ni cambia lo que se puede hacer
+ * en la app: sirve para saber si el identificador fiscal es un NIF o un CIF,
+ * y para dirigirse a quien sea con las palabras que le corresponden.
+ */
+const LEGAL_FORM_OPTIONS = [
+  { value: 'SELF_EMPLOYED', label: 'Autónomo — trabajo por mi cuenta' },
+  { value: 'COMPANY', label: 'Empresa — sociedad con CIF' },
+]
+
 export interface RegisterPageProps {
   onSuccess: () => void
   onLogin: () => void
@@ -44,7 +54,13 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [phone, setPhone] = useState('')
   const [role, setRole] = useState<'client' | 'pro'>('client')
+  const [hasStaff, setHasStaff] = useState(false)
+  const [legalForm, setLegalForm] = useState<'SELF_EMPLOYED' | 'COMPANY' | null>(null)
+  const [taxId, setTaxId] = useState('')
+  const [legalName, setLegalName] = useState('')
+  const [acceptsStaffResponsibility, setAcceptsStaffResponsibility] = useState(false)
   const [trade, setTrade] = useState<string | null>(null)
   const [hourlyRate, setHourlyRate] = useState('')
   const [city, setCity] = useState('')
@@ -77,12 +93,18 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
       name,
       email,
       password,
+      phone,
       role,
       trade: trade ?? undefined,
       hourlyRate,
       city,
       acceptTerms,
       acceptComms,
+      hasStaff: isPro && hasStaff,
+      legalForm: legalForm ?? undefined,
+      taxId,
+      legalName,
+      acceptsStaffResponsibility,
     })
 
     if (!result.ok) return
@@ -103,10 +125,26 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
     clearAuth()
     onSuccess()
 
+    const problems: string[] = []
+
+    if (failed.length > 0) {
+      problems.push(
+        `No hemos podido subir ${failed.join(', ')}. Podrás intentarlo desde tu perfil.`,
+      )
+    }
+
+    // Si esto falla se queda sin el botón de trabajadores en su inicio, y sin
+    // aviso no tendría forma de entender por qué.
+    if (result.staffDeclared === false) {
+      problems.push(
+        'No hemos podido guardar los datos de tu empresa. Podrás darte de alta como empleador desde Mi cuenta.',
+      )
+    }
+
     Alert.alert(
       'Cuenta creada',
-      failed.length > 0
-        ? `No hemos podido subir ${failed.join(', ')}. Podrás intentarlo desde tu perfil. Revisa tu correo para confirmar el email e inicia sesión.`
+      problems.length > 0
+        ? `${problems.join(' ')} Revisa tu correo para confirmar el email e inicia sesión.`
         : 'Revisa tu correo para confirmar tu email. Ya puedes iniciar sesión.',
     )
   }
@@ -172,6 +210,25 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
           error={Boolean(fieldErrors.password)}
           editable={!isBusy}
           testID="register-password"
+        />
+      </FormField>
+
+      <FormField
+        label="Teléfono"
+        hint="Para que el cliente pueda llamarte el día del trabajo. No se publica en tu perfil."
+        error={fieldErrors.phone}
+        testID="register-phone-field"
+      >
+        <Input
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="600 000 000"
+          keyboardType="phone-pad"
+          autoComplete="tel"
+          textContentType="telephoneNumber"
+          error={Boolean(fieldErrors.phone)}
+          editable={!isLoading}
+          testID="register-phone"
         />
       </FormField>
 
@@ -258,6 +315,111 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
               testID="register-license"
             />
           </FormField>
+
+          {/**
+           * Gente a cargo. Se pregunta aquí y no se dan de alta aquí: quien
+           * llega con ocho trabajadores no va a meterlos en el formulario de
+           * registro. Solo se recoge lo fiscal, que es lo que no se puede
+           * deducir después, y el alta de cada uno se hace desde su inicio.
+           */}
+          <View style={styles.staffBox} testID="register-staff-fields">
+            <Checkbox
+              checked={hasStaff}
+              onChange={setHasStaff}
+              disabled={isLoading}
+              testID="register-has-staff"
+            >
+              <Text style={styles.consentText}>
+                Tengo trabajadores a mi cargo.{' '}
+                <Text style={styles.consentSecondary}>
+                  Los darás de alta después, desde tu inicio. Ellos ejecutan
+                  los trabajos; tú pujas, facturas y cobras.
+                </Text>
+              </Text>
+            </Checkbox>
+
+            {hasStaff && (
+              <View style={styles.staffFields}>
+                <FormField
+                  label="Trabajas como"
+                  helper="Solo cambia si el identificador fiscal es un NIF o un CIF. Lo demás funciona igual."
+                  error={fieldErrors.legalForm}
+                  testID="register-legal-form-field"
+                >
+                  <Picker
+                    options={LEGAL_FORM_OPTIONS}
+                    value={legalForm}
+                    onChange={(value) =>
+                      setLegalForm(value as 'SELF_EMPLOYED' | 'COMPANY')
+                    }
+                    placeholder="Autónomo o empresa"
+                    title="Trabajas como"
+                    error={Boolean(fieldErrors.legalForm)}
+                    disabled={isLoading}
+                    testID="register-legal-form"
+                  />
+                </FormField>
+
+                <FormField
+                  label={legalForm === 'COMPANY' ? 'Razón social' : 'Nombre fiscal'}
+                  hint="Es el nombre que verá el cliente encabezando la ficha de cada uno de tus trabajadores."
+                  error={fieldErrors.legalName}
+                  testID="register-legal-name-field"
+                >
+                  <Input
+                    value={legalName}
+                    onChangeText={setLegalName}
+                    placeholder={
+                      legalForm === 'COMPANY'
+                        ? 'Ej. Instalaciones Ruiz S.L.'
+                        : 'Ej. Miguel Ruiz Navarro'
+                    }
+                    autoCapitalize="words"
+                    error={Boolean(fieldErrors.legalName)}
+                    editable={!isLoading}
+                    testID="register-legal-name"
+                  />
+                </FormField>
+
+                <FormField
+                  label={legalForm === 'COMPANY' ? 'CIF' : 'NIF'}
+                  error={fieldErrors.taxId}
+                  testID="register-tax-id-field"
+                >
+                  <Input
+                    value={taxId}
+                    onChangeText={(value) => setTaxId(value.toUpperCase())}
+                    placeholder={legalForm === 'COMPANY' ? 'B12345678' : '12345678Z'}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    error={Boolean(fieldErrors.taxId)}
+                    editable={!isLoading}
+                    testID="register-tax-id"
+                  />
+                </FormField>
+
+                <Checkbox
+                  checked={acceptsStaffResponsibility}
+                  onChange={setAcceptsStaffResponsibility}
+                  error={Boolean(fieldErrors.acceptsStaffResponsibility)}
+                  disabled={isLoading}
+                  testID="register-staff-responsibility"
+                >
+                  <Text style={styles.consentText}>
+                    Respondo ante los clientes de Lughly de las personas que
+                    dé de alta.{' '}
+                    <Text style={styles.strong}>(obligatorio)</Text>
+                  </Text>
+                </Checkbox>
+
+                {fieldErrors.acceptsStaffResponsibility && (
+                  <Text style={styles.consentError} testID="register-staff-error">
+                    {fieldErrors.acceptsStaffResponsibility}
+                  </Text>
+                )}
+              </View>
+            )}
+          </View>
         </View>
       )}
 

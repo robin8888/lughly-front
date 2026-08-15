@@ -548,6 +548,63 @@ dice cuántas hay pero no las enseña.
 
 ---
 
+### Trabajadores a cargo ✅ (15 Agosto 2026)
+
+Fuera del plan original. Sale de una pregunta del negocio: qué pasa con una
+empresa que quiere ofrecer sus servicios y tiene varios profesionales del
+mismo oficio.
+
+**No se ha añadido un rol de empresa.** Lo que cambia el comportamiento de la
+app no es la forma jurídica sino mandar a otros a los trabajos, y un autónomo
+también puede tener oficiales. Así que en el registro se pregunta "¿tienes
+trabajadores a cargo?" y solo después, para saber si el identificador es un
+NIF o un CIF, si es autónomo o empresa.
+
+**Backend** — migración `20260815120000_employers_and_phone`:
+- [x] Modelo `Employer` (forma jurídica, identificador fiscal, razón social,
+      fecha de aceptación de la responsabilidad) y `ProProfile.employerId`
+- [x] `User.phone`, `User.mustChangePassword`, `User.temporaryPasswordExpiresAt`
+- [x] `GET/POST /v1/employer`, `GET/POST /v1/employees`
+- [x] El alta de un trabajador genera contraseña temporal y le manda un correo
+      con usuario, contraseña, por qué hay que cambiarla y dónde
+- [x] Un empleado no puja ni ve la lista de subastas abiertas (lleva
+      presupuestos e importes), ni puede darse de alta como empleador
+- [x] `POST /v1/auth/register` acepta teléfono
+
+**Front**:
+- [x] Pregunta en el registro, con forma jurídica, NIF/CIF y razón social
+- [x] Botón de trabajadores en el hero del inicio, solo para quien los tiene
+- [x] EmployeesPage: lista y alta, más el alta como empleador para quien no
+      la hizo en el registro (o para el autónomo que contrata al primero)
+- [x] Cambio de contraseña obligatorio en el primer acceso, con las tabs
+      retiradas del navegador hasta que se haga
+- [x] Al empleado se le ocultan Ofertas, Cartera y su propia tarifa
+- [x] La tarjeta del directorio y la ficha las encabeza el empleador, con el
+      trabajador debajo
+
+**Decisiones**:
+
+- **Los oficios de la empresa no se declaran: se derivan de sus
+  trabajadores.** Así no puede aparecer en fontanería sin tener un fontanero,
+  y deja de aparecer el día que ese trabajador se va.
+- **La empresa no sube los documentos de sus empleados.** Los sube cada uno
+  desde su móvil, que es donde no cuesta nada; a cambio, quien da de alta
+  acepta responder de esa persona ante los clientes. Pedirle a una empresa
+  que fotografíe cincuenta DNI es garantizar que no da de alta a nadie.
+- **La tarifa es del empleador, no del trabajador.** Es lo que la empresa
+  cobra por su hora, no su sueldo. Por eso al trabajador no se le enseña: si
+  se le enseñara, confundiría una cosa con la otra.
+- **La tarjeta la encabeza el empleador.** A quien se contrata es a la
+  empresa —pone el precio, factura y responde—; el trabajador es quien irá a
+  la casa. Al revés parecería que se contrata a un autónomo.
+- **El modelo tiene un nivel, no una cadena.** Un empleado no puede tener
+  empleados: con dos niveles no habría forma de decir a quién se le paga.
+
+**Pendiente**: las facturas y los pagos al empleador dependen de `Payment`
+(Fase 9). Hoy no hay dinero que dirigir a ningún sitio.
+
+---
+
 ### Día 19-20: Pujar en Subasta
 **Tareas**:
 - [ ] AuctionDetailPage

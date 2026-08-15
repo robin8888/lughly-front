@@ -21,7 +21,11 @@ import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { setupSessionBridge } from '@/api/sessionBridge'
 import { LoadingOverlay } from '@/components/organisms/LoadingOverlay'
-import { useHasHydrated, useIsAuthenticated } from '@/stores/useAuthStore'
+import {
+  useHasHydrated,
+  useIsAuthenticated,
+  useMustChangePassword,
+} from '@/stores/useAuthStore'
 import { useIsLoading, useLoadingMessage } from '@/stores/useLoadingStore'
 
 // Mantener el splash nativo visible hasta que todo esté listo
@@ -48,6 +52,7 @@ export default function RootLayout() {
     BarlowCondensed_600SemiBold,
   })
   const isAuthenticated = useIsAuthenticated()
+  const mustChangePassword = useMustChangePassword()
   const hasHydrated = useHasHydrated()
   const isLoading = useIsLoading()
   const loadingMessage = useLoadingMessage()
@@ -72,21 +77,34 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <Stack screenOptions={{ headerShown: false }}>
-        {/* Punto de entrada: decide entre splash y tabs */}
-        <Stack.Screen name="index" />
+          {/* Punto de entrada: decide entre splash y tabs */}
+          <Stack.Screen name="index" />
 
-        {/*
-          Registro sin proteger a propósito: durante el alta hay una sesión
-          activa momentánea para poder subir los documentos. Si estuviera
-          protegido con `!isAuthenticated`, la pantalla se desmontaría en
-          mitad de las subidas. Al terminar, la sesión se cierra y el
-          usuario entra por el login.
-        */}
-        <Stack.Screen name="registro" />
+          {/*
+            Registro sin proteger a propósito: durante el alta hay una sesión
+            activa momentánea para poder subir los documentos. Si estuviera
+            protegido con `!isAuthenticated`, la pantalla se desmontaría en
+            mitad de las subidas. Al terminar, la sesión se cierra y el
+            usuario entra por el login.
+          */}
+          <Stack.Screen name="registro" />
 
-        <Stack.Protected guard={isAuthenticated}>
-          <Stack.Screen name="(tabs)" />
-        </Stack.Protected>
+          {/*
+            Quien entró con la contraseña que le puso su empleador no pasa de
+            aquí. No es un aviso que se pueda cerrar: mientras esa contraseña
+            siga viva, el empleador puede entrar como él, y entonces nada de
+            lo que haga esa cuenta prueba quién lo hizo. Al retirar las tabs
+            del navegador tampoco vale entrar por un enlace directo.
+          */}
+          <Stack.Protected guard={isAuthenticated && mustChangePassword}>
+            <Stack.Screen name="cambiar-contrasena" />
+          </Stack.Protected>
+
+          <Stack.Protected guard={isAuthenticated && !mustChangePassword}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="empleados" />
+            <Stack.Screen name="pro/[id]" />
+          </Stack.Protected>
 
           <Stack.Protected guard={!isAuthenticated}>
             <Stack.Screen name="login" />

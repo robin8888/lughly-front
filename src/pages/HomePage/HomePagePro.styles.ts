@@ -46,6 +46,37 @@ export const styles = StyleSheet.create({
     opacity: 0.8,
   },
 
+  employees: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 13,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.accent600,
+    backgroundColor: theme.colors.accent100,
+  },
+  employeesText: {
+    flex: 1,
+  },
+  employeesTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
+  },
+  employeesBody: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.8,
+    marginTop: 3,
+  },
+  employeesArrow: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.h5,
+    color: theme.colors.accent700,
+  },
   section: {
     marginTop: 20,
     paddingHorizontal: 4,

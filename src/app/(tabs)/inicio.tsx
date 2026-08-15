@@ -22,6 +22,7 @@ export default function InicioRoute() {
         userId={user?.id}
         onPrimary={() => router.navigate('/offers')}
         onSecondary={() => router.navigate('/wallet')}
+        onManageEmployees={() => router.navigate('/empleados')}
       />
     )
   }

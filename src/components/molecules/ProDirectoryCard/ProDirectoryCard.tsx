@@ -4,6 +4,12 @@
  *
  * Más completa que la de la home: incluye distancia, distintivo de
  * disponibilidad y tarifa destacada, que es lo que el cliente compara.
+ *
+ * Cuando el profesional trabaja para alguien, la tarjeta la encabeza el
+ * empleador y el trabajador va debajo. No es un detalle de maquetación: a
+ * quien se contrata es a la empresa —es quien pone el precio, quien factura
+ * y quien responde—, y el trabajador es quien irá a la casa. Poner el nombre
+ * del trabajador arriba haría pensar que se contrata a un autónomo.
  */
 
 import { View, Text, Pressable, Image } from 'react-native'
@@ -37,9 +43,20 @@ export function ProDirectoryCard({ pro, onPress, testID }: ProDirectoryCardProps
           </View>
 
           <View style={styles.identity}>
-            <Text style={styles.name} numberOfLines={1}>
-              {pro.name}
-            </Text>
+            {pro.employerName ? (
+              <>
+                <Text style={styles.name} numberOfLines={1}>
+                  {pro.employerName}
+                </Text>
+                <Text style={styles.worker} numberOfLines={1}>
+                  Trabajo de {pro.name}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.name} numberOfLines={1}>
+                {pro.name}
+              </Text>
+            )}
             <Text style={styles.meta} numberOfLines={1}>
               {pro.tradeLabel} · {pro.city}
             </Text>

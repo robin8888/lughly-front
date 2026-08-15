@@ -39,6 +39,18 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.cardText,
   },
+  /**
+   * El trabajador, bajo el nombre del empleador. Va en semibold y sin
+   * mayúsculas: se lee como una segunda línea de la identidad, no como otro
+   * titular que compita con el de arriba.
+   */
+  worker: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: 13,
+    color: theme.colors.cardText,
+    opacity: 0.85,
+    marginTop: 1,
+  },
   meta: {
     fontFamily: theme.typography.fonts.body,
     fontSize: 13,

@@ -10,14 +10,19 @@
 
 import { Redirect, useRouter } from 'expo-router'
 import { SplashPage } from '@/pages/SplashPage'
-import { useIsAuthenticated } from '@/stores/useAuthStore'
+import { useIsAuthenticated, useMustChangePassword } from '@/stores/useAuthStore'
 
 export default function Index() {
   const router = useRouter()
   const isAuthenticated = useIsAuthenticated()
+  const mustChangePassword = useMustChangePassword()
 
   if (isAuthenticated) {
-    return <Redirect href="/inicio" />
+    /**
+     * El trabajador que entra por primera vez no va al inicio: sigue con la
+     * contraseña que le puso su empleador y lo primero es cambiarla.
+     */
+    return <Redirect href={mustChangePassword ? '/cambiar-contrasena' : '/inicio'} />
   }
 
   return (

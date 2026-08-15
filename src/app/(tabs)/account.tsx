@@ -10,16 +10,32 @@
 import { useRouter } from 'expo-router'
 import { AccountPage, type AccountLink } from '@/pages/AccountPage'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
+import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 
 export default function AccountRoute() {
   const router = useRouter()
   const role = useEffectiveRole()
+
+  /**
+   * Un empleado no puede tener empleados, así que ese acceso no le sale. Al
+   * resto sí, tenga gente a cargo o no: es la puerta de quien contrata al
+   * primero después de haber empezado solo.
+   */
+  const isEmployee = useIsEmployee()
 
   const links: AccountLink[] =
     role === 'pro'
       ? [
           { label: 'Mensajes', comingSoon: true },
           { label: 'Panel profesional', comingSoon: true },
+          ...(isEmployee
+            ? []
+            : [
+                {
+                  label: 'Mis trabajadores',
+                  onPress: () => router.navigate('/empleados'),
+                },
+              ]),
           { label: 'Calendario de disponibilidad', comingSoon: true },
           { label: 'Cartera', onPress: () => router.navigate('/wallet') },
           { label: 'Configuración', comingSoon: true },

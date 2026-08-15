@@ -28,6 +28,7 @@ import {
   NAV_WIDTH_NORMAL,
 } from '@/hooks/ui/useCompactNav'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
+import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { styles } from './BottomTabBar.styles'
 
 /** Pantallas sin sesión: ahí no hay barra */
@@ -68,10 +69,29 @@ export const PRO_TABS: TabDefinition[] = [
   { name: 'account', label: 'Cuenta', icon: 'user-circle' },
 ]
 
+/**
+ * Lo que solo ve quien contrata y factura. Un trabajador por cuenta ajena
+ * ejecuta el trabajo, pero ni puja por él ni cobra por él.
+ */
+const EMPLOYER_ONLY_TABS = ['offers', 'wallet']
+
 export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets()
   const role = useEffectiveRole()
-  const tabs = role === 'pro' ? PRO_TABS : CLIENT_TABS
+  const isEmployee = useIsEmployee()
+
+  /**
+   * Al empleado se le quitan Ofertas y Cartera: el dinero del trabajo es de
+   * quien lo contrata y factura, que es su empleador. La lista de subastas
+   * además lleva presupuestos e importes de pujas, así que enseñársela y
+   * luego negarle el botón sería peor que no enseñársela.
+   */
+  const tabs =
+    role === 'pro'
+      ? isEmployee
+        ? PRO_TABS.filter((tab) => !EMPLOYER_ONLY_TABS.includes(tab.name))
+        : PRO_TABS
+      : CLIENT_TABS
 
   const currentRoute = state.routes[state.index]?.name ?? ''
 

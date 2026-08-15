@@ -147,10 +147,20 @@ export function ProProfilePage({
             )}
           </View>
 
+          {/**
+           * Igual que en el directorio: si trabaja para alguien, el titular
+           * es el empleador. Es a quien se contrata y quien factura; el
+           * trabajador es quien va a ir a la casa.
+           */}
           <View style={styles.identityText}>
             <Text style={styles.name} numberOfLines={2}>
-              {pro.name}
+              {pro.employerName ?? pro.name}
             </Text>
+            {pro.employerName && (
+              <Text style={styles.worker} numberOfLines={1}>
+                Trabajo de {pro.name}
+              </Text>
+            )}
             <Text style={styles.trade} numberOfLines={1}>
               {pro.tradeLabel} · {pro.city}
             </Text>

@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/molecules/EmptyState'
 import { Picker } from '@/components/molecules/Picker'
 import { AuctionCard } from '@/components/organisms/AuctionCard'
 import { useOpenJobs } from '@/hooks/domain/useOpenJobs'
+import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { TRADE_OPTIONS } from '@/utils/trades'
 import { theme } from '@/theme'
 import { styles } from './OffersPage.styles'
@@ -28,12 +29,48 @@ export interface OffersPageProps {
 
 export function OffersPage({ onBack }: OffersPageProps) {
   const [trade, setTrade] = useState('')
+  const isEmployee = useIsEmployee()
 
+  /**
+   * Al empleado ni se le pide la lista: el backend se la niega, y con razón
+   * —lleva presupuestos e importes de pujas—, así que pedirla solo sería
+   * gastar una llamada para acabar en un 403.
+   */
   const { data, isPending, isError, refetch, isFetching } = useOpenJobs(
     trade === '' ? {} : { trade },
+    !isEmployee,
   )
 
   const jobs = data?.items ?? []
+
+  if (isEmployee) {
+    return (
+      <View style={styles.screen} testID="offers-page">
+        <View style={styles.header}>
+          <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
+            <Text style={styles.backIcon}>←</Text>
+          </Pressable>
+          <Text style={styles.title}>Ofertas</Text>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.content}>
+          <EmptyState
+            title="Las subastas las lleva tu empresa"
+            message="Quien puja, factura y cobra es quien te dio de alta. Tú verás los trabajos que te asigne en tu agenda, con la dirección y la hora."
+            illustration="greeting"
+            actions={[
+              {
+                label: 'Volver al inicio',
+                onPress: onBack,
+                testID: 'offers-employee-back',
+              },
+            ]}
+            testID="offers-employee"
+          />
+        </ScrollView>
+      </View>
+    )
+  }
 
   return (
     <View style={styles.screen} testID="offers-page">

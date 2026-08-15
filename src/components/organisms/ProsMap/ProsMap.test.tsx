@@ -27,6 +27,7 @@ function makePro(n: number, availableNow = false): ProsMapPro {
     availableNow,
     verified: true,
     bio: null,
+    employerName: null,
     distanceKm: null,
     latitude: 40.4168 + n * 0.001,
     longitude: -3.7038 + n * 0.001,

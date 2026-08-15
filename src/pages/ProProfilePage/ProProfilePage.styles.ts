@@ -87,6 +87,14 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.text,
   },
+  /** Quién hará el trabajo, bajo el nombre de quien lo contrata */
+  worker: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+    opacity: 0.85,
+    marginTop: 2,
+  },
   trade: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,

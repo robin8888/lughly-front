@@ -17,6 +17,12 @@ export interface ApiUser {
   emailVerified: boolean
   /** Ruta de la foto de perfil, relativa a la API */
   avatarUrl: string | null
+  /**
+   * Entró con la contraseña temporal que le puso su empresa y no la ha
+   * cambiado. La app debe llevarle a cambiarla antes de dejarle operar.
+   */
+  mustChangePassword: boolean
+  phone: string | null
 }
 
 export interface ApiSession {
@@ -30,6 +36,8 @@ export interface RegisterPayload {
   name: string
   email: string
   password: string
+  /** Para que el cliente pueda llamar; opcional en el alta */
+  phone?: string
   role: 'client' | 'pro'
   trade?: string
   hourlyRate?: string

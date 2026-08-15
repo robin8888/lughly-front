@@ -13,10 +13,12 @@ import { FormField } from '@/components/molecules/FormField'
 import { Input } from '@/components/atoms/Input'
 import { Button } from '@/components/atoms/Button'
 import { useLogin } from '@/hooks/auth/useLogin'
+import type { User } from '@/stores/useAuthStore'
 import { styles } from './LoginPage.styles'
 
 export interface LoginPageProps {
-  onSuccess: () => void
+  /** Recibe al usuario: la ruta decide adónde va según su estado */
+  onSuccess: (user: User) => void
   onRegister: () => void
   onForgotPassword?: () => void
 }

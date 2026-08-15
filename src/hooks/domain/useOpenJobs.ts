@@ -13,10 +13,11 @@ export function openJobsQueryKey(filters: OpenJobsFilters) {
   return ['jobs', 'open', filters] as const
 }
 
-export function useOpenJobs(filters: OpenJobsFilters = {}) {
+export function useOpenJobs(filters: OpenJobsFilters = {}, enabled = true) {
   return useQuery<OpenJobsPage>({
     queryKey: openJobsQueryKey(filters),
     queryFn: () => bidsApi.open(filters),
+    enabled,
     staleTime: 10_000,
   })
 }

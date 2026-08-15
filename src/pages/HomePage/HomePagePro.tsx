@@ -17,7 +17,7 @@
  * El interruptor de "disponible ahora" sí es real y escribe en el perfil.
  */
 
-import { View, Text, ActivityIndicator } from 'react-native'
+import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import Animated from 'react-native-reanimated'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -29,6 +29,7 @@ import { ReviewList } from '@/components/organisms/ReviewList'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
+import { useEmployer } from '@/hooks/domain/useEmployees'
 import { theme } from '@/theme'
 import { styles } from './HomePagePro.styles'
 
@@ -37,16 +38,33 @@ export interface HomePageProProps {
   userId: string | undefined
   onPrimary: () => void
   onSecondary: () => void
+  onManageEmployees: () => void
 }
 
 export function HomePagePro({
   userId,
   onPrimary,
   onSecondary,
+  onManageEmployees,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
   const { data: pro, isPending, isError } = useProProfile(userId)
   const { setAvailableNow, isSaving } = useAvailableNow(userId)
+
+  /**
+   * Un trabajador por cuenta ajena no ve su tarifa: la fija su empresa y es
+   * el precio que ella cobra, no su sueldo. Enseñársela invitaría a
+   * confundir una cosa con la otra.
+   */
+  const isEmployee = pro?.employerName != null
+
+  /**
+   * Quien es empleado no puede tener empleados: no se le pregunta. Al resto
+   * sí, porque el botón de trabajadores depende de la respuesta y no hay
+   * otro sitio de donde sacarla.
+   */
+  const { data: employerData } = useEmployer(!isEmployee)
+  const employer = employerData?.employer ?? null
 
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page-pro">
@@ -69,6 +87,34 @@ export function HomePagePro({
           onSecondary={onSecondary}
           testID="home-pro-hero"
         />
+
+        {/**
+         * Quien tiene gente a cargo entra a la app para dar de alta a los
+         * suyos, sobre todo al principio. Por eso va aquí arriba y no
+         * escondido en Mi cuenta: es lo primero que necesita hacer.
+         */}
+        {employer && (
+          <Pressable
+            onPress={onManageEmployees}
+            style={styles.employees}
+            accessibilityRole="button"
+            testID="home-pro-employees"
+          >
+            <View style={styles.employeesText}>
+              <Text style={styles.employeesTitle}>
+                {employer.employeeCount === 0
+                  ? 'Añade a tus trabajadores'
+                  : 'Mis trabajadores'}
+              </Text>
+              <Text style={styles.employeesBody}>
+                {employer.employeeCount === 0
+                  ? `${employer.legalName} todavía no tiene a nadie dado de alta. Sin trabajadores no apareces en ningún oficio.`
+                  : `${employer.employeeCount} ${employer.employeeCount === 1 ? 'trabajador' : 'trabajadores'} · ${employer.trades.length} ${employer.trades.length === 1 ? 'oficio' : 'oficios'}`}
+              </Text>
+            </View>
+            <Text style={styles.employeesArrow}>→</Text>
+          </Pressable>
+        )}
 
         {isPending ? (
           <View style={styles.state} testID="home-pro-loading">
@@ -112,11 +158,19 @@ export function HomePagePro({
               </View>
 
               <View style={styles.grid}>
-                <StatCard
-                  label="Tu tarifa"
-                  value={`${pro.hourlyRate} €/h`}
-                  testID="stat-rate"
-                />
+                {isEmployee ? (
+                  <StatCard
+                    label="Trabajas para"
+                    value={pro.employerName ?? ''}
+                    testID="stat-employer"
+                  />
+                ) : (
+                  <StatCard
+                    label="Tu tarifa"
+                    value={`${pro.hourlyRate} €/h`}
+                    testID="stat-rate"
+                  />
+                )}
                 <StatCard
                   label="Cobertura"
                   value={`${pro.radiusKm} km`}

@@ -23,6 +23,15 @@ export interface User {
   emailVerified: boolean
   /** Ruta de la foto de perfil, relativa a la API */
   avatarUrl: string | null
+  /**
+   * Entró con la contraseña temporal que le puso su empleador y aún no la ha
+   * cambiado. Mientras siga así no se le deja pasar del cambio: si el
+   * empleador conoce la contraseña, nada de lo que haga esa cuenta prueba
+   * quién lo hizo.
+   */
+  mustChangePassword: boolean
+  /** Teléfono de contacto; null si no lo ha puesto */
+  phone: string | null
 }
 
 interface AuthState {
@@ -105,3 +114,11 @@ export const useUser = () => useAuthStore((s) => s.user)
 export const useIsAuthenticated = () => useAuthStore((s) => s.isAuthenticated)
 export const useAccessToken = () => useAuthStore((s) => s.accessToken)
 export const useUserRole = () => useAuthStore((s) => s.user?.role)
+
+/**
+ * `?? false` y no `?? true`: una sesión guardada de antes de esta bandera no
+ * trae el campo, y dar por hecho que hay que cambiar la contraseña dejaría a
+ * esos usuarios encerrados en una pantalla que no les corresponde.
+ */
+export const useMustChangePassword = () =>
+  useAuthStore((s) => s.user?.mustChangePassword ?? false)
