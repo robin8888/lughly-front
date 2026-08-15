@@ -21,6 +21,8 @@ import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import Animated from 'react-native-reanimated'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { ApiError } from '@/api'
+import { Button } from '@/components/atoms/Button'
 import { Switch } from '@/components/atoms/Switch'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { StatCard } from '@/components/molecules/StatCard'
@@ -50,7 +52,22 @@ export function HomePagePro({
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
   const user = useUser()
-  const { data: pro, isPending, isError } = useProProfile(userId)
+  const {
+    data: pro,
+    isPending,
+    isError,
+    isFetching,
+    error,
+    refetch,
+  } = useProProfile(userId)
+
+  /**
+   * Solo un 404 significa "no tiene perfil". Cualquier otro fallo —el
+   * servidor caído, el móvil sin cobertura— es un problema de esta pantalla,
+   * no de su ficha, y confundirlos le diría a alguien con su perfil completo
+   * que no lo tiene.
+   */
+  const hasNoProfile = error instanceof ApiError && error.status === 404
   const { setAvailableNow, isSaving } = useAvailableNow(userId)
 
   /**
@@ -123,10 +140,10 @@ export function HomePagePro({
           <View style={styles.state} testID="home-pro-loading">
             <ActivityIndicator color={theme.colors.accent} />
           </View>
-        ) : isError || !pro ? (
+        ) : hasNoProfile ? (
           /**
-           * Una cuenta profesional sin perfil llega aquí: se registró y no
-           * completó el alta. No es un error de red, así que no se ofrece
+           * Una cuenta profesional sin perfil: se registró y no completó el
+           * alta. Solo un 404 significa esto, y por eso no se ofrece
            * reintentar sino completar lo que falta.
            */
           <InfoCard style={styles.stateCard} testID="home-pro-no-profile">
@@ -135,6 +152,28 @@ export function HomePagePro({
               Sin oficio, tarifa y ciudad no apareces en el directorio ni
               recibes avisos. El alta llega en la pantalla de configuración.
             </Text>
+          </InfoCard>
+        ) : isError || !pro ? (
+          /**
+           * Aquí llega todo lo demás: el servidor caído, el móvil sin red, un
+           * 500. Antes se enseñaba el mensaje de arriba, que decía a alguien
+           * con su ficha completa que no tenía perfil. Un fallo de red hay
+           * que llamarlo por su nombre y ofrecer reintentar.
+           */
+          <InfoCard style={styles.stateCard} testID="home-pro-error">
+            <Text style={styles.stateTitle}>No hemos podido cargar tu perfil</Text>
+            <Text style={styles.stateBody}>
+              Tu ficha sigue donde estaba; es esta pantalla la que no ha
+              podido leerla. Revisa tu conexión e inténtalo de nuevo.
+            </Text>
+            <Button
+              onPress={() => void refetch()}
+              loading={isFetching}
+              style={styles.retry}
+              testID="home-pro-retry"
+            >
+              Reintentar
+            </Button>
           </InfoCard>
         ) : (
           <>

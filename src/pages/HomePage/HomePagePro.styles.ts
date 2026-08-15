@@ -46,6 +46,11 @@ export const styles = StyleSheet.create({
     opacity: 0.8,
   },
 
+  retry: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+
   employees: {
     flexDirection: 'row',
     alignItems: 'center',
