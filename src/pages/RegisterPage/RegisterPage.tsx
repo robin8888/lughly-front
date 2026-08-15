@@ -45,6 +45,14 @@ const LEGAL_FORM_OPTIONS = [
   { value: 'COMPANY', label: 'Empresa — sociedad con CIF' },
 ]
 
+/**
+ * Oficio de quien tiene gente a cargo. El perfil necesita uno —es una
+ * columna obligatoria—, pero los oficios que de verdad cubre salen de sus
+ * trabajadores. Poner aquí "fontanería" haría aparecer a la empresa en ese
+ * listado aunque no tuviera todavía ningún fontanero dado de alta.
+ */
+const STAFF_TRADE = 'otros'
+
 export interface RegisterPageProps {
   onSuccess: () => void
   onLogin: () => void
@@ -85,6 +93,14 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
   const isPro = role === 'pro'
+
+  /**
+   * El oficio que cuenta. Con gente a cargo no lo elige: se queda en "Otros"
+   * porque sus oficios los ponen sus trabajadores. Se calcula una sola vez y
+   * se usa en el desplegable, en el aviso de habilitación y en el envío, para
+   * que no puedan decir tres cosas distintas.
+   */
+  const effectiveTrade = hasStaff ? STAFF_TRADE : trade
   const isPassport = identityKind === 'PASSPORT'
   const isBusy = isLoading || isUploading
 
@@ -95,7 +111,8 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
       password,
       phone,
       role,
-      trade: trade ?? undefined,
+      // Lo mismo que enseña el desplegable: si tiene gente a cargo, "Otros"
+      trade: (isPro ? effectiveTrade : trade) ?? undefined,
       hourlyRate,
       city,
       acceptTerms,
@@ -249,73 +266,6 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
 
       {isPro && (
         <View testID="register-pro-fields">
-          <FormField
-            label="Oficio principal"
-            error={fieldErrors.trade}
-            testID="register-trade-field"
-          >
-            <Picker
-              options={TRADE_OPTIONS}
-              value={trade}
-              onChange={setTrade}
-              placeholder="Elige tu oficio"
-              title="Oficio principal"
-              error={Boolean(fieldErrors.trade)}
-              disabled={isLoading}
-              testID="register-trade"
-            />
-          </FormField>
-
-          <FormField
-            label="Tarifa orientativa (€/h)"
-            error={fieldErrors.hourlyRate}
-            testID="register-rate-field"
-          >
-            <Input
-              value={hourlyRate}
-              onChangeText={setHourlyRate}
-              placeholder="Ej. 25"
-              keyboardType="decimal-pad"
-              error={Boolean(fieldErrors.hourlyRate)}
-              editable={!isLoading}
-              testID="register-rate"
-            />
-          </FormField>
-
-          <FormField
-            label="Ciudad base"
-            error={fieldErrors.city}
-            testID="register-city-field"
-          >
-            <Input
-              value={city}
-              onChangeText={setCity}
-              placeholder="Ej. Madrid"
-              autoCapitalize="words"
-              error={Boolean(fieldErrors.city)}
-              editable={!isLoading}
-              testID="register-city"
-            />
-          </FormField>
-
-          <FormField
-            label="Habilitación profesional (si tu oficio es regulado)"
-            helper={
-              trade && isRegulatedTrade(trade)
-                ? 'Tu oficio está regulado: sin el certificado aprobado no podrás pujar. Puedes subirlo ahora o más tarde.'
-                : 'Opcional. Súbela si tu oficio la requiere.'
-            }
-            testID="register-license-field"
-          >
-            <ImagePickerField
-              value={license}
-              onChange={setLicense}
-              placeholder="Subir certificado"
-              disabled={isBusy}
-              testID="register-license"
-            />
-          </FormField>
-
           {/**
            * Gente a cargo. Se pregunta aquí y no se dan de alta aquí: quien
            * llega con ocho trabajadores no va a meterlos en el formulario de
@@ -420,6 +370,86 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
               </View>
             )}
           </View>
+
+          {/**
+           * Con gente a cargo el oficio queda en "Otros oficios" y no se
+           * elige: los oficios que cubre salen de los trabajadores que dé de
+           * alta, no de lo que declare aquí. Así no puede aparecer en
+           * fontanería sin tener un fontanero, y deja de aparecer el día que
+           * ese trabajador se va.
+           */}
+          <FormField
+            label="Oficio principal"
+            helper={
+              hasStaff
+                ? 'Tus oficios saldrán de los trabajadores que des de alta, así que este campo queda en "Otros oficios".'
+                : undefined
+            }
+            error={fieldErrors.trade}
+            testID="register-trade-field"
+          >
+            <Picker
+              options={TRADE_OPTIONS}
+              value={effectiveTrade}
+              onChange={setTrade}
+              placeholder="Elige tu oficio"
+              title="Oficio principal"
+              error={Boolean(fieldErrors.trade)}
+              disabled={isLoading || hasStaff}
+              testID="register-trade"
+            />
+          </FormField>
+
+          <FormField
+            label="Tarifa orientativa (€/h)"
+            error={fieldErrors.hourlyRate}
+            testID="register-rate-field"
+          >
+            <Input
+              value={hourlyRate}
+              onChangeText={setHourlyRate}
+              placeholder="Ej. 25"
+              keyboardType="decimal-pad"
+              error={Boolean(fieldErrors.hourlyRate)}
+              editable={!isLoading}
+              testID="register-rate"
+            />
+          </FormField>
+
+          <FormField
+            label="Ciudad base"
+            error={fieldErrors.city}
+            testID="register-city-field"
+          >
+            <Input
+              value={city}
+              onChangeText={setCity}
+              placeholder="Ej. Madrid"
+              autoCapitalize="words"
+              error={Boolean(fieldErrors.city)}
+              editable={!isLoading}
+              testID="register-city"
+            />
+          </FormField>
+
+          <FormField
+            label="Habilitación profesional (si tu oficio es regulado)"
+            helper={
+              effectiveTrade && isRegulatedTrade(effectiveTrade)
+                ? 'Tu oficio está regulado: sin el certificado aprobado no podrás pujar. Puedes subirlo ahora o más tarde.'
+                : 'Opcional. Súbela si tu oficio la requiere.'
+            }
+            testID="register-license-field"
+          >
+            <ImagePickerField
+              value={license}
+              onChange={setLicense}
+              placeholder="Subir certificado"
+              disabled={isBusy}
+              testID="register-license"
+            />
+          </FormField>
+
         </View>
       )}
 
