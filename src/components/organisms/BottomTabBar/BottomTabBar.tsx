@@ -50,8 +50,18 @@ export const CLIENT_TABS: TabDefinition[] = [
   { name: 'account', label: 'Cuenta', icon: 'user-circle' },
 ]
 
+/**
+ * El README describe 5 pestañas de profesional. Son 6 desde el 15 Agosto
+ * 2026, con Urgencias.
+ *
+ * El motivo: una urgencia se pierde en minutos. Si el profesional tiene que
+ * pasar por Inicio para verla, llega tarde, y llegar tarde a una urgencia es
+ * lo único que esta función no puede permitirse. Es además donde más cobra,
+ * por el recargo de salir corriendo.
+ */
 export const PRO_TABS: TabDefinition[] = [
   { name: 'inicio', label: 'Inicio', icon: 'home' },
+  { name: 'urgent', label: 'Urgencias', icon: 'alert', danger: true },
   { name: 'offers', label: 'Ofertas', icon: 'gavel' },
   { name: 'schedule', label: 'Agenda', icon: 'calendar' },
   { name: 'wallet', label: 'Cartera', icon: 'wallet' },

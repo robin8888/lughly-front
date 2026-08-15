@@ -1,0 +1,64 @@
+/**
+ * Urgencias: el lado del profesional.
+ * Contrato: lughly-backend/src/modules/jobs/urgencies.controller.ts
+ */
+
+import { apiRequest } from './http'
+
+export interface ApiUrgency {
+  id: string
+  title: string
+  description: string
+  tradeLabel: string
+  city: string
+  /** Distancia desde su base, en km */
+  distanceKm: number | null
+  photoCount: number
+  createdAt: string
+}
+
+export interface ApiBusyWith {
+  id: string
+  title: string
+  /** La dirección exacta, que solo se entrega al aceptar */
+  addressLine: string | null
+}
+
+export interface UrgenciesResult {
+  items: ApiUrgency[]
+  /** La que está atendiendo ahora mismo, si hay alguna */
+  busyWith: ApiBusyWith | null
+}
+
+export interface AcceptedUrgency {
+  jobId: string
+  title: string
+  addressLine: string | null
+  latitude: number | null
+  longitude: number | null
+  city: string
+  acceptedAt: string
+}
+
+export interface FinishedUrgency {
+  jobId: string
+  status: string
+  /** Vuelve a estar disponible si su interruptor seguía encendido */
+  availableAgain: boolean
+}
+
+export const urgenciesApi = {
+  mine: () => apiRequest<UrgenciesResult>('/v1/urgencies', { auth: true }),
+
+  accept: (jobId: string) =>
+    apiRequest<AcceptedUrgency>(`/v1/urgencies/${jobId}/accept`, {
+      method: 'POST',
+      auth: true,
+    }),
+
+  finish: (jobId: string) =>
+    apiRequest<FinishedUrgency>(`/v1/urgencies/${jobId}/finish`, {
+      method: 'POST',
+      auth: true,
+    }),
+}

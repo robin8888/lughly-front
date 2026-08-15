@@ -229,8 +229,11 @@ resto de peticiones. Afectaba también a los documentos del registro.
 **Tareas**:
 - [x] Organism RoleGate — bloquea y explica, con salidas concretas
 - [x] Hook useRoleGate
-- [x] Rutas protegidas: `publish`, `urgent`, `jobs` (cliente) ·
-      `offers`, `schedule`, `wallet` (profesional)
+- [x] Rutas protegidas: `publish`, `jobs` (cliente) · `offers`, `schedule`,
+      `wallet` (profesional)
+- [x] `urgent` **dejó de estar protegida** el 15 Agosto 2026: no bloquea al
+      profesional, le enseña su propia pantalla de urgencias. Bloquearle sería
+      absurdo, porque es a quien más le importan
 - [ ] ~~Pantalla "Cambiar Modo"~~ — no se hace, ver abajo
 
 **Criterio de aceptación**:

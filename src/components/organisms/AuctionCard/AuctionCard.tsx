@@ -17,6 +17,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable } from 'react-native'
 import { Button } from '@/components/atoms/Button'
+import { Countdown } from '@/components/atoms/Countdown'
 import { Input } from '@/components/atoms/Input'
 import { Money } from '@/components/atoms/Money'
 import { Tag } from '@/components/atoms/Tag'
@@ -24,7 +25,6 @@ import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { usePlaceBid } from '@/hooks/domain/usePlaceBid'
 import type { ApiOpenJob } from '@/api/bids.api'
-import { timeLeftLabel } from '@/utils/jobStatus'
 import { styles } from './AuctionCard.styles'
 
 export interface AuctionCardProps {
@@ -113,9 +113,18 @@ export function AuctionCard({ job, testID }: AuctionCardProps) {
         </View>
       </View>
 
-      {job.biddingEndsAt !== null && (
-        <Text style={styles.deadline}>{timeLeftLabel(job.biddingEndsAt)}</Text>
-      )}
+      {/**
+       * Cuenta atrás viva y no un texto fijo: en una subasta el plazo es
+       * medio argumento para pujar, y verlo correr en la última hora es lo
+       * que empuja a decidirse.
+       */}
+      <Countdown
+        target={job.biddingEndsAt}
+        prefix="Cierra en"
+        expiredLabel="El plazo ya se ha cumplido"
+        style={styles.deadline}
+        testID={`${testID ?? 'auction'}-countdown`}
+      />
 
       {!open ? (
         <Button

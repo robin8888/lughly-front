@@ -40,24 +40,12 @@ export function jobTypeLabel(type: ApiJobType): string {
   return TYPE_LABEL[type]
 }
 
-/**
- * Cuánto queda para que cierre la subasta, en palabras.
+/*
+ * Aquí vivía `timeLeftLabel`, que daba el plazo en palabras ("Cierra en 2
+ * días") sin cuenta atrás. Se retiró el 15 Agosto 2026 al sustituirse por el
+ * átomo `Countdown`, que sí corre.
  *
- * Sin segundos ni cuentas atrás vivas: en una lista, un contador que corre
- * obliga a repintar cada segundo y no aporta nada. "2 días" basta para
- * decidir si hay que darse prisa.
+ * El motivo original para no tener contador vivo era el gasto de repintar
+ * cada segundo. Lo resuelve `useCountdown` cambiando el ritmo según lo que
+ * quede: cada minuto mientras faltan horas, cada segundo en la última.
  */
-export function timeLeftLabel(endsAt: string, now: Date = new Date()): string {
-  const remaining = new Date(endsAt).getTime() - now.getTime()
-
-  if (Number.isNaN(remaining)) return ''
-  if (remaining <= 0) return 'Plazo cumplido'
-
-  const days = Math.floor(remaining / 86_400_000)
-  if (days >= 1) return `Cierra en ${days} ${days === 1 ? 'día' : 'días'}`
-
-  const hours = Math.floor(remaining / 3_600_000)
-  if (hours >= 1) return `Cierra en ${hours} ${hours === 1 ? 'hora' : 'horas'}`
-
-  return 'Cierra en menos de una hora'
-}

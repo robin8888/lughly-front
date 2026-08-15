@@ -2,18 +2,21 @@
  * JobCard Molecule
  * Un trabajo publicado, según MobileApp.dc.html (`isMisTrabajos`).
  *
- * El diseño enseña además el número de pujas y la más baja. No están aquí
- * porque **no existe todavía el modelo `Bid`**: inventar un "0 pujas" sería
- * indistinguible de un trabajo que de verdad no ha recibido ninguna, y el
- * cliente no podría saber cuál de las dos cosas está mirando.
+ * Las pujas solo se enseñan en subastas: una reserva instantánea es a tarifa
+ * fija y una urgencia se acepta, no se puja.
+ *
+ * El plazo va con cuenta atrás viva (`Countdown`) y no con un texto fijo: es
+ * lo que le dice al cliente si aún puede esperar más ofertas o si conviene
+ * decidirse ya.
  */
 
 import { View, Text, Pressable, Image } from 'react-native'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { Countdown } from '@/components/atoms/Countdown'
 import { Tag } from '@/components/atoms/Tag'
 import { Money } from '@/components/atoms/Money'
 import type { ApiJob } from '@/api/jobs.api'
-import { jobStatusLook, jobTypeLabel, timeLeftLabel } from '@/utils/jobStatus'
+import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
 import { getTradeImage } from '@/utils/trades'
 import { styles } from './JobCard.styles'
 
@@ -67,8 +70,13 @@ export function JobCard({ job, onPress, testID }: JobCardProps) {
             </Text>
           )}
 
-          {job.biddingEndsAt !== null && job.status === 'OPEN' && (
-            <Text style={styles.deadline}>{timeLeftLabel(job.biddingEndsAt)}</Text>
+          {job.status === 'OPEN' && (
+            <Countdown
+              target={job.biddingEndsAt}
+              prefix="Cierra en"
+              expiredLabel="Plazo cumplido"
+              style={styles.deadline}
+            />
           )}
         </View>
 
