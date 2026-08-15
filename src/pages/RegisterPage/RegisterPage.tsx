@@ -45,14 +45,6 @@ const LEGAL_FORM_OPTIONS = [
   { value: 'COMPANY', label: 'Empresa — sociedad con CIF' },
 ]
 
-/**
- * Oficio de quien tiene gente a cargo. El perfil necesita uno —es una
- * columna obligatoria—, pero los oficios que de verdad cubre salen de sus
- * trabajadores. Poner aquí "fontanería" haría aparecer a la empresa en ese
- * listado aunque no tuviera todavía ningún fontanero dado de alta.
- */
-const STAFF_TRADE = 'otros'
-
 export interface RegisterPageProps {
   onSuccess: () => void
   onLogin: () => void
@@ -93,14 +85,6 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
   const isPro = role === 'pro'
-
-  /**
-   * El oficio que cuenta. Con gente a cargo no lo elige: se queda en "Otros"
-   * porque sus oficios los ponen sus trabajadores. Se calcula una sola vez y
-   * se usa en el desplegable, en el aviso de habilitación y en el envío, para
-   * que no puedan decir tres cosas distintas.
-   */
-  const effectiveTrade = hasStaff ? STAFF_TRADE : trade
   const isPassport = identityKind === 'PASSPORT'
   const isBusy = isLoading || isUploading
 
@@ -111,8 +95,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
       password,
       phone,
       role,
-      // Lo mismo que enseña el desplegable: si tiene gente a cargo, "Otros"
-      trade: (isPro ? effectiveTrade : trade) ?? undefined,
+      trade: trade ?? undefined,
       hourlyRate,
       city,
       acceptTerms,
@@ -372,17 +355,20 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
           </View>
 
           {/**
-           * Con gente a cargo el oficio queda en "Otros oficios" y no se
-           * elige: los oficios que cubre salen de los trabajadores que dé de
-           * alta, no de lo que declare aquí. Así no puede aparecer en
-           * fontanería sin tener un fontanero, y deja de aparecer el día que
-           * ese trabajador se va.
+           * El oficio se elige siempre, también con gente a cargo: un
+           * autónomo con dos oficiales suele ser del oficio y trabajar él
+           * también, y dejarlo fuera de su listado lo escondería de los
+           * clientes que buscan justo eso.
+           *
+           * Los oficios de sus trabajadores se suman a este, no lo
+           * sustituyen: salen de las altas que haga, no de lo que declare
+           * aquí. Si no es de ningún oficio concreto, "Otros oficios".
            */}
           <FormField
             label="Oficio principal"
             helper={
               hasStaff
-                ? 'Tus oficios saldrán de los trabajadores que des de alta, así que este campo queda en "Otros oficios".'
+                ? 'El tuyo, el que ejerces. A los oficios de tus trabajadores no hace falta que les des de alta aquí: salen solos cuando los añadas.'
                 : undefined
             }
             error={fieldErrors.trade}
@@ -390,12 +376,12 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
           >
             <Picker
               options={TRADE_OPTIONS}
-              value={effectiveTrade}
+              value={trade}
               onChange={setTrade}
               placeholder="Elige tu oficio"
               title="Oficio principal"
               error={Boolean(fieldErrors.trade)}
-              disabled={isLoading || hasStaff}
+              disabled={isLoading}
               testID="register-trade"
             />
           </FormField>
@@ -435,7 +421,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
           <FormField
             label="Habilitación profesional (si tu oficio es regulado)"
             helper={
-              effectiveTrade && isRegulatedTrade(effectiveTrade)
+              trade && isRegulatedTrade(trade)
                 ? 'Tu oficio está regulado: sin el certificado aprobado no podrás pujar. Puedes subirlo ahora o más tarde.'
                 : 'Opcional. Súbela si tu oficio la requiere.'
             }
