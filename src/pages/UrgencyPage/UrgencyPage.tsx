@@ -18,7 +18,9 @@
  */
 
 import { useState } from 'react'
-import { View, Text, ScrollView, Pressable } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { FormField } from '@/components/molecules/FormField'
@@ -52,6 +54,13 @@ export function UrgencyPage({
   onPublishNormal,
   onBack,
 }: UrgencyPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const [trade, setTrade] = useState('')
   const [address, setAddress] = useState('')
   const [description, setDescription] = useState('')
@@ -126,7 +135,9 @@ export function UrgencyPage({
         <Text style={styles.title}>Urgencia</Text>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -262,7 +273,7 @@ export function UrgencyPage({
             nadie.
           </Text>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

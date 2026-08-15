@@ -14,7 +14,9 @@
  * dónde encenderlo.
  */
 
-import { View, Text, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native'
+import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -40,6 +42,13 @@ export function ProUrgenciesPage({
   onBack,
   onGoAvailability,
 }: ProUrgenciesPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const { data, isPending, isError, refetch } = useMyUrgencies()
   const { data: profile } = useProProfile(userId)
   const { accept, finish, isAccepting, isFinishing } = useUrgencyActions(userId)
@@ -73,7 +82,12 @@ export function ProUrgenciesPage({
         <Text style={styles.title}>Urgencias</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {isPending ? (
           <View style={styles.state} testID="urgencies-loading">
             <ActivityIndicator size="large" color={theme.colors.accent} />
@@ -195,7 +209,7 @@ export function ProUrgenciesPage({
             </Text>
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

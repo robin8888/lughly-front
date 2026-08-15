@@ -16,7 +16,9 @@
  */
 
 import { useState } from 'react'
-import { View, Text, ScrollView, Pressable } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { FormField } from '@/components/molecules/FormField'
@@ -53,6 +55,13 @@ export interface PublishPageProps {
 }
 
 export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const draft = useJobDraft()
   const update = useDraftJobStore((s) => s.update)
   const { publish, isPublishing, isUploadingPhotos, fieldErrors, formError, reset } =
@@ -111,7 +120,9 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
         </View>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -278,7 +289,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
           Lo que escribes se guarda solo. Puedes cerrar la app y seguir
           después; las fotos habrá que volver a elegirlas.
         </Text>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

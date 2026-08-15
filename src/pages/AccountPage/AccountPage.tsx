@@ -11,11 +11,12 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  ScrollView,
   Text,
   View,
   Pressable,
 } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Icon } from '@/components/atoms/Icon'
 import { Input } from '@/components/atoms/Input'
 import { Button } from '@/components/atoms/Button'
@@ -46,6 +47,13 @@ export interface AccountPageProps {
 }
 
 export function AccountPage({ links, onBack }: AccountPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const user = useUser()
   const role = useEffectiveRole()
   const setActiveRole = useRoleStore((s) => s.setActiveRole)
@@ -103,7 +111,9 @@ export function AccountPage({ links, onBack }: AccountPageProps) {
         <Text style={styles.title}>Mi cuenta</Text>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -317,7 +327,7 @@ export function AccountPage({ links, onBack }: AccountPageProps) {
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

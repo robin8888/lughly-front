@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
   content: {
     padding: 16,
     // La barra inferior flota por encima
-    paddingBottom: 78,
+    paddingBottom: 96,
   },
 
   state: {

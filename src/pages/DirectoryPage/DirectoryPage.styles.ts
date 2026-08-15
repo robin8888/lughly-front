@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
     // La barra inferior flota por encima
-    paddingBottom: 78,
+    paddingBottom: 96,
   },
   searchWrapper: {
     position: 'relative',

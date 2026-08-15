@@ -11,7 +11,9 @@
  */
 
 import { useState } from 'react'
-import { View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native'
+import { View, Text, ActivityIndicator, Pressable } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { Picker } from '@/components/molecules/Picker'
 import { AuctionCard } from '@/components/organisms/AuctionCard'
@@ -28,6 +30,13 @@ export interface OffersPageProps {
 }
 
 export function OffersPage({ onBack }: OffersPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const [trade, setTrade] = useState('')
   const isEmployee = useIsEmployee()
 
@@ -53,7 +62,11 @@ export function OffersPage({ onBack }: OffersPageProps) {
           <Text style={styles.title}>Ofertas</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content}>
+        <Animated.ScrollView
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={styles.content}
+        >
           <EmptyState
             title="Las subastas las lleva tu empresa"
             message="Quien puja, factura y cobra es quien te dio de alta. Tú verás los trabajos que te asigne en tu agenda, con la dirección y la hora."
@@ -67,7 +80,7 @@ export function OffersPage({ onBack }: OffersPageProps) {
             ]}
             testID="offers-employee"
           />
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
     )
   }
@@ -81,7 +94,9 @@ export function OffersPage({ onBack }: OffersPageProps) {
         <Text style={styles.title}>Ofertas</Text>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -150,7 +165,7 @@ export function OffersPage({ onBack }: OffersPageProps) {
             </View>
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

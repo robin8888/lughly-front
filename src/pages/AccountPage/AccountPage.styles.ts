@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
     // La barra inferior flota por encima
-    paddingBottom: 78,
+    paddingBottom: 96,
   },
   identityCard: {
     padding: 14,

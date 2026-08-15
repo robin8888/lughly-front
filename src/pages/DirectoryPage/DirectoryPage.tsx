@@ -8,7 +8,9 @@
  */
 
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native'
+import { View, Text, Pressable, ActivityIndicator } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -35,6 +37,13 @@ export function DirectoryPage({
   onSelectPro,
   onBack,
 }: DirectoryPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const [trade, setTrade] = useState(initialTrade ?? '')
   const [availableNow, setAvailableNow] = useState(false)
   const [query, setQuery] = useState('')
@@ -80,7 +89,9 @@ export function DirectoryPage({
         )}
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -268,7 +279,7 @@ export function DirectoryPage({
             )}
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

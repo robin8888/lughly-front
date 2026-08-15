@@ -15,7 +15,9 @@
  * justo lo que un marketplace de confianza no se puede permitir.
  */
 
-import { View, Text, ScrollView, Image, Pressable, ActivityIndicator } from 'react-native'
+import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { Icon } from '@/components/atoms/Icon'
 import { StarRating } from '@/components/atoms/StarRating'
@@ -54,6 +56,13 @@ export function ProProfilePage({
   onMessage,
   onReport,
 }: ProProfilePageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const { data: pro, isPending, isError, error, refetch } = useProProfile(id)
 
   const header = (
@@ -91,7 +100,11 @@ export function ProProfilePage({
     return (
       <View style={styles.screen} testID="pro-profile-page">
         {header}
-        <ScrollView contentContainerStyle={styles.content}>
+        <Animated.ScrollView
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={styles.content}
+        >
           <EmptyState
             title={isGone ? 'Este perfil ya no está' : 'No hemos podido cargar el perfil'}
             message={
@@ -119,7 +132,7 @@ export function ProProfilePage({
             ]}
             testID="pro-error"
           />
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
     )
   }
@@ -131,7 +144,9 @@ export function ProProfilePage({
     <View style={styles.screen} testID="pro-profile-page">
       {header}
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
@@ -268,7 +283,7 @@ export function ProProfilePage({
         >
           <Text style={styles.report}>Denunciar este perfil</Text>
         </Pressable>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

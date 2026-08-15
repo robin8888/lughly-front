@@ -20,6 +20,7 @@ import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { setupSessionBridge } from '@/api/sessionBridge'
+import { BottomTabBar } from '@/components/organisms/BottomTabBar'
 import { LoadingOverlay } from '@/components/organisms/LoadingOverlay'
 import {
   useHasHydrated,
@@ -110,7 +111,16 @@ export default function RootLayout() {
             <Stack.Screen name="login" />
             <Stack.Screen name="recuperar" />
           </Stack.Protected>
-        </Stack>
+          </Stack>
+
+        {/*
+          La barra va fuera del Stack, no dentro del navegador de pestañas:
+          así también sale en las pantallas de pila —el perfil de un
+          profesional, el alta de trabajadores— y no aparece y desaparece
+          según dónde esté el usuario. Ella misma se esconde en las pantallas
+          de antes de entrar.
+        */}
+        {isAuthenticated && !mustChangePassword && <BottomTabBar />}
 
         {/* Se monta una sola vez y lo controla useLoadingStore desde donde sea */}
         <LoadingOverlay

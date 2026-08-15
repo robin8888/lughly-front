@@ -10,7 +10,9 @@
  * Se dice al pie en vez de dejar huecos silenciosos.
  */
 
-import { View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native'
+import { View, Text, ActivityIndicator, Pressable } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { JobCard } from '@/components/molecules/JobCard'
@@ -25,6 +27,13 @@ export interface MyJobsPageProps {
 }
 
 export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const { data, isPending, isError, refetch, isFetching } = useMyJobs()
 
   const jobs = data?.items ?? []
@@ -38,7 +47,9 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
         <Text style={styles.title}>Mis trabajos</Text>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
@@ -106,7 +117,7 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
             </Text>
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

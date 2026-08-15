@@ -13,7 +13,9 @@
  */
 
 import { useState } from 'react'
-import { View, Text, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native'
+import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Tag } from '@/components/atoms/Tag'
@@ -184,6 +186,13 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
 }
 
 export function EmployeesPage({ onBack }: EmployeesPageProps) {
+  /**
+   * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
+   * las pantallas con scroll, no solo en el inicio: si en una se moviera
+   * y en la siguiente no, parecería que la barra falla.
+   */
+  const onScroll = useNavScrollHandler()
+
   const { data: employerData, isPending: loadingEmployer } = useEmployer()
   const employer = employerData?.employer ?? null
 
@@ -268,13 +277,15 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
     return (
       <View style={styles.screen} testID="employees-page">
         {header}
-        <ScrollView
+        <Animated.ScrollView
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <EmployerForm onBack={onBack} />
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
     )
   }
@@ -283,7 +294,9 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
     <View style={styles.screen} testID="employees-page">
       {header}
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -509,7 +522,7 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
             )}
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 }

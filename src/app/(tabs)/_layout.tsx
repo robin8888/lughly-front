@@ -1,16 +1,17 @@
 /**
  * Layout de las pestañas.
  *
- * La barra es un `tabBar` personalizado (BOTTOM_NAV_MOBILE.md §7): píldora
- * flotante con desenfoque. La de serie no se puede convertir en eso con
- * `tabBarStyle`, así que se sustituye entera.
+ * Sin barra propia: la píldora flotante (BOTTOM_NAV_MOBILE.md §7) la monta
+ * el layout raíz por encima de toda la app, para que también salga en las
+ * pantallas de pila —el perfil de un profesional, el alta de trabajadores—,
+ * que no viven aquí dentro. Aquí solo se declara que no se pinte la de
+ * serie: dos barras a la vez, una encima de otra.
  *
  * Todas las rutas existen siempre —expo-router registra el directorio
  * completo—; qué pestañas se ven lo decide `BottomTabBar` según el rol.
  */
 
 import { Tabs } from 'expo-router'
-import { BottomTabBar } from '@/components/organisms/BottomTabBar'
 
 export const unstable_settings = {
   initialRouteName: 'inicio',
@@ -19,7 +20,7 @@ export const unstable_settings = {
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props) => <BottomTabBar {...props} />}
+      tabBar={() => null}
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="inicio" />
