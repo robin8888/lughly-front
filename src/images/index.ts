@@ -26,16 +26,25 @@ export type ImageKey = keyof typeof images
 /**
  * Ilustración por oficio. Las claves son los slugs de `@/utils/trades`.
  *
- * Nota: en MobileApp.dc.html los mapas de `informatica` y `pintura` están
- * intercambiados por error; aquí cada oficio usa su propia ilustración.
+ * **Ojo con `pintura` e `informatica`**: los dos ficheros están mal
+ * nombrados. `robot-hormiga-pintura.png` es la hormiga con el portátil y
+ * `robot-hormiga-informatica.png` la del bote y la brocha. Viene del diseño,
+ * que ya los tenía cruzados, y por eso el mapa los cambia aquí en vez de
+ * seguir el nombre del fichero.
+ *
+ * No se renombran los ficheros porque `Home.dc.html` y `MobileApp.dc.html`
+ * los referencian con estos nombres y dejarían de verse. Se arregla el día
+ * que los diseños dejen de hacer falta.
  */
 export const tradeImages = {
   carpinteria: require('./robot-hormiga-carpinteria.png'),
   electricidad: require('./robot-hormiga-electricidad.png'),
   fontaneria: require('./robot-hormiga-fontaneria.png'),
-  pintura: require('./robot-hormiga-pintura.png'),
+  // El fichero se llama informatica, pero dentro está la brocha
+  pintura: require('./robot-hormiga-informatica.png'),
   jardineria: require('./robot-hormiga-jardineria.png'),
-  informatica: require('./robot-hormiga-informatica.png'),
+  // Y este se llama pintura, pero dentro está el portátil
+  informatica: require('./robot-hormiga-pintura.png'),
   limpieza: require('./robot-hormiga-limpieza.png'),
   transporte: require('./robot-hormiga-transporte.png'),
   cuidados: require('./robot-hormiga-cuidado-ninos.png'),

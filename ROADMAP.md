@@ -684,6 +684,29 @@ sistema, es una persona sin dormir.
 - [ ] Pantalla del trabajador: lo que le han asignado, con dirección y hora
       y sin importes.
 
+### Selectores de fecha y hora, en toda la app
+
+Va junto con esto porque las ventanas de urgencias son días y horas, y no
+tiene sentido construirlas con campos de texto mientras el resto de la app
+los usa.
+
+Hoy la publicación de un trabajo pide dos fechas escritas a mano —cuándo
+cierra la subasta y cuándo se necesita— y eso es pedir errores: formatos
+distintos, meses cambiados, fechas imposibles.
+
+- [ ] Un solo componente de fecha y hora para toda la app. Cualquier campo
+      que hoy pida una fecha o una hora escrita pasa por él.
+- [ ] **Horario de verano.** Es lo que hace que esto no sea trivial: en
+      España hay un día de 23 horas y otro de 25. Una franja "de 22:00 a
+      06:00" en la madrugada del cambio no dura ocho horas, y el cierre de
+      una subasta puesto en la hora que se repite es ambiguo.
+      Las fechas se guardan y se comparan en UTC —ya lo son en la base— y se
+      pintan en la zona del usuario; lo que no se puede hacer es sumar horas
+      a mano sobre una hora local.
+- [ ] Revisar dónde hay ya fechas u horas: publicar trabajo (cierre de
+      subasta y cuándo se necesita), reserva instantánea (Fase 7),
+      disponibilidad y ausencias (Fase 6).
+
 ### Decisiones pendientes (bloquean el diseño)
 
 1. **¿Puede el empleador mandar a otro trabajador distinto del que eligió el
