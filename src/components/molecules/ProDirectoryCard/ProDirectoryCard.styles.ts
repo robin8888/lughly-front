@@ -138,6 +138,15 @@ export const styles = StyleSheet.create({
     opacity: 0.85,
     marginTop: 6,
   },
+  /** Los otros oficios, en texto y con su precio: son datos, no insignias */
+  alsoDoes: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 12.5,
+    lineHeight: 12.5 * 1.45,
+    color: theme.colors.cardText,
+    opacity: 0.8,
+    marginTop: 6,
+  },
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -99,24 +99,30 @@ export function ProDirectoryCard({ pro, onPress, testID }: ProDirectoryCardProps
         )}
 
         {/**
-         * Los demás oficios que ejerce. El de la cabecera ya está dicho
-         * arriba con su precio, así que repetirlo aquí sería ruido; los
-         * otros importan porque el cliente que busca limpieza puede
-         * necesitar además quien le cuide al perro.
+         * Los demás oficios que ejerce, con su precio. El de la cabecera ya
+         * está dicho arriba, así que repetirlo sería ruido; los otros
+         * importan porque el cliente que busca limpieza puede necesitar
+         * además quien le cuide al perro.
+         *
+         * Va con la palabra "También" por delante y no como etiquetas
+         * sueltas: mezclado con el distintivo de identidad verificada, un
+         * "Carpintería" a secas se lee como una insignia más y no como "esta
+         * persona además hace carpintería".
          */}
-        {(otherTrades.length > 0 || pro.verified) && (
-          <View style={styles.tags}>
-            {otherTrades.map((trade) => (
-              <View key={trade.slug} style={styles.tag}>
-                <Text style={styles.tagText}>{trade.label}</Text>
-              </View>
-            ))}
+        {otherTrades.length > 0 && (
+          <Text style={styles.alsoDoes} numberOfLines={2}>
+            También:{' '}
+            {otherTrades
+              .map((trade) => `${trade.label} ${trade.hourlyRate} €/h`)
+              .join(' · ')}
+          </Text>
+        )}
 
-            {pro.verified && (
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>Identidad verificada</Text>
-              </View>
-            )}
+        {pro.verified && (
+          <View style={styles.tags}>
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>Identidad verificada</Text>
+            </View>
           </View>
         )}
       </InfoCard>
