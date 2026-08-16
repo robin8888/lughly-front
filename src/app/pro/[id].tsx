@@ -2,7 +2,11 @@
  * Ficha de un profesional: /pro/<id>.
  *
  * Fuera de `(tabs)` porque no es una pestaña: se llega desde el directorio y
- * se vuelve a él. Las cuatro acciones todavía no tienen pantalla, así que
+ * se vuelve a él.
+ *
+ * Reservar y pedir presupuesto llevan al mismo formulario con distinto tipo:
+ * lo único que cambia es si se pide precio o se contrata a la tarifa que ya
+ * está publicada. Mensajes y denuncia todavía no tienen pantalla, así que
  * avisan de cuándo llegan en vez de no hacer nada: un botón que no responde
  * parece una app rota.
  */
@@ -23,8 +27,18 @@ export default function ProProfileRoute() {
     <ProProfilePage
       id={id}
       onBack={() => router.navigate('/pros')}
-      onBook={() => comingSoon('Reservar ahora', 'la Fase 7 (reserva instantánea)')}
-      onQuote={() => comingSoon('Pedir presupuesto', 'la Fase 7 (presupuesto directo)')}
+      onBook={() =>
+        router.navigate({
+          pathname: '/encargar',
+          params: { proId: id ?? '', type: 'INSTANT' },
+        })
+      }
+      onQuote={() =>
+        router.navigate({
+          pathname: '/encargar',
+          params: { proId: id ?? '', type: 'QUOTE' },
+        })
+      }
       onMessage={() => comingSoon('Enviar mensaje', 'la Fase 11 (chat)')}
       onReport={() => comingSoon('Denunciar perfil', 'una fase posterior')}
     />

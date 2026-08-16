@@ -106,6 +106,8 @@ export default function RootLayout() {
             <Stack.Screen name="empleados" />
             <Stack.Screen name="oficios" />
             <Stack.Screen name="horario-urgencias" />
+            <Stack.Screen name="encargos" />
+            <Stack.Screen name="encargar" />
             <Stack.Screen name="pro/[id]" />
           </Stack.Protected>
 
