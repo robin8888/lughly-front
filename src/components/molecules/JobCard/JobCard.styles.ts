@@ -107,4 +107,64 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.accent700,
   },
+
+  requested: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+    opacity: 0.75,
+    marginTop: 6,
+  },
+
+  /** El cambio de persona: lo único de la tarjeta que pide una decisión */
+  substitute: {
+    marginTop: 10,
+    paddingTop: 9,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  substituteText: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+  },
+  strong: {
+    fontFamily: theme.typography.fonts.bodyBold,
+  },
+  substituteHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+    opacity: 0.7,
+    marginTop: 4,
+  },
+  substituteActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  accept: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: 'center',
+    backgroundColor: theme.colors.accent700,
+  },
+  acceptText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardBg,
+  },
+  reject: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.cardDivider,
+  },
+  rejectText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+  },
 })

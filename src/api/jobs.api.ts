@@ -10,6 +10,10 @@ export type ApiJobType = 'AUCTION' | 'QUOTE' | 'INSTANT' | 'URGENT'
 export type ApiJobStatus =
   | 'DRAFT'
   | 'OPEN'
+  /** Encargado a alguien concreto, esperando su respuesta o la de su empresa */
+  | 'PENDING_PRO'
+  /** La empresa propone mandar a otro y falta que el cliente conteste */
+  | 'SUBSTITUTE_PROPOSED'
   | 'AWARDED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
@@ -29,6 +33,15 @@ export interface ApiJob {
   preferredDate: string | null
   biddingEndsAt: string | null
   photoCount: number
+  /**
+   * A quién eligió el cliente en el directorio, si el encargo fue directo.
+   * Null en lo publicado al aire.
+   */
+  requestedProName: string | null
+  /** Quién propone mandar la empresa en su lugar, si lo ha propuesto */
+  substituteProName: string | null
+  /** Hasta cuándo tiene para responder quien recibió el encargo */
+  respondByAt: string | null
   /** Pujas vivas recibidas */
   bidCount: number
   /** La más baja de las vivas; null si aún no hay ninguna */

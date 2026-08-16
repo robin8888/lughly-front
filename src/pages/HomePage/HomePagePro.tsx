@@ -32,6 +32,7 @@ import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
 import { useEmployer } from '@/hooks/domain/useEmployees'
+import { useInbox } from '@/hooks/domain/useInbox'
 import { theme } from '@/theme'
 import { useUser } from '@/stores/useAuthStore'
 import { styles } from './HomePagePro.styles'
@@ -42,6 +43,7 @@ export interface HomePageProProps {
   onPrimary: () => void
   onSecondary: () => void
   onManageEmployees: () => void
+  onInbox: () => void
 }
 
 export function HomePagePro({
@@ -49,6 +51,7 @@ export function HomePagePro({
   onPrimary,
   onSecondary,
   onManageEmployees,
+  onInbox,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
   const user = useUser()
@@ -85,6 +88,14 @@ export function HomePagePro({
   const { data: employerData } = useEmployer(!isEmployee)
   const employer = employerData?.employer ?? null
 
+  /**
+   * Los encargos corren: hay 24 horas para contestar y hoy no hay aviso al
+   * móvil. Por eso el número va aquí arriba, donde se entra todos los días,
+   * y no escondido en Mi cuenta.
+   */
+  const { data: inboxData } = useInbox(!isEmployee)
+  const pendingCount = inboxData?.items.length ?? 0
+
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page-pro">
       <Animated.ScrollView
@@ -107,6 +118,28 @@ export function HomePagePro({
           onSecondary={onSecondary}
           testID="home-pro-hero"
         />
+
+        {pendingCount > 0 && (
+          <Pressable
+            onPress={onInbox}
+            style={styles.inbox}
+            accessibilityRole="button"
+            testID="home-pro-inbox"
+          >
+            <View style={styles.employeesText}>
+              <Text style={styles.inboxTitle}>
+                {pendingCount === 1
+                  ? 'Tienes un encargo sin responder'
+                  : `Tienes ${pendingCount} encargos sin responder`}
+              </Text>
+              <Text style={styles.inboxBody}>
+                Un cliente os ha elegido. Hay 24 horas para contestar; pasado
+                el plazo queda libre para contratar a otro.
+              </Text>
+            </View>
+            <Text style={styles.inboxArrow}>→</Text>
+          </Pressable>
+        )}
 
         {/**
          * Quien tiene gente a cargo entra a la app para dar de alta a los

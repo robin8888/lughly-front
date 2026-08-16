@@ -18,6 +18,17 @@ interface StatusLook {
 const STATUS: Record<ApiJobStatus, StatusLook> = {
   DRAFT: { label: 'Borrador', variant: 'neutral' },
   OPEN: { label: 'Abierta', variant: 'accent' },
+  /**
+   * Encargado a alguien concreto y esperando su respuesta. Si trabaja para
+   * una empresa, quien responde es ella.
+   */
+  PENDING_PRO: { label: 'Esperando respuesta', variant: 'accent' },
+  /**
+   * La empresa propone mandar a otra persona y falta que el cliente diga.
+   * Va en el color de urgencia porque es lo único de la lista que necesita
+   * que el cliente haga algo.
+   */
+  SUBSTITUTE_PROPOSED: { label: 'Te proponen un cambio', variant: 'accent2' },
   AWARDED: { label: 'Adjudicada', variant: 'accent2' },
   IN_PROGRESS: { label: 'En curso', variant: 'available' },
   COMPLETED: { label: 'Terminada', variant: 'neutral' },

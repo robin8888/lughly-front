@@ -51,6 +51,40 @@ export const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
 
+  /**
+   * Los encargos van en el color de urgencia, no en el de la app: son lo
+   * único de esta pantalla con un plazo corriendo, y tienen que distinguirse
+   * del botón de trabajadores, que puede esperar.
+   */
+  inbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 13,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.urgency,
+    backgroundColor: 'rgba(163, 69, 58, 0.08)',
+  },
+  inboxTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.urgency,
+  },
+  inboxBody: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.8,
+    marginTop: 3,
+  },
+  inboxArrow: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.h5,
+    color: theme.colors.urgency,
+  },
+
   employees: {
     flexDirection: 'row',
     alignItems: 'center',

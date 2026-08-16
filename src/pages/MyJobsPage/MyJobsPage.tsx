@@ -10,13 +10,15 @@
  * Se dice al pie en vez de dejar huecos silenciosos.
  */
 
-import { View, Text, ActivityIndicator, Pressable } from 'react-native'
+import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { JobCard } from '@/components/molecules/JobCard'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
+import { useRespondSubstitute } from '@/hooks/domain/useInbox'
+import type { ApiJob } from '@/api/jobs.api'
 import { theme } from '@/theme'
 import { styles } from './MyJobsPage.styles'
 
@@ -35,8 +37,49 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
   const onScroll = useNavScrollHandler()
 
   const { data, isPending, isError, refetch, isFetching } = useMyJobs()
+  const { respond, isResponding } = useRespondSubstitute()
 
   const jobs = data?.items ?? []
+
+  /**
+   * Rechazar cancela el encargo, así que se pregunta antes. Aceptar no: es
+   * confirmar lo que la tarjeta acaba de explicar, y meter un diálogo en
+   * medio solo añadiría un toque.
+   */
+  const decideSubstitute = (job: ApiJob, accept: boolean) => {
+    const send = () => {
+      void respond(job.id, accept).then(({ ok, error }) => {
+        if (!ok) {
+          Alert.alert(
+            'No se ha podido enviar tu respuesta',
+            error ?? 'Inténtalo de nuevo en un momento.',
+          )
+          return
+        }
+
+        if (accept) {
+          Alert.alert(
+            'Cambio aceptado',
+            `${job.substituteProName} hará el trabajo. Ya tiene la dirección y la fecha.`,
+          )
+        }
+      })
+    }
+
+    if (accept) {
+      send()
+      return
+    }
+
+    Alert.alert(
+      'Cancelar el encargo',
+      `Si no aceptas a ${job.substituteProName}, el encargo se cancela y no se te cobra nada. Podrás buscar a otro profesional.`,
+      [
+        { text: 'Volver', style: 'cancel' },
+        { text: 'Cancelar el encargo', style: 'destructive', onPress: send },
+      ],
+    )
+  }
 
   return (
     <View style={styles.screen} testID="my-jobs-page">
@@ -97,6 +140,8 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
                   key={job.id}
                   job={job}
                   {...(onSelectJob && { onPress: () => onSelectJob(job.id) })}
+                  onRespondSubstitute={(accept) => decideSubstitute(job, accept)}
+                  isRespondingSubstitute={isResponding}
                   testID={`job-${job.id}`}
                 />
               ))}
