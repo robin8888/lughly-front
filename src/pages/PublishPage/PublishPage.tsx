@@ -29,6 +29,16 @@ import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useDraftJobStore, useJobDraft, type JobDraftType } from '@/stores/useDraftJobStore'
 import { TRADE_OPTIONS } from '@/utils/trades'
 import { surchargesSummary } from '@/utils/surcharges'
+import { DateTimeField } from '@/components/molecules/DateTimeField'
+import {
+  addDays,
+  atTime,
+  formatLongDate,
+  formatLongDateTime,
+  parseIsoDate,
+  startOfToday,
+  toIsoDate,
+} from '@/utils/dates'
 import { styles } from './PublishPage.styles'
 
 const MODE_HINT: Record<JobDraftType, string> = {
@@ -41,10 +51,18 @@ const MODE_HINT: Record<JobDraftType, string> = {
 /** Días por defecto que dura una subasta si el usuario no toca la fecha. */
 const DEFAULT_AUCTION_DAYS = 7
 
-function isoDateIn(days: number): string {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-  return date.toISOString().slice(0, 10)
+/**
+ * Hora a la que se cierra una subasta si solo se elige el día.
+ *
+ * Las ocho de la tarde y no la medianoche: quien publica espera comparar las
+ * pujas esa tarde, no levantarse al día siguiente con la subasta cerrada de
+ * madrugada.
+ */
+const DEFAULT_CLOSING_HOUR = 20
+
+/** Cierre por defecto: dentro de una semana, a la hora de siempre. */
+function defaultClosing(): Date {
+  return atTime(addDays(new Date(), DEFAULT_AUCTION_DAYS), DEFAULT_CLOSING_HOUR)
 }
 
 export interface PublishPageProps {
@@ -72,6 +90,14 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
 
   const isAuction = draft.type === 'AUCTION'
 
+  /**
+   * El borrador guarda texto —sobrevive a cerrar la app— y el selector
+   * trabaja con fechas. Se convierte aquí, en el único sitio donde se sabe
+   * que una es un día suelto y la otra un instante.
+   */
+  const preferredDate = parseIsoDate(draft.preferredDate)
+  const biddingEndsAt = draft.biddingEndsAt ? new Date(draft.biddingEndsAt) : null
+
   const handlePublish = async () => {
     reset()
 
@@ -87,11 +113,9 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
         ...(draft.maxBudget !== '' && Number.isFinite(budget) && { maxBudget: budget }),
         ...(draft.preferredDate !== '' && { preferredDate: draft.preferredDate }),
         ...(isAuction && {
-          // Si no eligió fecha, se cierra en una semana: es lo que espera
+          // Si no eligió cierre, se cierra en una semana: es lo que espera
           // quien publica y evita subastas abiertas para siempre.
-          biddingEndsAt: new Date(
-            draft.biddingEndsAt || isoDateIn(DEFAULT_AUCTION_DAYS),
-          ).toISOString(),
+          biddingEndsAt: draft.biddingEndsAt || defaultClosing().toISOString(),
         }),
       },
       photos,
@@ -227,16 +251,30 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
           />
         </FormField>
 
+        {/**
+         * Fecha y hora con el selector del sistema, nunca escritas a mano.
+         * Antes se pedían en texto con formato AAAA-MM-DD: un español teclea
+         * el día primero, y "03/04" acaba siendo el 3 de abril para quien lo
+         * escribe y el 4 de marzo para quien lo lee.
+         */}
         <FormField
           label={isAuction ? 'Cuándo lo necesitas' : 'Día del servicio'}
-          hint="Formato AAAA-MM-DD."
+          hint={
+            preferredDate
+              ? formatLongDate(preferredDate)
+              : 'Opcional. Ayuda al profesional a saber si le encaja.'
+          }
           error={fieldErrors.preferredDate}
         >
-          <Input
-            value={draft.preferredDate}
-            onChangeText={(value) => update({ preferredDate: value })}
-            placeholder={isoDateIn(3)}
-            editable={!isBusy}
+          <DateTimeField
+            value={preferredDate}
+            onChange={(picked) => update({ preferredDate: toIsoDate(picked) })}
+            mode="date"
+            placeholder="Elegir día"
+            // Nadie necesita un fontanero el martes pasado
+            minimumDate={startOfToday()}
+            disabled={isBusy}
+            error={Boolean(fieldErrors.preferredDate)}
             testID="publish-date"
           />
         </FormField>
@@ -244,14 +282,24 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
         {isAuction && (
           <FormField
             label="La subasta cierra el"
-            hint={`Si lo dejas vacío, se cierra en ${DEFAULT_AUCTION_DAYS} días.`}
+            hint={
+              biddingEndsAt
+                ? `Se cierra el ${formatLongDateTime(biddingEndsAt)}.`
+                : `Si no eliges, se cierra en ${DEFAULT_AUCTION_DAYS} días a las ${DEFAULT_CLOSING_HOUR}:00.`
+            }
             error={fieldErrors.biddingEndsAt}
           >
-            <Input
-              value={draft.biddingEndsAt}
-              onChangeText={(value) => update({ biddingEndsAt: value })}
-              placeholder={isoDateIn(DEFAULT_AUCTION_DAYS)}
-              editable={!isBusy}
+            <DateTimeField
+              value={biddingEndsAt}
+              onChange={(picked) => update({ biddingEndsAt: picked.toISOString() })}
+              // Con hora: una subasta se cierra a una hora concreta, y
+              // dejarlo en la medianoche sorprende a quien esperaba
+              // compararlas por la tarde.
+              mode="datetime"
+              placeholder="Elegir cierre"
+              minimumDate={new Date()}
+              disabled={isBusy}
+              error={Boolean(fieldErrors.biddingEndsAt)}
               testID="publish-bidding-ends"
             />
           </FormField>
