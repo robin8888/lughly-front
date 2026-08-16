@@ -47,6 +47,22 @@ export interface BecomeEmployerPayload {
   acceptsStaffResponsibility: true
 }
 
+/**
+ * Una franja en la que el trabajador puede atender urgencias.
+ *
+ * Las horas van en hora local española, "HH:MM". No viaja ninguna zona
+ * horaria porque no hay ninguna que elegir: "los sábados a las 22:00" son
+ * las diez de la noche en el reloj de la pared, en verano y en invierno.
+ */
+export interface ApiUrgencyWindow {
+  /** 0 domingo … 6 sábado */
+  weekday: number
+  from: string
+  to: string
+  /** Tarifa base de urgencia; los recargos se aplican encima */
+  hourlyRate: number
+}
+
 export interface CreateEmployeePayload {
   name: string
   email: string
@@ -87,4 +103,22 @@ export const employeesApi = {
    */
   remove: (id: string) =>
     apiRequest<null>(`/v1/employees/${id}`, { method: 'DELETE', auth: true }),
+
+  /** El horario de urgencias que tiene puesto ahora mismo */
+  urgencyWindows: (id: string) =>
+    apiRequest<ApiUrgencyWindow[]>(`/v1/employees/${id}/urgency-windows`, {
+      auth: true,
+    }),
+
+  /**
+   * Guarda la semana completa. No hay alta y baja de franjas sueltas: a
+   * medias, el trabajador quedaría de guardia a horas que la empresa ya no
+   * quiere, y de guardia significa que puede aparecerle un cliente.
+   */
+  setUrgencyWindows: (id: string, windows: ApiUrgencyWindow[]) =>
+    apiRequest<ApiUrgencyWindow[]>(`/v1/employees/${id}/urgency-windows`, {
+      method: 'PUT',
+      auth: true,
+      body: { windows },
+    }),
 }

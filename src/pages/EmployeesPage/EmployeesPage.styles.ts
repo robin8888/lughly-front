@@ -119,6 +119,17 @@ export const styles = StyleSheet.create({
     marginTop: 6,
   },
 
+  /** Ajuste habitual: va antes que la baja y con el color de la app */
+  schedule: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+
   /**
    * Discreto y al final de la tarjeta: es la acción que menos se usa y la
    * única que no se puede deshacer desde aquí.
@@ -127,10 +138,7 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.urgency,
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.cardDivider,
+    marginTop: 8,
   },
 
   add: {

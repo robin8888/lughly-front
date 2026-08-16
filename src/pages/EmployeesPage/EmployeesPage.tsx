@@ -58,6 +58,8 @@ const LEGAL_FORM_OPTIONS = [
 
 export interface EmployeesPageProps {
   onBack: () => void
+  /** Al horario de urgencias de ese trabajador */
+  onUrgencySchedule: (employeeId: string, employeeName: string) => void
 }
 
 /**
@@ -185,7 +187,7 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
   )
 }
 
-export function EmployeesPage({ onBack }: EmployeesPageProps) {
+export function EmployeesPage({ onBack, onUrgencySchedule }: EmployeesPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
    * las pantallas con scroll, no solo en el inicio: si en una se moviera
@@ -418,6 +420,21 @@ export function EmployeesPage({ onBack }: EmployeesPageProps) {
                           y no puede aceptar urgencias.
                         </Text>
                       )}
+
+                      {/**
+                       * Dentro de estas horas el cliente le asigna urgencias
+                       * directamente, sin pasar por el empleador. Va en su
+                       * ficha porque es un ajuste de esa persona, no de la
+                       * empresa: cada uno tiene el suyo.
+                       */}
+                      <Pressable
+                        onPress={() => onUrgencySchedule(employee.id, employee.name)}
+                        disabled={isRemoving}
+                        accessibilityRole="button"
+                        testID={`employee-schedule-${employee.id}`}
+                      >
+                        <Text style={styles.schedule}>Horario de urgencias →</Text>
+                      </Pressable>
 
                       <Pressable
                         onPress={() => confirmRemove(employee.id, employee.name)}

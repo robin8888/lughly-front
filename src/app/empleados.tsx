@@ -32,7 +32,12 @@ export default function EmployeesRoute() {
       unavailableMessage="Tu cuenta es de cliente. Para tener trabajadores a tu cargo hace falta darse de alta como profesional."
       testID="employees-denied"
     >
-      <EmployeesPage onBack={() => router.navigate('/inicio')} />
+      <EmployeesPage
+        onBack={() => router.navigate('/inicio')}
+        onUrgencySchedule={(id, name) =>
+          router.navigate({ pathname: '/horario-urgencias', params: { id, name } })
+        }
+      />
     </RoleGate>
   )
 }
