@@ -20,6 +20,7 @@ import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { setupSessionBridge } from '@/api/sessionBridge'
+import { usePushRegistration } from '@/hooks/push/usePushRegistration'
 import { BottomTabBar } from '@/components/organisms/BottomTabBar'
 import { LoadingOverlay } from '@/components/organisms/LoadingOverlay'
 import {
@@ -54,6 +55,13 @@ export default function RootLayout() {
   })
   const isAuthenticated = useIsAuthenticated()
   const mustChangePassword = useMustChangePassword()
+
+  /**
+   * Registra este móvil para los avisos en cuanto hay sesión. Va en la raíz
+   * porque no es de ninguna pantalla: el token se renueva solo y hay que
+   * mandarlo cada vez que se abre la app.
+   */
+  usePushRegistration()
   const hasHydrated = useHasHydrated()
   const isLoading = useIsLoading()
   const loadingMessage = useLoadingMessage()

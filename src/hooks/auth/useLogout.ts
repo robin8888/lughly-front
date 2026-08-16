@@ -9,6 +9,7 @@
 
 import { useCallback, useState } from 'react'
 import { authApi } from '@/api'
+import { releaseDevice } from '@/hooks/push/usePushRegistration'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useRoleStore } from '@/stores/useRoleStore'
 
@@ -21,6 +22,13 @@ export function useLogout() {
     const { refreshToken, clearAuth } = useAuthStore.getState()
 
     try {
+      /**
+       * Primero se suelta el móvil, mientras la sesión sigue viva: después
+       * no habría con qué autenticarse. Sin esto, quien use este teléfono
+       * después seguiría recibiendo los avisos de esta cuenta.
+       */
+      await releaseDevice()
+
       if (refreshToken) {
         await authApi.logout(refreshToken)
       }
