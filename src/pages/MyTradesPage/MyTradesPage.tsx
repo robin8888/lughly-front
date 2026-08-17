@@ -18,6 +18,7 @@ import { Button } from '@/components/atoms/Button'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { TradeRatesField, type TradeRate } from '@/components/molecules/TradeRatesField'
+import { useMyPhotos } from '@/hooks/domain/useMyPhotos'
 import { useMyTrades, useSetMyTrades } from '@/hooks/domain/useMyTrades'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -35,6 +36,9 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
   // A un empleado el backend le responde 403: no se le pide la lista
   const { data, isPending, isError, refetch } = useMyTrades(!isEmployee)
   const { save, isSaving, formError } = useSetMyTrades()
+
+  // Para avisar de las fotos que se van con un oficio que se quita
+  const photos = useMyPhotos(!isEmployee)
 
   const [trades, setTrades] = useState<TradeRate[] | null>(null)
 
@@ -57,6 +61,21 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
   const rateOf = (value: string) => Number(value.replace(',', '.'))
 
   const current = trades ?? []
+
+  /**
+   * Los oficios que tenía, tienen fotos y ya no están en la lista. El servidor
+   * borra sus fotos al guardar, así que se dice antes.
+   */
+  const kept = new Set(current.map((trade) => trade.slug))
+  const removesPhotos = (photos.data ?? [])
+    .filter((photo) => !kept.has(photo.tradeSlug))
+    .reduce<{ slug: string; label: string }[]>((list, photo) => {
+      if (!list.some((entry) => entry.slug === photo.tradeSlug)) {
+        list.push({ slug: photo.tradeSlug, label: photo.tradeLabel })
+      }
+
+      return list
+    }, [])
 
   const canSave =
     current.length > 0 &&
@@ -149,6 +168,20 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
               listado de ese oficio. El precio es por hora y va por separado,
               porque no se cobra igual limpiar una casa que cuidar a un mayor.
             </Text>
+
+            {/**
+             * El aviso de las fotos va antes de guardar, no después: quitar un
+             * oficio borra las fotos suyas, y eso no se deshace. Solo se dice
+             * a quien tiene alguna, para no asustar al que no.
+             */}
+            {removesPhotos.length > 0 && (
+              <Text style={styles.warning} testID="my-trades-photo-warning">
+                Al guardar se borrarán las fotos de{' '}
+                {removesPhotos.map((trade) => trade.label.toLowerCase()).join(', ')}
+                : una foto solo se enseña en el listado de su oficio, así que sin
+                el oficio no se vería en ninguna parte.
+              </Text>
+            )}
 
             {formError && <Text style={styles.formError}>{formError}</Text>}
 

@@ -26,6 +26,14 @@ export interface ApiPro {
   hourlyRate: number
   /** Todos los que ejerce, en su orden, para las etiquetas de la tarjeta */
   trades: ApiProTrade[]
+  /**
+   * Fotos de trabajos hechos, hasta cinco. En oficios dicen más que cualquier
+   * descripción, así que van en la tarjeta y no solo en la ficha.
+   *
+   * Son las **del oficio del que habla la tarjeta**, que las elige el
+   * servidor: quien ejerce dos no enseña fotos de muebles en limpieza.
+   */
+  photos: string[]
   rating: number
   reviewCount: number
   completedJobs: number
@@ -54,7 +62,26 @@ export interface ApiPro {
  * Superconjunto de `ApiPro` salvo `distanceKm`, que solo tiene sentido en el
  * listado: depende del punto desde el que se busca, no del profesional.
  */
-export interface ApiProDetail extends Omit<ApiPro, 'distanceKm'> {
+/** Una foto propia, tal y como llega para gestionarla. */
+export interface ApiMyProPhoto extends ApiProPhoto {
+  id: string
+  position: number
+}
+
+/** Una foto de la ficha, con el oficio del que es. */
+export interface ApiProPhoto {
+  url: string
+  tradeSlug: string
+  tradeLabel: string
+}
+
+export interface ApiProDetail extends Omit<ApiPro, 'distanceKm' | 'photos'> {
+  /**
+   * Todas sus fotos, cada una con su oficio y en el orden de sus oficios: la
+   * ficha las agrupa, al contrario que la tarjeta, que solo enseña las del
+   * oficio buscado. Aquí interesa ver todo lo que hace.
+   */
+  photos: ApiProPhoto[]
   /** Habilitación profesional comprobada (obligatoria en oficios regulados) */
   licenseVerified: boolean
   /** Kilómetros que se desplaza desde su base */
@@ -179,6 +206,13 @@ export const prosApi = {
       `/v1/pros/coverage?trade=${encodeURIComponent(trade)}&lat=${lat}&lng=${lng}`,
       { auth: true },
     ),
+
+  /** Mis fotos de trabajo, para gestionarlas. Vienen agrupables por oficio. */
+  myPhotos: () => apiRequest<ApiMyProPhoto[]>('/v1/pro/photos', { auth: true }),
+
+  /** Quita una. Las que quedan se recolocan en el servidor. */
+  removePhoto: (id: string) =>
+    apiRequest<null>(`/v1/pro/photos/${id}`, { method: 'DELETE', auth: true }),
 
   /** Los oficios propios, para editarlos */
   myTrades: () => apiRequest<ApiProTrade[]>('/v1/pro/trades', { auth: true }),

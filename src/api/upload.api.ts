@@ -41,6 +41,17 @@ export interface JobPhotoResponse {
   sizeBytes: number
 }
 
+/** Una foto del trabajo de un profesional, ya guardada. */
+export interface ProPhotoResponse {
+  id: string
+  /** Ruta desde la que se sirve; pública, se ve en el directorio */
+  url: string
+  /** De qué oficio es: la tarjeta de limpieza no enseña fotos de carpintería */
+  tradeSlug: string
+  tradeLabel: string
+  position: number
+}
+
 export interface DocumentResponse {
   id: string
   type: DocumentType
@@ -122,6 +133,18 @@ export const uploadApi = {
    */
   jobPhoto: (jobId: string, file: UploadFile, accessToken: string) =>
     uploadMultipart<JobPhotoResponse>(`/v1/jobs/${jobId}/photos`, file, accessToken),
+
+  /**
+   * Una foto de su trabajo, con el oficio al que pertenece.
+   *
+   * El servidor admite cinco POR OFICIO y las numera por orden de llegada, así
+   * que se suben de una en una y en orden. El oficio no es opcional: sin él la
+   * foto no sabría en qué listado enseñarse.
+   */
+  proPhoto: (file: UploadFile, tradeSlug: string, accessToken: string) =>
+    uploadMultipart<ProPhotoResponse>('/v1/pro/photos', file, accessToken, {
+      tradeSlug,
+    }),
 
   document: (
     file: UploadFile,

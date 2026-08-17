@@ -20,6 +20,12 @@ import type { ApiPro } from '@/api/pros.api'
 import { theme } from '@/theme'
 import { styles } from './ProDirectoryCard.styles'
 
+/**
+ * Cuántas fotos caben en la tira sin que la tarjeta crezca de más. Cuatro
+ * entran a lo ancho de un móvil normal; la quinta se resume en un "+1".
+ */
+const MAX_STRIP = 4
+
 export interface ProDirectoryCardProps {
   pro: ApiPro
   onPress: () => void
@@ -91,6 +97,37 @@ export function ProDirectoryCard({ pro, onPress, testID }: ProDirectoryCardProps
             <Text style={styles.reviews}>{pro.reviewCount} reseñas</Text>
           </View>
         </View>
+
+        {/**
+         * Las fotos de sus trabajos, en tira. Van antes de la descripción a
+         * propósito: en oficios se decide mirando, y un baño terminado
+         * convence más que dos líneas de texto. Sin ellas la tarjeta queda
+         * igual que antes, así que quien no las suba no pierde nada.
+         */}
+        {pro.photos.length > 0 && (
+          <View style={styles.photos}>
+            {pro.photos.slice(0, MAX_STRIP).map((photo) => (
+              <Image
+                key={photo}
+                source={{ uri: `${API_BASE_URL}${photo}` }}
+                style={styles.photo}
+                resizeMode="cover"
+              />
+            ))}
+
+            {/**
+             * Si tiene más de las que caben, se dice cuántas en vez de
+             * cortarlas sin avisar: así se sabe que en la ficha hay más.
+             */}
+            {pro.photos.length > MAX_STRIP && (
+              <View style={[styles.photo, styles.photoMore]}>
+                <Text style={styles.photoMoreText}>
+                  +{pro.photos.length - MAX_STRIP}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {pro.bio && (
           <Text style={styles.bio} numberOfLines={2}>

@@ -27,7 +27,12 @@ const COPY = {
     // El diseño decía "Ver trabajos disponibles", pero no cabe en media fila
     // sin partirse en dos líneas. "Ver trabajos" dice lo mismo y cabe.
     primary: 'Ver trabajos',
-    secondary: 'Mi panel',
+    /**
+     * Antes decía "Mi panel" y llevaba a la Cartera, que todavía es un
+     * "Pronto": un callejón sin salida en el sitio más visible de su
+     * pantalla. Su agenda sí existe y es lo que de verdad viene a mirar.
+     */
+    secondary: 'Mi agenda',
   },
 } as const
 

@@ -21,7 +21,7 @@ export default function InicioRoute() {
       <HomePagePro
         userId={user?.id}
         onPrimary={() => router.navigate('/offers')}
-        onSecondary={() => router.navigate('/wallet')}
+        onSecondary={() => router.navigate('/schedule')}
         onManageEmployees={() => router.navigate('/empleados')}
         onInbox={() => router.navigate('/encargos')}
       />

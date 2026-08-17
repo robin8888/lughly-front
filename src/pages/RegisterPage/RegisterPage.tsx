@@ -13,6 +13,8 @@ import { AuthShell } from '@/components/templates/AuthShell'
 import { FormField } from '@/components/molecules/FormField'
 import { Picker } from '@/components/molecules/Picker'
 import { ImagePickerField } from '@/components/molecules/ImagePickerField'
+import { PhotoPicker } from '@/components/molecules/PhotoPicker'
+import { MAX_WORK_PHOTOS } from '@/hooks/domain/useMyPhotos'
 import { Input } from '@/components/atoms/Input'
 import { Button } from '@/components/atoms/Button'
 import { Checkbox } from '@/components/atoms/Checkbox'
@@ -22,7 +24,7 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import type { IdentityKind } from '@/api'
 import { TradeRatesField, type TradeRate } from '@/components/molecules/TradeRatesField'
-import { isRegulatedTrade } from '@/utils/trades'
+import { getTradeLabel, isRegulatedTrade } from '@/utils/trades'
 import { styles } from './RegisterPage.styles'
 
 const ROLE_OPTIONS = [
@@ -76,6 +78,13 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   // Adjuntos: se seleccionan aquí y se suben al crear la cuenta
   const [avatar, setAvatar] = useState<PickedImage | null>(null)
   const [license, setLicense] = useState<PickedImage | null>(null)
+  /**
+   * Las fotos van por oficio, con el slug como clave. Se guarda así y no como
+   * una lista por posición porque los oficios se añaden y se quitan mientras
+   * se rellena el formulario: con un índice, quitar el primero le pasaría sus
+   * fotos al segundo.
+   */
+  const [workPhotos, setWorkPhotos] = useState<Record<string, PickedImage[]>>({})
   const [identityKind, setIdentityKind] = useState<IdentityKind>('DNI')
   const [identityFront, setIdentityFront] = useState<PickedImage | null>(null)
   const [identityBack, setIdentityBack] = useState<PickedImage | null>(null)
@@ -123,6 +132,17 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
       identityFront,
       identityBack,
       license,
+      /**
+       * Solo las de los oficios que siguen en la lista: si añadió fotos de
+       * fontanería y luego quitó el oficio, el servidor las rechazaría.
+       */
+      workPhotos: trades
+        .filter((entry) => (workPhotos[entry.slug]?.length ?? 0) > 0)
+        .map((entry) => ({
+          tradeSlug: entry.slug,
+          tradeLabel: getTradeLabel(entry.slug),
+          photos: workPhotos[entry.slug]!,
+        })),
       identityKind,
     })
 
@@ -403,6 +423,36 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
               testID="register-city"
             />
           </FormField>
+
+          {/**
+           * Fotos de trabajos hechos. Van en el registro porque es cuando se
+           * tienen a mano las del móvil, y porque una ficha sin fotos compite
+           * en desventaja desde el primer día: en oficios, ver un trabajo
+           * terminado dice más que cualquier descripción.
+           *
+           * Una tira por oficio, no una común: quien busca limpieza ve solo
+           * las de limpieza, así que pedirlas mezcladas obligaría a repartirlas
+           * después. Aparecen al elegir el primer oficio; antes no habría
+           * dónde colocarlas.
+           */}
+          {trades.map((entry) => (
+            <FormField
+              key={entry.slug}
+              label={`Fotos de ${getTradeLabel(entry.slug).toLowerCase()}`}
+              helper={`Hasta ${MAX_WORK_PHOTOS}. Se ven en tu ficha y en el listado de este oficio, así que elige las mejores. Puedes cambiarlas después.`}
+              testID={`register-work-photos-field-${entry.slug}`}
+            >
+              <PhotoPicker
+                value={workPhotos[entry.slug] ?? []}
+                onChange={(photos) =>
+                  setWorkPhotos((current) => ({ ...current, [entry.slug]: photos }))
+                }
+                max={MAX_WORK_PHOTOS}
+                disabled={isBusy}
+                testID={`register-work-photos-${entry.slug}`}
+              />
+            </FormField>
+          ))}
 
           <FormField
             label="Habilitación profesional (si tu oficio es regulado)"

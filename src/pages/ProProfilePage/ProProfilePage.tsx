@@ -15,7 +15,7 @@
  * justo lo que un marketplace de confianza no se puede permitir.
  */
 
-import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native'
+import { View, Text, Image, Pressable, ScrollView, ActivityIndicator } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
@@ -140,6 +140,30 @@ export function ProProfilePage({
   const isTopRated =
     pro.rating >= TOP_RATED_MIN_RATING && pro.reviewCount >= TOP_RATED_MIN_REVIEWS
 
+  /**
+   * Las fotos, agrupadas por oficio. El servidor ya las manda en el orden de
+   * sus oficios, así que basta con recorrerlas: el primer grupo es el del
+   * oficio que encabeza la ficha.
+   */
+  const photoGroups = pro.photos.reduce<
+    { tradeSlug: string; tradeLabel: string; photos: string[] }[]
+  >((groups, photo) => {
+    const last = groups[groups.length - 1]
+
+    if (last && last.tradeSlug === photo.tradeSlug) {
+      last.photos.push(photo.url)
+      return groups
+    }
+
+    groups.push({
+      tradeSlug: photo.tradeSlug,
+      tradeLabel: photo.tradeLabel,
+      photos: [photo.url],
+    })
+
+    return groups
+  }, [])
+
   return (
     <View style={styles.screen} testID="pro-profile-page">
       {header}
@@ -200,6 +224,41 @@ export function ProProfilePage({
             </Text>
           </View>
         </View>
+
+        {/**
+         * Sus trabajos, a lo ancho y con desplazamiento lateral. Aquí sí se
+         * ven grandes: es la pantalla donde se decide, y recortarlas a
+         * cuadraditos como en la tarjeta desaprovecharía el sitio.
+         *
+         * Una tira por oficio, con su nombre encima. En la tarjeta solo salen
+         * las del oficio buscado; en la ficha interesa lo contrario —ver todo
+         * lo que hace— pero sin mezclar, que es lo que hacía dudar de si esa
+         * cocina la había montado él o solo pintado.
+         */}
+        {photoGroups.map((group) => (
+          <View key={group.tradeSlug} style={styles.galleryGroup}>
+            {/* El nombre del oficio solo si hay más de uno: con uno, sobra */}
+            {photoGroups.length > 1 && (
+              <Text style={styles.galleryLabel}>{group.tradeLabel}</Text>
+            )}
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.gallery}
+              contentContainerStyle={styles.galleryContent}
+            >
+              {group.photos.map((url) => (
+                <Image
+                  key={url}
+                  source={{ uri: `${API_BASE_URL}${url}` }}
+                  style={styles.galleryPhoto}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ))}
 
         {pro.bio && <Text style={styles.bio}>{pro.bio}</Text>}
 

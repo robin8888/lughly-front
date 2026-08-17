@@ -19,7 +19,20 @@ export interface RegistrationAttachments {
   identityFront: PickedImage | null
   identityBack: PickedImage | null
   license: PickedImage | null
+  /**
+   * Fotos de trabajos hechos, por oficio: hasta cinco de cada uno. Se suben de
+   * una en una y en orden, porque el servidor las numera por orden de llegada.
+   */
+  workPhotos: WorkPhotoGroup[]
   identityKind: IdentityKind
+}
+
+/** Las fotos de un oficio concreto. */
+export interface WorkPhotoGroup {
+  tradeSlug: string
+  /** Para el mensaje del velo: "la foto 2 de Fontanería" */
+  tradeLabel: string
+  photos: PickedImage[]
 }
 
 export interface UploadOutcome {
@@ -74,6 +87,20 @@ export function useRegistrationUploads() {
             ),
         })
       }
+
+      /**
+       * Cada foto va como un trabajo aparte: si falla la tercera, las dos
+       * primeras se quedan puestas. Perder las cinco por un corte de red a
+       * mitad sería peor, y volver a elegirlas cuesta.
+       */
+      attachments.workPhotos.forEach((group) => {
+        group.photos.forEach((photo, index) => {
+          jobs.push({
+            label: `la foto ${index + 1} de ${group.tradeLabel}`,
+            run: () => uploadApi.proPhoto(photo, group.tradeSlug, accessToken),
+          })
+        })
+      })
 
       if (attachments.license) {
         jobs.push({

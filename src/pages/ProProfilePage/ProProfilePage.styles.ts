@@ -139,6 +139,40 @@ export const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
+  /**
+   * Galería de sus trabajos. Se sale del margen de la pantalla a propósito,
+   * con el mismo hueco de vuelta en el contenido: así la primera foto empieza
+   * alineada con el texto y las siguientes se asoman por el borde, que es lo
+   * que invita a arrastrar.
+   */
+  galleryGroup: {
+    marginBottom: 4,
+  },
+  /** El oficio de la tira, en pequeño y en mayúsculas como el resto de rótulos */
+  galleryLabel: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    color: theme.colors.cardText,
+    opacity: 0.7,
+    marginBottom: 6,
+  },
+  gallery: {
+    marginHorizontal: -16,
+    marginBottom: 12,
+  },
+  galleryContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  galleryPhoto: {
+    width: 220,
+    height: 165,
+    backgroundColor: theme.colors.accent100,
+    borderRadius: theme.radius.none,
+  },
+
   bio: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,

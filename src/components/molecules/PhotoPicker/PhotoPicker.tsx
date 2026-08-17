@@ -18,11 +18,21 @@ import { theme } from '@/theme'
 import { styles } from './PhotoPicker.styles'
 
 /** El diseño enseña cuatro huecos. */
+/**
+ * Huecos por defecto: los cuatro que enseña el diseño para un trabajo.
+ *
+ * Las fotos del profesional son cinco, así que el máximo se puede pasar. Cada
+ * tope tiene su motivo y los dos los hace cumplir el servidor: cuatro en un
+ * trabajo porque más no aporta para valorar una avería, cinco en un perfil
+ * porque caben en la tira de la tarjeta y obligan a elegir las mejores.
+ */
 export const MAX_PHOTOS = 4
 
 export interface PhotoPickerProps {
   value: PickedImage[]
   onChange: (photos: PickedImage[]) => void
+  /** Cuántas caben. Por defecto las cuatro de un trabajo. */
+  max?: number
   disabled?: boolean
   testID?: string
 }
@@ -30,6 +40,7 @@ export interface PhotoPickerProps {
 export function PhotoPicker({
   value,
   onChange,
+  max = MAX_PHOTOS,
   disabled = false,
   testID,
 }: PhotoPickerProps) {
@@ -38,7 +49,7 @@ export function PhotoPicker({
 
   const handleAdd = async () => {
     const image = await pick('library')
-    if (image) onChange([...value, image].slice(0, MAX_PHOTOS))
+    if (image) onChange([...value, image].slice(0, max))
   }
 
   const handleRemove = (index: number) => {
@@ -46,7 +57,7 @@ export function PhotoPicker({
   }
 
   /** Siempre cuatro huecos: los llenos primero y el resto vacíos. */
-  const slots = Array.from({ length: MAX_PHOTOS }, (_, index) => value[index] ?? null)
+  const slots = Array.from({ length: max }, (_, index) => value[index] ?? null)
 
   return (
     <View style={styles.grid} testID={testID ?? 'photo-picker'}>

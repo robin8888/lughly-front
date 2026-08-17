@@ -138,6 +138,31 @@ export const styles = StyleSheet.create({
     opacity: 0.85,
     marginTop: 6,
   },
+  /** Tira de fotos de sus trabajos, todas del mismo tamaño */
+  photos: {
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 8,
+  },
+  photo: {
+    flex: 1,
+    aspectRatio: 1,
+    backgroundColor: theme.colors.accent100,
+    // Cuadradas, como el resto del tema industrial
+    borderRadius: theme.radius.none,
+  },
+  photoMore: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.accent300,
+  },
+  photoMoreText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
+  },
+
   /** Los otros oficios, en texto y con su precio: son datos, no insignias */
   alsoDoes: {
     fontFamily: theme.typography.fonts.body,

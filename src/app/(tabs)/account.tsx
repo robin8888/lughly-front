@@ -27,6 +27,12 @@ export default function AccountRoute() {
     role === 'pro'
       ? [
           { label: 'Mensajes', comingSoon: true },
+          /**
+           * El aviso del inicio solo sale cuando hay algo pendiente, así que
+           * sin esto no había forma de entrar a mirar si no había nada. Y una
+           * vez respondido tampoco se podía volver.
+           */
+          { label: 'Encargos', onPress: () => router.navigate('/encargos') },
           { label: 'Panel profesional', comingSoon: true },
           /**
            * Los oficios de un empleado los pone su empresa, y empleados de
@@ -43,6 +49,14 @@ export default function AccountRoute() {
                 {
                   label: 'Mis trabajadores',
                   onPress: () => router.navigate('/empleados'),
+                },
+                /**
+                 * Las fotos de un empleado son las de su empresa, igual que
+                 * sus oficios, así que el acceso va en el mismo grupo.
+                 */
+                {
+                  label: 'Mis fotos de trabajo',
+                  onPress: () => router.navigate('/mis-fotos'),
                 },
               ]),
           { label: 'Calendario de disponibilidad', comingSoon: true },
