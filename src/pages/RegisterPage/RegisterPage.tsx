@@ -434,12 +434,18 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
            * las de limpieza, así que pedirlas mezcladas obligaría a repartirlas
            * después. Aparecen al elegir el primer oficio; antes no habría
            * dónde colocarlas.
+           *
+           * Son opcionales y no hay validación que las pida: quien se
+           * registra en la calle, sin las fotos buenas a mano, no debe
+           * quedarse sin poder acabar el alta. Sin ninguna, la tarjeta del
+           * listado se dibuja como antes —sin tira ni hueco vacío—, así que
+           * no subirlas no deja la ficha a medias, solo sin esa ventaja.
            */}
           {trades.map((entry) => (
             <FormField
               key={entry.slug}
-              label={`Fotos de ${getTradeLabel(entry.slug).toLowerCase()}`}
-              helper={`Hasta ${MAX_WORK_PHOTOS}. Se ven en tu ficha y en el listado de este oficio, así que elige las mejores. Puedes cambiarlas después.`}
+              label={`Fotos de ${getTradeLabel(entry.slug).toLowerCase()} (opcional)`}
+              helper={`Opcional, hasta ${MAX_WORK_PHOTOS}. Si no subes ninguna, tu tarjeta sale igual que antes, sin hueco vacío. Se ven en el listado de este oficio, así que elige las mejores; puedes añadirlas o cambiarlas después en Mi cuenta.`}
               testID={`register-work-photos-field-${entry.slug}`}
             >
               <PhotoPicker

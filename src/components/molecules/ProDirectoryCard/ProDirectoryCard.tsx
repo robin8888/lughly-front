@@ -101,11 +101,15 @@ export function ProDirectoryCard({ pro, onPress, testID }: ProDirectoryCardProps
         {/**
          * Las fotos de sus trabajos, en tira. Van antes de la descripción a
          * propósito: en oficios se decide mirando, y un baño terminado
-         * convence más que dos líneas de texto. Sin ellas la tarjeta queda
-         * igual que antes, así que quien no las suba no pierde nada.
+         * convence más que dos líneas de texto.
+         *
+         * Son opcionales: sin ninguna, el bloque entero no se dibuja —ni tira
+         * ni hueco gris esperando— y la tarjeta queda igual que antes de que
+         * existieran. Un placeholder haría parecer la ficha incompleta, y
+         * quien se registra sin las fotos a mano no lo está.
          */}
         {pro.photos.length > 0 && (
-          <View style={styles.photos}>
+          <View style={styles.photos} testID="pro-card-photos">
             {pro.photos.slice(0, MAX_STRIP).map((photo) => (
               <Image
                 key={photo}
