@@ -55,6 +55,7 @@ export function RequestProPage({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [city, setCity] = useState('')
+  const [addressLine, setAddressLine] = useState('')
   const [preferredDate, setPreferredDate] = useState<Date | null>(null)
   const [maxBudget, setMaxBudget] = useState('')
 
@@ -79,6 +80,7 @@ export function RequestProPage({
     title.trim().length >= 8 &&
     description.trim().length >= 20 &&
     city.trim().length >= 2 &&
+    addressLine.trim().length >= 5 &&
     !isRequesting
 
   const handleSend = async () => {
@@ -93,6 +95,7 @@ export function RequestProPage({
       title: title.trim(),
       description: description.trim(),
       city: city.trim(),
+      addressLine: addressLine.trim(),
       ...(preferredDate && { preferredDate: toIsoDate(preferredDate) }),
       ...(maxBudget !== '' &&
         Number.isFinite(budget) &&
@@ -245,6 +248,21 @@ export function RequestProPage({
         </FormField>
 
         <FormField
+          label="Dirección"
+          hint="Con el número. Solo la verá quien acabe haciendo el trabajo, no antes."
+          error={fieldErrors.addressLine}
+        >
+          <Input
+            value={addressLine}
+            onChangeText={setAddressLine}
+            placeholder="Ej. Calle Mayor 14, 3º B"
+            editable={!isRequesting}
+            error={Boolean(fieldErrors.addressLine)}
+            testID="request-address"
+          />
+        </FormField>
+
+        <FormField
           label="¿Cuándo lo necesitas?"
           hint={
             preferredDate
@@ -286,8 +304,14 @@ export function RequestProPage({
          * asignado, igual que en una subasta al adjudicar: mientras el
          * encargo pueda no salir adelante, no hay motivo para darla.
          */}
+        {/**
+         * Se explica el recorrido de la dirección, que es la duda razonable
+         * de quien la acaba de escribir: la da ahora, pero no la ve nadie
+         * hasta que hay una persona asignada que tiene que ir.
+         */}
         <Text style={styles.privacy}>
-          Tu dirección se entrega solo cuando haya alguien asignado al trabajo.
+          Ni la empresa ni nadie más ve tu dirección mientras deciden. Solo la
+          recibe quien quede asignado al trabajo.
         </Text>
 
         {isInstant && chosenRate !== undefined && (

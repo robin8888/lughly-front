@@ -10,7 +10,11 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
-import { assignmentsApi, type ApiInboxItem } from '@/api/assignments.api'
+import {
+  assignmentsApi,
+  type ApiAssignedJob,
+  type ApiInboxItem,
+} from '@/api/assignments.api'
 
 export function inboxQueryKey() {
   return ['pro', 'inbox'] as const
@@ -23,6 +27,21 @@ export function useInbox(enabled = true) {
     enabled,
     staleTime: 30_000,
     refetchInterval: 60_000,
+  })
+}
+
+/**
+ * La agenda del profesional: lo que tiene asignado.
+ *
+ * `staleTime` corto porque en el día del trabajo importa: si el cliente
+ * cambia algo o le asignan otro encargo, se ve al volver a la pestaña.
+ */
+export function useAssignedJobs(enabled = true) {
+  return useQuery<{ items: ApiAssignedJob[] }>({
+    queryKey: ['pro', 'assignments'],
+    queryFn: () => assignmentsApi.assignments(),
+    enabled,
+    staleTime: 30_000,
   })
 }
 

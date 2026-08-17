@@ -8,6 +8,7 @@
  */
 
 import { apiRequest } from './http'
+import type { ApiJobStatus, ApiJobType } from './jobs.api'
 
 export interface RequestProPayload {
   /** Presupuesto directo o reserva; una urgencia no pasa por aquí */
@@ -16,6 +17,11 @@ export interface RequestProPayload {
   title: string
   description: string
   city: string
+  /**
+   * Se guarda desde el principio pero solo la ve quien quede asignado: no
+   * viaja en la bandeja ni la ve la empresa mientras decide a quién manda.
+   */
+  addressLine: string
   preferredDate?: string
   maxBudget?: number
 }
@@ -75,7 +81,39 @@ export interface ApiSubstituteDecision {
   assignedProName: string | null
 }
 
+/**
+ * Un trabajo que este profesional tiene asignado.
+ *
+ * Lleva dirección y teléfono: a estas alturas el trabajo es suyo y sin eso no
+ * puede ir. `amount` es null para un trabajador por cuenta ajena, porque el
+ * importe es de la empresa que le dio de alta.
+ */
+export interface ApiAssignedJob {
+  id: string
+  type: ApiJobType
+  status: ApiJobStatus
+  title: string
+  description: string
+  trade: string
+  tradeLabel: string
+  city: string
+  addressLine: string | null
+  latitude: number | null
+  longitude: number | null
+  preferredDate: string | null
+  clientName: string
+  clientPhone: string | null
+  amount: number | null
+  photoCount: number
+  awardedAt: string | null
+  createdAt: string
+}
+
 export const assignmentsApi = {
+  /** Su agenda: lo que tiene adjudicado y por delante */
+  assignments: () =>
+    apiRequest<{ items: ApiAssignedJob[] }>('/v1/pro/assignments', { auth: true }),
+
   /** El cliente encarga a alguien concreto del directorio */
   request: (proId: string, payload: RequestProPayload) =>
     apiRequest<ApiDirectRequest>(`/v1/pros/${proId}/requests`, {
