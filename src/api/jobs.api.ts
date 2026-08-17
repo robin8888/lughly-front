@@ -64,7 +64,12 @@ export interface CreateJobPayload {
    * quien cubre la dirección con su radio, así que sin punto no hay a quién
    * avisar. En una subasta no hace falta hasta adjudicar.
    */
-  addressLine?: string
+  /**
+   * Obligatoria. No se enseña a nadie que no esté adjudicado: no viaja en el
+   * listado de subastas ni en la bandeja de encargos, solo en la agenda de
+   * quien va a hacer el trabajo.
+   */
+  addressLine: string
   latitude?: number
   longitude?: number
   maxBudget?: number

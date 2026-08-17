@@ -25,7 +25,8 @@ import { styles } from './MyJobsPage.styles'
 export interface MyJobsPageProps {
   onPublish: () => void
   onBack: () => void
-  onSelectJob?: (jobId: string) => void
+  /** Solo tiene sentido en una subasta: lleva a sus pujas */
+  onSelectJob?: (jobId: string, title: string) => void
 }
 
 export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) {
@@ -139,7 +140,10 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
                 <JobCard
                   key={job.id}
                   job={job}
-                  {...(onSelectJob && { onPress: () => onSelectJob(job.id) })}
+                  {...(onSelectJob &&
+                    job.type === 'AUCTION' && {
+                      onPress: () => onSelectJob(job.id, job.title),
+                    })}
                   onRespondSubstitute={(accept) => decideSubstitute(job, accept)}
                   isRespondingSubstitute={isResponding}
                   testID={`job-${job.id}`}

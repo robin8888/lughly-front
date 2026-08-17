@@ -110,6 +110,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
         title: draft.title.trim(),
         description: draft.description.trim(),
         city: draft.city.trim(),
+        addressLine: draft.addressLine.trim(),
         ...(draft.maxBudget !== '' && Number.isFinite(budget) && { maxBudget: budget }),
         ...(draft.preferredDate !== '' && { preferredDate: draft.preferredDate }),
         ...(isAuction && {
@@ -130,7 +131,8 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
     draft.tradeSlug !== '' &&
     draft.title.trim().length >= 8 &&
     draft.description.trim().length >= 20 &&
-    draft.city.trim().length >= 2
+    draft.city.trim().length >= 2 &&
+    draft.addressLine.trim().length >= 5
 
   return (
     <View style={styles.screen} testID="publish-page">
@@ -233,6 +235,27 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
             placeholder="Ej. Madrid"
             editable={!isBusy}
             testID="publish-city"
+          />
+        </FormField>
+
+        {/**
+         * La dirección se pide al publicar y no se enseña a quien no esté
+         * adjudicado. Antes era opcional y no había ningún paso posterior
+         * donde darla, así que quien ganaba la subasta se quedaba con el
+         * trabajo y sin saber dónde ir.
+         */}
+        <FormField
+          label="Dirección"
+          hint="Con el número. Solo la verá quien acabe haciendo el trabajo, no quien puje."
+          error={fieldErrors.addressLine}
+        >
+          <Input
+            value={draft.addressLine}
+            onChangeText={(value) => update({ addressLine: value })}
+            placeholder="Ej. Calle Mayor 14, 3º B"
+            editable={!isBusy}
+            error={Boolean(fieldErrors.addressLine)}
+            testID="publish-address"
           />
         </FormField>
 

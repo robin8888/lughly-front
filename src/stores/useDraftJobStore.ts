@@ -32,6 +32,7 @@ export interface JobDraft {
   /** En euros, como texto: es lo que hay en el input hasta validarlo */
   maxBudget: string
   /** ISO corto (YYYY-MM-DD) o cadena vacía */
+  addressLine: string
   preferredDate: string
   biddingEndsAt: string
 }
@@ -43,6 +44,7 @@ export const EMPTY_DRAFT: JobDraft = {
   description: '',
   city: '',
   maxBudget: '',
+  addressLine: '',
   preferredDate: '',
   biddingEndsAt: '',
 }

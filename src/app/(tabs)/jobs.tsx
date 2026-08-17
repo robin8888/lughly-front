@@ -29,6 +29,13 @@ export default function JobsRoute() {
       <MyJobsPage
         onPublish={() => router.navigate('/publish')}
         onBack={() => router.navigate('/inicio')}
+        /**
+         * Tocar una subasta lleva a sus pujas, que es lo único que se puede
+         * hacer con ella: comparar y adjudicar.
+         */
+        onSelectJob={(jobId, title) =>
+          router.navigate({ pathname: '/pujas', params: { jobId, title } })
+        }
       />
     </RoleGate>
   )
