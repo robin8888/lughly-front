@@ -85,7 +85,7 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
         ) : jobs.length === 0 ? (
           <EmptyState
             title="Nada asignado por ahora"
-            message="Aquí aparecerán los trabajos que tengas que hacer, con la dirección, la hora y el teléfono del cliente."
+            message="Aquí aparecerán los trabajos que tengas que hacer, con la dirección, la fecha y el teléfono del cliente."
             illustration="none"
             testID="agenda-empty"
           />

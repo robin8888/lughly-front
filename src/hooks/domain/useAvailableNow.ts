@@ -12,6 +12,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert } from 'react-native'
+import { ApiError } from '@/api'
 import { prosApi, type ApiProDetail } from '@/api/pros.api'
 import { proProfileQueryKey } from './useProProfile'
 
@@ -36,14 +37,27 @@ export function useAvailableNow(proId: string | undefined) {
       return { previous }
     },
 
-    onError: (_error, _availableNow, context) => {
+    onError: (error, _availableNow, context) => {
       if (context?.previous) {
         queryClient.setQueryData(key, context.previous)
       }
 
+      /**
+       * Si el servidor ha contestado, se repite lo que dice él.
+       *
+       * Antes se echaba siempre la culpa a la conexión, y había un caso en el
+       * que era mentira: a un trabajador por cuenta ajena el servidor le
+       * rechaza el interruptor porque sus horas de urgencia las fija su
+       * empresa. Decirle que revisara la cobertura lo mandaba a buscar un
+       * problema que no existía. Ese interruptor ya no se le enseña, pero el
+       * mensaje se arregla igual: vale para cualquier otro rechazo con motivo.
+       */
+      const explained = error instanceof ApiError ? error.message : null
+
       Alert.alert(
         'No se ha podido cambiar',
-        'Sigue como estaba. Revisa tu conexión e inténtalo de nuevo.',
+        explained ??
+          'Sigue como estaba. Revisa tu conexión e inténtalo de nuevo.',
       )
     },
 

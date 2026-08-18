@@ -303,27 +303,44 @@ export function HomePagePro({
               </View>
             </View>
 
+            {/**
+             * Un trabajador por cuenta ajena no tiene interruptor.
+             *
+             * Su disponibilidad para urgencias sale de las franjas que le pone
+             * su empresa, no de él: el servidor lo rechaza con
+             * `EmployeeHasNoSwitchError` y la deriva de `urgency_windows`. Aquí
+             * se enseñaba el interruptor igual, así que lo pulsaba, se pintaba
+             * encendido, el servidor lo tumbaba y el aviso le decía que
+             * revisara su conexión — que no era el problema.
+             *
+             * Enseñarle en su lugar de qué depende es más útil que esconderlo:
+             * la pregunta "¿por qué no me llegan urgencias?" tiene respuesta.
+             */}
             <InfoCard style={styles.availability}>
               <View style={styles.availabilityRow}>
                 <View style={styles.availabilityText}>
                   <Text style={styles.availabilityTitle}>Disponible ahora</Text>
                   <Text style={styles.availabilityBody}>
-                    {pro.availableNow
-                      ? `Te avisamos de las urgencias de ${pro.tradeLabel.toLowerCase()} a menos de ${pro.radiusKm} km.`
-                      : 'Actívalo y te llegarán las urgencias de tu zona en cuanto se publiquen.'}
+                    {isEmployee
+                      ? `Tus horas de urgencia las fija ${pro.employerName}. Dentro de esas franjas apareces disponible y el cliente puede avisarte directamente.`
+                      : pro.availableNow
+                        ? `Te avisamos de las urgencias de ${pro.tradeLabel.toLowerCase()} a menos de ${pro.radiusKm} km.`
+                        : 'Actívalo y te llegarán las urgencias de tu zona en cuanto se publiquen.'}
                   </Text>
                 </View>
 
-                <Switch
-                  value={pro.availableNow}
-                  onValueChange={setAvailableNow}
-                  disabled={isSaving}
-                  testID="home-pro-available-now"
-                  accessibilityLabel="Disponible ahora para urgencias"
-                />
+                {!isEmployee && (
+                  <Switch
+                    value={pro.availableNow}
+                    onValueChange={setAvailableNow}
+                    disabled={isSaving}
+                    testID="home-pro-available-now"
+                    accessibilityLabel="Disponible ahora para urgencias"
+                  />
+                )}
               </View>
 
-              {pro.availableNow && (
+              {!isEmployee && pro.availableNow && (
                 <Text style={styles.availabilityNote}>
                   Tienes 30 minutos para aceptar cada aviso. Si no respondes,
                   pasa al siguiente profesional.

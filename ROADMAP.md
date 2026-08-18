@@ -627,7 +627,7 @@ NIF o un CIF, si es autónomo o empresa.
 
 ---
 
-## 🎯 Asignación de trabajos por el empleador ⏳ (siguiente)
+## 🎯 Asignación de trabajos por el empleador ✅ (18 Agosto 2026)
 
 Cuando el profesional que elige el cliente trabaja para alguien, entre los dos
 hay un tercero. Esto define quién recibe qué y en qué orden.
@@ -667,22 +667,55 @@ sistema, es una persona sin dormir.
 - `ProProfile.busyWithJobId`: atendiendo una urgencia, no le llegan más.
 - Los muros del empleado: no puja, no ve importes, no ve su tarifa.
 
-### Lo que falta
+### Lo que se construyó
 
-- [ ] Modelo de ventanas de disponibilidad para urgencias, por trabajador,
-      con su tarifa. Se solapa con `Availability` (Fase 6): conviene que sea
-      la misma tabla con un dueño distinto —el empleador— y no dos.
-- [ ] `availableNow` de un empleado deja de ser suyo. Hoy es un interruptor
-      que él enciende; con esto pasa a derivarse de la ventana que le puso su
-      empresa, o el empleado podría ponerse disponible cuando le apetezca.
-- [ ] Estado intermedio del trabajo: elegido por el cliente → pendiente de
-      que el empleador asigne → asignado. Hoy se pasa de OPEN a AWARDED de
-      una vez.
-- [ ] Notificaciones. Hoy no hay ninguna en el proyecto: esto es lo primero
-      que las necesita de verdad.
-- [ ] Pantalla del empleador: encargos entrantes, a quién se los asigna.
-- [ ] Pantalla del trabajador: lo que le han asignado, con dirección y hora
-      y sin importes.
+**Ojo: casi todo esto vive en el backend, que es OTRO repositorio** —
+`lughly-backend` (NestJS + Prisma), fuera de este árbol. Mirando solo
+`apps/mobile` esta sección parece sin empezar, y no lo está.
+
+- [x] Modelo de ventanas de urgencia por trabajador, con tarifa: `UrgencyWindow`
+      (`prisma/schema.prisma`), con las rutas `GET`/`PUT
+      /v1/employees/:id/urgency-windows`, que exigen ser el empleador de esa
+      persona. Las franjas que cruzan medianoche se parten en dos filas y la
+      semana entera se reemplaza en una transacción con bloqueo de fila.
+      **Desviación**: es tabla propia y no compartida con `Availability`, como
+      decía la idea original — porque `Availability` no existe todavía, la
+      Fase 6 está sin empezar. Cuando llegue, hay que decidir si se unifican.
+- [x] `availableNow` de un empleado deja de ser suyo. El servidor lo rechaza
+      (`EmployeeHasNoSwitchError`) y lo deriva de sus franjas, en el camino SQL
+      y en el de Prisma. El móvil ya no le enseña el interruptor: le explica
+      que su horario lo fija su empresa (18 Agosto 2026).
+- [x] Estado intermedio del trabajo. No es uno sino dos: `PENDING_PRO`
+      —elegido por el cliente, esperando a que la empresa asigne— y
+      `SUBSTITUTE_PROPOSED` —la empresa propone a otro y el cliente aún no ha
+      dicho nada—. La asignación va con `updateMany` condicionado al estado, así
+      que dos asignaciones en paralelo no se pisan. `OPEN → AWARDED` de una vez
+      solo ocurre con un autónomo sin gente, que es lo correcto.
+- [x] Notificaciones. Once envíos reales a la API de Expo desde siete casos de
+      uso, incluidos "te han elegido" al empleador y "te han asignado" al
+      trabajador. Registro y baja del dispositivo en `POST`/`DELETE
+      /v1/me/devices`, y el móvil se registra al arrancar y se suelta al salir.
+      En desarrollo `PUSH_PROVIDER=console`, así que no sale nada del ordenador;
+      producción no arranca con ese valor.
+- [x] Pantalla del empleador: `InboxPage`. No es aceptar o rechazar, es un
+      selector de persona —"¿Quién va?"— con el profesional pedido, uno mismo y
+      cada trabajador. Elegir a otro distinto pide confirmación y deja el
+      trabajo en `SUBSTITUTE_PROPOSED`.
+- [x] Pantalla del trabajador: `AgendaPage`, con dirección, cliente y teléfono
+      para llamar. El importe llega `null` desde el servidor para un empleado, o
+      sea que no se oculta en la pantalla: no se envía.
+
+### Lo que quedó pendiente de esto
+
+- [ ] **La hora del trabajo no se captura.** La agenda enseña el día pero no la
+      hora, y no es cosa de la pantalla: `preferredDate` se guarda con
+      `toIsoDate`, que la descarta al publicar. Pintar `formatLongDateTime`
+      sobre eso daría una hora inventada —medianoche UTC, "a las 02:00" en
+      España—, así que primero hay que capturarla. Va con el bloque de abajo.
+- [ ] Un autónomo con gente a cargo puede ya asignarse a sí mismo desde la
+      bandeja, pero si quien responde es una empresa sin ficha propia el
+      servidor lo rechazará. Lo limpio sería que `GET /v1/pro/inbox` dijera si
+      quien responde puede trabajar, y no deducirlo en el móvil.
 
 ### Selectores de fecha y hora, en toda la app
 
@@ -694,8 +727,12 @@ Hoy la publicación de un trabajo pide dos fechas escritas a mano —cuándo
 cierra la subasta y cuándo se necesita— y eso es pedir errores: formatos
 distintos, meses cambiados, fechas imposibles.
 
-- [ ] Un solo componente de fecha y hora para toda la app. Cualquier campo
-      que hoy pida una fecha o una hora escrita pasa por él.
+- [x] Un solo componente de fecha y hora para toda la app: `DateTimeField`
+      (14 Agosto 2026). Ya no queda ningún campo de fecha escrito a mano.
+- [ ] **Capturar la hora, no solo el día.** El componente la sabe pedir, pero
+      `preferredDate` se guarda con `toIsoDate`, que la tira. Por eso la agenda
+      del trabajador enseña el día y no la hora — y por eso no se puede arreglar
+      solo en la pantalla.
 - [ ] **Horario de verano.** Es lo que hace que esto no sea trivial: en
       España hay un día de 23 horas y otro de 25. Una franja "de 22:00 a
       06:00" en la madrugada del cambio no dura ocho horas, y el cierre de
@@ -707,17 +744,23 @@ distintos, meses cambiados, fechas imposibles.
       subasta y cuándo se necesita), reserva instantánea (Fase 7),
       disponibilidad y ausencias (Fase 6).
 
-### Decisiones pendientes (bloquean el diseño)
+### Decisiones que ya se tomaron
 
-1. **¿Puede el empleador mandar a otro trabajador distinto del que eligió el
-   cliente?** El cliente eligió a Luis mirando sus valoraciones. Si va Marta,
-   ¿se le avisa?, ¿puede rechazar? Cambia el flujo entero y la confianza del
-   directorio.
-2. **La tarifa de urgencia, ¿sustituye a la del oficio o es una aparte?** Y
-   los recargos ya existentes (sábado +20%, domingo/festivo +35%, nocturno
-   +25%) ¿se aplican encima de ella?
-3. **Si el empleador no responde**, ¿cuánto se espera antes de liberar al
-   cliente? En urgencias hay 30 minutos; en presupuesto directo no hay plazo.
+1. **¿Puede el empleador mandar a otro trabajador?** Sí, pero no a la callada:
+   el trabajo pasa a `SUBSTITUTE_PROPOSED` y es el cliente quien acepta o
+   rechaza el cambio (`POST /v1/jobs/:id/substitute`). Hasta que conteste, el
+   trabajo sigue en el aire: no es una adjudicación.
+2. **Si el empleador no responde**: 24 horas, y luego el trabajo queda libre.
+   Se le dice al avisarle ("Tenéis 24 horas para responder") y lo aplica
+   `expire-overdue`. En urgencias siguen siendo 30 minutos.
+
+### Decisión que sigue pendiente
+
+- **La tarifa de urgencia, ¿sustituye a la del oficio o es una aparte?** Existe
+  `UrgencyWindow.hourlyRate` y el empleador la fija al poner la franja, pero no
+  está escrito qué pasa con los recargos ya existentes (sábado +20%,
+  domingo/festivo +35%, nocturno +25%): si se aplican encima de ella o si esa
+  tarifa ya los lleva dentro.
 
 ---
 

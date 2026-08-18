@@ -112,7 +112,7 @@ export function InboxPage({ onBack }: InboxPageProps) {
         {header}
         <EmptyState
           title="Los encargos los lleva tu empresa"
-          message="Cuando un cliente te elige, el encargo le llega a quien te dio de alta. Verás el trabajo aquí en cuanto te lo asignen, con la dirección y la hora."
+          message="Cuando un cliente te elige, el encargo le llega a quien te dio de alta. Verás el trabajo aquí en cuanto te lo asignen, con la dirección y el teléfono del cliente."
           illustration="greeting"
           actions={[{ label: 'Volver', onPress: onBack, testID: 'inbox-employee-back' }]}
           testID="inbox-employee"
@@ -240,7 +240,22 @@ export function InboxPage({ onBack }: InboxPageProps) {
                         </Text>
                       </Pressable>
 
-                      {employer === null && user?.id && (
+                      {/*
+                        "Yo mismo" estaba condicionado a no tener empresa, y
+                        eso dejaba fuera al autónomo con gente a cargo: él
+                        también trabaja, pero no sale en su propia lista de
+                        empleados, así que solo podía asignarse un encargo si el
+                        cliente le había pedido a él por su nombre.
+
+                        Se excluye cuando ya es el profesional pedido, porque
+                        entonces el botón de arriba es él y saldrían dos para la
+                        misma persona.
+
+                        El servidor manda: acepta `isSelf` y lo rechaza si quien
+                        responde no tiene ficha propia —una empresa que no
+                        trabaja— y entonces el aviso lo explica.
+                      */}
+                      {user?.id && user.id !== job.requestedProId && (
                         <Pressable
                           onPress={() => confirmAssign(job, user.id, 'Tú')}
                           disabled={isAssigning}
