@@ -1,9 +1,12 @@
 /**
  * ReverseAuctionCard Organism
- * "03 · Subasta inversa" (HOME_MOBILE.md §3): tarjeta oscura.
+ * La regla que diferencia a Lughly: "La puja más baja no gana
+ * automáticamente", recogida en el README.
  *
- * El titular es la regla de negocio que diferencia a Lughly y está recogida
- * en el README: "La puja más baja no gana automáticamente".
+ * Era la sección "03 · Subasta inversa" de la home (HOME_MOBILE.md §3). Ahora
+ * vive dentro de la pantalla "Cómo funciona", junto a los tres pasos, que es
+ * donde una regla del modelo se puede leer con calma; suelta en mitad de la
+ * home era un anuncio.
  */
 
 import { Text } from 'react-native'
@@ -22,7 +25,7 @@ export function ReverseAuctionCard({
 }: ReverseAuctionCardProps) {
   return (
     <InfoCard style={styles.card} testID={testID}>
-      <Text style={styles.label}>03 · Subasta inversa</Text>
+      <Text style={styles.label}>Subasta inversa</Text>
       <Text style={styles.title}>
         La puja más baja no gana automáticamente
       </Text>

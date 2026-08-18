@@ -21,7 +21,7 @@ import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import Animated from 'react-native-reanimated'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ApiError } from '@/api'
+import { API_BASE_URL, ApiError } from '@/api'
 import { Button } from '@/components/atoms/Button'
 import { Switch } from '@/components/atoms/Switch'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -40,7 +40,10 @@ import { styles } from './HomePagePro.styles'
 export interface HomePageProProps {
   /** Id del usuario en sesión: su ficha es la de este profesional */
   userId: string | undefined
-  onPrimary: () => void
+  /**
+   * No hay `onPrimary`: el hero se quedó sin botón principal. Llevaba a las
+   * pujas, que están a un toque en la barra de abajo.
+   */
   onSecondary: () => void
   onManageEmployees: () => void
   onInbox: () => void
@@ -48,7 +51,6 @@ export interface HomePageProProps {
 
 export function HomePagePro({
   userId,
-  onPrimary,
   onSecondary,
   onManageEmployees,
   onInbox,
@@ -114,7 +116,30 @@ export function HomePagePro({
           role="pro"
           variant="light"
           userName={user?.name}
-          onPrimary={onPrimary}
+          /*
+           * `avatarUrl` llega como ruta relativa a la API, así que el prefijo
+           * se pone aquí: el mismo trato que en Mi cuenta y en la ficha del
+           * profesional. Se lee del usuario en sesión y no de `pro`, que puede
+           * estar todavía cargando o haber fallado —y la cabecera no debería
+           * quedarse sin foto por eso.
+           */
+          avatarUri={
+            user?.avatarUrl ? `${API_BASE_URL}${user.avatarUrl}` : null
+          }
+          /*
+           * Su oficio, su ciudad y su valoración, que es lo que convierte la
+           * cabecera en su ficha. Va sin comprobar `isPending`: mientras la
+           * ficha carga se queda en `undefined` y el hero enseña foto y nombre,
+           * que salen de la sesión y están desde el primer momento.
+           */
+          profile={
+            pro && {
+              tradeLabel: pro.tradeLabel,
+              city: pro.city,
+              rating: pro.rating,
+              reviewCount: pro.reviewCount,
+            }
+          }
           onSecondary={onSecondary}
           testID="home-pro-hero"
         />
@@ -149,7 +174,10 @@ export function HomePagePro({
         {employer && (
           <Pressable
             onPress={onManageEmployees}
-            style={styles.employees}
+            style={({ pressed }) => [
+              styles.employees,
+              pressed && styles.employeesPressed,
+            ]}
             accessibilityRole="button"
             testID="home-pro-employees"
           >
@@ -217,6 +245,12 @@ export function HomePagePro({
                 <StatCard
                   label="Valoración"
                   value={pro.reviewCount > 0 ? pro.rating.toFixed(1) : '—'}
+                  /*
+                   * Sin valoraciones no van estrellas: cinco huecos grises
+                   * bajo un guion se leen como un cero, y no es que le hayan
+                   * puntuado mal, es que todavía no le han puntuado.
+                   */
+                  rating={pro.reviewCount > 0 ? pro.rating : undefined}
                   hint={
                     pro.reviewCount > 0
                       ? `de ${pro.reviewCount} ${pro.reviewCount === 1 ? 'valoración' : 'valoraciones'}`

@@ -20,7 +20,6 @@ export default function InicioRoute() {
     return (
       <HomePagePro
         userId={user?.id}
-        onPrimary={() => router.navigate('/offers')}
         onSecondary={() => router.navigate('/schedule')}
         onManageEmployees={() => router.navigate('/empleados')}
         onInbox={() => router.navigate('/encargos')}
@@ -36,14 +35,16 @@ export default function InicioRoute() {
   return (
     <HomePage
       role="client"
-      onPrimary={() => router.navigate('/publish')}
-      onSecondary={() => router.navigate({ pathname: '/pros', params: { trade: '' } })}
       onUrgent={() => router.navigate('/urgent')}
       // El oficio viaja como parámetro: el directorio abre ya filtrado
       onSelectTrade={(slug) =>
         router.navigate({ pathname: '/pros', params: { trade: slug } })
       }
-      onSelectPro={() => router.navigate({ pathname: '/pros', params: { trade: '' } })}
+      /*
+       * `push` y no `navigate`: "Cómo funciona" no es una pestaña, es una
+       * pantalla de pila que se apila sobre la home y de la que se vuelve.
+       */
+      onHowItWorks={() => router.push('/como-funciona')}
     />
   )
 }

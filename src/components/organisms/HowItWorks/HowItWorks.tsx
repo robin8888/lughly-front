@@ -1,8 +1,12 @@
 /**
  * HowItWorks Organism
- * "02 · Cómo funciona" (HOME_MOBILE.md §3): tres tarjetas claras.
+ * Los tres pasos del modelo, en tres tarjetas claras.
  *
  * Los textos explican el modelo de negocio y vienen literales del diseño.
+ *
+ * Era la sección "02 · Cómo funciona" de la home (HOME_MOBILE.md §3). Ahora
+ * vive dentro de la pantalla "Cómo funciona", así que perdió el número de
+ * sección: fuera de la home no ordenaba nada.
  */
 
 import { View, Text } from 'react-native'
@@ -27,7 +31,7 @@ const STEPS = [
 export function HowItWorks({ testID }: { testID?: string }) {
   return (
     <View style={styles.section} testID={testID}>
-      <Text style={styles.sectionLabel}>02 · Cómo funciona</Text>
+      <Text style={styles.sectionLabel}>Paso a paso</Text>
 
       <View style={styles.list}>
         {STEPS.map((step) => (

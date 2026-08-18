@@ -85,15 +85,30 @@ export const styles = StyleSheet.create({
     color: theme.colors.urgency,
   },
 
+  /**
+   * Trabajadores: un botón de verdad, azul y relleno.
+   *
+   * Antes era un recuadro con borde y fondo casi blanco (`accent100`), que se
+   * leía como un aviso más que como algo que se pulsa. Ahora lleva el azul de
+   * la app, las esquinas redondeadas del átomo `Button` y el texto en blanco.
+   *
+   * `accent700` y no `accent`: el blanco sobre el azul de marca se queda en
+   * 4,15:1 y aquí el texto va a 16 y a 13,5 px, así que WCAG pide 4,5:1. Con
+   * el 700 sube a 6,48:1. Es además el mismo azul que rellena los botones
+   * primarios desde que se corrigió el contraste, así que ahora pegan.
+   */
   employees: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     padding: 13,
     marginTop: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.accent600,
-    backgroundColor: theme.colors.accent100,
+    borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.accent700,
+  },
+  /** Un escalón más de la rampa al pulsarlo, como hace `Button` */
+  employeesPressed: {
+    backgroundColor: theme.colors.accent800,
   },
   employeesText: {
     flex: 1,
@@ -101,20 +116,21 @@ export const styles = StyleSheet.create({
   employeesTitle: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.accent700,
+    color: '#ffffff',
   },
   employeesBody: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: theme.colors.cardText,
+    color: '#ffffff',
+    // Blanco al 80% sobre el 700 da 4,83:1: se apaga sin dejar de cumplir
     opacity: 0.8,
     marginTop: 3,
   },
   employeesArrow: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.h5,
-    color: theme.colors.accent700,
+    color: '#ffffff',
   },
   section: {
     marginTop: 20,
