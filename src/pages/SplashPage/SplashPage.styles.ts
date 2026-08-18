@@ -12,10 +12,9 @@
  * El vídeo es una escena opaca que ahora llena la pantalla entera, así que el
  * color de fondo casi no se ve: queda de respaldo mientras el vídeo carga.
  *
- * Los botones se apartan del handoff en dos cosas, a conciencia: esquinas
- * redondeadas (el tema industrial las quiere cuadradas) y `accent700` en vez
- * de `accent` (el blanco sobre `accent` no llega al contraste que pide WCAG a
- * 16px). Cada una está razonada donde se define.
+ * Los botones se apartan del handoff en las esquinas redondeadas, que el tema
+ * industrial quiere cuadradas. El azul de relleno y el contraste los resuelve
+ * ya el átomo `Button`.
  */
 
 import { StyleSheet } from 'react-native'
@@ -91,23 +90,6 @@ export const styles = StyleSheet.create({
   buttonBase: {
     paddingVertical: theme.spacing[4],
     paddingHorizontal: theme.spacing[4],
-  },
-  /**
-   * `accent700` en vez de `accent`: el blanco sobre `accent` da 4,15:1 y a
-   * 16px WCAG pide 4,5:1. Con este sube a 6,48:1. Sigue siendo de la rampa de
-   * la marca; de hecho es el color que el diseño ya usaba para el pulsado.
-   */
-  actionButton: {
-    backgroundColor: theme.colors.accent700,
-    borderColor: theme.colors.accent700,
-  },
-  /**
-   * Al pintar el fondo a mano hay que decir también cómo se ve hundido: el
-   * `style` tapa el pulsado que trae la variante. Un escalón más de la rampa.
-   */
-  actionButtonPressed: {
-    backgroundColor: theme.colors.accent800,
-    borderColor: theme.colors.accent800,
   },
   /**
    * "Iniciar sesión": relleno blanco con el texto y el borde en el azul de la

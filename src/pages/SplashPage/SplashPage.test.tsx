@@ -67,24 +67,6 @@ describe('SplashPage — botones', () => {
     expect(flatten(styles.buttonBase).borderRadius).toBeUndefined()
   })
 
-  it('rellena "Registrarse" con un azul que aguanta el texto blanco', () => {
-    /*
-     * El blanco sobre `accent` da 4,15:1 y a 16px WCAG pide 4,5:1. Si alguien
-     * lo devuelve a `accent` "para que pegue con el resto", vuelve a fallar.
-     */
-    expect(flatten(styles.actionButton).backgroundColor).toBe(theme.colors.accent700)
-    expect(flatten(styles.actionButton).backgroundColor).not.toBe(theme.colors.accent)
-  })
-
-  it('hunde "Registrarse" a un tono más oscuro al pulsarlo', () => {
-    // Sin esto el botón se quedaría sin respuesta: el fondo pintado a mano
-    // tapa el pulsado que trae la variante.
-    const pulsado = flatten(styles.actionButtonPressed).backgroundColor
-
-    expect(pulsado).toBe(theme.colors.accent800)
-    expect(pulsado).not.toBe(flatten(styles.actionButton).backgroundColor)
-  })
-
   it('rellena "Iniciar sesión" de blanco, con el azul de la app en el texto', () => {
     // Sobre el cristal esmerilado, el blanco lo despega del vídeo de detrás
     expect(flatten(styles.loginButton).backgroundColor).toBe('#ffffff')

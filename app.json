@@ -51,7 +51,7 @@
         {
           "image": "./src/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#04070f"
+          "backgroundColor": "#f2f2f3"
         }
       ],
       "expo-status-bar",

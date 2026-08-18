@@ -19,12 +19,22 @@ describe('Button', () => {
     expect(base.borderRadius).not.toBe(theme.radius.none)
   })
 
+  it('rellena el primario con un azul que aguanta el texto blanco', () => {
+    /*
+     * El blanco sobre `accent` da 4,15:1 y el texto va a 16 px: WCAG pide
+     * 4,5:1. Si alguien lo devuelve al azul de marca "para que pegue con el
+     * resto", vuelve a fallar — y esta vez en toda la app de golpe.
+     */
+    expect(buttonStyles.primary.backgroundColor).toBe(theme.colors.accent700)
+    expect(buttonStyles.primary.backgroundColor).not.toBe(theme.colors.accent)
+  })
+
   it('cambia de color al pulsarse, no solo de tamaño', () => {
     /*
      * En un móvil el dedo tapa medio botón, así que encogerlo un 4% no es
      * respuesta suficiente. Los colores son los de `.btn-*:active`.
      */
-    expect(pressedStyles.primary.backgroundColor).toBe(theme.colors.accent700)
+    expect(pressedStyles.primary.backgroundColor).toBe(theme.colors.accent800)
     expect(pressedStyles.secondary.backgroundColor).toBeDefined()
     expect(pressedStyles.ghost.backgroundColor).toBeDefined()
 

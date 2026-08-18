@@ -52,7 +52,16 @@ export function LoadingOverlay({
       onRequestClose={() => {}}
     >
       <Animated.View style={[styles.overlay, { opacity }]} testID={testID}>
-        <BlurView intensity={30} tint="dark" style={styles.veil} />
+        <BlurView
+          /*
+           * Sin `blurMethod`, en Android `BlurView` no desenfoca: dibuja
+           * una vista semitransparente. `...Sdk31Plus` usa el desenfoque
+           * real en Android 12 o superior y en versiones anteriores no
+           * dibuja nada, que es mejor que un velo mal puesto.
+           */
+          blurMethod="dimezisBlurViewSdk31Plus"
+          intensity={30} tint="dark" style={styles.veil}
+        />
         <View style={styles.veil} pointerEvents="none" />
 
         <Image

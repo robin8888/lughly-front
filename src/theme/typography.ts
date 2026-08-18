@@ -59,12 +59,21 @@ export const typography = {
     body: 1.55,
     button: 1.2,
   },
-  letterSpacing: {
-    heading: -0.015,
-    caps: 0.08,
-    body: 0,
-  },
 } as const
 
+/**
+ * **No hay tokens de `letterSpacing`, y es a propósito.**
+ *
+ * Los hubo, copiados del CSS tal cual: `caps: 0.08`, `heading: -0.015`. Pero
+ * en CSS eso son **em** —proporción del cuerpo— y React Native lo interpreta
+ * en **puntos**. Un tracking de 0,08 puntos es exactamente nada, así que los
+ * rótulos en mayúsculas iban sin separar sin que nadie lo notara. Al final no
+ * los usaba ningún componente: cada regla pone su tracking en puntos y bien
+ * calculado (0,66 sobre 12,5 px, 0,4 sobre 13,5…).
+ *
+ * O sea que eran un duplicado muerto y equivocado. Si vuelven, tienen que ser
+ * una función del cuerpo —`em * fontSize`— y no una constante, porque el mismo
+ * em da puntos distintos en cada tamaño.
+ */
 export type FontFamily = keyof typeof typography.fonts
 export type FontSize = keyof typeof typography.sizes

@@ -12,10 +12,10 @@
 /**
  * Imágenes de producto (mascota Uhiro y estados de la app).
  *
- * Ya no hay `splash`: la pantalla de entrada pasó a la animación del logotipo
- * (`videos.splash` en `@/videos`). El fichero `splash-uhiro.png` sigue en la
- * carpeta por si hace falta volver atrás, pero al no estar aquí ya no entra en
- * el bundle: eran 784 KB que nadie miraba.
+ * Ya no hay `splash`: la pantalla de entrada pasó al vídeo (`videos.splash` en
+ * `@/videos`). El PNG que había, `splash-uhiro.png`, se borró junto con un mp4
+ * suelto que tampoco usaba nadie — el historial de git los guarda si algún día
+ * hacen falta, y ahí no ocupan sitio a nadie.
  */
 export const images = {
   /**

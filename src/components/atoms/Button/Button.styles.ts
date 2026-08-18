@@ -55,9 +55,20 @@ type ButtonVariantStyle = Record<string, ViewStyle>
 type TextVariantStyle = Record<string, TextStyle>
 
 export const buttonStyles: ButtonVariantStyle = {
+  /**
+   * `accent700` y no el `accent` de la marca.
+   *
+   * El blanco sobre `accent` da 4,15:1 y el texto del botón va a 16 px, por
+   * debajo del umbral de "texto grande": WCAG pide 4,5:1 y no llegaba. Con el
+   * 700 sube a 6,48:1.
+   *
+   * Estuvo corrigiéndose a mano en cada sitio que pintaba un botón relleno —la
+   * entrada, el hero, los trabajadores— hasta que fueron cuatro. El fallo era
+   * del átomo, así que se arregla aquí y esas correcciones desaparecen.
+   */
   primary: {
-    backgroundColor: theme.colors.accent,
-    borderColor: theme.colors.accent,
+    backgroundColor: theme.colors.accent700,
+    borderColor: theme.colors.accent700,
   },
   secondary: {
     backgroundColor: 'transparent',
@@ -90,8 +101,8 @@ export const buttonStyles: ButtonVariantStyle = {
  */
 export const pressedStyles: ButtonVariantStyle = {
   primary: {
-    backgroundColor: theme.colors.accent700,
-    borderColor: theme.colors.accent700,
+    backgroundColor: theme.colors.accent800,
+    borderColor: theme.colors.accent800,
   },
   // color-mix(in srgb, var(--color-text) 14%, transparent)
   secondary: {

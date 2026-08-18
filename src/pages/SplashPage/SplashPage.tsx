@@ -105,8 +105,7 @@ export function SplashPage({ onRegister, onLogin }: SplashPageProps) {
           variant="primary"
           fullWidth
           onPress={onRegister}
-          style={[styles.buttonBase, styles.actionButton]}
-          pressedStyle={styles.actionButtonPressed}
+          style={styles.buttonBase}
           testID="register-button"
         >
           Registrarse

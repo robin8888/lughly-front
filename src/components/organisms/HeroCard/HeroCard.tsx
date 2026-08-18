@@ -194,8 +194,6 @@ export function HeroCard({
           variant="primary"
           fullWidth
           onPress={onSecondary}
-          style={styles.actionFilled}
-          pressedStyle={styles.actionFilledPressed}
           textStyle={styles.actionText}
           testID="hero-secondary"
         >

@@ -145,7 +145,16 @@ export function BottomTabBar() {
       style={[styles.navBar, { bottom: 12 + insets.bottom }, animatedStyle]}
       testID="bottom-tab-bar"
     >
-      <BlurView intensity={45} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView
+          /*
+           * Sin `blurMethod`, en Android `BlurView` no desenfoca: dibuja
+           * una vista semitransparente. `...Sdk31Plus` usa el desenfoque
+           * real en Android 12 o superior y en versiones anteriores no
+           * dibuja nada, que es mejor que un velo mal puesto.
+           */
+          blurMethod="dimezisBlurViewSdk31Plus"
+          intensity={45} tint="dark" style={StyleSheet.absoluteFill}
+        />
       <View style={styles.tint} pointerEvents="none" />
 
       {tabs.map((tab) => (

@@ -100,27 +100,6 @@ export const styles = StyleSheet.create({
   actionSecondary: {
     backgroundColor: 'transparent',
   },
-  /**
-   * "Cómo funciona" va relleno de azul con el texto en blanco, no hueco.
-   *
-   * `accent700` y no el `accent` de la variante `primary` del átomo: el blanco
-   * sobre el azul de marca da 4,15:1 y este texto va a 14 px, así que WCAG
-   * pide 4,5:1. Con el 700 sube a 6,48:1. Es el mismo azul con el que se
-   * rellenan el botón de la entrada y el de trabajadores.
-   */
-  actionFilled: {
-    backgroundColor: theme.colors.accent700,
-    borderColor: theme.colors.accent700,
-  },
-  /**
-   * Al pintar el fondo a mano hay que decir también cómo se ve hundido: el
-   * `style` tapa el pulsado que trae la variante, y sin esto el botón se
-   * quedaría sin respuesta al tacto.
-   */
-  actionFilledPressed: {
-    backgroundColor: theme.colors.accent800,
-    borderColor: theme.colors.accent800,
-  },
   actionText: {
     fontSize: 14,
   },
