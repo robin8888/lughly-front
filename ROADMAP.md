@@ -753,14 +753,19 @@ distintos, meses cambiados, fechas imposibles.
 2. **Si el empleador no responde**: 24 horas, y luego el trabajo queda libre.
    Se le dice al avisarle ("Tenéis 24 horas para responder") y lo aplica
    `expire-overdue`. En urgencias siguen siendo 30 minutos.
+3. **La tarifa de urgencia lleva los recargos dentro** (18 Agosto 2026). El
+   `hourlyRate` que el empleador pone en la franja es el precio final: no se le
+   suman encima el +20% de sábado, el +35% de domingo y festivo ni el +25%
+   nocturno. Es él quien decide si esa hora vale más por caer en sábado, y lo
+   mete en el número.
 
-### Decisión que sigue pendiente
+   Tiene sentido con el resto: la franja ya es "este trabajador, este día, a
+   esta hora", así que la hora ya está elegida cuando se pone el precio.
+   Aplicar encima un recargo por la hora sería cobrarla dos veces.
 
-- **La tarifa de urgencia, ¿sustituye a la del oficio o es una aparte?** Existe
-  `UrgencyWindow.hourlyRate` y el empleador la fija al poner la franja, pero no
-  está escrito qué pasa con los recargos ya existentes (sábado +20%,
-  domingo/festivo +35%, nocturno +25%): si se aplican encima de ella o si esa
-  tarifa ya los lleva dentro.
+   No había que cambiar ningún cálculo —no existe: en el backend no hay
+   aritmética de porcentajes por ninguna parte—, solo dos textos que afirmaban
+   lo contrario, en el aviso al empleador y en el esquema de la API.
 
 ---
 

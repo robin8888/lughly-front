@@ -180,9 +180,16 @@ export function UrgencySchedulePage({
             aviso.
           </Text>
 
+          {/*
+            Los recargos van dentro de esta tarifa, no encima (decisión de
+            producto del 18 Agosto 2026). Aquí se decía lo contrario, y no es un
+            matiz: quien pone 40 €/h creyendo que el sábado subirá solo está
+            fijando un precio distinto del que cree.
+          */}
           <Text style={styles.rateNote}>
-            La tarifa es la base de la urgencia. Encima se aplican los recargos
-            de siempre: sábado, domingo y festivo, y nocturno.
+            Esta es la tarifa final de la urgencia: ya incluye lo que quieras
+            cobrar de más por sábados, domingos, festivos o noche. No se le suma
+            ningún recargo encima.
           </Text>
         </InfoCard>
 
