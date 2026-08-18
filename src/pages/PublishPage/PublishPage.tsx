@@ -33,11 +33,10 @@ import { DateTimeField } from '@/components/molecules/DateTimeField'
 import {
   addDays,
   atTime,
-  formatLongDate,
   formatLongDateTime,
-  parseIsoDate,
+  parseIsoDateTime,
   startOfToday,
-  toIsoDate,
+  toIsoDateTime,
 } from '@/utils/dates'
 import { styles } from './PublishPage.styles'
 
@@ -95,7 +94,7 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
    * trabaja con fechas. Se convierte aquí, en el único sitio donde se sabe
    * que una es un día suelto y la otra un instante.
    */
-  const preferredDate = parseIsoDate(draft.preferredDate)
+  const preferredDate = parseIsoDateTime(draft.preferredDate)
   const biddingEndsAt = draft.biddingEndsAt ? new Date(draft.biddingEndsAt) : null
 
   const handlePublish = async () => {
@@ -280,20 +279,29 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
          * el día primero, y "03/04" acaba siendo el 3 de abril para quien lo
          * escribe y el 4 de marzo para quien lo lee.
          */}
+        {/*
+          Con hora, no solo el día. Sin ella, el profesional recibía "el jueves"
+          y tenía que llamar para acordarla, y la agenda del trabajador no podía
+          enseñar más que un día suelto.
+
+          Se manda como instante en UTC (`toIsoDateTime`), que es lo que hace
+          que el cambio de hora no sea un problema: en el día de 25 horas hay
+          dos "02:30" locales, pero un solo instante para cada uno.
+        */}
         <FormField
-          label={isAuction ? 'Cuándo lo necesitas' : 'Día del servicio'}
+          label={isAuction ? 'Cuándo lo necesitas' : 'Día y hora del servicio'}
           hint={
             preferredDate
-              ? formatLongDate(preferredDate)
+              ? formatLongDateTime(preferredDate)
               : 'Opcional. Ayuda al profesional a saber si le encaja.'
           }
           error={fieldErrors.preferredDate}
         >
           <DateTimeField
             value={preferredDate}
-            onChange={(picked) => update({ preferredDate: toIsoDate(picked) })}
-            mode="date"
-            placeholder="Elegir día"
+            onChange={(picked) => update({ preferredDate: toIsoDateTime(picked) })}
+            mode="datetime"
+            placeholder="Elegir día y hora"
             // Nadie necesita un fontanero el martes pasado
             minimumDate={startOfToday()}
             disabled={isBusy}

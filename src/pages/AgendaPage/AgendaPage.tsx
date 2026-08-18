@@ -24,7 +24,7 @@ import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
-import { formatLongDate } from '@/utils/dates'
+import { formatJobWhen } from '@/utils/dates'
 import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
 import { theme } from '@/theme'
 import { styles } from './AgendaPage.styles'
@@ -85,7 +85,7 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
         ) : jobs.length === 0 ? (
           <EmptyState
             title="Nada asignado por ahora"
-            message="Aquí aparecerán los trabajos que tengas que hacer, con la dirección, la fecha y el teléfono del cliente."
+            message="Aquí aparecerán los trabajos que tengas que hacer, con la dirección, cuándo es y el teléfono del cliente."
             illustration="none"
             testID="agenda-empty"
           />
@@ -115,10 +115,16 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                      * El día, lo primero después del título: es una agenda y
                      * lo que se viene a mirar es cuándo toca.
                      */}
+                    {/*
+                      `formatJobWhen` y no `formatLongDateTime`: los trabajos
+                      publicados antes de que se pidiera la hora no la tienen, y
+                      pintársela diría "a las 02:00" —medianoche UTC—, una hora
+                      a la que nadie va a ir. El helper enseña la hora solo
+                      cuando el dato la trae.
+                    */}
                     <Text style={styles.when}>
-                      {job.preferredDate
-                        ? formatLongDate(new Date(job.preferredDate))
-                        : 'Sin fecha acordada todavía'}
+                      {(job.preferredDate && formatJobWhen(job.preferredDate)) ??
+                        'Sin fecha acordada todavía'}
                     </Text>
 
                     <View style={styles.block}>

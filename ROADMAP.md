@@ -707,11 +707,6 @@ sistema, es una persona sin dormir.
 
 ### Lo que quedó pendiente de esto
 
-- [ ] **La hora del trabajo no se captura.** La agenda enseña el día pero no la
-      hora, y no es cosa de la pantalla: `preferredDate` se guarda con
-      `toIsoDate`, que la descarta al publicar. Pintar `formatLongDateTime`
-      sobre eso daría una hora inventada —medianoche UTC, "a las 02:00" en
-      España—, así que primero hay que capturarla. Va con el bloque de abajo.
 - [ ] Un autónomo con gente a cargo puede ya asignarse a sí mismo desde la
       bandeja, pero si quien responde es una empresa sin ficha propia el
       servidor lo rechazará. Lo limpio sería que `GET /v1/pro/inbox` dijera si
@@ -729,10 +724,21 @@ distintos, meses cambiados, fechas imposibles.
 
 - [x] Un solo componente de fecha y hora para toda la app: `DateTimeField`
       (14 Agosto 2026). Ya no queda ningún campo de fecha escrito a mano.
-- [ ] **Capturar la hora, no solo el día.** El componente la sabe pedir, pero
-      `preferredDate` se guarda con `toIsoDate`, que la tira. Por eso la agenda
-      del trabajador enseña el día y no la hora — y por eso no se puede arreglar
-      solo en la pantalla.
+- [x] **Capturar la hora, no solo el día** (18 Agosto 2026). Publicar un
+      trabajo y encargárselo a alguien concreto piden ya día **y** hora. El
+      backend no hubo que tocarlo: `preferredDate` ya era `DateTime` y la
+      validación `z.coerce.date()`; la hora se perdía en el móvil, en
+      `toIsoDate`.
+
+      Se manda como instante en UTC (`toIsoDateTime`) y no como hora local, que
+      es lo que hace que el cambio de hora no sea un problema: en el día de 25
+      horas hay dos "02:30" locales y un solo instante para cada uno.
+
+      Conviven dos formas de dato antiguo sin hora —"2026-08-16" en los
+      borradores del móvil y "2026-08-16T00:00:00.000Z" en lo que devuelve el
+      servidor— y `formatJobWhen` las reconoce para no inventarse una hora: sin
+      eso, un trabajo de antes se vería "a las 02:00", que es la medianoche UTC
+      y no una hora a la que nadie va a ir.
 - [ ] **Horario de verano.** Es lo que hace que esto no sea trivial: en
       España hay un día de 23 horas y otro de 25. Una franja "de 22:00 a
       06:00" en la madrugada del cambio no dura ocho horas, y el cierre de

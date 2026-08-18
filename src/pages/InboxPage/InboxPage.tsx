@@ -24,7 +24,7 @@ import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useUser } from '@/stores/useAuthStore'
 import type { ApiInboxItem } from '@/api/assignments.api'
-import { formatLongDate, timeLeft } from '@/utils/dates'
+import { formatJobWhen, timeLeft } from '@/utils/dates'
 import { jobTypeLabel } from '@/utils/jobStatus'
 import type { ApiJobType } from '@/api/jobs.api'
 import { theme } from '@/theme'
@@ -168,7 +168,7 @@ export function InboxPage({ onBack }: InboxPageProps) {
                   <Text style={styles.meta}>
                     {job.tradeLabel} · {job.city}
                     {job.preferredDate
-                      ? ` · para el ${formatLongDate(new Date(job.preferredDate))}`
+                      ? ` · para el ${formatJobWhen(job.preferredDate)}`
                       : ''}
                   </Text>
 

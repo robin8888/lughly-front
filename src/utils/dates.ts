@@ -96,8 +96,10 @@ export function toIsoDate(date: Date): string {
  * en España eso es el día 15 a las 22:00 en verano. Un usuario que eligió el
  * 16 vería el 15 al volver a abrir el formulario.
  */
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
+
 export function parseIsoDate(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim())
+  const match = DATE_ONLY.exec(value.trim())
   if (!match) return null
 
   const [, year, month, day] = match
@@ -105,6 +107,87 @@ export function parseIsoDate(value: string): Date | null {
 
   // Rechaza el 31 de febrero y compañía, que JS convertiría al 3 de marzo
   return date.getMonth() === Number(month) - 1 ? date : null
+}
+
+/**
+ * Fecha **con hora** para la API: "2026-08-16T18:30:00.000Z".
+ *
+ * Aquí sí se usa `toISOString()`, al revés que en `toIsoDate`, y no es
+ * incoherencia: son dos cosas distintas. Una fecha suelta es un día del
+ * calendario y hay que mandarla tal cual se eligió; una cita es un **instante**,
+ * y un instante se manda en UTC y se pinta en la hora de quien lo mire.
+ *
+ * Es además lo que resuelve el cambio de hora sin pensarlo. En el día de 25
+ * horas hay dos "02:30" locales; en UTC son dos instantes distintos y no hay
+ * ambigüedad. Sumar o restar horas sobre una hora local sí la tendría.
+ */
+export function toIsoDateTime(date: Date): string {
+  return date.toISOString()
+}
+
+/**
+ * Lee lo que venga: una cita con hora o una fecha suelta de las de antes.
+ *
+ * Las dos formas conviven y van a seguir conviviendo. Los trabajos publicados
+ * antes de que se pidiera la hora llevan "2026-08-16" a secas, y los borradores
+ * a medias guardados en el móvil, también. Un solo `new Date(value)` no vale
+ * para ambas: con la fecha suelta la norma manda leerla como UTC, y en España
+ * eso devuelve el día anterior a las 22:00.
+ */
+export function parseIsoDateTime(value: string): Date | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+
+  // Fecha suelta: la lee quien sabe hacerlo sin correrla un día
+  const dateOnly = parseIsoDate(trimmed)
+  if (dateOnly) return dateOnly
+
+  const parsed = new Date(trimmed)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+/**
+ * Cuándo es un trabajo, dicho como se pueda: con hora si la tiene, y solo el
+ * día si no.
+ *
+ * Hace falta porque los datos son mixtos. Un trabajo de antes se guardó como
+ * "2026-08-16", que al leerlo es medianoche **UTC**; pintarle la hora diría "a
+ * las 02:00", una hora que nadie eligió y a la que nadie va a ir. Se detecta
+ * justo por eso: si el instante cae exactamente en medianoche UTC, es una
+ * fecha suelta disfrazada.
+ *
+ * El falso positivo —alguien que eligiera de verdad la medianoche UTC— sale
+ * gratis: se le enseña el día sin la hora, que es lo que se veía hasta ahora.
+ */
+export function formatJobWhen(iso: string): string | null {
+  const trimmed = iso.trim()
+
+  /*
+   * Una fecha sin hora llega de dos formas y hay que reconocer las dos.
+   *
+   * La cadena a secas —"2026-08-16"— viene de un borrador guardado en el
+   * móvil. La otra, "2026-08-16T00:00:00.000Z", es la misma fecha después de
+   * pasar por el servidor: se guardó con `z.coerce.date()`, que la leyó como
+   * medianoche UTC.
+   *
+   * Mirar solo la hora UTC no vale para la primera: se lee como medianoche
+   * **local**, que en España son las 22:00 UTC del día anterior, y pasaría por
+   * una hora elegida. Por eso se comprueba antes la forma de la cadena.
+   */
+  if (DATE_ONLY.test(trimmed)) {
+    const dateOnly = parseIsoDate(trimmed)
+    return dateOnly ? formatLongDate(dateOnly) : null
+  }
+
+  const date = parseIsoDateTime(trimmed)
+  if (!date) return null
+
+  const isUtcMidnight =
+    date.getUTCHours() === 0 &&
+    date.getUTCMinutes() === 0 &&
+    date.getUTCSeconds() === 0
+
+  return isUtcMidnight ? formatLongDate(date) : formatLongDateTime(date)
 }
 
 /** Hoy a las 00:00, en la hora del dispositivo. */

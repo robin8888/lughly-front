@@ -25,7 +25,7 @@ import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useRequestPro } from '@/hooks/domain/useRequestPro'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
-import { formatLongDate, startOfToday, toIsoDate } from '@/utils/dates'
+import { formatLongDateTime, startOfToday, toIsoDateTime } from '@/utils/dates'
 import { theme } from '@/theme'
 import { styles } from './RequestProPage.styles'
 
@@ -96,7 +96,7 @@ export function RequestProPage({
       description: description.trim(),
       city: city.trim(),
       addressLine: addressLine.trim(),
-      ...(preferredDate && { preferredDate: toIsoDate(preferredDate) }),
+      ...(preferredDate && { preferredDate: toIsoDateTime(preferredDate) }),
       ...(maxBudget !== '' &&
         Number.isFinite(budget) &&
         budget > 0 && { maxBudget: budget }),
@@ -266,7 +266,7 @@ export function RequestProPage({
           label="¿Cuándo lo necesitas?"
           hint={
             preferredDate
-              ? formatLongDate(preferredDate)
+              ? formatLongDateTime(preferredDate)
               : 'Opcional. Ayuda a saber si le encaja en la agenda.'
           }
           error={fieldErrors.preferredDate}
@@ -274,8 +274,8 @@ export function RequestProPage({
           <DateTimeField
             value={preferredDate}
             onChange={setPreferredDate}
-            mode="date"
-            placeholder="Elegir día"
+            mode="datetime"
+            placeholder="Elegir día y hora"
             minimumDate={startOfToday()}
             disabled={isRequesting}
             testID="request-date"

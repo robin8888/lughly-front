@@ -4,11 +4,14 @@ import {
   formatDate,
   formatDateTime,
   formatLongDate,
+  formatJobWhen,
   formatLongDateTime,
   formatTime,
   parseIsoDate,
+  parseIsoDateTime,
   timeLeft,
   toIsoDate,
+  toIsoDateTime,
 } from './dates'
 
 /**
@@ -198,5 +201,52 @@ describe('timeLeft', () => {
   it('devuelve null si ya pasó', () => {
     expect(timeLeft(new Date(2026, 7, 16, 11, 59), now)).toBeNull()
     expect(timeLeft(now, now)).toBeNull()
+  })
+})
+
+/**
+ * Fecha con hora: lo que se añadió al pedir la hora al publicar.
+ *
+ * El riesgo aquí no es el formato sino el desfase: una cita del 16 mandada
+ * como el 15, o una hora inventada donde no la hay.
+ */
+describe('citas con hora', () => {
+  it('manda un instante, no un día suelto', () => {
+    const cita = new Date(2026, 7, 16, 18, 30)
+
+    expect(toIsoDateTime(cita)).toBe(cita.toISOString())
+    expect(parseIsoDateTime(toIsoDateTime(cita))?.getTime()).toBe(cita.getTime())
+  })
+
+  it('sigue leyendo las fechas sueltas de antes sin correrlas un día', () => {
+    /*
+     * `new Date('2026-08-16')` a secas es medianoche UTC, que en España es el
+     * día 15 a las 22:00 en verano. Un trabajo publicado antes del cambio se
+     * vería con la fecha equivocada.
+     */
+    const suelta = parseIsoDateTime('2026-08-16')
+
+    expect(suelta?.getDate()).toBe(16)
+    expect(suelta?.getMonth()).toBe(7)
+  })
+
+  it('no se inventa una hora cuando el dato no la trae', () => {
+    // Medianoche UTC delata a una fecha suelta disfrazada de instante
+    expect(formatJobWhen('2026-08-16T00:00:00.000Z')).toBe(
+      'domingo, 16 de agosto',
+    )
+    expect(formatJobWhen('2026-08-16')).toBe('domingo, 16 de agosto')
+  })
+
+  it('la enseña cuando sí la trae', () => {
+    const cita = new Date(2026, 7, 16, 18, 30)
+
+    expect(formatJobWhen(cita.toISOString())).toContain('a las 18:30')
+  })
+
+  it('devuelve null con basura, en vez de una fecha inválida', () => {
+    expect(parseIsoDateTime('')).toBeNull()
+    expect(parseIsoDateTime('el jueves')).toBeNull()
+    expect(formatJobWhen('el jueves')).toBeNull()
   })
 })
