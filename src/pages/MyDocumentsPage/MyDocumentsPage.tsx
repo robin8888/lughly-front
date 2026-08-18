@@ -11,10 +11,10 @@
  * Ahora hace falta de verdad: sin documento no se puede pujar. Un bloqueo sin
  * salida no es una regla, es una app rota.
  *
- * Las fotos se toman con el **escáner de documentos del sistema**, no con la
- * cámara: detecta el documento, recorta y endereza, y no deja capturar si no ve
- * uno. Es lo que impide subir cualquier otra cosa, y funciona en el origen en
- * vez de juzgar la foto después.
+ * Las fotos se toman con el escáner de documentos del sistema, que encuadra,
+ * recorta y endereza. **No impide fotografiar otra cosa**: lleva disparador
+ * manual. La comprobación de que es un documento está pendiente y va en el
+ * servidor, leyendo el contenido de la imagen ya recortada.
  */
 
 import { useState } from 'react'
@@ -232,9 +232,9 @@ export function MyDocumentsPage({ onBack, testID }: MyDocumentsPageProps) {
           duplicar nada.
         */}
         <Text style={styles.hint}>
-          El escáner solo dispara cuando reconoce un documento, y lo recorta y
-          endereza él. Si ya subiste uno, volver a subirlo lo sustituye: sirve
-          para corregir una foto movida o un documento caducado.
+          El escáner recorta y endereza el documento por ti. Si ya subiste uno,
+          volver a subirlo lo sustituye: sirve para corregir una foto movida o un
+          documento caducado.
         </Text>
 
         <Button

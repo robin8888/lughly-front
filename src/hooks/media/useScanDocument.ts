@@ -2,17 +2,23 @@
  * useScanDocument
  * Captura un documento con el escáner nativo del sistema.
  *
- * **No es la cámara normal.** Usa `VNDocumentCameraViewController` en iOS y el
- * escáner de documentos de ML Kit en Android: los dos detectan el rectángulo
- * del documento, guían al usuario, y recortan y corrigen la perspectiva. La
- * consecuencia importante es que **no se puede fotografiar cualquier cosa**: si
- * no encuentra un documento, no deja capturar.
+ * Usa `VNDocumentCameraViewController` en iOS y el escáner de documentos de ML
+ * Kit en Android: detectan el rectángulo del documento, guían al usuario, y
+ * recortan y corrigen la perspectiva.
  *
- * Eso resuelve el problema en el origen, que es donde se resuelve bien. La
- * alternativa era juzgar la foto después con OCR, y se probó: sobre una imagen
- * de césped y cielo, el OCR devolvió 983 caracteres de basura, mientras que
- * sobre un logotipo con una palabra real devolvió 6. Contar texto no distingue
- * un documento de una textura.
+ * **Lo que NO hace: garantizar que la foto sea de un documento.** Se dijo aquí
+ * que no dejaba capturar otra cosa y es falso, comprobado en el móvil: los dos
+ * escáneres llevan disparador manual, así que quien insista fotografía lo que
+ * quiera. La detección sirve para encuadrar y recortar, no para vetar.
+ *
+ * Lo que sí aporta, y no es poco: la imagen llega recortada, recta y con buen
+ * contraste. Eso es justo la condición en la que un OCR posterior funciona, y
+ * es ahí donde tiene que estar la comprobación de que es un documento —leyendo
+ * marcas: un número cuya letra cuadre, la zona MRZ, palabras como "APELLIDOS"—.
+ *
+ * Contar texto no vale como criterio, y también está medido: sobre una imagen
+ * de césped y cielo el OCR devolvió 983 caracteres de basura, y sobre un
+ * logotipo con una palabra real, 6. El OCR lee las texturas como letras.
  *
  * El fichero que devuelve el escáner pasa por `prepareForUpload`, el mismo aro
  * que las imágenes de la galería: se recomprime y se le quitan los metadatos

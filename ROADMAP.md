@@ -654,11 +654,21 @@ NIF o un CIF, si es autónomo o empresa.
       Cubre DNI, NIE —X, Y y Z valen 0, 1 y 2— y CIF, cuyo control es dígito o
       letra según la inicial de la sociedad. No dice que el número esté dado de
       alta en Hacienda ni que sea de quien lo escribe: solo que es posible.
-- [x] **Que la foto sea de un documento** (18 Agosto 2026). Las caras del
-      documento se capturan con el escáner nativo del sistema —VisionKit en iOS,
-      el escáner de documentos de ML Kit en Android—, que detecta el documento,
-      recorta, endereza y **no deja disparar si no ve uno**. Se resuelve en el
-      origen en vez de juzgar la foto después.
+- [ ] **Que la foto sea de un documento.** Sigue abierto: se dio por resuelto
+      con el escáner nativo y era falso. Los escáneres de iOS y Android llevan
+      **disparador manual**, así que quien insista fotografía lo que quiera —
+      comprobado en el móvil, subiendo cualquier cosa—. La detección de bordes
+      encuadra y recorta; no veta.
+
+      Lo que el escáner sí deja, y hace viable el siguiente paso: la imagen
+      llega recortada, recta y con buen contraste. La comprobación tiene que ir
+      **en el servidor**, sobre esa imagen, buscando marcas: un número cuya letra
+      cuadre con la validación ya escrita, la zona MRZ del pasaporte, palabras
+      como "APELLIDOS" o "DOCUMENTO NACIONAL DE IDENTIDAD".
+
+- [x] **Escáner nativo para capturar** (18 Agosto 2026). VisionKit en iOS y el
+      escáner de ML Kit en Android, con carga en diferido para que su ausencia
+      degrade a la galería en vez de tumbar la app.
 
       Se probó primero lo obvio, OCR en el servidor, y falló: sobre una imagen de
       césped y cielo devolvió 983 caracteres de basura, y sobre un logotipo con

@@ -28,6 +28,7 @@ import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { setupSessionBridge } from '@/api/sessionBridge'
+import { useResetCacheOnAccountChange } from '@/hooks/auth/useResetCacheOnAccountChange'
 import { usePushRegistration } from '@/hooks/push/usePushRegistration'
 import { BottomTabBar } from '@/components/organisms/BottomTabBar'
 import { LoadingOverlay } from '@/components/organisms/LoadingOverlay'
@@ -37,6 +38,18 @@ import {
   useMustChangePassword,
 } from '@/stores/useAuthStore'
 import { useIsLoading, useLoadingMessage } from '@/stores/useLoadingStore'
+
+/**
+ * Vigila el cambio de cuenta y tira lo cacheado.
+ *
+ * Es un componente y no una llamada dentro de `RootLayout` porque el hook
+ * necesita el `QueryClient` del proveedor, y el proveedor se monta dentro del
+ * propio `RootLayout`.
+ */
+function CacheGuard() {
+  useResetCacheOnAccountChange()
+  return null
+}
 
 // Mantener el splash nativo visible hasta que todo esté listo
 SplashScreen.preventAutoHideAsync()
@@ -151,6 +164,12 @@ export default function RootLayout() {
           de antes de entrar.
         */}
         {isAuthenticated && !mustChangePassword && <BottomTabBar />}
+
+        {/*
+          Vacía la caché al cambiar de cuenta. Va dentro del proveedor porque
+          necesita su cliente, y sin renderizar nada: solo vigila.
+        */}
+        <CacheGuard />
 
         {/* Se monta una sola vez y lo controla useLoadingStore desde donde sea */}
         <LoadingOverlay
