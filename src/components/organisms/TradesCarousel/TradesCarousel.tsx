@@ -1,6 +1,10 @@
 /**
  * TradesCarousel Organism
- * "01 · Un experto para cada trabajo" (HOME_MOBILE.md §1).
+ * El carrusel de oficios (HOME_MOBILE.md §1).
+ *
+ * Iba bajo el rótulo "01 · Un experto para cada trabajo", que se retiró: era
+ * la numeración de una home con cinco secciones que ya no existen, y las
+ * tarjetas dicen solas lo que son.
  *
  * Las 18 tarjetas están posicionadas en absoluto sobre un contenedor de 410 px
  * de alto y solo se ven cinco: la central y dos a cada lado, alejándose con
@@ -9,7 +13,7 @@
  */
 
 import { useRef } from 'react'
-import { View, Text } from 'react-native'
+import { View, Image } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Easing,
@@ -23,6 +27,7 @@ import { TradeCarouselItem } from '@/components/molecules/TradeCarouselItem'
 import { useCarousel } from '@/hooks/ui/useCarousel'
 import { useTrades } from '@/hooks/domain/useTrades'
 import type { TradeSlug } from '@/utils/trades'
+import { images } from '@/images'
 import { styles } from './TradesCarousel.styles'
 
 export interface TradesCarouselProps {
@@ -118,7 +123,22 @@ export function TradesCarousel({ onSelect, testID }: TradesCarouselProps) {
 
   return (
     <View style={styles.section} testID={testID}>
-      <Text style={styles.sectionLabel}>01 · Un experto para cada trabajo</Text>
+      {/*
+        La foto y su velo van los primeros y en absoluto: quedan por debajo de
+        las tarjetas y del detector de gestos, que se dibujan después, sin
+        necesidad de tocar z-index.
+
+        El velo lleva `pointerEvents="none"` para no comerse el arrastre, que
+        se puede empezar en cualquier punto del carrusel. `Image` no admite esa
+        prop, pero tampoco hace falta: queda por debajo del `GestureDetector`.
+      */}
+      <Image
+        source={images.carruselFondo}
+        style={styles.background}
+        resizeMode="cover"
+        testID="carousel-background"
+      />
+      <View style={styles.veil} pointerEvents="none" />
 
       <View style={styles.viewport}>
         <GestureDetector gesture={pan}>

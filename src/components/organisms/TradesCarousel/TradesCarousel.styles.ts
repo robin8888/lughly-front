@@ -6,21 +6,57 @@
 import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
+/**
+ * Opacidad del velo sobre la foto de fondo.
+ *
+ * Bajo, porque el trabajo pesado lo hace ahora el desenfoque: la foto va
+ * horneada con un desenfoque gaussiano, así que el detalle ya no compite con
+ * las tarjetas. Lo que queda por hacer es rebajar un poco la saturación —el
+ * cielo y el césped son muy vivos— para que las hormigas, que son claras, no
+ * se pierdan encima.
+ *
+ * Es el color de la página, no un blanco cualquiera: así el fondo del carrusel
+ * se lee como una variación de la pantalla y no como un parche.
+ *
+ * Este es el número que hay que tocar si la foto se ve apagada o demasiado
+ * presente. A 0 desaparece el velo y queda solo el desenfoque.
+ */
+const VEIL_OPACITY = 0.2
+
 export const styles = StyleSheet.create({
+  /**
+   * Sin padding: lo lleva el viewport como margen.
+   *
+   * Es lo que permite que la foto llegue de borde a borde. Con el padding aquí,
+   * una capa absoluta se quedaría dentro de él y el fondo saldría enmarcado con
+   * 16 px de página a cada lado, como un cuadro colgado.
+   */
   section: {
-    paddingTop: 20,
-    paddingHorizontal: 16,
+    position: 'relative',
   },
-  sectionLabel: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: 12.5,
-    letterSpacing: 0.66,
-    textTransform: 'uppercase',
-    // Va sobre el fondo claro de la página, así que el accent700 del diseño
-    color: theme.colors.accent700,
-    marginBottom: 10,
+  /** La foto, tapando la sección entera por debajo de todo */
+  background: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  veil: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.bg,
+    opacity: VEIL_OPACITY,
   },
   viewport: {
+    // Antes eran el padding de la sección; como margen dejan el fondo libre
+    marginTop: 20,
+    marginHorizontal: 16,
     position: 'relative',
     /**
      * 40 (top de la tarjeta) + 345 (imagen) + 8 + 20 (etiqueta) = 413, más

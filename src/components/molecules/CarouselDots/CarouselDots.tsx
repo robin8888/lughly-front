@@ -40,21 +40,38 @@ export function CarouselDots({ onPressSlot, testID }: CarouselDotsProps) {
               width: active ? 20 : small ? 5 : 7,
               height: active ? 7 : small ? 5 : 7,
               borderRadius: theme.radius.pill,
-              opacity: small ? 0.45 : 1,
               /**
-               * El inactivo va en oscuro: el diseño lo pone en blanco al 30%
-               * porque la home era negra, y sobre el fondo claro actual eso
-               * es invisible.
-               *
-               * Al 50% y no al 30%: son botones, y el 30% se quedaba en
-               * 1,88:1 sobre la página. Así llega a 3,13:1, que es más de lo
-               * que daba el original sobre negro (2,54:1). Los dos puntos
-               * exteriores siguen bajando de ahí con su `opacity: 0.45`, que
-               * es el desvanecido buscado por el diseño.
+               * Tres niveles de presencia: el activo entero, el de al lado
+               * algo apagado y los dos de los extremos desvanecidos, que es
+               * el degradado que buscaba el diseño. Al ser todos blancos, la
+               * opacidad es lo que devuelve la jerarquía que antes daba el
+               * color del activo.
                */
-              backgroundColor: active
-                ? theme.colors.accent600
-                : 'rgba(29, 31, 32, 0.5)',
+              opacity: active ? 1 : small ? 0.5 : 0.75,
+              /**
+               * Blancos, y con sombra.
+               *
+               * Pasaron por tres fondos: el diseño los ponía en blanco al 30%
+               * sobre la home negra; al aclararse la home hubo que invertirlos
+               * a oscuro; y ahora caen sobre la foto del carrusel, a la altura
+               * del césped. Ahí el oscuro se quedaba en 2,71:1 y el azul del
+               * activo en 2,10:1: ninguno de los dos resaltaba.
+               *
+               * Blanco sobre ese verde tampoco llega por sí solo (1,97:1), así
+               * que llevan la misma sombra que las etiquetas. Es lo que se hace
+               * con indicadores sobre una foto, y de paso los devuelve al
+               * blanco del diseño original.
+               *
+               * El activo se distingue por forma además de por color: es una
+               * píldora de 20 px frente a puntos de 5 y 7.
+               */
+              backgroundColor: '#ffffff',
+              shadowColor: '#000000',
+              shadowOpacity: 0.45,
+              shadowRadius: 3,
+              shadowOffset: { width: 0, height: 1 },
+              // Android no usa `shadow*`, sino esto
+              elevation: 3,
             }}
           />
         )
