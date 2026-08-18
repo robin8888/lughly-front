@@ -19,6 +19,7 @@ export type IconName =
   | 'gavel'
   | 'calendar'
   | 'wallet'
+  | 'search'
 
 export interface IconProps {
   name: IconName
@@ -117,6 +118,14 @@ export function Icon({
         <>
           <Path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5" {...stroke} />
           <Path d="M17 13h.01" {...stroke} />
+        </>
+      )}
+
+      {/* Lupa: la lente y el mango, en el mismo trazo que el resto */}
+      {name === 'search' && (
+        <>
+          <Circle cx="11" cy="11" r="7" {...stroke} />
+          <Path d="m20 20-3.6-3.6" {...stroke} />
         </>
       )}
     </Svg>

@@ -29,6 +29,15 @@ export interface InfoCardProps {
   variant?: InfoCardVariant
   /** Oculta la cuadrícula. Para tarjetas muy pequeñas, donde solo ensucia. */
   grid?: boolean
+  /**
+   * Quita el contorno azul.
+   *
+   * Para las piezas que no se leen como una tarjeta dentro de la página sino
+   * como la página misma —la cabecera de las dos home—, donde enmarcarlas las
+   * convierte en un recuadro pegado encima en vez de en el principio de la
+   * pantalla.
+   */
+  bordered?: boolean
   style?: ViewStyle
   testID?: string
 }
@@ -37,6 +46,7 @@ export function InfoCard({
   children,
   variant = 'light',
   grid = true,
+  bordered = true,
   style,
   testID,
 }: InfoCardProps) {
@@ -46,7 +56,12 @@ export function InfoCard({
 
   return (
     <View
-      style={[styles.base, isDark ? styles.dark : styles.light, style]}
+      style={[
+        styles.base,
+        bordered && styles.bordered,
+        isDark ? styles.dark : styles.light,
+        style,
+      ]}
       testID={testID}
     >
       {grid && <CardGrid color={gridColor} />}

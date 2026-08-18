@@ -16,7 +16,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native'
-import { styles, buttonStyles, textStyles } from './Button.styles'
+import { styles, buttonStyles, pressedStyles, textStyles } from './Button.styles'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost'
 export type ButtonSize = 'default' | 'small' | 'large'
@@ -35,6 +35,15 @@ export interface ButtonProps {
    * sin tener que fundir los objetos a mano en cada llamada.
    */
   style?: StyleProp<ViewStyle>
+  /**
+   * Capa que se añade mientras el botón está pulsado, encima de `style`.
+   *
+   * Hace falta porque `style` se aplica al final y, si trae `backgroundColor`,
+   * tapa el color de pulsado de la variante y el botón se queda sin respuesta
+   * al tacto. Quien pinte el fondo a mano tiene que decir también cómo se ve
+   * hundido.
+   */
+  pressedStyle?: StyleProp<ViewStyle>
   textStyle?: StyleProp<TextStyle>
   testID?: string
 }
@@ -48,6 +57,7 @@ export function Button({
   onPress,
   fullWidth = false,
   style,
+  pressedStyle,
   textStyle,
   testID,
 }: ButtonProps) {
@@ -65,7 +75,9 @@ export function Button({
         fullWidth && styles.fullWidth,
         isDisabled && styles.disabled,
         pressed && !isDisabled && styles.pressed,
+        pressed && !isDisabled && pressedStyles[variant],
         style,
+        pressed && !isDisabled && pressedStyle,
       ]}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}

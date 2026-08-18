@@ -1,5 +1,9 @@
 /**
  * Avatar styles
+ *
+ * Mismos valores que el avatar de Mi cuenta, que es el patrón que ya seguían
+ * los cuatro hechos a mano: círculo con velo del acento y contorno fino, para
+ * que la reserva sin foto no sea un agujero.
  */
 
 import { StyleSheet } from 'react-native'
@@ -9,40 +13,14 @@ export const styles = StyleSheet.create({
   container: {
     borderRadius: theme.radius.pill,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.accent100,
+    borderWidth: 1,
+    borderColor: theme.colors.accent300,
   },
   image: {
     width: '100%',
     height: '100%',
-  },
-  fallback: {
-    backgroundColor: theme.colors.accent200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    fontFamily: theme.typography.fonts.heading,
-    color: theme.colors.accent800,
-    textTransform: 'uppercase',
-  },
-  small: {
-    width: 32,
-    height: 32,
-  },
-  medium: {
-    width: 48,
-    height: 48,
-  },
-  large: {
-    width: 72,
-    height: 72,
-  },
-  smallText: {
-    fontSize: 13.5,
-  },
-  mediumText: {
-    fontSize: 18,
-  },
-  largeText: {
-    fontSize: 27,
   },
 })
