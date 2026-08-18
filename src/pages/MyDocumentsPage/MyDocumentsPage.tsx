@@ -8,9 +8,13 @@
  * inerte. Quien se quedaba sin documentos —el alta está hecha para no tumbarse
  * si la subida falla— no tenía ninguna salida.
  *
- * Ahora hace falta de verdad: sin documento no se puja, no se adjudica, no se
- * encarga y no se lanza una urgencia. Un bloqueo sin salida no es una regla,
- * es una app rota.
+ * Ahora hace falta de verdad: sin documento no se puede pujar. Un bloqueo sin
+ * salida no es una regla, es una app rota.
+ *
+ * Las fotos se toman con el **escáner de documentos del sistema**, no con la
+ * cámara: detecta el documento, recorta y endereza, y no deja capturar si no ve
+ * uno. Es lo que impide subir cualquier otra cosa, y funciona en el origen en
+ * vez de juzgar la foto después.
  */
 
 import { useState } from 'react'
@@ -157,8 +161,8 @@ export function MyDocumentsPage({ onBack, testID }: MyDocumentsPageProps) {
             </Text>
             <Text style={styles.cardBody}>
               {hasIdentity
-                ? 'Con esto puedes pujar, adjudicar, encargar trabajos y pedir urgencias.'
-                : 'Sin él no se puede pujar, adjudicar un trabajo, encargárselo a alguien ni pedir una urgencia. Súbelo aquí abajo y podrás seguir al momento.'}
+                ? 'Con esto puedes pujar por los trabajos publicados.'
+                : 'Sin él no se puede pujar. Escanéalo aquí abajo y podrás seguir al momento.'}
             </Text>
 
             {pending.length > 0 && (
@@ -203,6 +207,7 @@ export function MyDocumentsPage({ onBack, testID }: MyDocumentsPageProps) {
               onChange={setFront}
               placeholder={isPassport ? 'Página de datos' : 'Cara frontal'}
               disabled={isUploading}
+              document
               testID="documents-front"
             />
           </View>
@@ -214,7 +219,8 @@ export function MyDocumentsPage({ onBack, testID }: MyDocumentsPageProps) {
                 onChange={setBack}
                 placeholder="Cara trasera"
                 disabled={isUploading}
-                testID="documents-back"
+                document
+              testID="documents-back"
               />
             </View>
           )}
@@ -226,8 +232,9 @@ export function MyDocumentsPage({ onBack, testID }: MyDocumentsPageProps) {
           duplicar nada.
         */}
         <Text style={styles.hint}>
-          Si ya subiste uno, volver a subirlo lo sustituye. Sirve para corregir
-          una foto movida o un documento caducado.
+          El escáner solo dispara cuando reconoce un documento, y lo recorta y
+          endereza él. Si ya subiste uno, volver a subirlo lo sustituye: sirve
+          para corregir una foto movida o un documento caducado.
         </Text>
 
         <Button

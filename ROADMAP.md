@@ -654,7 +654,21 @@ NIF o un CIF, si es autónomo o empresa.
       Cubre DNI, NIE —X, Y y Z valen 0, 1 y 2— y CIF, cuyo control es dígito o
       letra según la inicial de la sociedad. No dice que el número esté dado de
       alta en Hacienda ni que sea de quien lo escribe: solo que es posible.
-- [ ] Verificación automática de los documentos. Lo que se puede hacer gratis:
+- [x] **Que la foto sea de un documento** (18 Agosto 2026). Las caras del
+      documento se capturan con el escáner nativo del sistema —VisionKit en iOS,
+      el escáner de documentos de ML Kit en Android—, que detecta el documento,
+      recorta, endereza y **no deja disparar si no ve uno**. Se resuelve en el
+      origen en vez de juzgar la foto después.
+
+      Se probó primero lo obvio, OCR en el servidor, y falló: sobre una imagen de
+      césped y cielo devolvió 983 caracteres de basura, y sobre un logotipo con
+      una palabra real, 6. Contar texto no distingue un documento de una textura,
+      así que ese criterio habría dejado pasar el césped y rechazado el
+      documento.
+
+      La galería se queda como salida: hay quien ya tiene la foto hecha, y en un
+      aparato sin escáner —Android sin Play Services— es el único camino.
+- [ ] Verificación automática del contenido. Lo que se puede hacer gratis:
       leer el documento en el móvil con VisionKit o ML Kit —los dos gratis y en
       el propio aparato—, sacar número y caducidad, comprobar la letra con lo ya
       hecho, cotejar el nombre con el de la cuenta y detectar el mismo número en

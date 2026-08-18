@@ -8,6 +8,7 @@
 
 import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native'
 import { usePickImage, type PickedImage } from '@/hooks/media/usePickImage'
+import { useScanDocument } from '@/hooks/media/useScanDocument'
 import { theme } from '@/theme'
 import { styles } from './ImagePickerField.styles'
 
@@ -19,6 +20,15 @@ export interface ImagePickerFieldProps {
   placeholder?: string
   /** Texto a la derecha, solo en variante avatar */
   sideText?: string
+  /**
+   * Para documentos de identidad: sustituye "Hacer foto" por el escáner nativo
+   * del sistema, que solo captura cuando reconoce un documento.
+   *
+   * Va como prop y no como componente aparte porque el aspecto es el mismo y lo
+   * único que cambia es de dónde sale la imagen. La galería se queda: hay quien
+   * ya tiene la foto hecha, y en un aparato sin escáner es la única salida.
+   */
+  document?: boolean
   error?: boolean
   disabled?: boolean
   testID?: string
@@ -32,13 +42,20 @@ export function ImagePickerField({
   sideText,
   error = false,
   disabled = false,
+  document = false,
   testID,
 }: ImagePickerFieldProps) {
   const { pick, isProcessing } = usePickImage()
-  const isBusy = isProcessing || disabled
+  const { scan, isScanning } = useScanDocument()
+  const isBusy = isProcessing || isScanning || disabled
 
   const handlePick = async (source: 'library' | 'camera') => {
     const image = await pick(source)
+    if (image) onChange(image)
+  }
+
+  const handleScan = async () => {
+    const image = await scan()
     if (image) onChange(image)
   }
 
@@ -56,7 +73,7 @@ export function ImagePickerField({
         isBusy && styles.disabled,
       ]}
     >
-      {isProcessing ? (
+      {isProcessing || isScanning ? (
         <ActivityIndicator size="small" color={theme.colors.accent} />
       ) : value ? (
         <Image
@@ -82,13 +99,21 @@ export function ImagePickerField({
       )}
 
       <View style={styles.actions}>
+        {/*
+          Con `document`, la captura la hace el escáner del sistema. No es una
+          cámara con otro nombre: detecta el documento, recorta y endereza, y no
+          deja disparar si no ve uno. Ahí está lo que impide subir cualquier otra
+          cosa, y está en el origen y no en una comprobación posterior.
+        */}
         <Pressable
-          onPress={() => void handlePick('camera')}
+          onPress={() => void (document ? handleScan() : handlePick('camera'))}
           disabled={isBusy}
           testID={testID ? `${testID}-camera` : undefined}
           accessibilityRole="button"
         >
-          <Text style={styles.action}>Hacer foto</Text>
+          <Text style={styles.action}>
+            {document ? 'Escanear documento' : 'Hacer foto'}
+          </Text>
         </Pressable>
 
         {value && (

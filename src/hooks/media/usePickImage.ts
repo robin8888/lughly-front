@@ -27,7 +27,15 @@ export interface PickedImage {
 
 export type PickSource = 'library' | 'camera'
 
-async function compress(uri: string): Promise<PickedImage> {
+/**
+ * Deja una imagen lista para subir: la redimensiona, la recomprime y, al
+ * reescribirla, le quita los metadatos EXIF.
+ *
+ * Se exporta porque el escáner de documentos entrega su propio fichero y tiene
+ * que pasar por exactamente el mismo aro. Si cada origen comprimiera a su
+ * manera, uno de ellos acabaría subiendo las coordenadas GPS de la foto.
+ */
+export async function prepareForUpload(uri: string): Promise<PickedImage> {
   const image = await ImageManipulator.manipulate(uri)
     .resize({ width: MAX_WIDTH })
     .renderAsync()
@@ -88,7 +96,7 @@ export function usePickImage() {
 
       setIsProcessing(true)
       try {
-        return await compress(asset.uri)
+        return await prepareForUpload(asset.uri)
       } catch {
         Alert.alert(
           'No se pudo procesar la imagen',

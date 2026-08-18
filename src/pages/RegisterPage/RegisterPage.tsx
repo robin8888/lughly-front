@@ -532,6 +532,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
               onChange={setIdentityFront}
               placeholder={isPassport ? 'Página de datos' : 'Cara frontal'}
               disabled={isBusy}
+              document
               testID="register-identity-front"
             />
           </View>
@@ -543,7 +544,8 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
                 onChange={setIdentityBack}
                 placeholder="Cara trasera"
                 disabled={isBusy}
-                testID="register-identity-back"
+                document
+              testID="register-identity-back"
               />
             </View>
           )}
