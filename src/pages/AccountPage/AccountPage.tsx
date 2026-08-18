@@ -67,7 +67,13 @@ export function AccountPage({ links, onBack, onDocuments }: AccountPageProps) {
    * falta el documento" durante medio segundo a alguien que lo tiene todo es
    * peor que no enseñar nada.
    */
-  const { hasIdentity, isPending: isLoadingDocuments } = useMyDocuments()
+  /*
+   * El documento de identidad es cosa del profesional. Al cliente no se le pide
+   * —se identifica con su forma de pago—, así que ni se le avisa, ni se le
+   * enseña la puerta, ni se consultan sus documentos.
+   */
+  const isPro = role === 'pro'
+  const { hasIdentity, isPending: isLoadingDocuments } = useMyDocuments(isPro)
   const { chooseAndUpload, isUploading } = useAvatarUpload()
   const { change, isLoading, fieldErrors, formError, clearErrors } =
     useChangePassword()
@@ -194,7 +200,7 @@ export function AccountPage({ links, onBack, onDocuments }: AccountPageProps) {
             Ahora distingue los dos casos y los dos llevan a la pantalla donde
             se arregla, que es lo que faltaba.
           */}
-          {!hasIdentity && !isLoadingDocuments && (
+          {isPro && !hasIdentity && !isLoadingDocuments && (
             <Pressable
               onPress={onDocuments}
               accessibilityRole="button"
@@ -207,7 +213,7 @@ export function AccountPage({ links, onBack, onDocuments }: AccountPageProps) {
             </Pressable>
           )}
 
-          {hasIdentity && !user?.verified && (
+          {isPro && hasIdentity && !user?.verified && (
             <Pressable
               onPress={onDocuments}
               accessibilityRole="button"

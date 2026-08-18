@@ -31,10 +31,16 @@ export function hasIdentityDocuments(documents: ApiDocument[]): boolean {
   )
 }
 
-export function useMyDocuments() {
+/**
+ * @param enabled A un cliente no se le piden documentos, así que tampoco se
+ * consultan: sin esto haría una llamada por pantalla para nada. Mismo patrón
+ * que `useEmployer` y `useInbox`.
+ */
+export function useMyDocuments(enabled = true) {
   const query = useQuery({
     queryKey: myDocumentsQueryKey,
     queryFn: () => meApi.documents(),
+    enabled,
   })
 
   const documents = query.data?.items ?? []
@@ -46,6 +52,10 @@ export function useMyDocuments() {
      * Mientras carga no se sabe, y no es lo mismo que "no tiene". Quien avise
      * tiene que distinguirlo o enseñará "te faltan documentos" durante medio
      * segundo a alguien que los tiene todos.
+     *
+     * Con `enabled` en falso la consulta nunca corre, así que `isPending` se
+     * queda en `true` para siempre: se informa como "cargando", que es lo que
+     * hace que quien no debe ver el aviso no lo vea.
      */
     isPending: query.isPending,
     isError: query.isError,

@@ -496,44 +496,60 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
         />
       </FormField>
 
-      <FormField
-        label="Documento de identidad"
-        helper="Solo se usa para verificar tu identidad, no se muestra públicamente."
-        testID="register-identity-field"
-      >
-        <Picker
-          options={IDENTITY_OPTIONS}
-          value={identityKind}
-          onChange={(value) => setIdentityKind(value as IdentityKind)}
-          title="Documento de identidad"
-          disabled={isBusy}
-          testID="register-identity-kind"
-        />
-      </FormField>
+      {/*
+        El documento de identidad se le pide solo al profesional.
 
-      <View style={styles.documentRow}>
-        <View style={styles.documentSlot}>
-          <ImagePickerField
-            value={identityFront}
-            onChange={setIdentityFront}
-            placeholder={isPassport ? 'Página de datos' : 'Cara frontal'}
+        Al cliente se le pedía también y no hacía falta: quien contrata se
+        identifica con la tarjeta con la que paga, que ya ha verificado su
+        banco, y es una señal más fuerte que una foto de un DNI. Guardar
+        imágenes de documentos de todos los clientes obliga a custodiarlas y a
+        responder si se filtran, sin ganancia clara a cambio.
+
+        Con el profesional es distinto: cobra, entra en casas ajenas y su
+        reputación es pública.
+      */}
+      {isPro && (
+        <>
+        <FormField
+          label="Documento de identidad"
+          helper="Solo se usa para verificar tu identidad, no se muestra públicamente."
+          testID="register-identity-field"
+        >
+          <Picker
+            options={IDENTITY_OPTIONS}
+            value={identityKind}
+            onChange={(value) => setIdentityKind(value as IdentityKind)}
+            title="Documento de identidad"
             disabled={isBusy}
-            testID="register-identity-front"
+            testID="register-identity-kind"
           />
-        </View>
+        </FormField>
 
-        {!isPassport && (
+        <View style={styles.documentRow}>
           <View style={styles.documentSlot}>
             <ImagePickerField
-              value={identityBack}
-              onChange={setIdentityBack}
-              placeholder="Cara trasera"
+              value={identityFront}
+              onChange={setIdentityFront}
+              placeholder={isPassport ? 'Página de datos' : 'Cara frontal'}
               disabled={isBusy}
-              testID="register-identity-back"
+              testID="register-identity-front"
             />
           </View>
-        )}
-      </View>
+
+          {!isPassport && (
+            <View style={styles.documentSlot}>
+              <ImagePickerField
+                value={identityBack}
+                onChange={setIdentityBack}
+                placeholder="Cara trasera"
+                disabled={isBusy}
+                testID="register-identity-back"
+              />
+            </View>
+          )}
+        </View>
+        </>
+      )}
 
       <View style={styles.consentBox}>
         <Checkbox

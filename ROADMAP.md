@@ -625,6 +625,14 @@ NIF o un CIF, si es autónomo o empresa.
       hay nadie al otro lado, y pedir el DNI para probar la app espanta a quien
       aún no sabe si le sirve.
 
+      **Solo al profesional** (18 Agosto 2026). Al cliente se le pedía también
+      y se retiró: quien contrata se identifica con la tarjeta con la que paga,
+      ya verificada por su banco, y eso es una señal más fuerte que una foto de
+      un DNI. Guardar imágenes de documentos de todos los clientes obliga a
+      custodiarlas y a responder si se filtran, sin ganancia a cambio. Con el
+      profesional es distinto: cobra, entra en casas ajenas y su reputación es
+      pública. Así que la única puerta que queda es pujar.
+
       Se exige **subido, no aprobado**, y esto es lo importante: nada en el
       sistema saca un documento de `PENDING` —no hay panel de backoffice—, así
       que una puerta atada a `identityVerifiedAt` cerraría al 100 % de las
@@ -638,6 +646,27 @@ NIF o un CIF, si es autónomo o empresa.
       Dos textos ya prometían esa pantalla: el del registro ("Podrás intentarlo
       desde tu perfil") y el error de urgencias del servidor ("Súbelo desde Mi
       cuenta"). Las dos mentían.
+- [x] **Letra del NIF/NIE/CIF comprobada** (18 Agosto 2026). La validación de
+      `taxId` era una expresión regular de forma, que aceptaba `12345678A`
+      cuando la letra correcta es la Z: cualquier número inventado con la forma
+      adecuada entraba, siendo el dato con el que un empleador responde de su
+      gente. La letra se calcula, así que comprobarla es aritmética y gratis.
+      Cubre DNI, NIE —X, Y y Z valen 0, 1 y 2— y CIF, cuyo control es dígito o
+      letra según la inicial de la sociedad. No dice que el número esté dado de
+      alta en Hacienda ni que sea de quien lo escribe: solo que es posible.
+- [ ] Verificación automática de los documentos. Lo que se puede hacer gratis:
+      leer el documento en el móvil con VisionKit o ML Kit —los dos gratis y en
+      el propio aparato—, sacar número y caducidad, comprobar la letra con lo ya
+      hecho, cotejar el nombre con el de la cuenta y detectar el mismo número en
+      dos cuentas. Eso permite **rechazar** solo, no aprobar: aprobar
+      automáticamente traslada la responsabilidad a quien lo programó.
+      La verificación de verdad llega gratis con **Stripe Connect** en la Fase 9,
+      que hace el KYC como parte de su alta y lo devuelve por webhook — y ese
+      webhook es lo que puede escribir por fin `identityVerifiedAt`.
+- [ ] Panel para revisar documentos a mano. Hoy nada saca un documento de
+      `PENDING`, así que `identityVerifiedAt` no se escribe nunca y la puerta de
+      aceptar urgencias no la pasa nadie. Los campos están listos en el modelo
+      (`reviewedById`, `rejectionReason`).
 - [ ] Sin Stripe verificado → no puede pujar. **Bloqueado por la Fase 9**:
       Stripe no existe en el proyecto. La mitad de identidad ya está puesta.
 - [ ] Límite de plan Free. **No hay plan**: ni campo, ni tabla, ni contador de
