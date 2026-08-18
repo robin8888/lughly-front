@@ -46,7 +46,7 @@ export function ImagePickerField({
   testID,
 }: ImagePickerFieldProps) {
   const { pick, isProcessing } = usePickImage()
-  const { scan, isScanning } = useScanDocument()
+  const { scan, isScanning, isAvailable: canScan } = useScanDocument()
   const isBusy = isProcessing || isScanning || disabled
 
   const handlePick = async (source: 'library' | 'camera') => {
@@ -104,15 +104,22 @@ export function ImagePickerField({
           cámara con otro nombre: detecta el documento, recorta y endereza, y no
           deja disparar si no ve uno. Ahí está lo que impide subir cualquier otra
           cosa, y está en el origen y no en una comprobación posterior.
+
+          `canScan` es falso cuando el binario no trae el módulo nativo, lo que
+          pasa siempre que el JavaScript va por delante del build. Entonces se
+          ofrece la cámara normal: se pierde la garantía, pero se puede seguir.
+          Prometer "Escanear documento" y que no haga nada sería peor.
         */}
         <Pressable
-          onPress={() => void (document ? handleScan() : handlePick('camera'))}
+          onPress={() =>
+            void (document && canScan ? handleScan() : handlePick('camera'))
+          }
           disabled={isBusy}
           testID={testID ? `${testID}-camera` : undefined}
           accessibilityRole="button"
         >
           <Text style={styles.action}>
-            {document ? 'Escanear documento' : 'Hacer foto'}
+            {document && canScan ? 'Escanear documento' : 'Hacer foto'}
           </Text>
         </Pressable>
 
