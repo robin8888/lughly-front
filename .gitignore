@@ -40,3 +40,20 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Materiales de origen del diseño
+#
+# Las piezas que llegan de diseño —secuencias de frames, logotipos a tamaño
+# completo— pesan cientos de veces más que el asset que se saca de ellas, y no
+# hacen falta para compilar. Van en `design_handoff_lughly/_fuentes/`, fuera
+# del repo; esto es solo la red por si alguna vuelve a caer aquí dentro.
+#
+# No es una manía de orden: GitHub rechaza cualquier archivo de más de 100 MiB,
+# y una vez commiteado no se saca del historial sin reescribirlo entero y
+# forzar el push. Un zip de frames se pasa de ese límite él solo.
+#
+# Los assets que la app sí usa NO caen aquí: son .mp4 y .png sueltos en
+# `src/videos` y `src/images`, y siguen versionándose con normalidad.
+*.zip
+*.7z
+*.rar

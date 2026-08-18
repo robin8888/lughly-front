@@ -1,21 +1,46 @@
 /**
  * Typography tokens
- * Fuentes: Barlow Condensed (headings) + Barlow (body)
+ * Fuentes: Fredoka (titulares) + Nunito (cuerpo)
+ *
+ * **Cambio del 18 Agosto 2026.** Antes eran Barlow Condensed y Barlow: una
+ * grotética estrecha de señalética, correcta y seca. El logotipo, en cambio,
+ * son letras gordas de esquinas redondas, y las dos cosas juntas parecían de
+ * productos distintos. Fredoka es lo más cercano a esas letras que hay en
+ * Google Fonts; Nunito lleva los remates redondeados y aguanta bien en cuerpos
+ * pequeños, que es donde vive casi todo el texto de la app.
+ *
+ * **Ojo al tocar titulares:** Fredoka NO es condensada y Barlow Condensed sí,
+ * así que todo lo que use `heading` ocupa más ancho que antes. Los rótulos de
+ * pantalla van holgados, pero cualquier texto nuevo que se meta en media fila
+ * hay que mirarlo en el móvil.
+ *
+ * Por eso las etiquetas de botón se pasaron a `bodyBold`: van a 14-16 px,
+ * dos por fila y con `numberOfLines={1}`, y en Fredoka se cortarían.
  */
 
 export const typography = {
   fonts: {
-    heading: 'BarlowCondensed_600SemiBold',
-    body: 'Barlow_400Regular',
-    bodySemiBold: 'Barlow_600SemiBold',
-    bodyBold: 'Barlow_700Bold',
+    heading: 'Fredoka_600SemiBold',
+    body: 'Nunito_400Regular',
+    bodySemiBold: 'Nunito_600SemiBold',
+    bodyBold: 'Nunito_700Bold',
   },
   /**
    * Escala subida ~12% sobre la del diseño web (13 Agosto 2026): los tamaños
    * originales estaban pensados para una maqueta de 390 px vista en pantalla
    * grande, y en el móvil real se leían pequeños.
    *
-   * Entre paréntesis, el valor original por si hay que volver atrás.
+   * **Segunda subida, solo en los cuerpos pequeños (18 Agosto 2026):** `small`
+   * y `tiny` son los que llevan casi todo el texto secundario de la app —229
+   * reglas entre los dos— y seguían quedándose cortos en el móvil. Los
+   * titulares no se tocan: el problema era de lectura, no de jerarquía, y
+   * subirlo todo habría dejado la escala igual de apretada.
+   *
+   * Sube aquí y no regla a regla porque los `lineHeight` de la app se calculan
+   * multiplicando estos valores; tocarlos uno por uno habría descuadrado el
+   * interlineado en la mitad de las pantallas.
+   *
+   * Entre paréntesis, el valor original del diseño por si hay que volver atrás.
    */
   sizes: {
     h1: 46, // 42
@@ -25,8 +50,8 @@ export const typography = {
     h5: 18, // 16
     h6: 15, // 13
     body: 17, // 15
-    small: 15, // 13
-    tiny: 12.5, // 11
+    small: 16, // 13 · era 15
+    tiny: 13.5, // 11 · era 12,5
     button: 16, // 14
   },
   lineHeights: {

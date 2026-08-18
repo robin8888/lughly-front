@@ -9,12 +9,20 @@
 
 import { Stack } from 'expo-router'
 import { useFonts } from 'expo-font'
-import {
-  Barlow_400Regular,
-  Barlow_600SemiBold,
-  Barlow_700Bold,
-} from '@expo-google-fonts/barlow'
-import { BarlowCondensed_600SemiBold } from '@expo-google-fonts/barlow-condensed'
+/**
+ * Se importa peso a peso, desde su subcarpeta, y no desde la raíz del paquete.
+ *
+ * El `index.js` de `@expo-google-fonts/*` lleva un `require()` estático por
+ * cada peso que trae la familia, así que importar de la raíz mete los 16
+ * pesos de Nunito y los 5 de Fredoka en el bundle: 21 ficheros y 2,28 MB para
+ * usar cuatro. Con la ruta completa entran solo los cuatro (~430 KB).
+ *
+ * Medido con `npx expo export`, que es lo que corre `eas build` por dentro.
+ */
+import { Nunito_400Regular } from '@expo-google-fonts/nunito/400Regular'
+import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold'
+import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold'
+import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
@@ -47,11 +55,16 @@ const queryClient = new QueryClient({
 })
 
 export default function RootLayout() {
+  /*
+   * Los nombres de estas claves son los que `theme.typography.fonts` pone en
+   * `fontFamily`: si dejan de coincidir, el texto cae a la fuente del sistema
+   * sin avisar de nada.
+   */
   const [fontsLoaded, fontError] = useFonts({
-    Barlow_400Regular,
-    Barlow_600SemiBold,
-    Barlow_700Bold,
-    BarlowCondensed_600SemiBold,
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Fredoka_600SemiBold,
   })
   const isAuthenticated = useIsAuthenticated()
   const mustChangePassword = useMustChangePassword()
@@ -118,6 +131,7 @@ export default function RootLayout() {
             <Stack.Screen name="encargos" />
             <Stack.Screen name="encargar" />
             <Stack.Screen name="pujas" />
+            <Stack.Screen name="como-funciona" />
             <Stack.Screen name="pro/[id]" />
           </Stack.Protected>
 

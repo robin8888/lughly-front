@@ -12,12 +12,15 @@ import { ReactNode } from 'react'
 import {
   View,
   Text,
+  Image,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
+import { images } from '@/images'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
 import { styles } from './AuthShell.styles'
 
 export interface AuthShellProps {
@@ -42,6 +45,15 @@ export function AuthShell({
 
   return (
     <SafeAreaView style={styles.safeArea} testID={testID}>
+      {/*
+        El fondo de aquí es accent-900, así que la hora y la batería van en
+        blanco. Hace falta decirlo porque la pantalla de entrada declara el
+        estilo contrario —su fondo es claro— y el ajuste no se deshace al
+        salir de ella: sin esto, se entra a Login con los iconos en negro
+        sobre el navy.
+      */}
+      <StatusBar style="light" />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -52,7 +64,19 @@ export function AuthShell({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.wrapper}>
-            <Text style={styles.brand}>Lughly</Text>
+            {/*
+              El logotipo sustituye al nombre escrito. Lleva su etiqueta de
+              accesibilidad porque, al dejar de ser texto, un lector de
+              pantalla no tendría de dónde sacarlo.
+            */}
+            <Image
+              source={images.wordmark}
+              style={styles.brand}
+              resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel="Lughly"
+              testID="auth-brand"
+            />
 
             <View style={styles.card}>
               <Text style={[styles.title, alignStyle]}>{title}</Text>

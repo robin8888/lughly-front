@@ -9,9 +9,45 @@
  * incluir el asset en el bundle.
  */
 
-/** Imágenes de producto (mascota Uhiro y estados de la app). */
+/**
+ * Imágenes de producto (mascota Uhiro y estados de la app).
+ *
+ * Ya no hay `splash`: la pantalla de entrada pasó a la animación del logotipo
+ * (`videos.splash` en `@/videos`). El fichero `splash-uhiro.png` sigue en la
+ * carpeta por si hace falta volver atrás, pero al no estar aquí ya no entra en
+ * el bundle: eran 784 KB que nadie miraba.
+ */
 export const images = {
-  splash: require('./splash-uhiro.png'),
+  /**
+   * Logotipo de Lughly, para encabezar pantallas donde antes iba el nombre
+   * escrito. 900x308 (ratio 2,921), con alfa.
+   *
+   * **Las letras son blancas**: solo se ve sobre fondo oscuro. Donde encabece
+   * una pantalla clara hará falta otra versión, no vale reescalarla.
+   *
+   * Al dibujarla hay que fijar solo una dimensión y dejar la otra en `aspectRatio`,
+   * porque a este ancho las letras ya son finas y deformarlas se nota.
+   */
+  wordmark: require('./lughly-wordmark.png'),
+  /**
+   * Fondo del carrusel de oficios. 1219x1290, JPG.
+   *
+   * **El desenfoque va horneado en el fichero**, no se calcula en el móvil.
+   * Es profundidad de campo: el fondo fuera de foco y las tarjetas de oficio
+   * nítidas encima, que al ser una capa aparte no hay que hacer nada para que
+   * lo estén. Desenfocarlo en tiempo real costaría GPU y batería en cada
+   * fotograma para un efecto que nunca cambia.
+   *
+   * De paso sale gratis: al perder el detalle fino, el JPEG comprime mucho
+   * mejor. La foto original son 2,5 MB en PNG; nítida en JPG, 430 KB;
+   * desenfocada, 87 KB — y con más calidad de compresión que antes, para que
+   * los degradados del cielo no bandeen.
+   *
+   * Se dibuja con `cover`, así que en pantallas estrechas recorta por los
+   * lados: la casa va centrada y en los bordes solo hay cielo y césped, que se
+   * pueden perder sin que se note.
+   */
+  carruselFondo: require('./carrusel-fondo.jpg'),
   asistente: require('./asistente-icono.png'),
   loader: require('./robot-hormiga-loader.png'),
   saludando: require('./robot-hormiga-saludando.png'),
