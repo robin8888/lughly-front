@@ -38,8 +38,25 @@ contrato de la API. Esos tipos son un **espejo**, no la fuente: viven en
 backend son reflejo, con una línea `Contrato: lughly-backend/src/modules/…`.
 Si cambia el contrato, se tocan los dos lados.
 
-Un cambio que necesite servidor **no se puede terminar en este repositorio**.
-Se abre el otro, se hace allí, y cada repositorio lleva su propio commit.
+## Cómo se trabaja: los dos desde aquí
+
+**El backend se edita desde esta misma sesión.** No hay que abrir otro Claude
+Code en `lughly-backend` ni pasarle un encargo a nadie: la carpeta está en el
+disco y se puede leer y escribir con normalidad —`cd` a ella y trabajar—. Así
+se ha venido haciendo.
+
+Es además lo que conviene. Un cambio de contrato toca los dos lados a la vez
+—el endpoint y el tipo que lo copia—, y hacerlos en el mismo movimiento evita
+que se queden desparejados, que es el fallo caro: compila cada repositorio por
+su cuenta y revienta en el móvil de alguien.
+
+Lo único que **no** se comparte es git. Cada repositorio tiene el suyo, con su
+remoto y su historial, así que un trabajo que toque los dos lleva **un commit
+en cada uno**. Ninguno de los dos se queda a medias esperando al otro.
+
+Antes de dar por terminado algo de servidor, comprueba el estado de `git` en
+`lughly-backend`: es fácil dejarse cambios sin commitear ahí después de haber
+commiteado aquí.
 
 ## Materiales de origen
 
