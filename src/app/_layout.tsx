@@ -133,6 +133,7 @@ export default function RootLayout() {
             <Stack.Screen name="pujas" />
             <Stack.Screen name="como-funciona" />
             <Stack.Screen name="mis-documentos" />
+            <Stack.Screen name="revisar-documentos" />
             <Stack.Screen name="pro/[id]" />
           </Stack.Protected>
 

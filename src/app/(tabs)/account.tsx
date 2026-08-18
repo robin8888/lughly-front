@@ -11,10 +11,12 @@ import { useRouter } from 'expo-router'
 import { AccountPage, type AccountLink } from '@/pages/AccountPage'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
+import { useUserRole } from '@/stores/useAuthStore'
 
 export default function AccountRoute() {
   const router = useRouter()
   const role = useEffectiveRole()
+  const accountRole = useUserRole()
 
   /**
    * Un empleado no puede tener empleados, así que ese acceso no le sale. Al
@@ -22,6 +24,27 @@ export default function AccountRoute() {
    * primero después de haber empezado solo.
    */
   const isEmployee = useIsEmployee()
+
+  /**
+   * Lo del administrador va primero y aparte.
+   *
+   * No es una tercera "cara" del producto como cliente y profesional: es otra
+   * cosa, y quien entra con esa cuenta viene a revisar, no a contratar. Por eso
+   * encabeza la lista en vez de esconderse entre los accesos del rol.
+   *
+   * Se enseña por rol de la cuenta y no por el modo activo: un administrador ve
+   * la interfaz de cliente —`useEffectiveRole` solo distingue cliente y
+   * profesional—, y su acceso no debe depender de eso.
+   */
+  const adminLinks: AccountLink[] =
+    accountRole === 'admin'
+      ? [
+          {
+            label: 'Revisar documentos',
+            onPress: () => router.push('/revisar-documentos'),
+          },
+        ]
+      : []
 
   const links: AccountLink[] =
     role === 'pro'
@@ -74,7 +97,7 @@ export default function AccountRoute() {
 
   return (
     <AccountPage
-      links={links}
+      links={[...adminLinks, ...links]}
       onBack={() => router.navigate('/inicio')}
       onDocuments={() => router.push('/mis-documentos')}
     />

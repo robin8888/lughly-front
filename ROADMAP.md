@@ -677,10 +677,22 @@ NIF o un CIF, si es autónomo o empresa.
       La verificación de verdad llega gratis con **Stripe Connect** en la Fase 9,
       que hace el KYC como parte de su alta y lo devuelve por webhook — y ese
       webhook es lo que puede escribir por fin `identityVerifiedAt`.
-- [ ] Panel para revisar documentos a mano. Hoy nada saca un documento de
-      `PENDING`, así que `identityVerifiedAt` no se escribe nunca y la puerta de
-      aceptar urgencias no la pasa nadie. Los campos están listos en el modelo
-      (`reviewedById`, `rejectionReason`).
+- [x] **Panel para revisar documentos** (18 Agosto 2026). En el backend,
+      `GET /v1/admin/documents/pending` y `POST /v1/admin/documents/:id/review`
+      con `@Roles(ADMIN)`; en el móvil, "Revisar documentos" en Mi cuenta, que
+      solo aparece con rol `ADMIN`.
+
+      `identityVerifiedAt` **se deriva** de los documentos aprobados —pasaporte,
+      o las dos caras— y se retira si se rechaza uno que la sostenía. Con esto la
+      puerta de aceptar urgencias, cerrada para todo el mundo desde agosto, ya
+      puede abrirse.
+
+      La imagen se sirve por el endpoint que ya existía y admite administrador;
+      no se duplicó el camino a datos privados. El motivo del rechazo es
+      obligatorio: es lo único que el usuario lee en su pantalla.
+
+      Ojo para producción: el registro solo crea `CLIENT` y `PRO`, así que el
+      primer `ADMIN` hay que ponerlo a mano en la base.
 - [ ] Sin Stripe verificado → no puede pujar. **Bloqueado por la Fase 9**:
       Stripe no existe en el proyecto. La mitad de identidad ya está puesta.
 - [ ] Límite de plan Free. **No hay plan**: ni campo, ni tabla, ni contador de
