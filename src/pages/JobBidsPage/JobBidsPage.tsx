@@ -64,10 +64,15 @@ export function JobBidsPage({
           onPress: () => {
             void award(bid.id).then(({ ok, result, error }) => {
               if (!ok) {
-                Alert.alert(
-                  'No se ha podido adjudicar',
-                  error ?? 'Inténtalo de nuevo en un momento.',
-                )
+                /*
+                 * `error` nulo significa que ya se ha atendido en otro sitio:
+                 * hoy, la puerta de "te falta el documento", que enseña su
+                 * propio aviso con el botón para subirlo. Poner encima un
+                 * "no se ha podido adjudicar" taparía la única salida.
+                 */
+                if (error) {
+                  Alert.alert('No se ha podido adjudicar', error)
+                }
                 return
               }
 

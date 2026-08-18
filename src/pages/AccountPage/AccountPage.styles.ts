@@ -97,6 +97,14 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.accent700,
   },
+  /** Falta el documento: no es un pendiente, es algo que le bloquea */
+  missing: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.urgency,
+    marginTop: 8,
+  },
   pending: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

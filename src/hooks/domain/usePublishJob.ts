@@ -23,6 +23,7 @@ import { jobsApi, type ApiJob, type CreateJobPayload } from '@/api/jobs.api'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useDraftJobStore } from '@/stores/useDraftJobStore'
+import { useIdentityGate } from './useIdentityGate'
 
 export function myJobsQueryKey() {
   return ['jobs', 'mine'] as const
@@ -52,8 +53,18 @@ export function usePublishJob(): PublishJobResult {
   const clearDraft = useDraftJobStore((s) => s.clear)
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false)
 
+  const identityGate = useIdentityGate()
+
   const mutation = useMutation({
     mutationFn: (payload: CreateJobPayload) => jobsApi.create(payload),
+
+    /*
+     * Falta el documento: no es un fallo, es una puerta con salida. El aviso
+     * lo pone el gate, con el botón que lleva a subirlo.
+     */
+    onError: (error) => {
+      identityGate(error)
+    },
   })
 
   const error = mutation.error

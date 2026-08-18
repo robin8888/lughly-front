@@ -72,5 +72,11 @@ export default function AccountRoute() {
           { label: 'Notificaciones', comingSoon: true },
         ]
 
-  return <AccountPage links={links} onBack={() => router.navigate('/inicio')} />
+  return (
+    <AccountPage
+      links={links}
+      onBack={() => router.navigate('/inicio')}
+      onDocuments={() => router.push('/mis-documentos')}
+    />
+  )
 }

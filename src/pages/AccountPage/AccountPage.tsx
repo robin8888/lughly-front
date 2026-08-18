@@ -26,6 +26,7 @@ import { VerifyEmailNotice } from '@/components/molecules/VerifyEmailNotice'
 import { useAvatarUpload } from '@/hooks/auth/useAvatarUpload'
 import { useChangePassword } from '@/hooks/auth/useChangePassword'
 import { useLogout } from '@/hooks/auth/useLogout'
+import { useMyDocuments } from '@/hooks/domain/useMyDocuments'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
 import { MIN_PASSWORD_LENGTH } from '@/hooks/auth/useRegister'
 import { API_BASE_URL } from '@/api'
@@ -44,9 +45,11 @@ export interface AccountLink {
 export interface AccountPageProps {
   links: AccountLink[]
   onBack: () => void
+  /** Abre "Mis documentos", que es la salida de las puertas de identidad */
+  onDocuments: () => void
 }
 
-export function AccountPage({ links, onBack }: AccountPageProps) {
+export function AccountPage({ links, onBack, onDocuments }: AccountPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
    * las pantallas con scroll, no solo en el inicio: si en una se moviera
@@ -58,6 +61,13 @@ export function AccountPage({ links, onBack }: AccountPageProps) {
   const role = useEffectiveRole()
   const setActiveRole = useRoleStore((s) => s.setActiveRole)
   const { logout, isLoading: isLoggingOut } = useLogout()
+
+  /*
+   * `isPending` no es "no tiene": mientras carga no se sabe, y enseñar "te
+   * falta el documento" durante medio segundo a alguien que lo tiene todo es
+   * peor que no enseñar nada.
+   */
+  const { hasIdentity, isPending: isLoadingDocuments } = useMyDocuments()
   const { chooseAndUpload, isUploading } = useAvatarUpload()
   const { change, isLoading, fieldErrors, formError, clearErrors } =
     useChangePassword()
@@ -175,11 +185,39 @@ export function AccountPage({ links, onBack }: AccountPageProps) {
             </View>
           </View>
 
-          {!user?.verified && (
-            <Text style={styles.pending}>
-              Identidad pendiente de verificar. Revisaremos tus documentos en
-              breve.
-            </Text>
+          {/*
+            Antes esto era un texto inerte: "Identidad pendiente de verificar"
+            y nada más, sin decir qué hacer ni adónde ir. Y quien se quedaba sin
+            documentos porque la subida del alta falló leía lo mismo, cuando lo
+            suyo no estaba pendiente de revisar: no había llegado nunca.
+
+            Ahora distingue los dos casos y los dos llevan a la pantalla donde
+            se arregla, que es lo que faltaba.
+          */}
+          {!hasIdentity && !isLoadingDocuments && (
+            <Pressable
+              onPress={onDocuments}
+              accessibilityRole="button"
+              testID="account-documents-missing"
+            >
+              <Text style={styles.missing}>
+                Te falta el documento de identidad. Sin él no puedes contratar
+                ni pujar. Subirlo →
+              </Text>
+            </Pressable>
+          )}
+
+          {hasIdentity && !user?.verified && (
+            <Pressable
+              onPress={onDocuments}
+              accessibilityRole="button"
+              testID="account-documents-pending"
+            >
+              <Text style={styles.pending}>
+                Identidad pendiente de verificar. Revisaremos tus documentos en
+                breve; mientras tanto no te bloquea nada. Ver mis documentos →
+              </Text>
+            </Pressable>
           )}
         </InfoCard>
 

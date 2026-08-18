@@ -619,11 +619,32 @@ NIF o un CIF, si es autónomo o empresa.
 
 ### Día 21: Bloqueos y Validaciones
 **Tareas**:
-- [ ] Implementar bloqueos según README:
-  - Sin Stripe verificado → no puede pujar
-  - Límite de plan Free
-  - Recargos no acumulables
-- [ ] Mensajes de error claros
+- [x] **Documento de identidad para comprometerse** (18 Agosto 2026). Sin él no
+      se puja, no se adjudica, no se encarga un trabajo y no se pide una
+      urgencia. Publicar una subasta o un presupuesto sigue libre: todavía no
+      hay nadie al otro lado, y pedir el DNI para probar la app espanta a quien
+      aún no sabe si le sirve.
+
+      Se exige **subido, no aprobado**, y esto es lo importante: nada en el
+      sistema saca un documento de `PENDING` —no hay panel de backoffice—, así
+      que una puerta atada a `identityVerifiedAt` cerraría al 100 % de las
+      cuentas para siempre. Ya había una así, aceptar urgencias, que no la pasa
+      nadie desde agosto. Cuando exista la revisión se endurece cambiando la
+      condición de `common/identity-documents.ts`.
+
+      Con ello llegó **`/mis-documentos`**, que faltaba: el alta era el único
+      sitio donde se subían, y si aquella subida fallaba —el registro está hecho
+      para no tumbarse si falla— la cuenta se quedaba sin ellos y sin salida.
+      Dos textos ya prometían esa pantalla: el del registro ("Podrás intentarlo
+      desde tu perfil") y el error de urgencias del servidor ("Súbelo desde Mi
+      cuenta"). Las dos mentían.
+- [ ] Sin Stripe verificado → no puede pujar. **Bloqueado por la Fase 9**:
+      Stripe no existe en el proyecto. La mitad de identidad ya está puesta.
+- [ ] Límite de plan Free. **No hay plan**: ni campo, ni tabla, ni contador de
+      pujas, en ninguno de los dos repositorios.
+- [ ] Recargos no acumulables — los porcentajes están en `@/utils/surcharges`
+      con la regla escrita ("se aplica el más alto"), pero no hay cálculo que
+      la aplique todavía.
 
 ---
 

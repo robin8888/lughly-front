@@ -10,6 +10,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { bidsApi, type ApiJobBid } from '@/api/bids.api'
+import { useIdentityGate } from './useIdentityGate'
 
 export function jobBidsQueryKey(jobId: string) {
   return ['jobs', jobId, 'bids'] as const
@@ -30,6 +31,7 @@ export function useJobBids(jobId: string | undefined) {
 
 export function useAwardBid(jobId: string | undefined) {
   const queryClient = useQueryClient()
+  const identityGate = useIdentityGate()
 
   const mutation = useMutation({
     mutationFn: (bidId: string) => bidsApi.award(jobId as string, bidId),
@@ -49,6 +51,15 @@ export function useAwardBid(jobId: string | undefined) {
       try {
         return { ok: true as const, result: await mutation.mutateAsync(bidId), error: null }
       } catch (error) {
+        /*
+         * Si falta el documento, el gate ya enseña el aviso con su salida.
+         * Se devuelve `error: null` para que la pantalla no ponga encima su
+         * "no se ha podido adjudicar", que taparía la única salida que hay.
+         */
+        if (identityGate(error)) {
+          return { ok: false as const, result: null, error: null }
+        }
+
         return {
           ok: false as const,
           result: null,
