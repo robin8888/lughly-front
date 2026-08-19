@@ -119,26 +119,54 @@ export const styles = StyleSheet.create({
     marginTop: 6,
   },
 
-  /** Ajuste habitual: va antes que la baja y con el color de la app */
-  schedule: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.accent700,
-    marginTop: 10,
-    paddingTop: 8,
+  /**
+   * Los cuatro ajustes que la empresa le lleva, con forma de botón.
+   *
+   * Eran cuatro líneas de texto seguidas y no se leían como cuatro cosas que se
+   * pueden tocar, sino como un párrafo con flechas. Con forma de botón se ve
+   * dónde empieza y termina cada uno, y se acierta con el pulgar.
+   *
+   * Perfilados y no rellenos: son cuatro, y cuatro botones sólidos seguidos
+   * pesan más que la ficha del trabajador, que es lo que se ha venido a mirar.
+   */
+  settings: {
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: theme.colors.cardDivider,
   },
+  setting: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.accent,
+    backgroundColor: 'transparent',
+  },
+  settingText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
+    textAlign: 'center',
+  },
 
   /**
-   * Discreto y al final de la tarjeta: es la acción que menos se usa y la
-   * única que no se puede deshacer desde aquí.
+   * La baja va aparte y abajo del todo, separada de los ajustes: es la única
+   * que no se deshace, y no debe quedar al lado de las que sí.
    */
   remove: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.urgency,
+    alignItems: 'center',
+  },
+  removeText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
     color: theme.colors.urgency,
-    marginTop: 8,
   },
 
   add: {

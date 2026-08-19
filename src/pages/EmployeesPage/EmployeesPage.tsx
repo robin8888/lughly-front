@@ -442,61 +442,77 @@ export function EmployeesPage({
                        * ficha porque es un ajuste de esa persona, no de la
                        * empresa: cada uno tiene el suyo.
                        */}
-                      <Pressable
-                        onPress={() => onUrgencySchedule(employee.id, employee.name)}
-                        disabled={isRemoving}
-                        accessibilityRole="button"
-                        testID={`employee-schedule-${employee.id}`}
-                      >
-                        <Text style={styles.schedule}>Horario de urgencias →</Text>
-                      </Pressable>
+                      {/*
+                        Los cuatro ajustes que le lleva la empresa, con forma de
+                        botón. Eran cuatro líneas de texto seguidas y se leían
+                        como un párrafo con flechas, no como cuatro cosas que se
+                        pueden tocar.
+
+                        El de urgencias va el primero porque es el único que
+                        decide si un cliente puede llamar a su puerta sin pasar
+                        por la empresa.
+                      */}
+                      <View style={styles.settings}>
+                        <Pressable
+                          onPress={() => onUrgencySchedule(employee.id, employee.name)}
+                          disabled={isRemoving}
+                          accessibilityRole="button"
+                          style={styles.setting}
+                          testID={`employee-schedule-${employee.id}`}
+                        >
+                          <Text style={styles.settingText}>Horario de urgencias</Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() =>
+                            onEmployeeSetting('horario', employee.id, employee.name)
+                          }
+                          disabled={isRemoving}
+                          accessibilityRole="button"
+                          style={styles.setting}
+                          testID={`employee-availability-${employee.id}`}
+                        >
+                          <Text style={styles.settingText}>Horario de trabajo</Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() =>
+                            onEmployeeSetting('zona', employee.id, employee.name)
+                          }
+                          disabled={isRemoving}
+                          accessibilityRole="button"
+                          style={styles.setting}
+                          testID={`employee-coverage-${employee.id}`}
+                        >
+                          <Text style={styles.settingText}>Zona de trabajo</Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() =>
+                            onEmployeeSetting('ausencias', employee.id, employee.name)
+                          }
+                          disabled={isRemoving}
+                          accessibilityRole="button"
+                          style={styles.setting}
+                          testID={`employee-absences-${employee.id}`}
+                        >
+                          <Text style={styles.settingText}>Días que no está</Text>
+                        </Pressable>
+                      </View>
 
                       {/*
-                        Lo demás que le lleva la empresa. Van seguidos y con la
-                        misma forma que el de urgencias porque son lo mismo:
-                        ajustes de esa persona que decide quien organiza su
-                        trabajo.
+                        La baja, separada de los ajustes y en el color de
+                        urgencia: es la única de las cinco que no se deshace, y
+                        no debe quedar pegada a las que sí.
                       */}
-                      <Pressable
-                        onPress={() =>
-                          onEmployeeSetting('horario', employee.id, employee.name)
-                        }
-                        disabled={isRemoving}
-                        accessibilityRole="button"
-                        testID={`employee-availability-${employee.id}`}
-                      >
-                        <Text style={styles.schedule}>Horario de trabajo →</Text>
-                      </Pressable>
-
-                      <Pressable
-                        onPress={() =>
-                          onEmployeeSetting('zona', employee.id, employee.name)
-                        }
-                        disabled={isRemoving}
-                        accessibilityRole="button"
-                        testID={`employee-coverage-${employee.id}`}
-                      >
-                        <Text style={styles.schedule}>Zona de trabajo →</Text>
-                      </Pressable>
-
-                      <Pressable
-                        onPress={() =>
-                          onEmployeeSetting('ausencias', employee.id, employee.name)
-                        }
-                        disabled={isRemoving}
-                        accessibilityRole="button"
-                        testID={`employee-absences-${employee.id}`}
-                      >
-                        <Text style={styles.schedule}>Días que no está →</Text>
-                      </Pressable>
-
                       <Pressable
                         onPress={() => confirmRemove(employee.id, employee.name)}
                         disabled={isRemoving}
                         accessibilityRole="button"
+                        style={styles.remove}
                         testID={`employee-remove-${employee.id}`}
                       >
-                        <Text style={styles.remove}>Dar de baja</Text>
+                        <Text style={styles.removeText}>Dar de baja</Text>
                       </Pressable>
                     </InfoCard>
                   ))}
