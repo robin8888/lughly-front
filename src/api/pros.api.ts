@@ -187,6 +187,23 @@ export interface SetTradesPayload {
   trades: { slug: string; hourlyRate: number }[]
 }
 
+/**
+ * Una franja del horario ordinario de trabajo.
+ *
+ * No lleva precio, y esa es la diferencia con `ApiUrgencyWindow`: lo que cobra
+ * por su trabajo normal está en sus oficios, y una franja de urgencia sí lleva
+ * el suyo porque es un precio distinto para esa hora concreta.
+ *
+ * Las horas son locales españolas, "HH:MM". "De nueve a seis" son las nueve
+ * del reloj de la pared, en verano y en invierno.
+ */
+export interface ApiAvailabilityWindow {
+  /** 0 domingo … 6 sábado, como `Date.getDay()` */
+  weekday: number
+  from: string
+  to: string
+}
+
 export const prosApi = {
   list: (filters: ProsFilters = {}) =>
     apiRequest<ProsPage>(`/v1/pros${toQueryString(filters)}`),
@@ -227,6 +244,26 @@ export const prosApi = {
       method: 'PUT',
       auth: true,
       body: payload,
+    }),
+
+  /** El horario ordinario de trabajo propio, para editarlo */
+  myAvailability: () =>
+    apiRequest<ApiAvailabilityWindow[]>('/v1/pro/availability', { auth: true }),
+
+  /**
+   * Guarda la semana entera, como los oficios y por lo mismo: entre dos
+   * peticiones el horario quedaría a medias, y de un horario a medias salen
+   * citas a horas a las que nadie piensa ir.
+   *
+   * Lo que devuelve puede no ser lo que se mandó: el servidor junta las
+   * franjas del mismo día que se tocan y parte en dos las que cruzan la
+   * medianoche. Por eso se pinta la respuesta y no lo enviado.
+   */
+  setMyAvailability: (windows: ApiAvailabilityWindow[]) =>
+    apiRequest<ApiAvailabilityWindow[]>('/v1/pro/availability', {
+      method: 'PUT',
+      auth: true,
+      body: { windows },
     }),
 
   /**

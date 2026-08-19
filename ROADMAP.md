@@ -903,17 +903,42 @@ abre lo que señala.
 
 **Duración estimada**: 4-5 días
 
-### Día 22-23: AvailabilityPage
-**Tareas**:
-- [ ] AvailabilityPage
-  - Calendario semanal
-  - Por franja: mañana/tarde/noche
-  - Hora inicio y fin
-  - Toggle 24h
-  - "Aplicar a todos los lunes"
-- [ ] Organism AvailabilityWeek
-- [ ] Molecule TimeRangeRow
-- [ ] Hook useAvailability
+### Día 22-23: AvailabilityPage ✅ (19 Agosto 2026)
+**Hecho**:
+- [x] `AvailabilityPage` en `/mi-horario`, enlazada desde Mi cuenta, donde el
+      "Calendario de disponibilidad" no llevaba a ninguna parte.
+- [x] Tabla `availability_windows` y `GET`/`PUT /v1/pro/availability`.
+- [x] Hook `useMyAvailability`.
+
+**La duda que lo tenía parado**: si compartía tabla con `UrgencyWindow`. **No.**
+Tienen la misma forma pero son dos cosas: la de urgencia dice "salgo a una
+avería el sábado de noche y la hora cuesta esto", esta dice "trabajo de nueve a
+seis". Compartirla obligaría a una columna discriminadora y a dejar la tarifa
+opcional, con la regla "obligatoria si es de urgencia" viviendo en el código en
+vez de en la base. Lo que sí se comparte es lo difícil —hora local española y
+partir en la medianoche—, que ahora vive en `common/local-time`.
+
+**Lo que se añadió sobre las urgencias**: al guardar se juntan las franjas del
+mismo día que se tocan. Quien pone "de 9 a 13" y luego "de 11 a 14" quiere decir
+de 9 a 14; el hueco de la comida no se toca.
+
+**Decidido por el camino**:
+- El horario de un empleado lo pone su empresa, igual que sus oficios. A él se
+  le explica en vez de enseñarle un editor que el servidor va a rechazar.
+- En lugar del "toggle 24h" y el "aplicar a todos los lunes" que decía este
+  plan, un atajo que solo sale con el horario vacío: de lunes a viernes de 9 a
+  18. Es el horario de mucha gente y ahorra montar cinco franjas; quien no lo
+  tenga así cambia lo que necesite.
+
+**Sin hacer, y a propósito**: el editor no reagrupa para enseñarlo. Un turno de
+noche de viernes vuelve del servidor partido en dos —viernes 22:00-00:00 y
+sábado 00:00-06:00—, que es como está guardado. Se verá si molesta cuando
+alguien lo use de verdad.
+
+- [ ] ~~Organism AvailabilityWeek~~ · ~~Molecule TimeRangeRow~~ — no hicieron
+      falta: la pantalla es una tarjeta por franja con los componentes que ya
+      hay (`Picker`, `DateTimeField`, `FormField`), igual que el horario de
+      urgencias.
 
 ---
 

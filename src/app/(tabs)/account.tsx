@@ -82,7 +82,10 @@ export default function AccountRoute() {
                   onPress: () => router.navigate('/mis-fotos'),
                 },
               ]),
-          { label: 'Calendario de disponibilidad', comingSoon: true },
+          {
+            label: 'Mi horario de trabajo',
+            onPress: () => router.push('/mi-horario'),
+          },
           { label: 'Cartera', onPress: () => router.navigate('/wallet') },
           { label: 'Configuración', comingSoon: true },
           { label: 'Notificaciones', comingSoon: true },
