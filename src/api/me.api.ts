@@ -1,10 +1,19 @@
 /**
- * La cuenta propia: dispositivos para avisos.
+ * La cuenta propia: dispositivos para avisos y lectura de documentos.
  * Contrato: lughly-backend/src/modules/me/me.controller.ts
  *
- * El resto de operaciones sobre la cuenta —avatar, documentos, contraseña—
- * viven en `auth.api.ts` y `upload.api.ts` por razones históricas; esto es
- * solo lo de los avisos.
+ * Subir avatar y documentos vive en `upload.api.ts` y la contraseña en
+ * `auth.api.ts`, por razones históricas. Leer los documentos sí está aquí.
+ *
+ * **Las listas van en sobre `{ items }`, no como array pelado.** Es la
+ * convención de toda la API, y saltársela costó un fallo real: este endpoint
+ * devolvía el array suelto, el cliente leía `data.items`, obtenía `undefined`,
+ * y Mi cuenta decía "te falta el documento" a gente que los tenía aprobados.
+ * Nada lo delataba, porque un `?? []` convierte el desajuste en una lista vacía
+ * perfectamente plausible.
+ *
+ * La línea `Contrato:` de arriba estaba puesta y el fallo ocurrió igual: no
+ * basta con que apunte al controlador, hay que abrirlo.
  */
 
 import { apiRequest } from './http'

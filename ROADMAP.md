@@ -861,41 +861,27 @@ distintos, meses cambiados, fechas imposibles.
 
 ---
 
-### 🐞 ABIERTO: el aviso de "te falta el documento" no se va (18 Agosto 2026)
+### ✅ RESUELTO: el aviso de "te falta el documento" (19 Agosto 2026)
 
-Reproducido dos veces con `leti@yopmail.com`: sube sus documentos, el
-administrador los aprueba, vuelve a entrar y Mi cuenta sigue diciendo que le
-faltan.
+`GET /v1/me/documents` devolvía el **array pelado** y el cliente del móvil leía
+`data.items`. Eso daba `undefined`, la lista quedaba vacía por el `?? []`, y
+`hasIdentity` era falso **siempre**: aprobar los documentos no cambiaba nada,
+porque nunca llegaban a contarse.
 
-**El servidor está bien.** Comprobado en la base después del segundo intento:
+Era el único endpoint de lista de la API que no usaba sobre `{ items }`
+—assignments, urgencies, inbox y el de administración sí—. Se corrigió el
+servidor y no el móvil, para que la excepción desapareciera en vez de
+propagarse.
 
-    identityVerifiedAt: 2026-08-18T18:37:50Z
-    vigentes: IDENTITY_FRONT APPROVED · IDENTITY_BACK APPROVED
+Lo que costó encontrarlo: el síntoma apuntaba a la aprobación y a la caché, que
+es donde se miró primero. Por el camino se encontró y arregló una fuga real de
+caché entre cuentas, pero no era la causa de esto.
 
-Así que `GET /v1/me/documents` devuelve las dos caras y `hasIdentityDocuments`
-debería dar `true`. El fallo está en el móvil.
-
-**Ya descartado:** la fuga de caché entre cuentas, que era real y está
-arreglada (`useResetCacheOnAccountChange`) — pero no era esto, o no era solo
-esto, porque el aviso sigue.
-
-**Por dónde seguir, en orden de sospecha:**
-
-1. **Que el móvil no lleve el JavaScript nuevo.** El arreglo de la caché es de
-   después del último build; comprobar que Metro ha recargado y que la app es la
-   del build `3d1c83b4` o posterior.
-2. **`useMyDocuments(isPro)` en `AccountPage`.** `isPro` sale de
-   `useEffectiveRole()`, que devuelve `'client'` si el modo activo es cliente
-   **aunque la cuenta sea profesional**. Con la consulta desactivada,
-   `isPending` se queda en `true` para siempre. Eso escondería los dos avisos…
-   pero se ve uno, así que hay algo que no cuadra en esa lectura: mirar qué
-   aviso es exactamente el que sale, si el rojo de "te falta" o el otro.
-3. **Qué devuelve de verdad el endpoint al móvil.** Poner un log en
-   `useMyDocuments` y ver `documents` y `hasIdentity` con la sesión de Leti; es
-   el dato que falta y ahorra adivinar.
-4. **`user.verified` en el store.** Se lee al entrar; si la respuesta del login
-   trae `verified: false` pese al campo puesto en la base, el problema está en
-   `toUserView` o en el orden de las operaciones.
+**Lo que hay que aprender de esto:** un `?? []` convierte un desajuste de
+contrato en una lista vacía perfectamente plausible, y ahí no hay nada que
+delate el fallo. El fichero tenía su línea `Contrato:` apuntando al controlador
+y aun así se escribió el cliente suponiendo la forma. La línea no basta si no se
+abre lo que señala.
 
 ---
 
