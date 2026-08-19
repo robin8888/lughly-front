@@ -156,6 +156,7 @@ export default function RootLayout() {
             <Stack.Screen name="mi-horario" />
             <Stack.Screen name="mi-zona" />
             <Stack.Screen name="mis-ausencias" />
+            <Stack.Screen name="mis-datos" />
             <Stack.Screen name="revisar-documentos" />
             <Stack.Screen name="pro/[id]" />
           </Stack.Protected>

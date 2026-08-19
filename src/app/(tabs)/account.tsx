@@ -97,6 +97,16 @@ export default function AccountRoute() {
               ...(isEmployee
                 ? []
                 : [
+                    /*
+                     * Va el primero del grupo: el nombre y la descripción son
+                     * lo primero que lee el cliente en la tarjeta, antes que el
+                     * precio y que las fotos.
+                     */
+                    {
+                      label: 'Mis datos y mi descripción',
+                      onPress: () => router.push('/mis-datos'),
+                      ...(checklist?.bio === 'MISSING' && { note: optional }),
+                    },
                     {
                       label: 'Mis oficios y tarifas',
                       onPress: () => router.navigate('/oficios'),
@@ -193,6 +203,8 @@ export default function AccountRoute() {
           {
             title: 'Mi actividad',
             links: [
+              /* El nombre y el teléfono también son suyos, aunque no tenga ficha */
+              { label: 'Mis datos', onPress: () => router.push('/mis-datos') },
               { label: 'Mis trabajos publicados', onPress: () => router.navigate('/jobs') },
               { label: 'Mensajes', comingSoon: true },
             ],

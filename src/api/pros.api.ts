@@ -248,6 +248,8 @@ export type ApiChecklistState = 'MISSING' | 'PENDING' | 'DONE'
 
 export interface ApiProfileChecklist {
   trades: ApiChecklistState
+  /** Lo que cuenta de su trabajo con sus palabras: sale en su tarjeta */
+  bio: ApiChecklistState
   photos: ApiChecklistState
   schedule: ApiChecklistState
   coverage: ApiChecklistState
@@ -318,6 +320,17 @@ export const prosApi = {
    */
   myChecklist: () =>
     apiRequest<ApiProfileChecklist>('/v1/pro/checklist', { auth: true }),
+
+  /** Su descripción: lo que cuenta de su trabajo, con sus palabras */
+  myBio: () => apiRequest<{ bio: string | null }>('/v1/pro/bio', { auth: true }),
+
+  /** Vacío la quita: es lo que cualquiera intenta primero para borrarla */
+  setMyBio: (bio: string) =>
+    apiRequest<{ bio: string | null }>('/v1/pro/bio', {
+      method: 'PUT',
+      auth: true,
+      body: { bio },
+    }),
 
   /** Los días que ha marcado que no está */
   myAbsences: () => apiRequest<ApiAbsence[]>('/v1/pro/absences', { auth: true }),

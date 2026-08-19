@@ -37,6 +37,19 @@ export interface ApiDocument {
 
 export const meApi = {
   /**
+   * Cambia el nombre o el teléfono. Se manda solo lo que cambia.
+   *
+   * El correo **no** se toca aquí: es la identidad con la que se entra, y
+   * cambiarlo pide comprobar antes que el nuevo es de quien dice.
+   */
+  updateProfile: (payload: { name?: string; phone?: string }) =>
+    apiRequest<{ name: string; phone: string | null }>('/v1/me', {
+      method: 'PATCH',
+      auth: true,
+      body: payload,
+    }),
+
+  /**
    * Los documentos vigentes de la cuenta.
    *
    * El endpoint existía desde agosto y no lo llamaba nadie: los documentos se
