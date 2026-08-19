@@ -6,7 +6,11 @@
 import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
-const AVATAR_SIZE = 68
+/*
+ * 96 y no 68: centrada y con sitio, la foto es lo primero que se mira en la
+ * ficha de una persona a la que vas a dejar entrar en casa.
+ */
+const AVATAR_SIZE = 96
 
 export const styles = StyleSheet.create({
   screen: {
@@ -56,11 +60,10 @@ export const styles = StyleSheet.create({
     opacity: 0.7,
   },
 
-  identity: {
-    flexDirection: 'row',
+  /** La presentación entera: foto, nombre, etiquetas, precio y nota */
+  hero: {
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   avatar: {
     width: AVATAR_SIZE,
@@ -71,51 +74,76 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.accent100,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: theme.colors.accent,
+    marginBottom: 10,
   },
   avatarImage: {
     width: '100%',
     height: '100%',
   },
-  identityText: {
-    flex: 1,
-  },
   name: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
     textTransform: 'uppercase',
-    color: theme.colors.text,
+    textAlign: 'center',
+    color: theme.colors.cardText,
   },
   /** Quién hará el trabajo, bajo el nombre de quien lo contrata */
   worker: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
+    textAlign: 'center',
+    color: theme.colors.cardText,
     opacity: 0.85,
     marginTop: 2,
   },
   trade: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
-    opacity: 0.65,
+    textAlign: 'center',
+    color: theme.colors.cardText,
+    opacity: 0.7,
     marginTop: 2,
   },
 
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 6,
-    marginBottom: 12,
+    marginTop: 10,
   },
 
+  /*
+   * Los dos números con los que se compara una persona con otra, uno a cada
+   * lado de una línea. Separados del resto por arriba: así se encuentran en el
+   * mismo sitio en todas las fichas, sin tener que leer nada.
+   */
   headline: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    alignSelf: 'stretch',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  headlineItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  headlineDivider: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: theme.colors.cardDivider,
+  },
+  headlineLabel: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+    opacity: 0.6,
   },
   rate: {
     fontFamily: theme.typography.fonts.heading,
@@ -125,18 +153,12 @@ export const styles = StyleSheet.create({
   rating: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   ratingValue: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
-  },
-  ratingCount: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
-    opacity: 0.6,
+    color: theme.colors.cardText,
   },
 
   /**
@@ -170,22 +192,21 @@ export const styles = StyleSheet.create({
     width: 220,
     height: 165,
     backgroundColor: theme.colors.accent100,
-    borderRadius: theme.radius.none,
+    // Redondeadas como las tarjetas: era lo único que quedaba en esquina viva
+    borderRadius: theme.radius.card,
   },
 
   bio: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.55,
-    color: theme.colors.text,
-    marginBottom: 10,
+    color: theme.colors.cardText,
   },
   completed: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.text,
-    opacity: 0.7,
-    marginBottom: 16,
+    color: theme.colors.accent700,
+    marginTop: 8,
   },
 
   section: {
@@ -195,14 +216,14 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h6,
     textTransform: 'uppercase',
-    color: theme.colors.text,
-    marginBottom: 6,
+    color: theme.colors.cardText,
+    marginBottom: 8,
   },
   sectionBody: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.5,
-    color: theme.colors.text,
+    color: theme.colors.cardText,
     opacity: 0.85,
   },
   /** Una línea por oficio: nombre a la izquierda, precio a la derecha */
@@ -213,13 +234,13 @@ export const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 7,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
+    borderBottomColor: theme.colors.cardDivider,
   },
   tradeLabel: {
     flex: 1,
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
+    color: theme.colors.cardText,
   },
   tradeRate: {
     fontFamily: theme.typography.fonts.bodyBold,
@@ -231,6 +252,9 @@ export const styles = StyleSheet.create({
   coverageMap: {
     height: 180,
     marginTop: 10,
+    // Dentro de una tarjeta redondeada, un mapa en esquina viva canta
+    borderRadius: theme.radius.card,
+    overflow: 'hidden',
   },
   /*
    * Día a la izquierda y horas a la derecha, como el cartel de un negocio: es
@@ -241,14 +265,14 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
+    borderBottomColor: theme.colors.cardDivider,
   },
   scheduleDay: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
+    color: theme.colors.cardText,
     opacity: 0.85,
     textTransform: 'capitalize',
   },
@@ -256,9 +280,13 @@ export const styles = StyleSheet.create({
     flexShrink: 1,
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
+    color: theme.colors.cardText,
     opacity: 0.85,
     textAlign: 'right',
+  },
+  /** La última fila no lleva raya: la cierra el borde de la tarjeta */
+  scheduleRowLast: {
+    borderBottomWidth: 0,
   },
   /** Hoy, que es el día por el que casi todo el mundo viene a mirar */
   scheduleToday: {
@@ -274,9 +302,9 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: theme.colors.text,
+    color: theme.colors.cardText,
     opacity: 0.65,
-    marginTop: 4,
+    marginTop: 6,
   },
 
   actions: {

@@ -22,6 +22,7 @@ import { Button } from '@/components/atoms/Button'
 import { Icon } from '@/components/atoms/Icon'
 import { StarRating } from '@/components/atoms/StarRating'
 import { Tag } from '@/components/atoms/Tag'
+import { InfoCard } from '@/components/molecules/InfoCard'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { CoverageMap } from '@/components/organisms/CoverageMap'
 import { ReviewList } from '@/components/organisms/ReviewList'
@@ -174,7 +175,17 @@ export function ProProfilePage({
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.identity}>
+        {/**
+         * La presentación, en una sola pieza y centrada.
+         *
+         * Antes iba suelta sobre el fondo, en tres bloques que se leían como
+         * tres cosas distintas —la foto con el nombre a un lado, las etiquetas
+         * debajo y el precio en otra fila—. Son lo mismo: quién es. Juntarlo en
+         * una tarjeta le da principio a la página, y de paso repite la forma
+         * que ya tienen las dos home, donde la foto va centrada sobre el
+         * nombre.
+         */}
+        <InfoCard style={styles.hero} testID="pro-hero">
           <View style={styles.avatar}>
             {pro.avatarUrl ? (
               <Image
@@ -182,7 +193,7 @@ export function ProProfilePage({
                 style={styles.avatarImage}
               />
             ) : (
-              <Icon name="user-circle" size={32} color={theme.colors.accent} />
+              <Icon name="user-circle" size={44} color={theme.colors.accent} />
             )}
           </View>
 
@@ -191,39 +202,49 @@ export function ProProfilePage({
            * es el empleador. Es a quien se contrata y quien factura; el
            * trabajador es quien va a ir a la casa.
            */}
-          <View style={styles.identityText}>
-            <Text style={styles.name} numberOfLines={2}>
-              {pro.employerName ?? pro.name}
+          <Text style={styles.name} numberOfLines={2}>
+            {pro.employerName ?? pro.name}
+          </Text>
+          {pro.employerName && (
+            <Text style={styles.worker} numberOfLines={1}>
+              Trabajo de {pro.name}
             </Text>
-            {pro.employerName && (
-              <Text style={styles.worker} numberOfLines={1}>
-                Trabajo de {pro.name}
+          )}
+          <Text style={styles.trade} numberOfLines={1}>
+            {pro.tradeLabel} · {pro.city}
+          </Text>
+
+          <View style={styles.tags}>
+            {pro.availableNow && <Tag variant="available">Disponible ahora</Tag>}
+            {pro.verified && <Tag variant="accent">Identidad verificada</Tag>}
+            {pro.licenseVerified && <Tag variant="accent">Habilitación verificada</Tag>}
+            {isTopRated && <Tag variant="accent2">Top valorada</Tag>}
+          </View>
+
+          {/*
+            Precio y valoración, separados del resto por una línea: son los dos
+            números con los que se compara a una persona con otra, y buscarlos
+            tiene que costar lo mismo en todas las fichas.
+          */}
+          <View style={styles.headline}>
+            <View style={styles.headlineItem}>
+              <Text style={styles.rate}>{pro.hourlyRate} €/h</Text>
+              <Text style={styles.headlineLabel}>desde</Text>
+            </View>
+
+            <View style={styles.headlineDivider} />
+
+            <View style={styles.headlineItem}>
+              <View style={styles.rating}>
+                <StarRating rating={pro.rating} size={14} />
+                <Text style={styles.ratingValue}>{pro.rating.toFixed(1)}</Text>
+              </View>
+              <Text style={styles.headlineLabel}>
+                {pro.reviewCount} {pro.reviewCount === 1 ? 'reseña' : 'reseñas'}
               </Text>
-            )}
-            <Text style={styles.trade} numberOfLines={1}>
-              {pro.tradeLabel} · {pro.city}
-            </Text>
+            </View>
           </View>
-        </View>
-
-        <View style={styles.tags}>
-          {pro.availableNow && <Tag variant="available">Disponible ahora</Tag>}
-          {pro.verified && <Tag variant="accent">Identidad verificada</Tag>}
-          {pro.licenseVerified && <Tag variant="accent">Habilitación verificada</Tag>}
-          {isTopRated && <Tag variant="accent2">Top valorada</Tag>}
-        </View>
-
-        <View style={styles.headline}>
-          <Text style={styles.rate}>{pro.hourlyRate} €/h</Text>
-
-          <View style={styles.rating}>
-            <StarRating rating={pro.rating} size={13} />
-            <Text style={styles.ratingValue}>{pro.rating.toFixed(1)}</Text>
-            <Text style={styles.ratingCount}>
-              ({pro.reviewCount} {pro.reviewCount === 1 ? 'reseña' : 'reseñas'})
-            </Text>
-          </View>
-        </View>
+        </InfoCard>
 
         {/**
          * Sus trabajos, a lo ancho y con desplazamiento lateral. Aquí sí se
@@ -260,15 +281,26 @@ export function ProProfilePage({
           </View>
         ))}
 
-        {pro.bio && <Text style={styles.bio}>{pro.bio}</Text>}
+        {/*
+          Lo que cuenta de sí misma y lo que lleva hecho, juntos. Sueltos entre
+          tarjetas se quedaban en tierra de nadie, y el número de trabajos
+          terminados es de lo poco que no dice ella misma: acompaña a lo que sí.
+        */}
+        {(pro.bio !== null || pro.completedJobs > 0) && (
+          <InfoCard style={styles.section} testID="pro-about">
+            <Text style={styles.sectionTitle}>Sobre {pro.name.split(' ')[0]}</Text>
 
-        {pro.completedJobs > 0 && (
-          <Text style={styles.completed}>
-            {pro.completedJobs}{' '}
-            {pro.completedJobs === 1
-              ? 'trabajo terminado en Lughly'
-              : 'trabajos terminados en Lughly'}
-          </Text>
+            {pro.bio && <Text style={styles.bio}>{pro.bio}</Text>}
+
+            {pro.completedJobs > 0 && (
+              <Text style={styles.completed}>
+                {pro.completedJobs}{' '}
+                {pro.completedJobs === 1
+                  ? 'trabajo terminado en Lughly'
+                  : 'trabajos terminados en Lughly'}
+              </Text>
+            )}
+          </InfoCard>
         )}
 
         {/**
@@ -277,7 +309,7 @@ export function ProProfilePage({
          * descubrir que además pasea perros, y necesita saber a cuánto.
          */}
         {pro.trades.length > 1 && (
-          <View style={styles.section}>
+          <InfoCard style={styles.section} testID="pro-trades">
             <Text style={styles.sectionTitle}>Lo que hace y a qué precio</Text>
 
             {pro.trades.map((trade) => (
@@ -286,7 +318,7 @@ export function ProProfilePage({
                 <Text style={styles.tradeRate}>{trade.hourlyRate} €/h</Text>
               </View>
             ))}
-          </View>
+          </InfoCard>
         )}
 
         {/*
@@ -295,16 +327,19 @@ export function ProProfilePage({
           trabajos, y quien mira entendería que no trabaja nunca.
         */}
         {pro.availability.length > 0 && (
-          <View style={styles.section}>
+          <InfoCard style={styles.section} testID="pro-schedule">
             <Text style={styles.sectionTitle}>Horario</Text>
 
-            {toWeekSchedule(pro.availability).map((day) => {
+            {toWeekSchedule(pro.availability).map((day, index, week) => {
               const isToday = day.weekday === new Date().getDay()
 
               return (
                 <View
                   key={day.weekday}
-                  style={styles.scheduleRow}
+                  style={[
+                    styles.scheduleRow,
+                    index === week.length - 1 && styles.scheduleRowLast,
+                  ]}
                   testID={`pro-schedule-${day.weekday}`}
                 >
                   <Text
@@ -331,19 +366,19 @@ export function ProProfilePage({
               Son sus horas de trabajo normales. Una urgencia puede atenderla
               fuera de ellas, si en ese momento está disponible.
             </Text>
-          </View>
+          </InfoCard>
         )}
 
-        <View style={styles.section}>
+        <InfoCard style={styles.section} testID="pro-surcharges">
           <Text style={styles.sectionTitle}>Recargos</Text>
           <Text style={styles.sectionBody}>{surchargesSummary()}</Text>
           <Text style={styles.sectionNote}>
             No se suman entre sí: se aplica el más alto. Verás el importe exacto
             antes de confirmar.
           </Text>
-        </View>
+        </InfoCard>
 
-        <View style={styles.section}>
+        <InfoCard style={styles.section} testID="pro-coverage">
           <Text style={styles.sectionTitle}>Zona de cobertura</Text>
           <Text style={styles.sectionBody}>
             Se desplaza hasta {pro.radiusKm} km desde su base en {pro.city}.
@@ -362,7 +397,7 @@ export function ProProfilePage({
               testID="pro-coverage-map"
             />
           )}
-        </View>
+        </InfoCard>
 
         <ReviewList proId={pro.id} proName={pro.name} testID="pro-reviews" />
 
