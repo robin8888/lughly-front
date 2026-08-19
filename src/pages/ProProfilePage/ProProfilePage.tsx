@@ -23,7 +23,6 @@ import { Icon } from '@/components/atoms/Icon'
 import { StarRating } from '@/components/atoms/StarRating'
 import { Tag } from '@/components/atoms/Tag'
 import { EmptyState } from '@/components/molecules/EmptyState'
-import { InfoCard } from '@/components/molecules/InfoCard'
 import { CoverageMap } from '@/components/organisms/CoverageMap'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
@@ -366,14 +365,6 @@ export function ProProfilePage({
         </View>
 
         <ReviewList proId={pro.id} proName={pro.name} testID="pro-reviews" />
-
-        <InfoCard style={styles.pendingCard}>
-          <Text style={styles.pendingTitle}>Todavía no disponible</Text>
-          <Text style={styles.pendingBody}>
-            El calendario de disponibilidad y el mapa de cobertura llegan en los
-            próximos días del roadmap.
-          </Text>
-        </InfoCard>
 
         <View style={styles.actions}>
           <Button onPress={onBook} style={styles.actionButton} testID="pro-book">

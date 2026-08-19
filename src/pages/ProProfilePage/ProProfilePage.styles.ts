@@ -279,23 +279,6 @@ export const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  pendingCard: {
-    marginBottom: 16,
-  },
-  pendingTitle: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.small,
-    color: theme.colors.cardText,
-    marginBottom: 4,
-  },
-  pendingBody: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: theme.colors.cardText,
-    opacity: 0.8,
-  },
-
   actions: {
     flexDirection: 'row',
     gap: 8,
