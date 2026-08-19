@@ -8,11 +8,16 @@ import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
+  /*
+   * Mismas medidas que el `Input`, y por eso: en la pantalla de oficios los dos
+   * van uno al lado del otro en la misma fila, y con alturas o esquinas
+   * distintas la fila se ve descuadrada aunque cada pieza esté bien.
+   */
   trigger: {
     width: '100%',
-    minHeight: 44,
-    paddingVertical: 9,
-    paddingHorizontal: 10,
+    minHeight: 48,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -20,8 +25,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.divider,
-    // Es un `.input`, y va cuadrado (styles.css, línea 291)
-    borderRadius: theme.radius.none,
+    borderRadius: theme.radius.card,
   },
   triggerError: {
     borderColor: theme.colors.error,
@@ -33,7 +37,7 @@ export const styles = StyleSheet.create({
   value: {
     flexShrink: 1,
     fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.button,
+    fontSize: theme.typography.sizes.small,
     color: theme.colors.text,
   },
   placeholder: {

@@ -284,14 +284,15 @@ export function RequestProPage({
 
         {!isInstant && (
           <FormField
-            label="Presupuesto máximo (€)"
+            label="Presupuesto máximo"
             hint="Opcional. Decirlo ahorra idas y venidas si hay un tope claro."
             error={fieldErrors.maxBudget}
           >
             <Input
               value={maxBudget}
               onChangeText={(value) => setMaxBudget(value.replace(/[^0-9.,]/g, ''))}
-              placeholder="Ej. 200"
+              placeholder="200"
+              suffix="€"
               keyboardType="decimal-pad"
               editable={!isRequesting}
               testID="request-budget"

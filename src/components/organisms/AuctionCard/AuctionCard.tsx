@@ -142,11 +142,12 @@ export function AuctionCard({ job, testID }: AuctionCardProps) {
 
           <View style={styles.formRow}>
             <View style={styles.formCol}>
-              <FormField label="Tu precio (€)" error={fieldErrors.amount}>
+              <FormField label="Tu precio" error={fieldErrors.amount}>
                 <Input
                   value={amount}
                   onChangeText={(value) => setAmount(value.replace(/[^0-9.,]/g, ''))}
-                  placeholder="Ej. 180"
+                  placeholder="180"
+                  suffix="€"
                   keyboardType="numeric"
                   editable={!isPlacing}
                   testID={`${testID ?? 'auction'}-amount`}

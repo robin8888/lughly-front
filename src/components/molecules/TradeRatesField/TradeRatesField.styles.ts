@@ -32,7 +32,15 @@ export const styles = StyleSheet.create({
   },
   /** Ancho fijo: los precios alineados se comparan de un vistazo */
   rateColumn: {
-    width: 92,
+    // 112 y no 92: dentro del campo va ahora la unidad, y antes se apretaba
+    width: 112,
+  },
+  /*
+   * El número pegado a su unidad. A la izquierda quedaba un hueco entre la
+   * cifra y el "€/h" que hacía dudar de si formaban parte de lo mismo.
+   */
+  rateInput: {
+    textAlign: 'right',
   },
   remove: {
     width: 30,

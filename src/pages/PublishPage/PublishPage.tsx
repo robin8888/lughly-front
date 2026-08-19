@@ -259,14 +259,15 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
         </FormField>
 
         <FormField
-          label="Presupuesto máximo (€)"
+          label="Presupuesto máximo"
           hint="Orientativo. Ayuda a que no te lleguen pujas fuera de tu alcance."
           error={fieldErrors.maxBudget}
         >
           <Input
             value={draft.maxBudget}
             onChangeText={(value) => update({ maxBudget: value.replace(/[^0-9.,]/g, '') })}
-            placeholder="Ej. 300"
+            placeholder="300"
+            suffix="€"
             keyboardType="numeric"
             editable={!isBusy}
             testID="publish-budget"

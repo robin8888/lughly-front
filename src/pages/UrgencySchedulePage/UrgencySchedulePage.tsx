@@ -259,11 +259,16 @@ export function UrgencySchedulePage({
                 )}
 
                 <FormField
-                  label="Tarifa de urgencia (€/h)"
+                  label="Tarifa de urgencia"
                   error={
                     window.hourlyRate > 0 ? undefined : 'Pon lo que cobras por esa hora'
                   }
                 >
+                  {/*
+                    La unidad va dentro del campo y no en la etiqueta: ahí se
+                    lee una vez al llegar, y aquí sigue delante mientras se
+                    teclea el número, que es cuando importa.
+                  */}
                   <Input
                     value={window.hourlyRate > 0 ? String(window.hourlyRate) : ''}
                     onChangeText={(value) =>
@@ -271,9 +276,11 @@ export function UrgencySchedulePage({
                         hourlyRate: Number(value.replace(',', '.').replace(/[^0-9.]/g, '')),
                       })
                     }
-                    placeholder="Ej. 45"
+                    placeholder="45"
+                    suffix="€/h"
                     keyboardType="decimal-pad"
                     editable={!isSaving}
+                    error={window.hourlyRate <= 0}
                     testID={`window-${index}-rate`}
                   />
                 </FormField>

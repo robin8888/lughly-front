@@ -86,12 +86,19 @@ export function TradeRatesField({
 
           {!hideRates && (
             <View style={styles.rateColumn}>
+              {/*
+                La unidad va fija dentro del campo y no de marca de agua: el
+                marcador desaparece al teclear, que es justo cuando un número
+                suelto deja de decir si son euros por hora o por trabajo.
+              */}
               <Input
                 value={trade.hourlyRate}
                 onChangeText={(text) => setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))}
-                placeholder="€/h"
+                placeholder="0"
+                suffix="€/h"
                 keyboardType="decimal-pad"
                 editable={!disabled}
+                style={styles.rateInput}
                 testID={`trade-rate-${trade.slug}`}
               />
             </View>
