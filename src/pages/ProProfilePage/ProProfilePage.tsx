@@ -29,6 +29,7 @@ import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { surchargesSummary } from '@/utils/surcharges'
 import { ApiError, API_BASE_URL } from '@/api'
+import { toWeekSchedule } from '@/utils/schedule'
 import { theme } from '@/theme'
 import { styles } from './ProProfilePage.styles'
 
@@ -286,6 +287,51 @@ export function ProProfilePage({
                 <Text style={styles.tradeRate}>{trade.hourlyRate} €/h</Text>
               </View>
             ))}
+          </View>
+        )}
+
+        {/*
+          El horario, con los siete días. Solo si lo ha puesto: enseñar
+          "cerrado" toda la semana a quien no lo ha rellenado le costaría
+          trabajos, y quien mira entendería que no trabaja nunca.
+        */}
+        {pro.availability.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Horario</Text>
+
+            {toWeekSchedule(pro.availability).map((day) => {
+              const isToday = day.weekday === new Date().getDay()
+
+              return (
+                <View
+                  key={day.weekday}
+                  style={styles.scheduleRow}
+                  testID={`pro-schedule-${day.weekday}`}
+                >
+                  <Text
+                    style={[styles.scheduleDay, isToday && styles.scheduleToday]}
+                  >
+                    {day.label}
+                    {/* Hoy destacado: la pregunta que trae casi todo el mundo es si puede ir hoy */}
+                    {isToday ? ' (hoy)' : ''}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.scheduleHours,
+                      isToday && styles.scheduleToday,
+                      day.hours === null && styles.scheduleClosed,
+                    ]}
+                  >
+                    {day.hours ?? 'Cerrado'}
+                  </Text>
+                </View>
+              )
+            })}
+
+            <Text style={styles.sectionNote}>
+              Son sus horas de trabajo normales. Una urgencia puede atenderla
+              fuera de ellas, si en ese momento está disponible.
+            </Text>
           </View>
         )}
 

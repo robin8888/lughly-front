@@ -232,6 +232,44 @@ export const styles = StyleSheet.create({
     height: 180,
     marginTop: 10,
   },
+  /*
+   * Día a la izquierda y horas a la derecha, como el cartel de un negocio: es
+   * la forma en la que ya se sabe leer un horario sin pararse a mirarlo.
+   */
+  scheduleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.divider,
+  },
+  scheduleDay: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+    opacity: 0.85,
+    textTransform: 'capitalize',
+  },
+  scheduleHours: {
+    flexShrink: 1,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+    opacity: 0.85,
+    textAlign: 'right',
+  },
+  /** Hoy, que es el día por el que casi todo el mundo viene a mirar */
+  scheduleToday: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    color: theme.colors.accent700,
+    opacity: 1,
+  },
+  scheduleClosed: {
+    opacity: 0.5,
+  },
+
   sectionNote: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

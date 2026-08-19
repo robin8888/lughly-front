@@ -90,6 +90,14 @@ export interface ApiProDetail extends Omit<ApiPro, 'distanceKm' | 'photos'> {
   longitude: number | null
   /** Alta en la plataforma, en ISO */
   memberSince: string
+  /**
+   * Su horario ordinario de trabajo, ordenado por día.
+   *
+   * Vacío significa que **no lo ha puesto**, no que no trabaje nunca: enseñar
+   * "cerrado" siete veces a quien simplemente no lo ha rellenado le costaría
+   * trabajos. La ficha esconde la sección entera en ese caso.
+   */
+  availability: ApiAvailabilityWindow[]
 }
 
 export interface ProsPage {
