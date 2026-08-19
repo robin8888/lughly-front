@@ -960,10 +960,22 @@ alguien lo use de verdad.
   - Domingo/festivo +35%
   - Nocturno +25%
   - Vista previa de precio
-- [ ] Sección de ausencias
-  - Rango de fechas
-  - Motivo
-  - Lista de ausencias
+- [x] **Ausencias** (19 Agosto 2026). Tabla `absences`, `GET`/`POST`/`DELETE
+      /v1/pro/absences` y la pantalla `/mis-ausencias`.
+
+      Se adelantó al resto de este día porque publicar el horario en la ficha
+      dejó a la app prometiendo "lunes de 9 a 14" el lunes que uno está en la
+      playa.
+
+      Días completos con los dos extremos incluidos: "del 1 al 15" son quince
+      días y el de vuelta es el 16. Sin horas —nadie se va de vacaciones a las
+      14:37—. El **motivo no sale en la ficha**: al cliente le basta con la
+      fecha y una baja médica es asunto de quien la tiene.
+
+      Mandan sobre todo lo demás: desaparece de "disponible ahora", no le llegan
+      urgencias, y su ficha dice el día que vuelve —el siguiente al último que
+      está fuera, que enseñar el último diría "vuelve el 25" de alguien que el
+      25 sigue fuera—.
 - [ ] Hook useSurcharge (fórmula completa)
 
 ---

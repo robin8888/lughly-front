@@ -110,6 +110,13 @@ export interface ApiProDetail extends Omit<ApiPro, 'distanceKm' | 'photos'> {
    * trabajos. La ficha esconde la sección entera en ese caso.
    */
   availability: ApiAvailabilityWindow[]
+  /**
+   * Último día que está fuera, "AAAA-MM-DD", o `null` si está.
+   *
+   * Va con el horario porque sin esto el horario miente: sigue diciendo "lunes
+   * de 9 a 14" el lunes que está de vacaciones.
+   */
+  absentUntil: string | null
 }
 
 export interface ProsPage {
@@ -248,6 +255,21 @@ export interface ApiProfileChecklist {
   identityDocuments: ApiChecklistState
 }
 
+/**
+ * Unos días fuera: vacaciones, una baja, un viaje.
+ *
+ * Los dos extremos entran: "del 1 al 15" son quince días y el de vuelta es el
+ * 16. Sin horas, porque son días completos.
+ */
+export interface ApiAbsence {
+  id: string
+  /** "AAAA-MM-DD" */
+  startsOn: string
+  endsOn: string
+  /** Para él. No sale en su ficha: una baja es asunto suyo. */
+  reason: string | null
+}
+
 export const prosApi = {
   list: (filters: ProsFilters = {}) =>
     apiRequest<ProsPage>(`/v1/pros${toQueryString(filters)}`),
@@ -296,6 +318,19 @@ export const prosApi = {
    */
   myChecklist: () =>
     apiRequest<ApiProfileChecklist>('/v1/pro/checklist', { auth: true }),
+
+  /** Los días que ha marcado que no está */
+  myAbsences: () => apiRequest<ApiAbsence[]>('/v1/pro/absences', { auth: true }),
+
+  addAbsence: (payload: { startsOn: string; endsOn: string; reason?: string }) =>
+    apiRequest<ApiAbsence>('/v1/pro/absences', {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
+  removeAbsence: (id: string) =>
+    apiRequest<null>(`/v1/pro/absences/${id}`, { method: 'DELETE', auth: true }),
 
   /** Su zona de cobertura, para editarla */
   myCoverage: () =>

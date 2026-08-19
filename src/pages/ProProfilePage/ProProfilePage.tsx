@@ -30,6 +30,7 @@ import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { surchargesSummary } from '@/utils/surcharges'
 import { ApiError, API_BASE_URL } from '@/api'
+import { formatDate, parseIsoDate } from '@/utils/dates'
 import { toWeekSchedule } from '@/utils/schedule'
 import { theme } from '@/theme'
 import { styles } from './ProProfilePage.styles'
@@ -40,6 +41,25 @@ import { styles } from './ProProfilePage.styles'
  */
 const TOP_RATED_MIN_RATING = 4.8
 const TOP_RATED_MIN_REVIEWS = 20
+
+/**
+ * El día que vuelve: el **siguiente** al último que está fuera.
+ *
+ * `absentUntil` es el último día de la ausencia, los dos extremos incluidos.
+ * Enseñarlo tal cual diría "vuelve el 25" de alguien que el 25 todavía está de
+ * vacaciones, que es la clase de detalle por el que un cliente se planta en una
+ * puerta cerrada.
+ */
+function formatAbsentUntil(lastDayOut: string): string {
+  const last = parseIsoDate(lastDayOut)
+
+  if (!last) return lastDayOut
+
+  const back = new Date(last)
+  back.setDate(back.getDate() + 1)
+
+  return formatDate(back)
+}
 
 export interface ProProfilePageProps {
   id: string | undefined
@@ -328,6 +348,21 @@ export function ProProfilePage({
           "cerrado" toda la semana a quien no lo ha rellenado le costaría
           trabajos, y quien mira entendería que no trabaja nunca.
         */}
+        {/*
+          Si está fuera se dice antes que el horario, y no después: el horario
+          promete unas horas y esto las retira. Leerlo al revés sería enterarse
+          de que no está después de haber decidido llamarle.
+        */}
+        {pro.absentUntil !== null && (
+          <InfoCard style={styles.section} testID="pro-absent">
+            <Text style={styles.sectionTitle}>Ahora mismo no está</Text>
+            <Text style={styles.sectionBody}>
+              Vuelve el {formatAbsentUntil(pro.absentUntil)}. Puedes escribirle
+              igualmente, pero no contará con esos días.
+            </Text>
+          </InfoCard>
+        )}
+
         {pro.availability.length > 0 && (
           <InfoCard style={styles.section} testID="pro-schedule">
             <Text style={styles.sectionTitle}>Horario</Text>

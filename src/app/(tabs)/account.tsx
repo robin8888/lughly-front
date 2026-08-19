@@ -122,6 +122,16 @@ export default function AccountRoute() {
                       onPress: () => router.push('/mi-zona'),
                       ...(checklist?.coverage === 'MISSING' && { note: optional }),
                     },
+                    /*
+                     * Va detrás del horario porque es lo que lo corrige: el
+                     * horario dice la semana normal y esto dice cuándo no la
+                     * hay. Sin aviso de "falta": no tener vacaciones marcadas
+                     * es lo normal.
+                     */
+                    {
+                      label: 'Mis ausencias y vacaciones',
+                      onPress: () => router.push('/mis-ausencias'),
+                    },
                   ]),
             ],
           },
