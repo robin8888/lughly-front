@@ -70,7 +70,19 @@ export interface ApiMyProPhoto extends ApiProPhoto {
 
 /** Una foto de la ficha, con el oficio del que es. */
 export interface ApiProPhoto {
+  /**
+   * La **reducida**, que es la que hay que pintar.
+   *
+   * El servidor manda aquí la miniatura a propósito. Antes venía el original
+   * —1400 px, medio mega— y con varias fichas en pantalla el teléfono no
+   * conseguía decodificarlas: una imagen ocupa ancho × alto × 4 bytes en
+   * memoria pese lo que pese comprimida, así que eran casi 8 MB por foto y no
+   * se veía ninguna. Comprobado en el móvil: con una ficha con fotos se veían;
+   * con dos o más, ninguna.
+   */
   url: string
+  /** El original. Solo para una vista a pantalla completa, cuando la haya. */
+  fullUrl: string
   tradeSlug: string
   tradeLabel: string
 }
