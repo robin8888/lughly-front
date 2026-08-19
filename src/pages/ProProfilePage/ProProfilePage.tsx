@@ -23,6 +23,7 @@ import { Icon } from '@/components/atoms/Icon'
 import { StarRating } from '@/components/atoms/StarRating'
 import { Tag } from '@/components/atoms/Tag'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { CoverageMap } from '@/components/organisms/CoverageMap'
 import { ReviewList } from '@/components/organisms/ReviewList'
@@ -270,11 +271,12 @@ export function ProProfilePage({
               contentContainerStyle={styles.galleryContent}
             >
               {group.photos.map((url) => (
-                <Image
+                <RemotePhoto
                   key={url}
-                  source={{ uri: `${API_BASE_URL}${url}` }}
+                  uri={`${API_BASE_URL}${url}`}
                   style={styles.galleryPhoto}
-                  resizeMode="cover"
+                  fallback="Esta foto no se ha podido cargar"
+                  testID={`pro-photo-${url}`}
                 />
               ))}
             </ScrollView>
