@@ -30,6 +30,7 @@ import {
   useMyPhotos,
 } from '@/hooks/domain/useMyPhotos'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { PlusIcon } from '@/components/atoms/PlusIcon'
 import { theme } from '@/theme'
 import { styles } from './MyPhotosPage.styles'
 
@@ -208,7 +209,7 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
                         {isBusy ? (
                           <ActivityIndicator size="small" color={theme.colors.accent} />
                         ) : (
-                          <Text style={styles.addIcon}>+</Text>
+                          <PlusIcon size={44} color={theme.colors.accent} strokeWidth={2.2} />
                         )}
                       </Pressable>
                     )}

@@ -32,22 +32,6 @@ export const styles = StyleSheet.create({
   slotDisabled: {
     opacity: 0.45,
   },
-  /**
-   * Mismo arreglo que en Mis fotos: un texto se dibuja dentro de una caja de
-   * línea más alta que el signo, así que el `+` queda centrado en esa caja y
-   * no en el cuadrado. `lineHeight` igual al tamaño e `includeFontPadding` en
-   * falso, que es el aire que añade Android aparte.
-   */
-  slotLabel: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.h5,
-    lineHeight: theme.typography.sizes.h5,
-    includeFontPadding: false,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    color: theme.colors.text,
-    opacity: 0.5,
-  },
   thumb: {
     width: '100%',
     height: '100%',

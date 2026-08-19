@@ -14,6 +14,7 @@
 
 import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native'
 import { usePickImage, type PickedImage } from '@/hooks/media/usePickImage'
+import { PlusIcon } from '@/components/atoms/PlusIcon'
 import { theme } from '@/theme'
 import { styles } from './PhotoPicker.styles'
 
@@ -94,7 +95,7 @@ export function PhotoPicker({
             ) : isProcessing && isNextEmpty ? (
               <ActivityIndicator size="small" color={theme.colors.accent} />
             ) : (
-              <Text style={styles.slotLabel}>{isNextEmpty ? '+' : ''}</Text>
+              isNextEmpty && <PlusIcon size={28} color={theme.colors.text} />
             )}
           </Pressable>
         )

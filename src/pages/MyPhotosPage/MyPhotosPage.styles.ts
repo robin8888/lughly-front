@@ -131,25 +131,6 @@ export const styles = StyleSheet.create({
   addBusy: {
     opacity: 0.6,
   },
-  /**
-   * El `+` no salía centrado y no era cosa del contenedor, que ya centra: un
-   * texto se dibuja dentro de una caja de línea más alta que el propio signo
-   * —hay sitio reservado para las tildes y para lo que baja de la `g`—, así
-   * que el `+` se queda en el medio de esa caja y no en el del cuadrado.
-   *
-   * `lineHeight` igual al tamaño quita ese aire, y `includeFontPadding` quita
-   * el que Android añade además por su cuenta.
-   */
-  addIcon: {
-    fontFamily: theme.typography.fonts.heading,
-    fontSize: theme.typography.sizes.h4,
-    lineHeight: theme.typography.sizes.h4,
-    includeFontPadding: false,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    color: theme.colors.accent,
-  },
-
   hint: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
