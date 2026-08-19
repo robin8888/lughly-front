@@ -399,7 +399,18 @@ Google Maps**: MapLibre con teselas de OpenFreeMap, sin cuenta ni clave.
 - [x] `POST /v1/geocode` en el backend (Photon, sin clave en el cliente)
 - [x] `haversineKm` también en el backend, con los mismos casos de prueba
 - [x] Enganchados: `CoverageMap` en la ficha, `ProsMap` en el directorio
-- [ ] Deslizador de radio (1–50 km) — llega con Disponibilidad, Fase 6
+- [x] **Radio de cobertura** (19 Agosto 2026). Se pone en `/mi-zona`, con la
+      dirección buscada, la ubicación actual o arrastrando el marcador, y el
+      mapa enseña el resultado mientras se elige.
+
+      No era solo que faltara la pantalla: `radiusKm` se escribía en **un solo
+      sitio de todo el backend**, al dar de alta a un empleado. Un autónomo se
+      quedaba sin punto base para siempre, sin mapa en su ficha y sin filtro de
+      distancia en las urgencias —le entraban todas—.
+
+      Lista de radios en vez de deslizador: nadie distingue trabajar a 17 km o a
+      18, y una lista se toca bien con el pulgar, que un deslizador de 1 a 50 en
+      un móvil no.
 - [ ] **Development build con EAS**: lo tiene que lanzar el usuario
 
 **Tests**: 39 en el móvil y 7 en el backend. Se reinstaló jest para esto,

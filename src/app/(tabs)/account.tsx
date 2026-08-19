@@ -86,6 +86,10 @@ export default function AccountRoute() {
             label: 'Mi horario de trabajo',
             onPress: () => router.push('/mi-horario'),
           },
+          {
+            label: 'Mi zona de trabajo',
+            onPress: () => router.push('/mi-zona'),
+          },
           { label: 'Cartera', onPress: () => router.navigate('/wallet') },
           { label: 'Configuración', comingSoon: true },
           { label: 'Notificaciones', comingSoon: true },

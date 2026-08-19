@@ -212,6 +212,18 @@ export interface ApiAvailabilityWindow {
   to: string
 }
 
+/**
+ * Dónde trabaja el profesional. `latitude` y `longitude` en null significan que
+ * todavía no ha fijado su base: sin ella su ficha no enseña mapa, y las
+ * urgencias no se le filtran por distancia.
+ */
+export interface ApiCoverageSettings {
+  latitude: number | null
+  longitude: number | null
+  radiusKm: number
+  city: string
+}
+
 export const prosApi = {
   list: (filters: ProsFilters = {}) =>
     apiRequest<ProsPage>(`/v1/pros${toQueryString(filters)}`),
@@ -249,6 +261,27 @@ export const prosApi = {
    */
   setMyTrades: (payload: SetTradesPayload) =>
     apiRequest<ApiProTrade[]>('/v1/pro/trades', {
+      method: 'PUT',
+      auth: true,
+      body: payload,
+    }),
+
+  /** Su zona de cobertura, para editarla */
+  myCoverage: () =>
+    apiRequest<ApiCoverageSettings>('/v1/pro/coverage', { auth: true }),
+
+  /**
+   * Guarda el punto base y el radio. La ciudad viaja solo si se ha elegido una
+   * dirección del buscador: es por donde se busca en el directorio, y quien
+   * mueve su base a otra ciudad tiene que aparecer en esa.
+   */
+  setMyCoverage: (payload: {
+    latitude: number
+    longitude: number
+    radiusKm: number
+    city?: string
+  }) =>
+    apiRequest<ApiCoverageSettings>('/v1/pro/coverage', {
       method: 'PUT',
       auth: true,
       body: payload,
