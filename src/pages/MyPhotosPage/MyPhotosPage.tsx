@@ -209,7 +209,7 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
                         {isBusy ? (
                           <ActivityIndicator size="small" color={theme.colors.accent} />
                         ) : (
-                          <PlusIcon size={44} color={theme.colors.accent} strokeWidth={2.2} />
+                          <PlusIcon color={theme.colors.accent} />
                         )}
                       </Pressable>
                     )}

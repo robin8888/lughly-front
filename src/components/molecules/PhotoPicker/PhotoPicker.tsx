@@ -95,7 +95,7 @@ export function PhotoPicker({
             ) : isProcessing && isNextEmpty ? (
               <ActivityIndicator size="small" color={theme.colors.accent} />
             ) : (
-              isNextEmpty && <PlusIcon size={28} color={theme.colors.text} />
+              isNextEmpty && <PlusIcon color={theme.colors.text} span={0.34} />
             )}
           </Pressable>
         )

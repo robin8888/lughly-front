@@ -1,38 +1,45 @@
 /**
  * El `+` de añadir.
  *
- * Lo que se ata es que siga siendo un dibujo y no una letra. Como letra no
- * caía en el centro del cuadrado —la fuente coloca el signo por encima de la
- * mitad, alrededor del eje de las matemáticas— y no había forma de corregirlo
- * desde fuera. En el SVG las dos líneas se cruzan en el centro del lienzo por
- * definición, así que basta con comprobar que el lienzo es cuadrado y que el
- * trazo pasa por el medio.
+ * Lo que se ata es lo que costó dos intentos: que el signo no dependa de que
+ * nadie lo centre desde fuera. El lienzo se pega a los cuatro lados del cuadro
+ * y las dos líneas se cruzan en su mitad, así que basta con comprobar esas dos
+ * cosas —el trazo simétrico y el lienzo estirado—.
  */
 
 import { render } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { PlusIcon } from './PlusIcon'
 
 describe('PlusIcon', () => {
-  it('el lienzo es un cuadrado del tamaño pedido', () => {
-    const { getByTestId } = render(<PlusIcon size={38} color="#000" testID="mas" />)
+  it('el lienzo se pega a los cuatro lados del cuadro', () => {
+    const { getByTestId } = render(<PlusIcon color="#000" testID="mas" />)
 
-    expect(getByTestId('mas').props.width).toBe(38)
-    expect(getByTestId('mas').props.height).toBe(38)
+    const style = StyleSheet.flatten(getByTestId('mas').props.style)
+
+    expect(style.position).toBe('absolute')
+    expect([style.top, style.right, style.bottom, style.left]).toEqual([0, 0, 0, 0])
   })
 
   it('las dos líneas se cruzan en el centro del lienzo', () => {
-    const { UNSAFE_getByProps } = render(<PlusIcon size={38} color="#000" testID="mas" />)
+    const { UNSAFE_getByProps } = render(<PlusIcon color="#000" span={0.3} />)
 
     /*
-     * Lienzo de 24: el centro es 12,12. La vertical va de 3 a 21 en x=12 y la
-     * horizontal de 3 a 21 en y=12, así que se cruzan justo en medio y el
-     * signo ocupa tres cuartas partes del cuadrado.
+     * Lienzo de 100, signo del 30%: cada brazo mide 15, así que va de 35 a 65
+     * en los dos ejes y el cruce cae en 50,50, que es la mitad exacta.
      */
-    expect(UNSAFE_getByProps({ d: 'M12 3 V21 M3 12 H21' })).toBeTruthy()
+    expect(UNSAFE_getByProps({ d: 'M50 35 V65 M35 50 H65' })).toBeTruthy()
+  })
+
+  it('el signo crece y mengua sin moverse del centro', () => {
+    const { UNSAFE_getByProps } = render(<PlusIcon color="#000" span={0.5} />)
+
+    // Más grande, pero sigue cruzándose en 50,50
+    expect(UNSAFE_getByProps({ d: 'M50 25 V75 M25 50 H75' })).toBeTruthy()
   })
 
   it('pinta del color que se le pida', () => {
-    const { UNSAFE_getByProps } = render(<PlusIcon size={24} color="#5980a6" />)
+    const { UNSAFE_getByProps } = render(<PlusIcon color="#5980a6" />)
 
     expect(UNSAFE_getByProps({ stroke: '#5980a6' })).toBeTruthy()
   })
