@@ -108,6 +108,24 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  /** La instrucción va encima del mapa, que es donde se está mirando */
+  mapHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.text,
+    opacity: 0.75,
+    marginTop: 16,
+    marginBottom: -8,
+  },
+  /** Por qué no se puede guardar todavía, justo encima del botón */
+  blocked: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.urgency,
+    marginTop: 14,
+  },
+
   /** Alto fijo: el mapa no decide cuánto ocupa, lo decide la pantalla */
   map: {
     height: 260,

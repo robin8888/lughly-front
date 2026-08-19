@@ -2,8 +2,13 @@
  * CoverageMap Organism
  * El radio de cobertura (MAPS_MOBILE.md §4).
  *
- * Lo edita el profesional en Disponibilidad y lo ve el cliente en la ficha,
+ * Lo edita el profesional en su zona de trabajo y lo ve el cliente en la ficha,
  * en solo lectura.
+ *
+ * En modo edición el centro se pone **tocando el mapa**, además de arrastrando
+ * el marcador. Al principio solo se podía arrastrar y no valía: es un gesto que
+ * hay que adivinar, y quien no lo adivinaba se quedaba sin base, con el botón
+ * de guardar apagado y sin entender por qué.
  *
  * **El círculo es un polígono geodésico, no una vista redonda.** Se genera
  * con `circleToPolygon` y se pinta con `GeoJSONSource` + una capa de relleno
@@ -35,7 +40,13 @@ export interface CoverageMapProps {
   /** Centro en [lng, lat], como espera MapLibre */
   center: Position
   radiusKm: number
-  /** Permite mover el centro arrastrando el marcador */
+  /**
+   * Permite elegir el centro: tocando el mapa o arrastrando el marcador.
+   *
+   * Las dos formas, y la de tocar es la que importa: arrastrar hay que
+   * adivinarlo, y quien no lo adivina se queda sin poner su base y sin saber
+   * por qué no le deja guardar. Pasó.
+   */
   editable?: boolean
   onChange?: (center: Position, radiusKm: number) => void
   /** La altura la fija quien lo usa: el mapa no decide cuánto ocupa */
@@ -102,6 +113,13 @@ export function CoverageMap({
         // Girar e inclinar no aportan nada aquí y descolocan el encuadre
         touchRotate={false}
         touchPitch={false}
+        onPress={
+          editable
+            ? (event: { nativeEvent: { lngLat: Position } }) => {
+                onChange?.(event.nativeEvent.lngLat, radiusKm)
+              }
+            : undefined
+        }
         testID="coverage-map-view"
       >
         <Camera

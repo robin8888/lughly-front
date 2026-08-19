@@ -309,10 +309,15 @@ export function CoveragePage({ onBack }: CoveragePageProps) {
         </View>
 
         {/*
-          El mapa enseña lo que se va a guardar, y el marcador se arrastra: es
-          la forma más rápida de corregir los cien metros que el buscador de
-          direcciones casi nunca acierta.
+          El mapa enseña lo que se va a guardar, y sirve para ponerlo: un toque
+          deja ahí la base. Es también la forma más rápida de corregir los cien
+          metros que un buscador de direcciones casi nunca acierta.
         */}
+        <Text style={styles.mapHint}>
+          {point === null
+            ? 'Toca el mapa donde tengas tu base, o búscala arriba.'
+            : 'Toca el mapa para mover tu base, o arrastra el marcador.'}
+        </Text>
         <CoverageMap
           center={point ? [point.lng, point.lat] : FALLBACK_CENTER}
           radiusKm={radiusKm}
@@ -322,10 +327,14 @@ export function CoveragePage({ onBack }: CoveragePageProps) {
           testID="coverage-map"
         />
 
+        {/*
+          Pegado al botón y no perdido más arriba: un botón apagado sin motivo
+          al lado se lee como una app rota. Aquí pasó exactamente eso.
+        */}
         {point === null && (
-          <Text style={styles.hint}>
-            Todavía no tienes base. Búscala arriba o arrastra el marcador hasta
-            donde sales a trabajar.
+          <Text style={styles.blocked} testID="coverage-no-point">
+            Para guardar falta decir dónde tienes la base: toca el mapa, busca
+            tu dirección o usa tu ubicación.
           </Text>
         )}
 
