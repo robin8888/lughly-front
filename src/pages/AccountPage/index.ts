@@ -1,2 +1,2 @@
 export { AccountPage } from './AccountPage'
-export type { AccountPageProps, AccountLink, AccountLinkGroup } from './AccountPage'
+export type { AccountPageProps, AccountLink, AccountLinkGroup, AccountLinkNote } from './AccountPage'

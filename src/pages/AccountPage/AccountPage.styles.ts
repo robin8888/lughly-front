@@ -140,30 +140,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent700,
     opacity: 1,
   },
-  passwordCard: {
-    padding: 14,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.h6,
-    textTransform: 'uppercase',
-    color: theme.colors.cardText,
-    marginBottom: 10,
-  },
-  formError: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.error,
-    marginBottom: 10,
-  },
-  saveButton: {
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  saveButtonText: {
-    fontSize: 14,
-  },
   links: {
     gap: 2,
   },
@@ -205,6 +181,28 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     color: theme.colors.text,
     opacity: 0.4,
+  },
+  linkRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  note: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+  },
+  /** Sin esto no puede trabajar */
+  note_blocking: {
+    color: theme.colors.urgency,
+  },
+  /** Puede trabajar, pero le iría mejor con ello. No es un error suyo. */
+  note_optional: {
+    color: theme.colors.text,
+    opacity: 0.55,
+  },
+  /** Hecho y esperando a otro: ni le falta ni tiene nada que hacer */
+  note_pending: {
+    color: theme.colors.accent700,
   },
   soon: {
     fontFamily: theme.typography.fonts.body,

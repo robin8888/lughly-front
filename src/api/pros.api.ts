@@ -224,6 +224,18 @@ export interface ApiCoverageSettings {
   city: string
 }
 
+/** En qué estado está cada cosa que se le pide a un profesional. */
+export type ApiChecklistState = 'MISSING' | 'PENDING' | 'DONE'
+
+export interface ApiProfileChecklist {
+  trades: ApiChecklistState
+  photos: ApiChecklistState
+  schedule: ApiChecklistState
+  coverage: ApiChecklistState
+  /** `PENDING` = subidos y esperando a que alguien los revise */
+  identityDocuments: ApiChecklistState
+}
+
 export const prosApi = {
   list: (filters: ProsFilters = {}) =>
     apiRequest<ProsPage>(`/v1/pros${toQueryString(filters)}`),
@@ -265,6 +277,13 @@ export const prosApi = {
       auth: true,
       body: payload,
     }),
+
+  /**
+   * Qué tiene puesto en su perfil y qué le falta. Una sola petición para las
+   * cinco cosas, porque se enseñan juntas en Mi cuenta.
+   */
+  myChecklist: () =>
+    apiRequest<ApiProfileChecklist>('/v1/pro/checklist', { auth: true }),
 
   /** Su zona de cobertura, para editarla */
   myCoverage: () =>

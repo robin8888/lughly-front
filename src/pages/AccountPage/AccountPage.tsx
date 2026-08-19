@@ -3,7 +3,11 @@
  * "Mi cuenta", según MobileApp.dc.html (isCuenta).
  *
  * Secciones en el orden del diseño: ficha del usuario, cambio de modo,
- * cambio de contraseña, accesos y cierre de sesión.
+ * accesos y cierre de sesión.
+ *
+ * El cambio de contraseña estaba aquí incrustado y se ha ido a su propia
+ * pantalla: tres campos y un botón en medio de una lista de accesos cortan la
+ * lectura, y ocupaban sitio permanente para algo que se hace una vez al año.
  */
 
 import { useState } from 'react'
@@ -18,28 +22,48 @@ import {
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Icon } from '@/components/atoms/Icon'
-import { Input } from '@/components/atoms/Input'
 import { Button } from '@/components/atoms/Button'
-import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { VerifyEmailNotice } from '@/components/molecules/VerifyEmailNotice'
 import { useAvatarUpload } from '@/hooks/auth/useAvatarUpload'
-import { useChangePassword } from '@/hooks/auth/useChangePassword'
 import { useLogout } from '@/hooks/auth/useLogout'
 import { useMyDocuments } from '@/hooks/domain/useMyDocuments'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
-import { MIN_PASSWORD_LENGTH } from '@/hooks/auth/useRegister'
 import { API_BASE_URL } from '@/api'
 import { useUser } from '@/stores/useAuthStore'
 import { useRoleStore } from '@/stores/useRoleStore'
 import { theme } from '@/theme'
 import { styles } from './AccountPage.styles'
 
+/**
+ * Un aviso al lado del acceso, para lo que está sin poner.
+ *
+ * **Solo lo que falta.** Se pensó en pintar de rojo lo que falta y de verde lo
+ * que está, y lo verde se descartó: con el perfil completo serían siete líneas
+ * verdes, y siete avisos iguales no dicen nada —la información está en la
+ * excepción, no en la norma—. Además el color solo no vale como aviso: hay
+ * quien no distingue el rojo del verde, así que cada uno lleva su palabra.
+ *
+ * Y no todo lo que falta es igual de grave, que es lo que el rojo para todo se
+ * lleva por delante:
+ *
+ * - `blocking`: sin esto no se puede trabajar —sin oficios no sale en el
+ *   directorio, sin documentos no puede pujar—. Va en el color de urgencia.
+ * - `optional`: se puede trabajar, pero con esto le iría mejor. En un tono
+ *   neutro, porque no es un error suyo.
+ * - `pending`: hecho y esperando a otro. Ni le falta ni tiene que hacer nada.
+ */
+export interface AccountLinkNote {
+  label: string
+  tone: 'blocking' | 'optional' | 'pending'
+}
+
 export interface AccountLink {
   label: string
   onPress?: () => void
   /** Pantallas aún no construidas: se muestran, pero no navegan */
   comingSoon?: boolean
+  note?: AccountLinkNote
 }
 
 /**
@@ -94,31 +118,8 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
   const isPro = role === 'pro'
   const { hasIdentity, isPending: isLoadingDocuments } = useMyDocuments(isPro)
   const { chooseAndUpload, isUploading } = useAvatarUpload()
-  const { change, isLoading, fieldErrors, formError, clearErrors } =
-    useChangePassword()
-
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [repeatPassword, setRepeatPassword] = useState('')
-  const [showPasswords, setShowPasswords] = useState(false)
-
   /** Solo una cuenta profesional puede alternar entre los dos modos */
   const canSwitchMode = user?.role === 'pro'
-
-  const handleChangePassword = async () => {
-    const ok = await change({ currentPassword, newPassword, repeatPassword })
-
-    if (ok) {
-      setCurrentPassword('')
-      setNewPassword('')
-      setRepeatPassword('')
-      clearErrors()
-      Alert.alert(
-        'Contraseña cambiada',
-        'Hemos cerrado las sesiones abiertas en otros dispositivos.',
-      )
-    }
-  }
 
   const confirmLogout = () => {
     Alert.alert('Cerrar sesión', '¿Seguro que quieres salir de tu cuenta?', [
@@ -278,82 +279,6 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
           </View>
         )}
 
-        <InfoCard style={styles.passwordCard}>
-          <Text style={styles.sectionTitle}>Cambiar contraseña</Text>
-
-          {formError && <Text style={styles.formError}>{formError}</Text>}
-
-          <FormField
-            label="Contraseña actual"
-            error={fieldErrors.currentPassword}
-            testID="account-current-field"
-          >
-            <Input
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              placeholder="••••••••••"
-              secureTextEntry={!showPasswords}
-              autoCapitalize="none"
-              autoComplete="current-password"
-              error={Boolean(fieldErrors.currentPassword)}
-              editable={!isLoading}
-              testID="account-current-password"
-            />
-          </FormField>
-
-          <FormField
-            label="Nueva contraseña"
-            hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`}
-            error={fieldErrors.newPassword}
-            action={{
-              label: showPasswords ? 'Ocultar' : 'Mostrar',
-              onPress: () => setShowPasswords((visible) => !visible),
-              testID: 'account-toggle-passwords',
-            }}
-            testID="account-new-field"
-          >
-            <Input
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="••••••••••"
-              secureTextEntry={!showPasswords}
-              autoCapitalize="none"
-              autoComplete="new-password"
-              error={Boolean(fieldErrors.newPassword)}
-              editable={!isLoading}
-              testID="account-new-password"
-            />
-          </FormField>
-
-          <FormField
-            label="Repetir nueva contraseña"
-            error={fieldErrors.repeatPassword}
-            testID="account-repeat-field"
-          >
-            <Input
-              value={repeatPassword}
-              onChangeText={setRepeatPassword}
-              placeholder="••••••••••"
-              secureTextEntry={!showPasswords}
-              autoCapitalize="none"
-              autoComplete="new-password"
-              error={Boolean(fieldErrors.repeatPassword)}
-              editable={!isLoading}
-              testID="account-repeat-password"
-            />
-          </FormField>
-
-          <Button
-            loading={isLoading}
-            onPress={() => void handleChangePassword()}
-            style={styles.saveButton}
-            textStyle={styles.saveButtonText}
-            testID="account-save-password"
-          >
-            Guardar cambios
-          </Button>
-        </InfoCard>
-
         {groups.map((group) => (
           <View key={group.title} style={styles.group}>
             <Text style={styles.groupTitle}>{group.title}</Text>
@@ -376,7 +301,17 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
                 {link.comingSoon ? (
                   <Text style={styles.soon}>Pronto</Text>
                 ) : (
-                  <Text style={styles.chevron}>›</Text>
+                  <View style={styles.linkRight}>
+                    {link.note && (
+                      <Text
+                        style={[styles.note, styles[`note_${link.note.tone}`]]}
+                        testID={`account-note-${link.label}`}
+                      >
+                        {link.note.label}
+                      </Text>
+                    )}
+                    <Text style={styles.chevron}>›</Text>
+                  </View>
                 )}
               </Pressable>
             ))}

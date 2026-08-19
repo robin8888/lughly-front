@@ -8,7 +8,12 @@
  */
 
 import { useRouter } from 'expo-router'
-import { AccountPage, type AccountLinkGroup } from '@/pages/AccountPage'
+import {
+  AccountPage,
+  type AccountLinkGroup,
+  type AccountLinkNote,
+} from '@/pages/AccountPage'
+import { useProfileChecklist } from '@/hooks/domain/useProfileChecklist'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useUserRole } from '@/stores/useAuthStore'
@@ -67,6 +72,17 @@ export default function AccountRoute() {
    * La foto de perfil no está en ninguna lista porque no hace falta: se cambia
    * tocándola arriba, que es donde se busca.
    */
+  /*
+   * Lo que falta por poner. Solo tiene sentido para un profesional: un cliente
+   * no tiene perfil que completar.
+   */
+  const { data: checklist } = useProfileChecklist(role === 'pro')
+
+  /** Falta y hace falta para trabajar */
+  const blocking: AccountLinkNote = { label: 'Falta', tone: 'blocking' }
+  /** Falta, pero se puede trabajar sin ello */
+  const optional: AccountLinkNote = { label: 'Sin poner', tone: 'optional' }
+
   const groups: AccountLinkGroup[] =
     role === 'pro'
       ? [
@@ -81,17 +97,51 @@ export default function AccountRoute() {
               ...(isEmployee
                 ? []
                 : [
-                    { label: 'Mis oficios y tarifas', onPress: () => router.navigate('/oficios') },
-                    { label: 'Mis fotos de trabajo', onPress: () => router.navigate('/mis-fotos') },
-                    { label: 'Mi horario de trabajo', onPress: () => router.push('/mi-horario') },
-                    { label: 'Mi zona de trabajo', onPress: () => router.push('/mi-zona') },
+                    {
+                      label: 'Mis oficios y tarifas',
+                      onPress: () => router.navigate('/oficios'),
+                      /*
+                       * Este sí bloquea: sin ningún oficio no aparece en el
+                       * directorio, así que no es que le vaya peor, es que no
+                       * le encuentra nadie.
+                       */
+                      ...(checklist?.trades === 'MISSING' && { note: blocking }),
+                    },
+                    {
+                      label: 'Mis fotos de trabajo',
+                      onPress: () => router.navigate('/mis-fotos'),
+                      ...(checklist?.photos === 'MISSING' && { note: optional }),
+                    },
+                    {
+                      label: 'Mi horario de trabajo',
+                      onPress: () => router.push('/mi-horario'),
+                      ...(checklist?.schedule === 'MISSING' && { note: optional }),
+                    },
+                    {
+                      label: 'Mi zona de trabajo',
+                      onPress: () => router.push('/mi-zona'),
+                      ...(checklist?.coverage === 'MISSING' && { note: optional }),
+                    },
                   ]),
               /**
                * Los documentos sí, también para un empleado: se los piden a él,
                * no a su empresa. Y estaban solo detrás del aviso de que
                * faltaban, así que una vez subidos no había por dónde volver.
                */
-              { label: 'Mis documentos', onPress: () => router.push('/mis-documentos') },
+              {
+                label: 'Mis documentos',
+                onPress: () => router.push('/mis-documentos'),
+                /*
+                 * Sin ellos no puede pujar ni aceptar un encargo, así que es de
+                 * los que bloquean. Cuando están subidos y esperando revisión
+                 * se dice también: si no, quien acaba de subirlos no sabe si
+                 * llegaron.
+                 */
+                ...(checklist?.identityDocuments === 'MISSING' && { note: blocking }),
+                ...(checklist?.identityDocuments === 'PENDING' && {
+                  note: { label: 'En revisión', tone: 'pending' as const },
+                }),
+              },
             ],
           },
           {
@@ -116,6 +166,10 @@ export default function AccountRoute() {
           {
             title: 'Cuenta',
             links: [
+              {
+                label: 'Cambiar contraseña',
+                onPress: () => router.push('/cambiar-contrasena'),
+              },
               { label: 'Notificaciones', comingSoon: true },
               { label: 'Configuración', comingSoon: true },
             ],
@@ -132,6 +186,10 @@ export default function AccountRoute() {
           {
             title: 'Cuenta',
             links: [
+              {
+                label: 'Cambiar contraseña',
+                onPress: () => router.push('/cambiar-contrasena'),
+              },
               { label: 'Métodos de pago', comingSoon: true },
               { label: 'Notificaciones', comingSoon: true },
               { label: 'Configuración', comingSoon: true },
