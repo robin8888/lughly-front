@@ -15,7 +15,17 @@
  * peor: creer que se ha subido algo, salir de la pantalla y perderlo.
  */
 
-import { View, Text, Image, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  useWindowDimensions,
+} from 'react-native'
 import Animated from 'react-native-reanimated'
 import { API_BASE_URL } from '@/api'
 import type { ApiMyProPhoto } from '@/api/pros.api'
@@ -32,7 +42,7 @@ import {
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { PlusIcon } from '@/components/atoms/PlusIcon'
 import { theme } from '@/theme'
-import { styles } from './MyPhotosPage.styles'
+import { cellSize, styles } from './MyPhotosPage.styles'
 
 export interface MyPhotosPageProps {
   onBack: () => void
@@ -42,14 +52,46 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
   const onScroll = useNavScrollHandler()
   const isEmployee = useIsEmployee()
 
+  /*
+   * El lado de la celda se calcula con el ancho real de la pantalla, para que
+   * el hueco de añadir y las fotos midan exactamente lo mismo. Se recalcula al
+   * girar el teléfono, que es lo que `useWindowDimensions` hace y una constante
+   * de módulo no.
+   */
+  const { width } = useWindowDimensions()
+  const side = { width: cellSize(width), height: cellSize(width) }
+
   /**
    * Las rejillas las mandan sus OFICIOS, no las fotos que ya tenga: sin esto,
    * un oficio recién añadido no tendría dónde subir la primera.
    */
   const trades = useMyTrades(!isEmployee)
   const { data, isPending, isError, refetch } = useMyPhotos(!isEmployee)
-  const { add, remove, isWorking, formError } = useManageMyPhotos()
+  const { add, remove, isWorking } = useManageMyPhotos()
   const { pick, isProcessing } = usePickImage()
+
+  /**
+   * Qué ha pasado con lo último que se hizo.
+   *
+   * Va aquí dentro y no en un aviso del sistema: subir cinco fotos son cinco
+   * ventanas que cerrar a mano, y el aviso taparía justo la rejilla donde se
+   * quiere ver el resultado. Lo bueno se borra solo a los cuatro segundos; lo
+   * malo se queda hasta el siguiente intento, porque pide hacer algo.
+   */
+  const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const say = (text: string, ok: boolean) => {
+    if (timer.current) clearTimeout(timer.current)
+    setNotice({ text, ok })
+
+    if (ok) timer.current = setTimeout(() => setNotice(null), 4000)
+  }
+
+  // Sin esto, el temporizador dispararía sobre una pantalla que ya no está
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current)
+  }, [])
 
   const photos = data ?? []
   const isBusy = isWorking || isProcessing
@@ -61,7 +103,16 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
 
   const handleAdd = async (slug: string) => {
     const image = await pick('library')
-    if (image) await add(image, slug)
+
+    // Cancelar el selector no es un fallo: no se dice nada
+    if (!image) return
+
+    const { ok, error } = await add(image, slug)
+
+    say(
+      ok ? 'Foto subida. Ya se ve en tu ficha.' : (error ?? 'No hemos podido subir la foto.'),
+      ok,
+    )
   }
 
   /**
@@ -74,7 +125,14 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
       {
         text: 'Quitar',
         style: 'destructive',
-        onPress: () => void remove(id),
+        onPress: () => {
+          void remove(id).then(({ ok, error }) => {
+            say(
+              ok ? 'Foto quitada.' : (error ?? 'No hemos podido quitar la foto.'),
+              ok,
+            )
+          })
+        },
       },
     ])
   }
@@ -154,7 +212,14 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
                 : ` Caben ${MAX_WORK_PHOTOS}, y por eso conviene que sean tus mejores ${MAX_WORK_PHOTOS}.`}
             </Text>
 
-            {formError && <Text style={styles.formError}>{formError}</Text>}
+            {notice && (
+              <Text
+                style={[styles.notice, notice.ok ? styles.noticeOk : styles.noticeError]}
+                testID="my-photos-notice"
+              >
+                {notice.text}
+              </Text>
+            )}
 
             {myTrades.map((trade) => {
               const own = photosOf(trade.slug)
@@ -171,7 +236,7 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
 
                   <View style={styles.grid}>
                     {own.map((photo, index) => (
-                      <View key={photo.id} style={styles.cell}>
+                      <View key={photo.id} style={[styles.cell, side]}>
                         <Image
                           source={{ uri: `${API_BASE_URL}${photo.url}` }}
                           style={styles.photo}
@@ -203,7 +268,7 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
                         disabled={!canAdd}
                         accessibilityRole="button"
                         accessibilityLabel={`Añadir una foto de ${trade.label}`}
-                        style={[styles.cell, styles.addCell, !canAdd && styles.addBusy]}
+                        style={[styles.cell, side, styles.addCell, !canAdd && styles.addBusy]}
                         testID={`my-photos-add-${trade.slug}`}
                       >
                         {isBusy ? (

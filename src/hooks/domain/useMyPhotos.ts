@@ -78,20 +78,29 @@ export function useManageMyPhotos() {
         : null
 
   return {
-    add: async (photo: PickedImage, tradeSlug: string): Promise<boolean> => {
+    /**
+     * Devuelven el motivo del fallo con la respuesta y no solo en `formError`:
+     * quien las llama está dentro de un `onPress` que ya capturó el estado
+     * anterior, así que leería el error de la vez pasada. Es el mismo trato que
+     * en el resto de hooks que guardan algo.
+     */
+    add: async (
+      photo: PickedImage,
+      tradeSlug: string,
+    ): Promise<{ ok: boolean; error: string | null }> => {
       try {
         await add.mutateAsync({ photo, tradeSlug })
-        return true
-      } catch {
-        return false
+        return { ok: true, error: null }
+      } catch (error) {
+        return { ok: false, error: message(error) }
       }
     },
-    remove: async (id: string): Promise<boolean> => {
+    remove: async (id: string): Promise<{ ok: boolean; error: string | null }> => {
       try {
         await remove.mutateAsync(id)
-        return true
-      } catch {
-        return false
+        return { ok: true, error: null }
+      } catch (error) {
+        return { ok: false, error: message(error) }
       }
     },
     isWorking: add.isPending || remove.isPending,

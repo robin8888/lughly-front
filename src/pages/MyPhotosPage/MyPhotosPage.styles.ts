@@ -7,8 +7,25 @@
 import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
-/** Tres por fila con 8 de hueco: el 31 % deja sitio a los dos separadores. */
-const CELL = '31%'
+/** Lo que separa una celda de la siguiente, y de los bordes de la pantalla */
+export const GRID_GAP = 8
+export const CONTENT_PADDING = 16
+export const GRID_COLUMNS = 3
+
+/**
+ * El lado de una celda, en píxeles.
+ *
+ * Se calcula y no se pone en porcentaje. Con `31 %` más `aspectRatio`, el alto
+ * sale de una multiplicación con decimales que cada plataforma redondea a su
+ * manera, y el hueco de añadir acababa midiendo distinto que las fotos de al
+ * lado. En píxeles enteros las dos cajas son la misma caja.
+ */
+export function cellSize(windowWidth: number): number {
+  const available =
+    windowWidth - CONTENT_PADDING * 2 - GRID_GAP * (GRID_COLUMNS - 1)
+
+  return Math.floor(available / GRID_COLUMNS)
+}
 
 export const styles = StyleSheet.create({
   screen: {
@@ -56,11 +73,21 @@ export const styles = StyleSheet.create({
     opacity: 0.8,
     marginBottom: 12,
   },
-  formError: {
-    fontFamily: theme.typography.fonts.body,
+  /*
+   * Lo que ha pasado con la última foto, dentro de la pantalla y encima de la
+   * rejilla: es donde se está mirando cuando se acaba de tocar el hueco.
+   */
+  notice: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.4,
+    marginBottom: 12,
+  },
+  noticeOk: {
+    color: theme.colors.accent700,
+  },
+  noticeError: {
     color: theme.colors.error,
-    marginBottom: 8,
   },
 
   /** Cada oficio, con su rótulo y su rejilla */
@@ -80,13 +107,13 @@ export const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: GRID_GAP,
   },
+  /* El tamaño lo pone la pantalla, con `cellSize`: aquí solo va lo que no cambia */
   cell: {
-    width: CELL,
-    aspectRatio: 1,
     backgroundColor: theme.colors.accent100,
     borderRadius: theme.radius.none,
+    overflow: 'hidden',
   },
   photo: {
     width: '100%',
