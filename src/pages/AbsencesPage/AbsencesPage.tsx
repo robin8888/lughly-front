@@ -36,13 +36,24 @@ function readable(day: string): string {
 
 export interface AbsencesPageProps {
   onBack: () => void
+  /** Cuando los lleva la empresa: los días son los de ese trabajador */
+  employeeId?: string
+  employeeName?: string
 }
 
-export function AbsencesPage({ onBack }: AbsencesPageProps) {
+export function AbsencesPage({
+  onBack,
+  employeeId,
+  employeeName,
+}: AbsencesPageProps) {
   const onScroll = useNavScrollHandler()
   const isEmployee = useIsEmployee()
-  const { data, isPending, isError, refetch } = useMyAbsences(!isEmployee)
-  const { add, remove, isWorking } = useManageMyAbsences()
+
+  const isForEmployee = employeeId !== undefined
+  const blocked = isEmployee && !isForEmployee
+
+  const { data, isPending, isError, refetch } = useMyAbsences(!blocked, employeeId)
+  const { add, remove, isWorking } = useManageMyAbsences(employeeId)
 
   const [from, setFrom] = useState(() => new Date())
   const [to, setTo] = useState(() => new Date())
@@ -96,12 +107,12 @@ export function AbsencesPage({ onBack }: AbsencesPageProps) {
         <Text style={styles.backIcon}>←</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={1}>
-        Mis ausencias
+        {isForEmployee ? (employeeName ?? 'Sus ausencias') : 'Mis ausencias'}
       </Text>
     </View>
   )
 
-  if (isEmployee) {
+  if (blocked) {
     return (
       <View style={styles.screen} testID="absences-page">
         {header}
@@ -160,14 +171,15 @@ export function AbsencesPage({ onBack }: AbsencesPageProps) {
       >
         <InfoCard>
           <Text style={styles.intro}>
-            Los días que no estás. Mandan sobre tu horario: esos días no
-            aparecerás disponible, no te llegarán urgencias, y tu ficha dirá
-            hasta cuándo.
+            {isForEmployee
+              ? 'Los días que no está. Mandan sobre su horario: esos días no aparecerá disponible, no le llegarán urgencias, y su ficha dirá hasta cuándo.'
+              : 'Los días que no estás. Mandan sobre tu horario: esos días no aparecerás disponible, no te llegarán urgencias, y tu ficha dirá hasta cuándo.'}
           </Text>
 
           <Text style={styles.note}>
-            El motivo es solo para ti, para distinguir unos días de otros. No se
-            enseña a nadie.
+            {isForEmployee
+              ? 'El motivo es para vosotros, para distinguir unos días de otros. No se enseña al cliente.'
+              : 'El motivo es solo para ti, para distinguir unos días de otros. No se enseña a nadie.'}
           </Text>
         </InfoCard>
 

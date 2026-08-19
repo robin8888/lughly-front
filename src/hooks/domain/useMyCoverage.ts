@@ -9,8 +9,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { prosApi, type ApiCoverageSettings } from '@/api/pros.api'
+import { employeesApi } from '@/api/employees.api'
 
-export const myCoverageQueryKey = ['pro', 'coverage'] as const
+/** Con trabajador en la clave: dos empleados seguidos enseñarían la misma zona */
+export function coverageQueryKey(employeeId?: string) {
+  return employeeId
+    ? (['employees', employeeId, 'coverage'] as const)
+    : (['pro', 'coverage'] as const)
+}
 
 export interface CoverageInput {
   latitude: number
@@ -19,22 +25,26 @@ export interface CoverageInput {
   city?: string
 }
 
-export function useMyCoverage(enabled = true) {
+export function useMyCoverage(enabled = true, employeeId?: string) {
   return useQuery<ApiCoverageSettings>({
-    queryKey: myCoverageQueryKey,
-    queryFn: () => prosApi.myCoverage(),
+    queryKey: coverageQueryKey(employeeId),
+    queryFn: () =>
+      employeeId ? employeesApi.coverage(employeeId) : prosApi.myCoverage(),
     enabled,
     staleTime: 60_000,
   })
 }
 
-export function useSetMyCoverage() {
+export function useSetMyCoverage(employeeId?: string) {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (input: CoverageInput) => prosApi.setMyCoverage(input),
+    mutationFn: (input: CoverageInput) =>
+      employeeId
+        ? employeesApi.setCoverage(employeeId, input)
+        : prosApi.setMyCoverage(input),
     onSuccess: (saved) => {
-      queryClient.setQueryData(myCoverageQueryKey, saved)
+      queryClient.setQueryData(coverageQueryKey(employeeId), saved)
       // Su radio y su ciudad salen en el directorio y en su ficha
       void queryClient.invalidateQueries({ queryKey: ['pros'] })
     },

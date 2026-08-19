@@ -8,12 +8,21 @@
  * Solo profesional: un cliente no tiene disponibilidad que apartar.
  */
 
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { RoleGate } from '@/components/organisms/RoleGate'
 import { AbsencesPage } from '@/pages/AbsencesPage'
 
 export default function AbsencesRoute() {
   const router = useRouter()
+
+  /**
+   * Con `id` en la dirección, lo que se edita es lo de ese trabajador y quien
+   * lo edita es su empresa. Se reutiliza la ruta en vez de crear otra porque la
+   * pantalla es la misma y las reglas también: solo cambia de quién es lo que
+   * se guarda. Y se vuelve a la lista de trabajadores, no a Mi cuenta, que es
+   * de donde se ha venido.
+   */
+  const { id, name } = useLocalSearchParams<{ id?: string; name?: string }>()
 
   return (
     <RoleGate
@@ -30,7 +39,11 @@ export default function AbsencesRoute() {
       unavailableMessage="Tu cuenta es de cliente, así que no hay ausencias que marcar."
       testID="absences-denied"
     >
-      <AbsencesPage onBack={() => router.navigate('/account')} />
+      <AbsencesPage
+        employeeId={id}
+        employeeName={name}
+        onBack={() => router.navigate(id ? '/empleados' : '/account')}
+      />
     </RoleGate>
   )
 }

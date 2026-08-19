@@ -111,3 +111,34 @@ describe('AvailabilityPage', () => {
     expect(getByText(/no pueden ser la misma/)).toBeTruthy()
   })
 })
+
+/**
+ * Y el otro camino: la empresa editando el horario de un trabajador.
+ *
+ * Lo que se ata es que el aviso de "te lo pone tu empresa" **no** salga
+ * entonces. Es la misma pantalla y el mismo `useIsEmployee`, así que sin
+ * distinguirlo la empresa se encontraría el mensaje de su propio empleado y no
+ * podría editar nada, que es justo el agujero que esto viene a tapar.
+ */
+describe('AvailabilityPage con un trabajador', () => {
+  beforeEach(() => {
+    mockEsEmpleado = false
+  })
+
+  it('deja editar el horario de un trabajador', () => {
+    const { getByTestId, queryByTestId } = render(
+      <AvailabilityPage onBack={() => {}} employeeId="u2" employeeName="Ana" />,
+    )
+
+    expect(getByTestId('availability-add')).toBeTruthy()
+    expect(queryByTestId('availability-employee')).toBeNull()
+  })
+
+  it('encabeza con su nombre, para no confundirlo con el propio', () => {
+    const { getByText } = render(
+      <AvailabilityPage onBack={() => {}} employeeId="u2" employeeName="Ana" />,
+    )
+
+    expect(getByText('Ana')).toBeTruthy()
+  })
+})

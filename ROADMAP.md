@@ -941,6 +941,15 @@ de 9 a 14; el hueco de la comida no se toca.
   18. Es el horario de mucha gente y ahorra montar cinco franjas; quien no lo
   tenga así cambia lo que necesite.
 
+**La empresa también** (19 Agosto 2026, más tarde): las mismas tres pantallas
+—horario, zona y ausencias— las usa un empleador con la ficha de su gente, con
+el trabajador en la dirección. Detrás está el mismo código: los casos de uso se
+partieron en "quién puede" y "qué se guarda", y solo lo primero cambia.
+
+Faltaba, y no era un detalle: al empleado se le decía "esto lo pone tu empresa"
+en tres pantallas y la empresa no tenía dónde ponerlo. Solo podía fijarle las
+franjas de urgencia.
+
 **Sin hacer, y a propósito**: el editor no reagrupa para enseñarlo. Un turno de
 noche de viernes vuelve del servidor partido en dos —viernes 22:00-00:00 y
 sábado 00:00-06:00—, que es como está guardado. Se verá si molesta cuando

@@ -51,13 +51,24 @@ const FALLBACK_CENTER: [number, number] = [-3.7038, 40.4168]
 
 export interface CoveragePageProps {
   onBack: () => void
+  /** Cuando la pone la empresa: la zona que se edita es la de ese trabajador */
+  employeeId?: string
+  employeeName?: string
 }
 
-export function CoveragePage({ onBack }: CoveragePageProps) {
+export function CoveragePage({
+  onBack,
+  employeeId,
+  employeeName,
+}: CoveragePageProps) {
   const onScroll = useNavScrollHandler()
   const isEmployee = useIsEmployee()
-  const { data, isPending, isError, refetch } = useMyCoverage(!isEmployee)
-  const { save, isSaving } = useSetMyCoverage()
+
+  const isForEmployee = employeeId !== undefined
+  const blocked = isEmployee && !isForEmployee
+
+  const { data, isPending, isError, refetch } = useMyCoverage(!blocked, employeeId)
+  const { save, isSaving } = useSetMyCoverage(employeeId)
   const { status: shareStatus, share } = useShareLocation()
 
   const [point, setPoint] = useState<{ lat: number; lng: number } | null>(null)
@@ -149,7 +160,7 @@ export function CoveragePage({ onBack }: CoveragePageProps) {
         <Text style={styles.backIcon}>←</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={1}>
-        Mi zona
+        {isForEmployee ? (employeeName ?? 'Su zona') : 'Mi zona'}
       </Text>
     </View>
   )
@@ -158,7 +169,7 @@ export function CoveragePage({ onBack }: CoveragePageProps) {
    * A un empleado se la pone su empresa, igual que sus oficios y su horario:
    * la zona a la que se le manda a trabajar es de quien organiza el trabajo.
    */
-  if (isEmployee) {
+  if (blocked) {
     return (
       <View style={styles.screen} testID="coverage-page">
         {header}
@@ -217,8 +228,9 @@ export function CoveragePage({ onBack }: CoveragePageProps) {
       >
         <InfoCard>
           <Text style={styles.intro}>
-            Desde dónde sales y hasta dónde te desplazas. El cliente lo ve en tu
-            ficha antes de escribirte, así que decide cuánta gente te encuentra.
+            {isForEmployee
+              ? 'Desde dónde sale y hasta dónde se desplaza. El cliente lo ve en su ficha antes de escribirle, así que decide cuánta gente le encuentra.'
+              : 'Desde dónde sales y hasta dónde te desplazas. El cliente lo ve en tu ficha antes de escribirte, así que decide cuánta gente te encuentra.'}
           </Text>
 
           <Text style={styles.note}>

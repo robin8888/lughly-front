@@ -70,13 +70,31 @@ function toDate(value: string): Date {
 
 export interface AvailabilityPageProps {
   onBack: () => void
+  /**
+   * Cuando lo pone la empresa: el horario que se edita es el de ese trabajador,
+   * no el de quien mira. Sin esto, la pantalla solo servía para uno mismo y al
+   * empleado se le decía "te lo pone tu empresa" sin que la empresa tuviera
+   * dónde ponerlo.
+   */
+  employeeId?: string
+  /** Para encabezar con su nombre; opcional si aún no ha cargado */
+  employeeName?: string
 }
 
-export function AvailabilityPage({ onBack }: AvailabilityPageProps) {
+export function AvailabilityPage({
+  onBack,
+  employeeId,
+  employeeName,
+}: AvailabilityPageProps) {
   const onScroll = useNavScrollHandler()
   const isEmployee = useIsEmployee()
-  const { data, isPending, isError, refetch } = useMyAvailability(!isEmployee)
-  const { save, isSaving } = useSetMyAvailability()
+
+  /* Editando el de otro, lo que sea quien mira no viene al caso */
+  const isForEmployee = employeeId !== undefined
+  const blocked = isEmployee && !isForEmployee
+
+  const { data, isPending, isError, refetch } = useMyAvailability(!blocked, employeeId)
+  const { save, isSaving } = useSetMyAvailability(employeeId)
 
   const [windows, setWindows] = useState<ApiAvailabilityWindow[] | null>(null)
 
@@ -131,7 +149,7 @@ export function AvailabilityPage({ onBack }: AvailabilityPageProps) {
         <Text style={styles.backIcon}>←</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={1}>
-        Mi horario
+        {isForEmployee ? (employeeName ?? 'Su horario') : 'Mi horario'}
       </Text>
     </View>
   )
@@ -141,7 +159,7 @@ export function AvailabilityPage({ onBack }: AvailabilityPageProps) {
    * antes de pedir nada al servidor: la petición acabaría en un 403 y el
    * mensaje sería el mismo, pero después de una espera y con cara de error.
    */
-  if (isEmployee) {
+  if (blocked) {
     return (
       <View style={styles.screen} testID="availability-page">
         {header}
@@ -200,8 +218,9 @@ export function AvailabilityPage({ onBack }: AvailabilityPageProps) {
       >
         <InfoCard>
           <Text style={styles.intro}>
-            A qué horas trabajas normalmente. Es lo que dirá qué huecos se te
-            pueden reservar, así que pon las horas a las que de verdad puedes ir.
+            {isForEmployee
+              ? 'A qué horas trabaja normalmente. Es lo que dirá qué huecos se le pueden reservar, así que pon las horas a las que de verdad puede ir.'
+              : 'A qué horas trabajas normalmente. Es lo que dirá qué huecos se te pueden reservar, así que pon las horas a las que de verdad puedes ir.'}
           </Text>
 
           <Text style={styles.note}>

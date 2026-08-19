@@ -60,6 +60,17 @@ export interface EmployeesPageProps {
   onBack: () => void
   /** Al horario de urgencias de ese trabajador */
   onUrgencySchedule: (employeeId: string, employeeName: string) => void
+  /**
+   * A lo demás que la empresa le lleva: su horario de trabajo, su zona y sus
+   * días fuera. Hasta hoy solo podía fijarle las urgencias, y en las otras tres
+   * pantallas al trabajador se le decía "esto lo pone tu empresa" sin que la
+   * empresa tuviera dónde.
+   */
+  onEmployeeSetting: (
+    setting: 'horario' | 'zona' | 'ausencias',
+    employeeId: string,
+    employeeName: string,
+  ) => void
 }
 
 /**
@@ -187,7 +198,11 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
   )
 }
 
-export function EmployeesPage({ onBack, onUrgencySchedule }: EmployeesPageProps) {
+export function EmployeesPage({
+  onBack,
+  onUrgencySchedule,
+  onEmployeeSetting,
+}: EmployeesPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
    * las pantallas con scroll, no solo en el inicio: si en una se moviera
@@ -434,6 +449,45 @@ export function EmployeesPage({ onBack, onUrgencySchedule }: EmployeesPageProps)
                         testID={`employee-schedule-${employee.id}`}
                       >
                         <Text style={styles.schedule}>Horario de urgencias →</Text>
+                      </Pressable>
+
+                      {/*
+                        Lo demás que le lleva la empresa. Van seguidos y con la
+                        misma forma que el de urgencias porque son lo mismo:
+                        ajustes de esa persona que decide quien organiza su
+                        trabajo.
+                      */}
+                      <Pressable
+                        onPress={() =>
+                          onEmployeeSetting('horario', employee.id, employee.name)
+                        }
+                        disabled={isRemoving}
+                        accessibilityRole="button"
+                        testID={`employee-availability-${employee.id}`}
+                      >
+                        <Text style={styles.schedule}>Horario de trabajo →</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() =>
+                          onEmployeeSetting('zona', employee.id, employee.name)
+                        }
+                        disabled={isRemoving}
+                        accessibilityRole="button"
+                        testID={`employee-coverage-${employee.id}`}
+                      >
+                        <Text style={styles.schedule}>Zona de trabajo →</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() =>
+                          onEmployeeSetting('ausencias', employee.id, employee.name)
+                        }
+                        disabled={isRemoving}
+                        accessibilityRole="button"
+                        testID={`employee-absences-${employee.id}`}
+                      >
+                        <Text style={styles.schedule}>Días que no está →</Text>
                       </Pressable>
 
                       <Pressable

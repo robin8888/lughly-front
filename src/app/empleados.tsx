@@ -37,6 +37,23 @@ export default function EmployeesRoute() {
         onUrgencySchedule={(id, name) =>
           router.navigate({ pathname: '/horario-urgencias', params: { id, name } })
         }
+        /*
+         * Las mismas tres pantallas que usa un profesional para lo suyo, con el
+         * trabajador en la dirección. No hay rutas aparte porque la pantalla es
+         * la misma y las reglas también: lo único que cambia es de quién es lo
+         * que se guarda.
+         */
+        onEmployeeSetting={(setting, id, name) =>
+          router.navigate({
+            pathname:
+              setting === 'horario'
+                ? '/mi-horario'
+                : setting === 'zona'
+                  ? '/mi-zona'
+                  : '/mis-ausencias',
+            params: { id, name },
+          })
+        }
       />
     </RoleGate>
   )

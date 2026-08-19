@@ -7,6 +7,11 @@
  */
 
 import { apiRequest } from './http'
+import type {
+  ApiAbsence,
+  ApiAvailabilityWindow,
+  ApiCoverageSettings,
+} from './pros.api'
 
 export type LegalForm = 'SELF_EMPLOYED' | 'COMPANY'
 
@@ -115,6 +120,55 @@ export const employeesApi = {
    * medias, el trabajador quedaría de guardia a horas que la empresa ya no
    * quiere, y de guardia significa que puede aparecerle un cliente.
    */
+  /**
+   * Lo mismo que un profesional se pone a sí mismo, pero de su gente: horario,
+   * zona y días fuera. Mismos tipos y mismas reglas —el servidor comparte el
+   * código— y lo único que cambia es quién puede.
+   */
+  availability: (id: string) =>
+    apiRequest<ApiAvailabilityWindow[]>(`/v1/employees/${id}/availability`, {
+      auth: true,
+    }),
+
+  setAvailability: (id: string, windows: ApiAvailabilityWindow[]) =>
+    apiRequest<ApiAvailabilityWindow[]>(`/v1/employees/${id}/availability`, {
+      method: 'PUT',
+      auth: true,
+      body: { windows },
+    }),
+
+  coverage: (id: string) =>
+    apiRequest<ApiCoverageSettings>(`/v1/employees/${id}/coverage`, { auth: true }),
+
+  setCoverage: (
+    id: string,
+    payload: { latitude: number; longitude: number; radiusKm: number; city?: string },
+  ) =>
+    apiRequest<ApiCoverageSettings>(`/v1/employees/${id}/coverage`, {
+      method: 'PUT',
+      auth: true,
+      body: payload,
+    }),
+
+  absences: (id: string) =>
+    apiRequest<ApiAbsence[]>(`/v1/employees/${id}/absences`, { auth: true }),
+
+  addAbsence: (
+    id: string,
+    payload: { startsOn: string; endsOn: string; reason?: string },
+  ) =>
+    apiRequest<ApiAbsence>(`/v1/employees/${id}/absences`, {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
+  removeAbsence: (id: string, absenceId: string) =>
+    apiRequest<null>(`/v1/employees/${id}/absences/${absenceId}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
   setUrgencyWindows: (id: string, windows: ApiUrgencyWindow[]) =>
     apiRequest<ApiUrgencyWindow[]>(`/v1/employees/${id}/urgency-windows`, {
       method: 'PUT',
