@@ -36,6 +36,17 @@ export const typography = {
    * titulares no se tocan: el problema era de lectura, no de jerarquía, y
    * subirlo todo habría dejado la escala igual de apretada.
    *
+   * **Tercera subida, solo `tiny` (19 Agosto 2026):** seguía leyéndose pequeño
+   * en el móvil. Es el tamaño de 218 reglas —las introducciones de las
+   * pantallas, las notas al pie, las pistas de los formularios—, así que
+   * empezar a cambiarlas una a una habría dejado la app con dos criterios
+   * conviviendo según qué pantalla se tocó antes.
+   *
+   * Efecto que conviene saber: `tiny` y `small` quedan a un punto (15 y 16), o
+   * sea casi lo mismo. La diferencia entre "texto secundario" y "nota al pie"
+   * ya no la marca el tamaño sino el peso y la opacidad, que es como estaba
+   * hecha en casi todas las pantallas de todos modos.
+   *
    * Sube aquí y no regla a regla porque los `lineHeight` de la app se calculan
    * multiplicando estos valores; tocarlos uno por uno habría descuadrado el
    * interlineado en la mitad de las pantallas.
@@ -51,7 +62,7 @@ export const typography = {
     h6: 15, // 13
     body: 17, // 15
     small: 16, // 13 · era 15
-    tiny: 13.5, // 11 · era 12,5
+    tiny: 15, // 11 · era 12,5 y 13,5
     button: 16, // 14
   },
   lineHeights: {

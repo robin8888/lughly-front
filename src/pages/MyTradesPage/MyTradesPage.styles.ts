@@ -44,10 +44,15 @@ export const styles = StyleSheet.create({
     paddingVertical: 40,
     alignItems: 'center',
   },
+  /*
+   * La tarjeta de arriba explica para qué sirve la pantalla, así que va en el
+   * tamaño de texto normal y no en el de nota al pie. Igual que en el horario
+   * de urgencias y en el propio: es el mismo papel en las tres.
+   */
   intro: {
     fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.55,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.5,
     color: theme.colors.cardText,
     opacity: 0.8,
     marginBottom: 12,
