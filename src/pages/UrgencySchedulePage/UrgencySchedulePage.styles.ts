@@ -46,17 +46,21 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  /*
+   * La tarjeta de arriba es lo que explica para qué sirve la pantalla, así que
+   * va en el tamaño de texto normal y no en el pequeño de las notas al pie.
+   */
   intro: {
     fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.55,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.5,
     color: theme.colors.cardText,
     opacity: 0.85,
   },
   rateNote: {
     fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.5,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
     color: theme.colors.cardText,
     opacity: 0.7,
     marginTop: 8,
@@ -102,11 +106,23 @@ export const styles = StyleSheet.create({
     color: theme.colors.error,
     marginBottom: 10,
   },
+  /**
+   * Botón y no un enlace suelto: es la única acción destructiva de la tarjeta
+   * y con la forma de las demás se ve dónde termina el área que se pulsa.
+   * Va perfilado en vez de relleno para que no compita con guardar.
+   */
   remove: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
+    marginTop: 10,
+    paddingVertical: 9,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.urgency,
+    alignItems: 'center',
+  },
+  removeText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
     color: theme.colors.urgency,
-    marginTop: 4,
   },
 
   add: {

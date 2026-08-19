@@ -282,9 +282,10 @@ export function UrgencySchedulePage({
                   onPress={() => remove(index)}
                   disabled={isSaving}
                   accessibilityRole="button"
+                  style={styles.remove}
                   testID={`window-${index}-remove`}
                 >
-                  <Text style={styles.remove}>Quitar esta franja</Text>
+                  <Text style={styles.removeText}>Quitar esta franja</Text>
                 </Pressable>
               </InfoCard>
             ))}
@@ -292,7 +293,6 @@ export function UrgencySchedulePage({
         )}
 
         <Button
-          variant="secondary"
           fullWidth
           onPress={add}
           disabled={isSaving}
