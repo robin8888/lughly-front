@@ -98,19 +98,52 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent700,
   },
   /** Falta el documento: no es un pendiente, es algo que le bloquea */
+  /** El aviso y su botón, como un bloque: el botón es parte del aviso */
+  notice: {
+    marginTop: 10,
+  },
   missing: {
     fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.5,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
     color: theme.colors.urgency,
-    marginTop: 8,
+  },
+  /*
+   * Relleno y en el color de urgencia: es lo único de esta pantalla que
+   * impide trabajar, así que tiene que pesar más que cualquier otra cosa.
+   */
+  missingAction: {
+    marginTop: 10,
+    paddingVertical: 11,
+    borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.urgency,
+    alignItems: 'center',
+  },
+  missingActionText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: '#ffffff',
   },
   pending: {
     fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
     color: theme.colors.cardText,
-    opacity: 0.7,
+    opacity: 0.8,
+  },
+  /** Perfilado: aquí no hay nada urgente que hacer, solo mirar si se quiere */
+  pendingAction: {
     marginTop: 10,
+    paddingVertical: 10,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.accent,
+    alignItems: 'center',
+  },
+  pendingActionText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
   },
   modes: {
     flexDirection: 'row',

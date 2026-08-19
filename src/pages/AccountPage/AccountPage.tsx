@@ -221,29 +221,45 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
             se arregla, que es lo que faltaba.
           */}
           {isPro && !hasIdentity && !isLoadingDocuments && (
-            <Pressable
-              onPress={onDocuments}
-              accessibilityRole="button"
-              testID="account-documents-missing"
-            >
+            <View style={styles.notice}>
               <Text style={styles.missing}>
-                Te falta el documento de identidad. Sin él no puedes contratar
-                ni pujar. Subirlo →
+                Te falta el documento de identidad. Sin él no puedes contratar ni
+                pujar.
               </Text>
-            </Pressable>
+
+              {/*
+                Botón y no un "Subirlo →" pegado al final del párrafo: lo que
+                hay que hacer no puede leerse como la última palabra de una
+                frase. Relleno y en el color de urgencia porque esto sí bloquea.
+              */}
+              <Pressable
+                onPress={onDocuments}
+                accessibilityRole="button"
+                style={styles.missingAction}
+                testID="account-documents-missing"
+              >
+                <Text style={styles.missingActionText}>Subir mi documento</Text>
+              </Pressable>
+            </View>
           )}
 
           {isPro && hasIdentity && !user?.verified && (
-            <Pressable
-              onPress={onDocuments}
-              accessibilityRole="button"
-              testID="account-documents-pending"
-            >
+            <View style={styles.notice}>
               <Text style={styles.pending}>
                 Identidad pendiente de verificar. Revisaremos tus documentos en
-                breve; mientras tanto no te bloquea nada. Ver mis documentos →
+                breve; mientras tanto no te bloquea nada.
               </Text>
-            </Pressable>
+
+              {/* Perfilado, no relleno: aquí no hay nada urgente que hacer */}
+              <Pressable
+                onPress={onDocuments}
+                accessibilityRole="button"
+                style={styles.pendingAction}
+                testID="account-documents-pending"
+              >
+                <Text style={styles.pendingActionText}>Ver mis documentos</Text>
+              </Pressable>
+            </View>
           )}
         </InfoCard>
 
