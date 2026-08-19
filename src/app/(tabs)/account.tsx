@@ -123,25 +123,6 @@ export default function AccountRoute() {
                       ...(checklist?.coverage === 'MISSING' && { note: optional }),
                     },
                   ]),
-              /**
-               * Los documentos sí, también para un empleado: se los piden a él,
-               * no a su empresa. Y estaban solo detrás del aviso de que
-               * faltaban, así que una vez subidos no había por dónde volver.
-               */
-              {
-                label: 'Mis documentos',
-                onPress: () => router.push('/mis-documentos'),
-                /*
-                 * Sin ellos no puede pujar ni aceptar un encargo, así que es de
-                 * los que bloquean. Cuando están subidos y esperando revisión
-                 * se dice también: si no, quien acaba de subirlos no sabe si
-                 * llegaron.
-                 */
-                ...(checklist?.identityDocuments === 'MISSING' && { note: blocking }),
-                ...(checklist?.identityDocuments === 'PENDING' && {
-                  note: { label: 'En revisión', tone: 'pending' as const },
-                }),
-              },
             ],
           },
           {
@@ -166,9 +147,32 @@ export default function AccountRoute() {
           {
             title: 'Cuenta',
             links: [
+              /**
+               * Los documentos van aquí y no arriba: el cliente **no** los ve
+               * —los mira quien revisa, y nadie más—, así que en el grupo de
+               * "lo que ve el cliente" prometían algo que no es verdad. Son
+               * papeles de la cuenta, como la contraseña.
+               *
+               * Los tiene también un empleado: se los piden a él, no a su
+               * empresa.
+               */
+              {
+                label: 'Mis documentos',
+                onPress: () => router.push('/mis-documentos'),
+                /*
+                 * Sin ellos no puede pujar ni aceptar un encargo, así que es de
+                 * los que bloquean. Cuando están subidos y esperando revisión se
+                 * dice también: si no, quien acaba de subirlos no sabe si
+                 * llegaron.
+                 */
+                ...(checklist?.identityDocuments === 'MISSING' && { note: blocking }),
+                ...(checklist?.identityDocuments === 'PENDING' && {
+                  note: { label: 'En revisión', tone: 'pending' as const },
+                }),
+              },
               {
                 label: 'Cambiar contraseña',
-                onPress: () => router.push('/cambiar-contrasena'),
+                onPress: () => router.push('/contrasena'),
               },
               { label: 'Notificaciones', comingSoon: true },
               { label: 'Configuración', comingSoon: true },
@@ -188,7 +192,7 @@ export default function AccountRoute() {
             links: [
               {
                 label: 'Cambiar contraseña',
-                onPress: () => router.push('/cambiar-contrasena'),
+                onPress: () => router.push('/contrasena'),
               },
               { label: 'Métodos de pago', comingSoon: true },
               { label: 'Notificaciones', comingSoon: true },

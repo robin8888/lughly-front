@@ -1,18 +1,24 @@
 /**
- * Cambiar contraseña: /cambiar-contrasena
+ * Cambio obligatorio de contraseña: /cambiar-contrasena
  *
- * Fuera de las pestañas: se entra desde Mi cuenta, donde el formulario estaba
- * antes incrustado en medio de la lista de accesos.
- *
- * Sin `RoleGate`: la contraseña es de la cuenta, no del rol. La cambian igual
- * un cliente, un profesional y un administrador.
+ * Va fuera de las pestañas y protegida al revés que el resto: solo existe
+ * mientras haga falta. En cuanto la contraseña cambia, el layout raíz la
+ * retira del navegador y monta las pestañas, así que no hay pantalla de la
+ * que volver ni botón atrás que la esquive.
  */
 
 import { useRouter } from 'expo-router'
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage'
+import { ForcePasswordPage } from '@/pages/ForcePasswordPage'
+import { useLogout } from '@/hooks/auth/useLogout'
 
-export default function ChangePasswordRoute() {
+export default function ForcePasswordRoute() {
   const router = useRouter()
+  const { logout } = useLogout()
 
-  return <ChangePasswordPage onBack={() => router.navigate('/account')} />
+  return (
+    <ForcePasswordPage
+      onDone={() => router.replace('/inicio')}
+      onLogout={() => void logout()}
+    />
+  )
 }

@@ -146,6 +146,15 @@ export default function RootLayout() {
             <Stack.Screen name="pujas" />
             <Stack.Screen name="como-funciona" />
             <Stack.Screen name="mis-documentos" />
+            {/*
+              La voluntaria, desde Mi cuenta. No comparte ruta con
+              `cambiar-contrasena`, que es la obligatoria y vive tras el
+              guardián de arriba: allí dentro, a un usuario normal no se le
+              abriría nunca.
+            */}
+            <Stack.Screen name="contrasena" />
+            <Stack.Screen name="mi-horario" />
+            <Stack.Screen name="mi-zona" />
             <Stack.Screen name="revisar-documentos" />
             <Stack.Screen name="pro/[id]" />
           </Stack.Protected>
