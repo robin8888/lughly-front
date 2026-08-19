@@ -251,41 +251,72 @@ export function InboxPage({ onBack }: InboxPageProps) {
                         entonces el botón de arriba es él y saldrían dos para la
                         misma persona.
 
-                        El servidor manda: acepta `isSelf` y lo rechaza si quien
-                        responde no tiene ficha propia —una empresa que no
-                        trabaja— y entonces el aviso lo explica.
+                        `canAssignToSelf` lo dice el servidor. Antes no venía y
+                        el botón se ofrecía siempre: una empresa que gana una
+                        subasta de fontanería pero está dada de alta como
+                        electricista lo pulsaba y se comía el error. Deducirlo
+                        aquí exigiría pedir los oficios propios en otra llamada
+                        y copiar una regla que ya vive en el servidor.
                       */}
                       {user?.id && user.id !== job.requestedProId && (
                         <Pressable
                           onPress={() => confirmAssign(job, user.id, 'Tú')}
-                          disabled={isAssigning}
-                          style={styles.choice}
+                          disabled={isAssigning || !job.canAssignToSelf}
+                          style={[
+                            styles.choice,
+                            !job.canAssignToSelf && styles.choiceBlocked,
+                          ]}
                           accessibilityRole="button"
+                          accessibilityState={{ disabled: !job.canAssignToSelf }}
                           testID={`inbox-${job.id}-assign-self`}
                         >
                           <Text style={styles.choiceText}>Yo mismo</Text>
+                          {!job.canAssignToSelf && (
+                            <Text style={styles.choiceHint}>
+                              No tienes este oficio dado de alta
+                            </Text>
+                          )}
                         </Pressable>
                       )}
 
+                      {/*
+                        La misma regla vale para la plantilla, y aquí no hace
+                        falta preguntar al servidor porque los oficios de cada
+                        uno ya vienen en la lista de empleados. Se apagan en vez
+                        de esconderse: quien no encuentra a los suyos en la
+                        lista cree que la app falla.
+                      */}
                       {employees
                         .filter((employee) => employee.id !== job.requestedProId)
-                        .map((employee) => (
-                          <Pressable
-                            key={employee.id}
-                            onPress={() =>
-                              confirmAssign(job, employee.id, employee.name)
-                            }
-                            disabled={isAssigning}
-                            style={styles.choice}
-                            accessibilityRole="button"
-                            testID={`inbox-${job.id}-assign-${employee.id}`}
-                          >
-                            <Text style={styles.choiceText}>{employee.name}</Text>
-                            <Text style={styles.choiceHint}>
-                              {employee.trades.map((t) => t.label).join(' · ')}
-                            </Text>
-                          </Pressable>
-                        ))}
+                        .map((employee) => {
+                          const canDoIt = employee.trades.some(
+                            (trade) => trade.slug === job.trade,
+                          )
+
+                          return (
+                            <Pressable
+                              key={employee.id}
+                              onPress={() =>
+                                confirmAssign(job, employee.id, employee.name)
+                              }
+                              disabled={isAssigning || !canDoIt}
+                              style={[
+                                styles.choice,
+                                !canDoIt && styles.choiceBlocked,
+                              ]}
+                              accessibilityRole="button"
+                              accessibilityState={{ disabled: !canDoIt }}
+                              testID={`inbox-${job.id}-assign-${employee.id}`}
+                            >
+                              <Text style={styles.choiceText}>{employee.name}</Text>
+                              <Text style={styles.choiceHint}>
+                                {canDoIt
+                                  ? employee.trades.map((t) => t.label).join(' · ')
+                                  : `No tiene ${job.tradeLabel.toLowerCase()} dado de alta`}
+                              </Text>
+                            </Pressable>
+                          )
+                        })}
                     </View>
                   )}
                 </InfoCard>

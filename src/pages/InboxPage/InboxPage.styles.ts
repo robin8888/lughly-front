@@ -166,6 +166,15 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.cardDivider,
   },
+  /**
+   * Una opción que el servidor rechazaría. Se deja a la vista y no se esconde:
+   * quien busca a alguien de su plantilla y no lo encuentra piensa que la app
+   * falla, mientras que verlo apagado con el motivo se entiende y se arregla
+   * —dando de alta el oficio—.
+   */
+  choiceBlocked: {
+    opacity: 0.45,
+  },
   choiceText: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.small,

@@ -793,10 +793,24 @@ sistema, es una persona sin dormir.
 
 ### Lo que quedó pendiente de esto
 
-- [ ] Un autónomo con gente a cargo puede ya asignarse a sí mismo desde la
-      bandeja, pero si quien responde es una empresa sin ficha propia el
-      servidor lo rechazará. Lo limpio sería que `GET /v1/pro/inbox` dijera si
-      quien responde puede trabajar, y no deducirlo en el móvil.
+- [x] **Hecho** (19 Agosto 2026). `GET /v1/pro/inbox` ya dice, trabajo a
+      trabajo, si quien mira puede quedárselo (`canAssignToSelf`), y la bandeja
+      apaga el botón cuando no.
+
+      Buscando el motivo del rechazo resultó no ser el que se apuntó aquí —"una
+      empresa sin ficha propia"—: sin ficha ni siquiera se llega a la bandeja,
+      que devuelve 404 antes. Lo que rechaza de verdad es el **oficio**: al
+      asignar se exige que el elegido lo tenga dado de alta, así que una empresa
+      que gana una subasta de fontanería estando dada de alta como electricista
+      pulsaba "Yo mismo" y se comía el error.
+
+      Y el mismo fallo estaba en la plantilla, que no se había mirado: se
+      ofrecían todos los empleados, tuvieran el oficio o no. Ese caso se
+      resuelve en el móvil sin preguntar nada, porque los oficios de cada uno ya
+      vienen en la lista de empleados.
+
+      Las dos opciones se apagan con el motivo en vez de esconderse: quien no
+      encuentra a los suyos en la lista cree que la app los ha perdido.
 
 ### Selectores de fecha y hora, en toda la app
 

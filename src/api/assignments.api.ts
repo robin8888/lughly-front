@@ -64,6 +64,14 @@ export interface ApiInboxItem {
   substituteProName: string | null
   photoCount: number
   createdAt: string
+  /**
+   * Si quien mira puede quedarse este trabajo.
+   *
+   * Lo decide el servidor: al asignar exige que el elegido tenga ese oficio
+   * dado de alta, y da igual que el elegido sea uno mismo. Antes no venía, así
+   * que aquí se ofrecía "Yo mismo" siempre y el error llegaba tras pulsar.
+   */
+  canAssignToSelf: boolean
 }
 
 export interface ApiAssignment {
