@@ -167,6 +167,23 @@ export const styles = StyleSheet.create({
   links: {
     gap: 2,
   },
+  group: {
+    marginBottom: 18,
+  },
+  /*
+   * El rótulo del grupo, en pequeño y en mayúsculas como el resto de rótulos
+   * de la app: tiene que separar sin competir con los accesos, que son lo que
+   * se va a pulsar.
+   */
+  groupTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    color: theme.colors.text,
+    opacity: 0.55,
+    marginBottom: 2,
+  },
   link: {
     flexDirection: 'row',
     justifyContent: 'space-between',

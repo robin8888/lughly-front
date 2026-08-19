@@ -42,14 +42,33 @@ export interface AccountLink {
   comingSoon?: boolean
 }
 
-export interface AccountPageProps {
+/**
+ * Un bloque de accesos con su rótulo.
+ *
+ * La lista llegó a once accesos seguidos, y once cosas en fila sin ningún orden
+ * se leen de arriba abajo cada vez que se busca una. Con rótulos, la vista va
+ * directa al grupo.
+ *
+ * Se agrupan aquí y **no** se esconden dentro de "Configuración": lo que un
+ * profesional edita —sus oficios, su horario, su zona, sus fotos— no es la
+ * configuración de una app, es su escaparate. Meterlo un nivel más adentro
+ * dejaría lo que le da trabajo más lejos que "Notificaciones", y encima
+ * "Configuración" significa otra cosa en todas las apps: contraseña, avisos,
+ * idioma, borrar la cuenta.
+ */
+export interface AccountLinkGroup {
+  title: string
   links: AccountLink[]
+}
+
+export interface AccountPageProps {
+  groups: AccountLinkGroup[]
   onBack: () => void
   /** Abre "Mis documentos", que es la salida de las puertas de identidad */
   onDocuments: () => void
 }
 
-export function AccountPage({ links, onBack, onDocuments }: AccountPageProps) {
+export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
    * las pantallas con scroll, no solo en el inicio: si en una se moviera
@@ -335,30 +354,36 @@ export function AccountPage({ links, onBack, onDocuments }: AccountPageProps) {
           </Button>
         </InfoCard>
 
-        <View style={styles.links}>
-          {links.map((link) => (
-            <Pressable
-              key={link.label}
-              onPress={link.onPress}
-              disabled={link.comingSoon || !link.onPress}
-              style={styles.link}
-              accessibilityRole="button"
-              testID={`account-link-${link.label}`}
-            >
-              <Text
-                style={[styles.linkLabel, link.comingSoon && styles.linkDisabled]}
+        {groups.map((group) => (
+          <View key={group.title} style={styles.group}>
+            <Text style={styles.groupTitle}>{group.title}</Text>
+
+            {group.links.map((link) => (
+              <Pressable
+                key={link.label}
+                onPress={link.onPress}
+                disabled={link.comingSoon || !link.onPress}
+                style={styles.link}
+                accessibilityRole="button"
+                testID={`account-link-${link.label}`}
               >
-                {link.label}
-              </Text>
+                <Text
+                  style={[styles.linkLabel, link.comingSoon && styles.linkDisabled]}
+                >
+                  {link.label}
+                </Text>
 
-              {link.comingSoon ? (
-                <Text style={styles.soon}>Pronto</Text>
-              ) : (
-                <Text style={styles.chevron}>›</Text>
-              )}
-            </Pressable>
-          ))}
+                {link.comingSoon ? (
+                  <Text style={styles.soon}>Pronto</Text>
+                ) : (
+                  <Text style={styles.chevron}>›</Text>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        ))}
 
+        <View style={styles.links}>
           <Pressable
             onPress={confirmLogout}
             disabled={isLoggingOut}

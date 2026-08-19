@@ -8,7 +8,7 @@
  */
 
 import { useRouter } from 'expo-router'
-import { AccountPage, type AccountLink } from '@/pages/AccountPage'
+import { AccountPage, type AccountLinkGroup } from '@/pages/AccountPage'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useUserRole } from '@/stores/useAuthStore'
@@ -36,75 +36,112 @@ export default function AccountRoute() {
    * la interfaz de cliente —`useEffectiveRole` solo distingue cliente y
    * profesional—, y su acceso no debe depender de eso.
    */
-  const adminLinks: AccountLink[] =
+  const adminGroups: AccountLinkGroup[] =
     accountRole === 'admin'
       ? [
           {
-            label: 'Revisar documentos',
-            onPress: () => router.push('/revisar-documentos'),
+            title: 'Administración',
+            links: [
+              {
+                label: 'Revisar documentos',
+                onPress: () => router.push('/revisar-documentos'),
+              },
+            ],
           },
         ]
       : []
 
-  const links: AccountLink[] =
+  /**
+   * Los accesos, en grupos con rótulo.
+   *
+   * Antes eran once seguidos sin ningún orden, y once cosas en fila se leen de
+   * arriba abajo cada vez que se busca una.
+   *
+   * El primer grupo es lo que ve el cliente —oficios, fotos, horario, zona,
+   * documentos—: es el escaparate, y es lo que hay que poder repasar de un
+   * vistazo. Que no esté dentro de "Configuración" es a propósito: ahí dentro
+   * quedaría más lejos que "Notificaciones", y en cualquier app
+   * "Configuración" significa otra cosa —contraseña, avisos, idioma, borrar la
+   * cuenta—.
+   *
+   * La foto de perfil no está en ninguna lista porque no hace falta: se cambia
+   * tocándola arriba, que es donde se busca.
+   */
+  const groups: AccountLinkGroup[] =
     role === 'pro'
       ? [
-          { label: 'Mensajes', comingSoon: true },
-          /**
-           * El aviso del inicio solo sale cuando hay algo pendiente, así que
-           * sin esto no había forma de entrar a mirar si no había nada. Y una
-           * vez respondido tampoco se podía volver.
-           */
-          { label: 'Encargos', onPress: () => router.navigate('/encargos') },
-          { label: 'Panel profesional', comingSoon: true },
-          /**
-           * Los oficios de un empleado los pone su empresa, y empleados de
-           * un empleado no existen. Las dos pantallas se lo explicarían,
-           * pero es mejor no llevarle a una puerta cerrada.
-           */
-          ...(isEmployee
-            ? []
-            : [
-                {
-                  label: 'Mis oficios',
-                  onPress: () => router.navigate('/oficios'),
-                },
-                {
-                  label: 'Mis trabajadores',
-                  onPress: () => router.navigate('/empleados'),
-                },
-                /**
-                 * Las fotos de un empleado son las de su empresa, igual que
-                 * sus oficios, así que el acceso va en el mismo grupo.
-                 */
-                {
-                  label: 'Mis fotos de trabajo',
-                  onPress: () => router.navigate('/mis-fotos'),
-                },
-              ]),
           {
-            label: 'Mi horario de trabajo',
-            onPress: () => router.push('/mi-horario'),
+            title: 'Mi perfil, lo que ve el cliente',
+            links: [
+              /**
+               * Los oficios y las fotos de un empleado los pone su empresa, y
+               * su horario y su zona también. Las pantallas se lo explicarían,
+               * pero es mejor no llevarle a una puerta cerrada.
+               */
+              ...(isEmployee
+                ? []
+                : [
+                    { label: 'Mis oficios y tarifas', onPress: () => router.navigate('/oficios') },
+                    { label: 'Mis fotos de trabajo', onPress: () => router.navigate('/mis-fotos') },
+                    { label: 'Mi horario de trabajo', onPress: () => router.push('/mi-horario') },
+                    { label: 'Mi zona de trabajo', onPress: () => router.push('/mi-zona') },
+                  ]),
+              /**
+               * Los documentos sí, también para un empleado: se los piden a él,
+               * no a su empresa. Y estaban solo detrás del aviso de que
+               * faltaban, así que una vez subidos no había por dónde volver.
+               */
+              { label: 'Mis documentos', onPress: () => router.push('/mis-documentos') },
+            ],
           },
           {
-            label: 'Mi zona de trabajo',
-            onPress: () => router.push('/mi-zona'),
+            title: 'Mi trabajo',
+            links: [
+              /**
+               * El aviso del inicio solo sale cuando hay algo pendiente, así que
+               * sin esto no había forma de entrar a mirar si no había nada. Y una
+               * vez respondido tampoco se podía volver.
+               */
+              { label: 'Encargos', onPress: () => router.navigate('/encargos') },
+              ...(isEmployee
+                ? []
+                : [
+                    { label: 'Mis trabajadores', onPress: () => router.navigate('/empleados') },
+                  ]),
+              { label: 'Cartera', onPress: () => router.navigate('/wallet') },
+              { label: 'Mensajes', comingSoon: true },
+              { label: 'Panel profesional', comingSoon: true },
+            ],
           },
-          { label: 'Cartera', onPress: () => router.navigate('/wallet') },
-          { label: 'Configuración', comingSoon: true },
-          { label: 'Notificaciones', comingSoon: true },
+          {
+            title: 'Cuenta',
+            links: [
+              { label: 'Notificaciones', comingSoon: true },
+              { label: 'Configuración', comingSoon: true },
+            ],
+          },
         ]
       : [
-          { label: 'Mensajes', comingSoon: true },
-          { label: 'Mis trabajos publicados', onPress: () => router.navigate('/jobs') },
-          { label: 'Métodos de pago', comingSoon: true },
-          { label: 'Configuración', comingSoon: true },
-          { label: 'Notificaciones', comingSoon: true },
+          {
+            title: 'Mi actividad',
+            links: [
+              { label: 'Mis trabajos publicados', onPress: () => router.navigate('/jobs') },
+              { label: 'Mensajes', comingSoon: true },
+            ],
+          },
+          {
+            title: 'Cuenta',
+            links: [
+              { label: 'Métodos de pago', comingSoon: true },
+              { label: 'Notificaciones', comingSoon: true },
+              { label: 'Configuración', comingSoon: true },
+            ],
+          },
         ]
 
   return (
     <AccountPage
-      links={[...adminLinks, ...links]}
+      groups={[...adminGroups, ...groups]}
       onBack={() => router.navigate('/inicio')}
       onDocuments={() => router.push('/mis-documentos')}
     />
