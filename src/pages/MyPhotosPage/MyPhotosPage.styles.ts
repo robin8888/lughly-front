@@ -119,15 +119,34 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: theme.colors.accent300,
+    /*
+     * `accent500` y no `accent300`: el borde de puntos sobre el fondo claro de
+     * la celda se veía tan lavado que el hueco no parecía que se pudiera
+     * pulsar. Sigue siendo más suave que el azul del texto, que es lo que
+     * tiene que llamar primero.
+     */
+    borderColor: theme.colors.accent500,
     backgroundColor: 'transparent',
   },
   addBusy: {
     opacity: 0.6,
   },
+  /**
+   * El `+` no salía centrado y no era cosa del contenedor, que ya centra: un
+   * texto se dibuja dentro de una caja de línea más alta que el propio signo
+   * —hay sitio reservado para las tildes y para lo que baja de la `g`—, así
+   * que el `+` se queda en el medio de esa caja y no en el del cuadrado.
+   *
+   * `lineHeight` igual al tamaño quita ese aire, y `includeFontPadding` quita
+   * el que Android añade además por su cuenta.
+   */
   addIcon: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
+    lineHeight: theme.typography.sizes.h4,
+    includeFontPadding: false,
+    textAlign: 'center',
+    textAlignVertical: 'center',
     color: theme.colors.accent,
   },
 
