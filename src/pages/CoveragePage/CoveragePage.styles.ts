@@ -81,9 +81,9 @@ export const styles = StyleSheet.create({
   matches: {
     marginTop: 10,
     borderWidth: 1,
-    borderColor: theme.colors.divider,
+    borderColor: theme.colors.fieldBorder,
     borderRadius: theme.radius.card,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.field,
     overflow: 'hidden',
   },
   match: {

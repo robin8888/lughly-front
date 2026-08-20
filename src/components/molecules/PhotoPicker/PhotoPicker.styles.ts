@@ -20,9 +20,9 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: theme.colors.divider,
+    borderColor: theme.colors.fieldBorder,
     borderRadius: theme.radius.field,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.field,
   },
   slotFilled: {
     borderStyle: 'solid',

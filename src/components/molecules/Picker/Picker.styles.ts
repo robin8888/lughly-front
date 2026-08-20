@@ -22,9 +22,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing[2],
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.field,
     borderWidth: 1,
-    borderColor: theme.colors.divider,
+    borderColor: theme.colors.fieldBorder,
     borderRadius: theme.radius.card,
   },
   triggerError: {

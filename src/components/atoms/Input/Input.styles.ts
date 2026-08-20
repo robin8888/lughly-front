@@ -25,9 +25,9 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     fontFamily: theme.typography.fonts.body,
     color: theme.colors.text,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.field,
     borderWidth: 1,
-    borderColor: theme.colors.divider,
+    borderColor: theme.colors.fieldBorder,
     borderRadius: theme.radius.field,
   },
   /**

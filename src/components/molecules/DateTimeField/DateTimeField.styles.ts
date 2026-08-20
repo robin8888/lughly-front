@@ -19,9 +19,9 @@ export const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 9,
     paddingHorizontal: 10,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.field,
     borderWidth: 1,
-    borderColor: theme.colors.divider,
+    borderColor: theme.colors.fieldBorder,
     borderRadius: theme.radius.field,
   },
   triggerError: {
@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(4, 7, 15, 0.45)',
   },
   sheet: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.field,
     paddingTop: 14,
     paddingHorizontal: 16,
     paddingBottom: 28,

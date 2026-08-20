@@ -13,8 +13,22 @@ export const colors = {
    */
   bg: '#ffffff',
   surface: '#e9e9ea',
-  /** Para lo que espera algo: campos, chips, huecos de foto */
+  /** Para lo que espera algo: chips, huecos de foto, estados pulsados */
   surfaceSoft: '#f3f5f7',
+  /**
+   * Los campos van en blanco (20 Agosto 2026). Con la página gris el relleno
+   * gris los delimitaba; sobre página blanca se leen como cajas apagadas, y
+   * un formulario entero en gris parece deshabilitado.
+   */
+  field: '#ffffff',
+  /**
+   * Y por eso el borde deja de ser el `divider`: un campo blanco sobre página
+   * blanca **solo se distingue por su contorno**, así que ese contorno tiene
+   * que verse de verdad. Este llega a 3,1:1 contra el blanco, que es lo que
+   * pide la WCAG 1.4.11 para el contorno de un control; el `divider` se queda
+   * en 1,5:1 y desaparecía.
+   */
+  fieldBorder: '#8b929c',
   /** Lo que acompaña sin competir: oficio, ciudad, distancia, pies de texto */
   textSoft: '#697586',
   /** Línea de un pelo, solo donde de verdad hace falta separar */
