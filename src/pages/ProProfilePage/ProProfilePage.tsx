@@ -24,6 +24,7 @@ import { Icon } from '@/components/atoms/Icon'
 import { StarRating } from '@/components/atoms/StarRating'
 import { Tag } from '@/components/atoms/Tag'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { Avatar } from '@/components/atoms/Avatar'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -35,7 +36,7 @@ import { ApiError, API_BASE_URL } from '@/api'
 import { formatDate, parseIsoDate } from '@/utils/dates'
 import { toWeekSchedule } from '@/utils/schedule'
 import { theme } from '@/theme'
-import { styles } from './ProProfilePage.styles'
+import { AVATAR_SIZE, styles } from './ProProfilePage.styles'
 
 /**
  * Umbral de "Top valorada". Se exige también un número mínimo de reseñas:
@@ -231,15 +232,20 @@ export function ProProfilePage({
          * nombre.
          */}
         <InfoCard style={styles.hero} testID="pro-hero">
+          {/*
+            Con el anillo de disponibilidad, como en el directorio y en su
+            propia home: verde si atiende urgencias ahora, rojo si no. Es lo
+            primero que mira quien tiene una avería a las once de la noche.
+
+            Con el átomo `Avatar` en vez de a mano, que es quien sabe dibujar
+            ese anillo y así no hay tres versiones del mismo círculo.
+          */}
           <View style={styles.avatar}>
-            {pro.avatarUrl ? (
-              <Image
-                source={{ uri: `${API_BASE_URL}${pro.avatarUrl}` }}
-                style={styles.avatarImage}
-              />
-            ) : (
-              <Icon name="user-circle" size={44} color={theme.colors.accent} />
-            )}
+            <Avatar
+              uri={pro.avatarUrl ? `${API_BASE_URL}${pro.avatarUrl}` : null}
+              size={AVATAR_SIZE}
+              available={pro.availableNow}
+            />
           </View>
 
           {/**

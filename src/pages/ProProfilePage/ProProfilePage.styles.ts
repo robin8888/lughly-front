@@ -10,7 +10,7 @@ import { theme } from '@/theme'
  * 96 y no 68: centrada y con sitio, la foto es lo primero que se mira en la
  * ficha de una persona a la que vas a dejar entrar en casa.
  */
-const AVATAR_SIZE = 96
+export const AVATAR_SIZE = 96
 
 export const styles = StyleSheet.create({
   screen: {
@@ -71,22 +71,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  /** Solo el hueco: el círculo y su anillo los dibuja el átomo `Avatar` */
   avatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-    flexShrink: 0,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.accent100,
-    borderWidth: 2,
-    borderColor: theme.colors.accent,
     marginBottom: 10,
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
   },
   name: {
     fontFamily: theme.typography.fonts.heading,
