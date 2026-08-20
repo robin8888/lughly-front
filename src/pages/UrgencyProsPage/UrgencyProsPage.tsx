@@ -35,6 +35,15 @@ export interface UrgencyProsPageProps {
   tradeSlug: string | undefined
   /** Dónde es la avería: de ahí sale quién llega */
   point: { lat: number; lng: number } | null
+  /**
+   * Quién ya dijo que no, si se entra desde una urgencia rechazada.
+   *
+   * Sigue saliendo en la lista —está de guardia y le llega—, pero apagado y
+   * diciendo por qué. Quitarlo sin más haría pensar que se ha ido, y el
+   * servidor tampoco deja volver a preguntarle: sin nada que haya cambiado,
+   * la respuesta sería la misma y se habrían perdido cinco minutos más.
+   */
+  declinedProId?: string | null
   onAsked: (jobId: string) => void
   /** Buscar en el directorio, cuando no hay nadie de guardia */
   onSeeDirectory: () => void
@@ -45,6 +54,7 @@ export function UrgencyProsPage({
   jobId,
   tradeSlug,
   point,
+  declinedProId,
   onAsked,
   onSeeDirectory,
   onBack,
@@ -182,15 +192,19 @@ export function UrgencyProsPage({
         </InfoCard>
 
         <View style={styles.list}>
-          {pros.map((pro) => (
+          {pros.map((pro) => {
+            const declined = pro.id === declinedProId
+
+            return (
             <Pressable
               key={pro.id}
               onPress={() => choose(pro.id, pro.name, pro.urgencyRate)}
-              disabled={isAsking}
+              disabled={isAsking || declined}
               accessibilityRole="button"
+              accessibilityState={{ disabled: declined }}
               testID={`urgency-pro-${pro.id}`}
             >
-              <InfoCard style={styles.card}>
+              <InfoCard style={declined ? styles.cardOff : styles.card}>
                 <View style={styles.row}>
                   <Avatar
                     uri={pro.avatarUrl ? `${API_BASE_URL}${pro.avatarUrl}` : null}
@@ -213,6 +227,13 @@ export function UrgencyProsPage({
                       {pro.tradeLabel} · a {pro.distanceKm} km
                     </Text>
 
+                    {/* Con texto y no solo apagado: un gris no se lee */}
+                    {declined && (
+                      <Text style={styles.declined}>
+                        No puede con este trabajo
+                      </Text>
+                    )}
+
                     <Text style={styles.rating}>
                       ★ {pro.rating.toFixed(1)} ·{' '}
                       {pro.reviewCount === 0
@@ -228,7 +249,8 @@ export function UrgencyProsPage({
                 </View>
               </InfoCard>
             </Pressable>
-          ))}
+            )
+          })}
         </View>
       </Animated.ScrollView>
     </View>

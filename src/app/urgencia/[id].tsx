@@ -29,6 +29,8 @@ export default function UrgencyProsRoute() {
       jobId={id}
       tradeSlug={job?.trade}
       point={point}
+      /* Quien dijo que no sigue en la lista, pero apagado */
+      declinedProId={job?.status === 'DECLINED' ? job.assignedPro?.id : null}
       /* A esperar su respuesta, que es lo único que queda por hacer */
       onAsked={(jobId) =>
         router.navigate({ pathname: '/trabajo/[id]', params: { id: jobId } })

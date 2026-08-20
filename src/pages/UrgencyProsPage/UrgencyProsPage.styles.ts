@@ -75,6 +75,19 @@ export const styles = StyleSheet.create({
   card: {
     padding: 14,
   },
+  /*
+    El que ya dijo que no: se ve, pero no se puede volver a elegir. Es un
+    estilo completo y no un añadido, porque `InfoCard` recibe un solo objeto.
+  */
+  cardOff: {
+    padding: 14,
+    opacity: 0.55,
+  },
+  declined: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.pendingText,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
