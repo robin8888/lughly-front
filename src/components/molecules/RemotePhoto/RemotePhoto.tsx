@@ -11,10 +11,17 @@
  * que devuelve el sistema, que es lo único que distingue "no llego al servidor"
  * de "la imagen está corrupta" o "no hay memoria para decodificarla" sin tener
  * el teléfono en la mano.
+ *
+ * **Y va con la sesión puesta.** Las fotos de una avería exigen sesión —enseñan
+ * el interior de la casa de alguien— pero un `Image` a secas no manda ninguna
+ * cabecera, así que el servidor contestaba 401 y no se ha visto nunca ninguna.
+ * Las públicas —avatares, fotos de trabajo del profesional— ignoran la
+ * cabecera, así que no hace falta saber aquí cuál es cuál.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Image, type StyleProp, type ImageStyle } from 'react-native'
+import { useAccessToken } from '@/stores/useAuthStore'
 import { styles } from './RemotePhoto.styles'
 
 export interface RemotePhotoProps {
@@ -31,7 +38,15 @@ export function RemotePhoto({
   fallback = 'No se ha podido cargar',
   testID,
 }: RemotePhotoProps) {
+  const token = useAccessToken()
   const [error, setError] = useState<string | null>(null)
+
+  /*
+    Se vuelve a intentar al cambiar la foto o al renovarse la sesión. Sin esto,
+    una que fallara por token caducado se quedaría en el hueco de "no carga"
+    hasta salir de la pantalla, aunque la sesión ya esté buena otra vez.
+  */
+  useEffect(() => setError(null), [uri, token])
 
   if (error !== null) {
     return (
@@ -55,7 +70,10 @@ export function RemotePhoto({
 
   return (
     <Image
-      source={{ uri }}
+      source={{
+        uri,
+        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+      }}
       style={style}
       resizeMode="cover"
       onError={(event) => {

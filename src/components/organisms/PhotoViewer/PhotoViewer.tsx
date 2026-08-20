@@ -17,6 +17,7 @@
 
 import { useEffect, useState } from 'react'
 import { Modal, View, Text, Pressable, Image } from 'react-native'
+import { useAccessToken } from '@/stores/useAuthStore'
 import { styles } from './PhotoViewer.styles'
 
 export interface PhotoViewerProps {
@@ -34,6 +35,7 @@ export function PhotoViewer({
   onClose,
   testID,
 }: PhotoViewerProps) {
+  const token = useAccessToken()
   const [index, setIndex] = useState(openAt ?? 0)
 
   /* Al abrir por otra foto, empieza por esa y no por donde se quedó */
@@ -50,7 +52,15 @@ export function PhotoViewer({
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} testID={testID}>
         <Image
-          source={{ uri: current }}
+          /*
+            Con la sesión puesta, como en `RemotePhoto`: las fotos de una
+            avería exigen sesión y un `Image` a secas no manda cabeceras, así
+            que se abría el visor sobre un hueco negro.
+          */
+          source={{
+            uri: current,
+            ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+          }}
           style={styles.photo}
           /* `contain`: recortar una foto que se abre para ver el detalle sería
              quitar justo lo que se ha venido a mirar */
