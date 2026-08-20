@@ -179,13 +179,23 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.urgency,
     borderColor: theme.colors.urgency,
   },
-  hint: {
-    fontFamily: theme.typography.fonts.body,
+  /*
+    Lo que falta para poder seguir, justo encima del botón apagado. En el
+    naranja de "te falta algo" y no en el rojo de error: no ha hecho nada mal,
+    todavía no ha terminado.
+  */
+  missing: {
+    backgroundColor: theme.colors.pendingSoft,
+    borderRadius: theme.radius.card,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 16,
+    gap: 4,
+  },
+  missingItem: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: theme.colors.text,
-    opacity: 0.65,
-    textAlign: 'center',
-    marginTop: 10,
+    color: theme.colors.pendingText,
   },
 })

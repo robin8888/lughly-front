@@ -93,6 +93,36 @@ export function UrgencyPage({
   const canPublish =
     trade !== '' && description.trim().length >= 20 && located !== null && !isBusy
 
+  /**
+   * Qué falta para poder seguir.
+   *
+   * El botón se quedaba apagado sin decir por qué, y lo único que se decía
+   * era lo de la dirección —debajo del botón y solo si había algo escrito—.
+   * Con una fuga en casa, un botón apagado y mudo es un callejón: hay tres
+   * motivos posibles y ninguno se ve.
+   *
+   * Se dice **antes** del botón, que es donde se mira al no poder pulsarlo.
+   */
+  const missing: string[] = []
+
+  if (trade === '') missing.push('Elige el oficio que necesitas.')
+
+  if (description.trim().length < 20) {
+    missing.push('Cuenta qué ocurre, con veinte caracteres o más.')
+  }
+
+  if (located === null) {
+    missing.push(
+      coverage.status === 'searching'
+        ? 'Estamos situando la dirección…'
+        : coverage.status === 'not-found'
+          ? 'No encontramos esa dirección. Prueba con la calle, el número y la ciudad.'
+          : coverage.status === 'failed'
+            ? 'No hemos podido situar la dirección. Inténtalo otra vez.'
+            : 'Escribe la dirección o comparte tu ubicación.',
+    )
+  }
+
   const handleShareLocation = async () => {
     const position = await share()
     if (!position) return
@@ -284,6 +314,16 @@ export function UrgencyPage({
           </Text>
         </View>
 
+        {missing.length > 0 && !isBusy && (
+          <View style={styles.missing} testID="urgency-missing">
+            {missing.map((item) => (
+              <Text key={item} style={styles.missingItem}>
+                {item}
+              </Text>
+            ))}
+          </View>
+        )}
+
         <Button
           fullWidth
           loading={isBusy}
@@ -292,15 +332,8 @@ export function UrgencyPage({
           style={styles.submit}
           testID="urgency-submit"
         >
-          Ver quién puede ir
+          Ver profesionales
         </Button>
-
-        {!located && address.trim().length > 0 && (
-          <Text style={styles.hint}>
-            Necesitamos situar la dirección en el mapa para saber quién llega
-            hasta ahí.
-          </Text>
-        )}
       </Animated.ScrollView>
     </View>
   )
