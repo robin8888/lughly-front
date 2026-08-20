@@ -84,8 +84,8 @@ export function JobCard({
           <View style={styles.needsYouBlock}>
             <Text style={styles.needsYouNote}>
               {job.status === 'DECLINED'
-                ? 'No pueden hacerlo. Ya puedes encargárselo a otro.'
-                : 'Nadie respondió a tiempo. Ya puedes encargárselo a otro.'}
+                ? 'No pueden hacerlo, puedes buscar otro profesional.'
+                : 'Nadie ha respondido a tiempo, puedes buscar otro profesional.'}
             </Text>
 
             {onReassign && (
@@ -95,7 +95,8 @@ export function JobCard({
                 style={styles.reassign}
                 testID={`job-${job.id}-reassign`}
               >
-                <Text style={styles.reassignText}>Buscar otro profesional</Text>
+                {/* Corto: la frase de arriba ya ha dicho qué se busca */}
+                <Text style={styles.reassignText}>Buscar</Text>
               </Pressable>
             )}
           </View>
