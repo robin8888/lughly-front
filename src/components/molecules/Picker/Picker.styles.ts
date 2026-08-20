@@ -70,7 +70,6 @@ export const styles = StyleSheet.create({
   sheetTitle: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h5,
-    textTransform: 'uppercase',
     color: theme.colors.text,
   },
   option: {

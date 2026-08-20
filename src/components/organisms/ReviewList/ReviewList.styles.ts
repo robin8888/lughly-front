@@ -14,7 +14,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     color: theme.colors.text,
     marginBottom: 10,
   },
@@ -49,7 +48,6 @@ export const styles = StyleSheet.create({
   breakdownTitle: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
-    textTransform: 'uppercase',
     letterSpacing: 0.4,
     color: theme.colors.cardText,
     opacity: 0.7,

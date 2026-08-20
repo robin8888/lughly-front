@@ -160,15 +160,6 @@ export default function AccountRoute() {
                       label: 'Mis festivos',
                       onPress: () => router.push('/mis-festivos'),
                     },
-                    /*
-                     * Prueba de aspecto, 20 Agosto 2026. Es el directorio de
-                     * siempre con el estilo propuesto, para poder verlos
-                     * seguidos y decidir. Se quita cuando se decida.
-                     */
-                    {
-                      label: 'Probar el aspecto nuevo',
-                      onPress: () => router.push('/directorio-nuevo'),
-                    },
                   ]),
             ],
           },

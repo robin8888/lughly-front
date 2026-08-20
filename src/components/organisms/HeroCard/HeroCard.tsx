@@ -123,18 +123,13 @@ export function HeroCard({
     !isClient && profile?.rating != null && (profile.reviewCount ?? 0) > 0
 
   /*
-   * `bordered={false}`: el resto de tarjetas llevan contorno azul para
-   * despegarse del fondo de la página, pero esta no es una tarjeta dentro de
-   * la pantalla, es su cabecera. Enmarcarla la convertiría en un recuadro
-   * pegado arriba en vez de en el principio de la pantalla.
+   * Ya no hace falta pedir nada para que esta no lleve marco: desde el 20
+   * Agosto 2026 ninguna tarjeta lo lleva. Antes había que quitárselo a mano,
+   * porque esta no es una tarjeta dentro de la pantalla sino su cabecera, y
+   * enmarcarla la convertía en un recuadro pegado arriba.
    */
   return (
-    <InfoCard
-      variant={variant}
-      bordered={false}
-      style={styles.card}
-      testID={testID}
-    >
+    <InfoCard variant={variant} style={styles.card} testID={testID}>
       {/*
         El logotipo en lugar del nombre escrito. No lleva color de paleta: las
         letras son blancas pero el contorno es navy oscuro, así que se lee

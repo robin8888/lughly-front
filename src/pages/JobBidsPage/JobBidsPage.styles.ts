@@ -36,7 +36,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h5,
-    textTransform: 'uppercase',
     color: theme.colors.text,
   },
   content: {

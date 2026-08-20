@@ -95,7 +95,6 @@ export const styles = StyleSheet.create({
   responseTitle: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
-    textTransform: 'uppercase',
     letterSpacing: 0.4,
     color: theme.colors.cardText,
     opacity: 0.7,

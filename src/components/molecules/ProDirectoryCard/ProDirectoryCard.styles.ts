@@ -1,17 +1,51 @@
 /**
  * ProDirectoryCard styles
- * Según MobileApp.dc.html (isProfesionales): avatar de 44px, distintivo
- * verde de disponibilidad y tarifa en color de acento.
+ *
+ * **Rediseñados el 20 Agosto 2026**: tarjeta blanca redondeada sin marco ni
+ * cuadrícula, nombres sin mayúsculas, fotos con las esquinas redondeadas y la
+ * disponibilidad en un anillo alrededor de la cara. El reparto de las piezas
+ * no cambió.
  */
 
 import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
+  card: {
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.radius.card,
+    padding: 14,
+    marginBottom: 14,
+    ...theme.shadows.card,
+  },
+  /** Se sombrea al tocarla: es lo que hace que se sienta pulsable entera */
+  cardPressed: {
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  /**
+   * El anillo de disponibilidad, alrededor de la cara.
+   *
+   * Es un aro con un hueco de aire por dentro y no un borde pegado a la foto:
+   * pegado se confunde con el recorte de la propia imagen, y con el hueco se
+   * lee como un estado puesto encima.
+   */
+  avatarRing: {
+    borderRadius: theme.radius.pill,
+    borderWidth: 2,
+    padding: 2,
+    flexShrink: 0,
+  },
+  ringAvailable: {
+    borderColor: theme.colors.available,
+  },
+  ringUnavailable: {
+    borderColor: theme.colors.unavailable,
   },
   avatar: {
     width: 44,
@@ -19,9 +53,7 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     flexShrink: 0,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: theme.colors.accent,
-    backgroundColor: theme.colors.accent100,
+    backgroundColor: theme.colors.surfaceSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -33,80 +65,37 @@ export const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  /** Sin `uppercase`: en caja alta el nombre de una persona suena a rótulo */
   name: {
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 15.5,
-    textTransform: 'uppercase',
+    fontSize: 16,
     color: theme.colors.cardText,
   },
-  /**
-   * El trabajador, bajo el nombre del empleador. Va en semibold y sin
-   * mayúsculas: se lee como una segunda línea de la identidad, no como otro
-   * titular que compita con el de arriba.
-   */
   worker: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 13,
-    color: theme.colors.cardText,
-    opacity: 0.85,
+    color: theme.colors.textSoft,
     marginTop: 1,
   },
   meta: {
     fontFamily: theme.typography.fonts.body,
     fontSize: 13,
-    color: theme.colors.cardText,
-    opacity: 0.7,
+    color: theme.colors.textSoft,
     marginTop: 2,
   },
   distance: {
     fontFamily: theme.typography.fonts.body,
     fontSize: 12,
-    color: theme.colors.cardText,
-    opacity: 0.7,
+    color: theme.colors.textSoft,
     marginTop: 3,
   },
-  badge: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 5,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: theme.colors.cardDivider,
-  },
-  badgeAvailable: {
-    backgroundColor: 'rgba(63, 143, 90, 0.14)',
-    borderColor: 'rgba(63, 143, 90, 0.45)',
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: theme.radius.pill,
-    backgroundColor: 'rgba(28, 43, 51, 0.3)',
-  },
-  dotAvailable: {
-    backgroundColor: theme.colors.available,
-  },
-  badgeText: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 11,
-    color: theme.colors.cardText,
-    opacity: 0.75,
-  },
-  badgeAvailableText: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 11,
-    color: '#2f6f45',
-  },
+
   numbers: {
     alignItems: 'flex-end',
   },
   rate: {
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 14.5,
+    fontSize: 15,
     color: theme.colors.accent,
   },
   ratingRow: {
@@ -127,68 +116,63 @@ export const styles = StyleSheet.create({
   reviews: {
     fontFamily: theme.typography.fonts.body,
     fontSize: 11,
-    color: theme.colors.cardText,
-    opacity: 0.6,
+    color: theme.colors.textSoft,
     marginTop: 2,
   },
-  bio: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: 14,
-    color: theme.colors.cardText,
-    opacity: 0.85,
-    marginTop: 6,
-  },
-  /** Tira de fotos de sus trabajos, todas del mismo tamaño */
+
+  /** La tira, igual que ahora: todas del mismo tamaño y cuadradas de forma */
   photos: {
     flexDirection: 'row',
-    gap: 4,
-    marginTop: 8,
+    gap: 5,
+    marginTop: 10,
   },
   photo: {
     flex: 1,
     aspectRatio: 1,
-    backgroundColor: theme.colors.accent100,
-    // Cuadradas, como el resto del tema industrial
-    borderRadius: theme.radius.none,
+    borderRadius: theme.radius.photo,
+    backgroundColor: theme.colors.surfaceSoft,
   },
   photoMore: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.accent300,
   },
   photoMoreText: {
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.small,
-    color: theme.colors.accent700,
+    fontSize: 14,
+    color: theme.colors.textSoft,
   },
 
-  /** Los otros oficios, en texto y con su precio: son datos, no insignias */
+  bio: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 14,
+    lineHeight: 20,
+    color: theme.colors.cardText,
+    marginTop: 10,
+  },
   alsoDoes: {
     fontFamily: theme.typography.fonts.body,
     fontSize: 12.5,
-    lineHeight: 12.5 * 1.45,
-    color: theme.colors.cardText,
-    opacity: 0.8,
-    marginTop: 6,
+    lineHeight: 18,
+    color: theme.colors.textSoft,
+    marginTop: 8,
   },
+
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 5,
-    marginTop: 6,
+    marginTop: 10,
   },
   tag: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.accent100,
-    borderWidth: 1,
-    borderColor: theme.colors.accent300,
   },
   tagText: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 11,
+    /* El oscuro: sobre el fondo pálido del distintivo, el claro no se lee */
     color: theme.colors.accent700,
   },
 })

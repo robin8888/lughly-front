@@ -32,7 +32,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     color: theme.colors.text,
   },
   content: {
@@ -47,7 +46,6 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.heading,
     fontSize: 29,
     lineHeight: 32.5,
-    textTransform: 'uppercase',
     color: theme.colors.accent700,
     marginBottom: 8,
   },

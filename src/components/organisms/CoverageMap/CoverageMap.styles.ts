@@ -12,8 +12,7 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: theme.colors.divider,
-    // Cuadrado, como el resto de superficies del tema industrial
-    borderRadius: theme.radius.none,
+    borderRadius: theme.radius.field,
     backgroundColor: theme.colors.surface,
   },
   map: {

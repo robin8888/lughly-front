@@ -24,7 +24,6 @@ export const styles = StyleSheet.create({
   label: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
-    textTransform: 'uppercase',
     letterSpacing: 0.4,
     color: theme.colors.cardText,
     opacity: 0.6,

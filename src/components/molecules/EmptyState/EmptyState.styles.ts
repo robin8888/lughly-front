@@ -23,7 +23,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h5,
-    textTransform: 'uppercase',
     color: theme.colors.cardText,
     textAlign: 'center',
     marginBottom: 6,

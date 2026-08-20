@@ -33,13 +33,11 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 12,
     letterSpacing: 0.66,
-    textTransform: 'uppercase',
     color: theme.colors.accent700,
   },
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     color: theme.colors.text,
   },
   content: {

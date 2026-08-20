@@ -140,7 +140,6 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 12.5,
     letterSpacing: 0.66,
-    textTransform: 'uppercase',
     color: theme.colors.accent700,
     marginBottom: 10,
   },

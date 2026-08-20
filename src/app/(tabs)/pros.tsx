@@ -15,8 +15,6 @@ export default function ProsRoute() {
       initialTrade={trade}
       onSelectPro={(id) => router.navigate({ pathname: '/pro/[id]', params: { id } })}
       onBack={() => router.navigate('/inicio')}
-      /* TEMPORAL, 20 Agosto 2026: prueba de aspecto. Se quita al decidir. */
-      onSeeNewLook={() => router.push('/directorio-nuevo')}
     />
   )
 }

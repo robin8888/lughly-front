@@ -22,7 +22,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.divider,
-    borderRadius: theme.radius.none,
+    borderRadius: theme.radius.field,
   },
   triggerError: {
     borderColor: theme.colors.error,

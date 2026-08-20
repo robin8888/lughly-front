@@ -32,7 +32,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     // El rojo del diseño: esta pantalla no se abre por gusto
     color: theme.colors.urgency,
   },

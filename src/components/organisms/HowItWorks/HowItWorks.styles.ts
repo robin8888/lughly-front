@@ -10,7 +10,6 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 12.5,
     letterSpacing: 0.66,
-    textTransform: 'uppercase',
     // Va sobre el fondo claro de la página, así que el accent700 del diseño
     color: theme.colors.accent700,
     marginBottom: 10,
@@ -21,7 +20,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: 15.5,
-    textTransform: 'uppercase',
     color: theme.colors.cardText,
     marginBottom: 4,
   },

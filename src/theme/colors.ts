@@ -5,8 +5,20 @@
 
 export const colors = {
   // Base
-  bg: '#f2f2f3',
+  /**
+   * **Blanco desde el 20 Agosto 2026.** Era `#f2f2f3`, y ese gris obligaba a
+   * que la tarjeta fuese casi blanca para destacar sobre él; ahí se perdía el
+   * contraste que de verdad importa, que es el de la foto y la cara contra la
+   * página. Ahora las tarjetas se separan con aire y una sombra baja.
+   */
+  bg: '#ffffff',
   surface: '#e9e9ea',
+  /** Para lo que espera algo: campos, chips, huecos de foto */
+  surfaceSoft: '#f3f5f7',
+  /** Lo que acompaña sin competir: oficio, ciudad, distancia, pies de texto */
+  textSoft: '#697586',
+  /** Línea de un pelo, solo donde de verdad hace falta separar */
+  hairline: '#e9edf1',
   text: '#1d1f20',
   accent: '#5980a6',
   accent2: '#728fab',
@@ -47,6 +59,12 @@ export const colors = {
 
   // Semánticos (según README)
   available: '#3f8f5a',
+  /**
+   * El anillo de quien no atiende ahora. Rojo apagado y **no** `urgency`: no
+   * ha fallado nada ni hay ninguna urgencia, solo dice que hoy no sale
+   * corriendo.
+   */
+  unavailable: '#d1544a',
   urgency: '#a3453a',
   error: '#a3453a',
   rating: '#d4a13a',

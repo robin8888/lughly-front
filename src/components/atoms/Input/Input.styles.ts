@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.divider,
-    borderRadius: theme.radius.card,
+    borderRadius: theme.radius.field,
   },
   /**
    * Mientras se escribe. No lo tenía, y era lo que más se echaba en falta en

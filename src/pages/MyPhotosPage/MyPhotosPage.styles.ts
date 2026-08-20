@@ -53,7 +53,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     color: theme.colors.text,
   },
   content: {
@@ -97,7 +96,6 @@ export const styles = StyleSheet.create({
   groupLabel: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
-    textTransform: 'uppercase',
     letterSpacing: 0.5,
     color: theme.colors.cardText,
     opacity: 0.7,
@@ -112,7 +110,7 @@ export const styles = StyleSheet.create({
   /* El tamaño lo pone la pantalla, con `cellSize`: aquí solo va lo que no cambia */
   cell: {
     backgroundColor: theme.colors.accent100,
-    borderRadius: theme.radius.none,
+    borderRadius: theme.radius.photo,
     overflow: 'hidden',
   },
   photo: {

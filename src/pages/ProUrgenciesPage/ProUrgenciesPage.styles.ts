@@ -31,7 +31,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     color: theme.colors.urgency,
   },
   content: {
@@ -61,7 +60,6 @@ export const styles = StyleSheet.create({
   busyLabel: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
-    textTransform: 'uppercase',
     letterSpacing: 0.4,
     color: theme.colors.available,
   },

@@ -68,7 +68,6 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.heading,
     fontSize: 29,
     lineHeight: 32.5,
-    textTransform: 'uppercase',
     textAlign: 'center',
     marginTop: 10,
   },

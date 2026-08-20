@@ -85,7 +85,6 @@ export const styles = StyleSheet.create({
   name: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     textAlign: 'center',
     color: theme.colors.cardText,
   },
@@ -174,7 +173,6 @@ export const styles = StyleSheet.create({
   galleryLabel: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
-    textTransform: 'uppercase',
     letterSpacing: 0.5,
     color: theme.colors.cardText,
     opacity: 0.7,
@@ -215,7 +213,6 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h6,
-    textTransform: 'uppercase',
     color: theme.colors.cardText,
     marginBottom: 8,
   },

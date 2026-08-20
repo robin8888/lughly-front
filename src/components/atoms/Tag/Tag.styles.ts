@@ -13,8 +13,8 @@ export const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingVertical: 3,
     paddingHorizontal: 10,
-    // `.tag` va cuadrada en el tema industrial (styles.css, línea 291)
-    borderRadius: theme.radius.none,
+    // Píldora: es una etiqueta, y una etiqueta con esquinas parece un botón
+    borderRadius: theme.radius.pill,
   },
   text: {
     fontSize: 12.5,

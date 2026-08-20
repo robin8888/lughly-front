@@ -5,6 +5,19 @@
  */
 
 export const shadows = {
+  /**
+   * La de las tarjetas. Muy baja a propósito: en una lista hay decenas, y una
+   * sombra marcada por tarjeta ensucia la pantalla entera. Es lo único que
+   * separa una tarjeta blanca de una página blanca, así que tampoco puede ser
+   * cero.
+   */
+  card: {
+    shadowColor: '#0b1220',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   sm: {
     shadowColor: '#2b2b2d',
     shadowOffset: { width: 0, height: 1 },

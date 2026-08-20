@@ -30,7 +30,6 @@ export const styles = StyleSheet.create({
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    textTransform: 'uppercase',
     color: theme.colors.text,
   },
   content: {
@@ -47,7 +46,6 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
     letterSpacing: 0.4,
-    textTransform: 'uppercase',
     color: theme.colors.accent700,
     marginBottom: 2,
   },
@@ -58,7 +56,6 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
     letterSpacing: 0.4,
-    textTransform: 'uppercase',
     color: theme.colors.accent700,
     marginBottom: 4,
   },

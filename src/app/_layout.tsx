@@ -158,8 +158,6 @@ export default function RootLayout() {
             <Stack.Screen name="mis-ausencias" />
             <Stack.Screen name="mis-recargos" />
             <Stack.Screen name="mis-festivos" />
-            {/* Prueba de aspecto, 20 Agosto 2026. Se quita al decidir. */}
-            <Stack.Screen name="directorio-nuevo" />
             <Stack.Screen name="mis-datos" />
             <Stack.Screen name="revisar-documentos" />
             <Stack.Screen name="pro/[id]" />

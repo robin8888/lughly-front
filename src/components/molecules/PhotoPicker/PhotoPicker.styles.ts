@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: theme.colors.divider,
-    borderRadius: theme.radius.none,
+    borderRadius: theme.radius.field,
     backgroundColor: theme.colors.surface,
   },
   slotFilled: {
