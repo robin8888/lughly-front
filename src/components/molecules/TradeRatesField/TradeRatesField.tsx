@@ -24,6 +24,14 @@ export interface TradeRate {
   slug: string
   /** Como texto: es lo que hay en el campo, con la coma que teclee */
   hourlyRate: string
+  /**
+   * Lo que cobra por una urgencia de este oficio, también como texto.
+   *
+   * **Vacío significa que no atiende urgencias de este oficio**, y por eso no
+   * se valida como un campo que falte: es una decisión, y hay quien sale
+   * corriendo por una fuga pero no por un mueble.
+   */
+  urgencyRate: string
 }
 
 export interface TradeRatesFieldProps {
@@ -52,12 +60,20 @@ export function TradeRatesField({
   const available = TRADE_OPTIONS.filter((option) => !chosen.has(option.value))
 
   const add = (slug: string) => {
-    onChange([...value, { slug, hourlyRate: '' }])
+    onChange([...value, { slug, hourlyRate: '', urgencyRate: '' }])
     setPickerKey((key) => key + 1)
   }
 
   const remove = (slug: string) => {
     onChange(value.filter((trade) => trade.slug !== slug))
+  }
+
+  const setUrgencyRate = (slug: string, urgencyRate: string) => {
+    onChange(
+      value.map((trade) =>
+        trade.slug === slug ? { ...trade, urgencyRate } : trade,
+      ),
+    )
   }
 
   const setRate = (slug: string, hourlyRate: string) => {
@@ -69,51 +85,86 @@ export function TradeRatesField({
   return (
     <View testID={testID}>
       {value.map((trade, index) => (
-        <View key={trade.slug} style={styles.row} testID={`trade-row-${trade.slug}`}>
-          <View style={styles.labelColumn}>
-            <Text style={styles.label} numberOfLines={2}>
-              {getTradeLabel(trade.slug)}
-            </Text>
-            {index === 0 && value.length > 1 && (
-              /**
-               * El primero encabeza su tarjeta cuando el cliente no ha
-               * buscado un oficio concreto. Decirlo evita la sorpresa de
-               * salir anunciado como otra cosa.
-               */
-              <Text style={styles.primary}>Encabeza tu ficha</Text>
+        <View
+          key={trade.slug}
+          style={styles.trade}
+          testID={`trade-row-${trade.slug}`}
+        >
+          <View style={styles.row}>
+            <View style={styles.labelColumn}>
+              <Text style={styles.label} numberOfLines={2}>
+                {getTradeLabel(trade.slug)}
+              </Text>
+              {index === 0 && value.length > 1 && (
+                /**
+                 * El primero encabeza su tarjeta cuando el cliente no ha
+                 * buscado un oficio concreto. Decirlo evita la sorpresa de
+                 * salir anunciado como otra cosa.
+                 */
+                <Text style={styles.primary}>Encabeza tu ficha</Text>
+              )}
+            </View>
+
+            {!hideRates && (
+              <View style={styles.rateColumn}>
+                {/*
+                  La unidad va fija dentro del campo y no de marca de agua: el
+                  marcador desaparece al teclear, que es justo cuando un número
+                  suelto deja de decir si son euros por hora o por trabajo.
+                */}
+                <Input
+                  value={trade.hourlyRate}
+                  onChangeText={(text) => setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))}
+                  placeholder="0"
+                  suffix="€/h"
+                  keyboardType="decimal-pad"
+                  editable={!disabled}
+                  style={styles.rateInput}
+                  testID={`trade-rate-${trade.slug}`}
+                />
+              </View>
             )}
+
+            <Pressable
+              onPress={() => remove(trade.slug)}
+              disabled={disabled}
+              style={styles.remove}
+              accessibilityRole="button"
+              accessibilityLabel={`Quitar ${getTradeLabel(trade.slug)}`}
+              testID={`trade-remove-${trade.slug}`}
+            >
+              <Text style={styles.removeIcon}>×</Text>
+            </Pressable>
           </View>
 
+          {/*
+            La tarifa de urgencia, debajo y aparte: es otra decisión. Vacía
+            significa que no atiende urgencias de este oficio, y por eso se
+            dice con palabras en vez de dejar un campo mudo que parezca que
+            falta rellenar.
+          */}
           {!hideRates && (
-            <View style={styles.rateColumn}>
-              {/*
-                La unidad va fija dentro del campo y no de marca de agua: el
-                marcador desaparece al teclear, que es justo cuando un número
-                suelto deja de decir si son euros por hora o por trabajo.
-              */}
+            <View style={styles.urgencyRow}>
+              <Text style={styles.urgencyLabel}>
+                {trade.urgencyRate.trim() === ''
+                  ? 'No atiendes urgencias de este oficio'
+                  : 'Urgencias de este oficio'}
+              </Text>
+
               <Input
-                value={trade.hourlyRate}
-                onChangeText={(text) => setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))}
-                placeholder="0"
+                value={trade.urgencyRate}
+                onChangeText={(text) =>
+                  setUrgencyRate(trade.slug, text.replace(/[^0-9.,]/g, ''))
+                }
+                placeholder="Sin urgencias"
                 suffix="€/h"
                 keyboardType="decimal-pad"
                 editable={!disabled}
-                style={styles.rateInput}
-                testID={`trade-rate-${trade.slug}`}
+                style={styles.urgencyInput}
+                testID={`trade-urgency-${trade.slug}`}
               />
             </View>
           )}
-
-          <Pressable
-            onPress={() => remove(trade.slug)}
-            disabled={disabled}
-            style={styles.remove}
-            accessibilityRole="button"
-            accessibilityLabel={`Quitar ${getTradeLabel(trade.slug)}`}
-            testID={`trade-remove-${trade.slug}`}
-          >
-            <Text style={styles.removeIcon}>×</Text>
-          </Pressable>
         </View>
       ))}
 

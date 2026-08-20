@@ -10,6 +10,15 @@ export interface ApiProTrade {
   slug: string
   label: string
   hourlyRate: number
+  /**
+   * Lo que cobra por una urgencia de este oficio.
+   *
+   * `null` **significa que no atiende urgencias de este oficio**, no que falte
+   * el dato: alguien puede querer salir corriendo por una fuga y no por un
+   * mueble. Es lo que decide si sale en la lista que ve el cliente con una
+   * avería.
+   */
+  urgencyHourlyRate?: number | null
 }
 
 export interface ApiPro {
@@ -209,7 +218,7 @@ function toQueryString(filters: ProsFilters | ProReviewsFilters): string {
 
 /** Respuesta de PUT /v1/pro/trades */
 export interface SetTradesPayload {
-  trades: { slug: string; hourlyRate: number }[]
+  trades: { slug: string; hourlyRate: number; urgencyHourlyRate?: number | null }[]
 }
 
 /**

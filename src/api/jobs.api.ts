@@ -4,6 +4,7 @@
  */
 
 import { apiRequest } from './http'
+import type { ApiUrgencyPro } from './urgencies.api'
 
 export type ApiJobType = 'AUCTION' | 'QUOTE' | 'INSTANT' | 'URGENT'
 
@@ -158,6 +159,31 @@ export const jobsApi = {
     apiRequest<ApiJob>('/v1/jobs', { method: 'POST', auth: true, body: payload }),
 
   mine: () => apiRequest<MyJobsPage>('/v1/jobs', { auth: true }),
+
+  /**
+   * Quién puede atender una urgencia ahora mismo, con su tarifa y a qué
+   * distancia. Vacío significa que no hay nadie de guardia cerca, y entonces
+   * la pantalla propone buscar en el directorio a alguien que quizá pueda
+   * ayudar igual.
+   */
+  urgencyPros: (trade: string, lat: number, lng: number) =>
+    apiRequest<{ items: ApiUrgencyPro[] }>(
+      `/v1/jobs/urgency-pros?trade=${encodeURIComponent(trade)}&lat=${lat}&lng=${lng}`,
+      { auth: true },
+    ),
+
+  /** Pedirle la urgencia a uno concreto. Tiene cinco minutos para contestar */
+  askUrgency: (jobId: string, proId: string) =>
+    apiRequest<{
+      jobId: string
+      status: ApiJobStatus
+      requestedProName: string
+      respondByAt: string
+    }>(`/v1/jobs/${jobId}/urgency-request`, {
+      method: 'POST',
+      auth: true,
+      body: { proId },
+    }),
 
   /** La ficha completa de un trabajo, para quien tiene algo que ver con él */
   detail: (jobId: string) =>

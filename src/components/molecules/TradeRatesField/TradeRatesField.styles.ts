@@ -7,6 +7,13 @@ import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
+  /** Cada oficio: su fila de siempre y debajo la de urgencias */
+  trade: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.hairline,
+    paddingBottom: 10,
+    marginBottom: 4,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -64,5 +71,28 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
     opacity: 0.7,
     marginTop: 8,
+  },
+
+  /**
+   * La tarifa de urgencia. Debajo y con su rótulo, no como un segundo campo
+   * sin nombre: es otra decisión, y vacía significa que no atiende urgencias
+   * de ese oficio.
+   */
+  urgencyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 2,
+  },
+  urgencyLabel: {
+    flex: 1,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+  },
+  urgencyInput: {
+    width: 128,
+    textAlign: 'right',
   },
 })

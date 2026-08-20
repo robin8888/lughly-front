@@ -14,7 +14,28 @@ export interface ApiUrgency {
   /** Distancia desde su base, en km */
   distanceKm: number | null
   photoCount: number
+  /** Hasta cuándo tiene para contestar. Son minutos, no horas */
+  respondByAt: string | null
   createdAt: string
+}
+
+/**
+ * Quién puede atender una urgencia ahora mismo, para que el cliente elija.
+ * Contrato: lughly-backend/src/modules/jobs/jobs.controller.ts (GET /v1/jobs/urgency-pros)
+ */
+export interface ApiUrgencyPro {
+  id: string
+  name: string
+  avatarUrl: string | null
+  /** Para quién trabaja: a quien se contrata es a la empresa, si la hay */
+  employerName: string | null
+  tradeLabel: string
+  /** Lo que cobra la hora por atender esta urgencia */
+  urgencyRate: number
+  rating: number
+  reviewCount: number
+  verified: boolean
+  distanceKm: number
 }
 
 export interface ApiBusyWith {

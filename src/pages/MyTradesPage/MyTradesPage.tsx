@@ -53,6 +53,9 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
         data.map((trade) => ({
           slug: trade.slug,
           hourlyRate: String(trade.hourlyRate),
+          /* Vacío si no atiende urgencias de ese oficio, que es lo normal */
+          urgencyRate:
+            trade.urgencyHourlyRate == null ? '' : String(trade.urgencyHourlyRate),
         })),
       )
     }
@@ -80,6 +83,15 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
   const canSave =
     current.length > 0 &&
     current.every((trade) => rateOf(trade.hourlyRate) > 0) &&
+    /*
+      La de urgencia puede estar vacía —significa que no las atiende—, pero si
+      escribe algo tiene que ser un número: un "no sé" a medio teclear se
+      guardaría como una tarifa de cero.
+    */
+    current.every(
+      (trade) =>
+        trade.urgencyRate.trim() === '' || rateOf(trade.urgencyRate) > 0,
+    ) &&
     !isSaving
 
   const handleSave = async () => {
@@ -87,6 +99,8 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
       trades: current.map((trade) => ({
         slug: trade.slug,
         hourlyRate: rateOf(trade.hourlyRate),
+        urgencyHourlyRate:
+          trade.urgencyRate.trim() === '' ? null : rateOf(trade.urgencyRate),
       })),
     })
 
