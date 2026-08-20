@@ -45,16 +45,25 @@ export default function JobsRoute() {
          * Al directorio con el oficio puesto y sabiendo quién dijo que no,
          * para apagarlo allí. `reassign` lleva el trabajo: lo que se elija se
          * le encarga a él, en vez de crear otro igual.
+         *
+         * Una urgencia va a otro sitio: a los que están de guardia ahora
+         * mismo. Mandarla al directorio sería ofrecerle una lista de gente
+         * que quizá conteste mañana para algo que no puede esperar.
          */
-        onReassign={(jobId, trade, declinedProId) =>
-          router.navigate({
-            pathname: '/pros',
-            params: {
-              trade,
-              reassign: jobId,
-              ...(declinedProId ? { declined: declinedProId } : {}),
-            },
-          })
+        onReassign={(jobId, trade, declinedProId, type) =>
+          type === 'URGENT'
+            ? router.navigate({
+                pathname: '/urgencia/[id]',
+                params: { id: jobId },
+              })
+            : router.navigate({
+                pathname: '/pros',
+                params: {
+                  trade,
+                  reassign: jobId,
+                  ...(declinedProId ? { declined: declinedProId } : {}),
+                },
+              })
         }
       />
     </RoleGate>

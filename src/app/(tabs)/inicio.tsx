@@ -23,6 +23,7 @@ export default function InicioRoute() {
         onSecondary={() => router.navigate('/schedule')}
         onManageEmployees={() => router.navigate('/empleados')}
         onInbox={() => router.navigate('/encargos')}
+        onUrgencies={() => router.navigate('/urgent')}
       />
     )
   }

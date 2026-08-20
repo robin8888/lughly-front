@@ -26,7 +26,7 @@ import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { useJob, useCancelJob } from '@/hooks/domain/useJob'
 import { API_BASE_URL } from '@/api'
-import type { ApiJobDetail } from '@/api/jobs.api'
+import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { formatJobWhen } from '@/utils/dates'
 import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
@@ -91,9 +91,28 @@ export interface JobDetailPageProps {
   onBack: () => void
   /** Ver las pujas de una subasta, que es donde se adjudica */
   onSeeBids: (jobId: string, title: string) => void
+  /**
+   * Buscar a otro, cuando el elegido no puede o se le pasó el plazo.
+   *
+   * La pantalla ya decía "ya puedes encargárselo a otro" y no daba por dónde:
+   * el botón estaba solo en la tarjeta de Mis trabajos, así que entrar en la
+   * ficha era meterse en un callejón. Va aquí también, y desde el mismo sitio
+   * en el que se lee la frase.
+   */
+  onReassign?: (
+    jobId: string,
+    trade: string,
+    declinedProId: string | null,
+    type: ApiJobType,
+  ) => void
 }
 
-export function JobDetailPage({ jobId, onBack, onSeeBids }: JobDetailPageProps) {
+export function JobDetailPage({
+  jobId,
+  onBack,
+  onSeeBids,
+  onReassign,
+}: JobDetailPageProps) {
   const onScroll = useNavScrollHandler()
   const { data: job, isPending, isError, refetch } = useJob(jobId)
   const { cancel, isCancelling } = useCancelJob()
@@ -180,6 +199,11 @@ export function JobDetailPage({ jobId, onBack, onSeeBids }: JobDetailPageProps) 
    * Se puede cancelar mientras nadie ha movido nada. Adjudicado ya no: hay
    * quien ha reservado sus horas, y eso no se deshace con un botón.
    */
+  /** Se quedó sin nadie: lo único que queda por hacer es buscar a otro */
+  const canReassign =
+    job.viewer === 'client' &&
+    (job.status === 'DECLINED' || job.status === 'EXPIRED')
+
   const canCancel =
     job.viewer === 'client' &&
     ['DRAFT', 'OPEN', 'PENDING_PRO', 'PENDING_WORKER', 'SUBSTITUTE_PROPOSED'].includes(
@@ -333,6 +357,24 @@ export function JobDetailPage({ jobId, onBack, onSeeBids }: JobDetailPageProps) 
               </Text>
             )}
           </>
+        )}
+
+        {canReassign && onReassign && (
+          <Button
+            fullWidth
+            onPress={() =>
+              onReassign(
+                job.id,
+                job.trade,
+                job.assignedPro?.id ?? null,
+                job.type,
+              )
+            }
+            style={styles.bids}
+            testID="job-detail-reassign"
+          >
+            Buscar
+          </Button>
         )}
 
         {/*

@@ -36,6 +36,7 @@ import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
 import { useEmployer } from '@/hooks/domain/useEmployees'
 import { useInbox } from '@/hooks/domain/useInbox'
+import { useMyUrgencies } from '@/hooks/domain/useMyUrgencies'
 import { theme } from '@/theme'
 import { useUser } from '@/stores/useAuthStore'
 import { styles } from './HomePagePro.styles'
@@ -50,6 +51,8 @@ export interface HomePageProProps {
   onSecondary: () => void
   onManageEmployees: () => void
   onInbox: () => void
+  /** A la pantalla de urgencias, donde se contestan */
+  onUrgencies: () => void
 }
 
 export function HomePagePro({
@@ -57,6 +60,7 @@ export function HomePagePro({
   onSecondary,
   onManageEmployees,
   onInbox,
+  onUrgencies,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
   const user = useUser()
@@ -141,8 +145,26 @@ export function HomePagePro({
    * cuando no hay nada que confirmar o ya se ha respondido a eso.
    */
   const [askedAboutInbox, setAskedAboutInbox] = useState(false)
+
+  /**
+   * Y delante de todo, las urgencias que le han pedido a él.
+   *
+   * Van primero porque el plazo es de cinco minutos y el de los encargos de
+   * veinticuatro horas: si el orden fuera el otro, se le enseñaría lo que
+   * puede contestar mañana tapando lo que caduca mientras lo lee. Es también
+   * el respaldo del aviso al móvil, para quien lo tenga silenciado.
+   */
+  const { data: urgencyData } = useMyUrgencies()
+  const urgencyCount = urgencyData?.items.length ?? 0
+
+  const [askedAboutUrgency, setAskedAboutUrgency] = useState(false)
+  const showUrgencyDialog = !askedAboutUrgency && urgencyCount > 0
+
   const showInboxDialog =
-    !askedAboutInbox && confirming === null && pendingCount > 0
+    !askedAboutInbox &&
+    !showUrgencyDialog &&
+    confirming === null &&
+    pendingCount > 0
 
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page-pro">
@@ -200,8 +222,36 @@ export function HomePagePro({
           testID="home-pro-hero"
         />
 
+        <Dialog
+          visible={showUrgencyDialog}
+          title={
+            urgencyCount === 1
+              ? 'Te han elegido para una urgencia'
+              : `Te han elegido para ${urgencyCount} urgencias`
+          }
+          message="Un cliente te está esperando ahora mismo. Tienes cinco minutos para contestar; pasado el plazo podrá llamar a otro."
+          onDismiss={() => setAskedAboutUrgency(true)}
+          testID="home-pro-urgency-dialog"
+          actions={[
+            {
+              label: 'Ver la urgencia',
+              onPress: () => {
+                setAskedAboutUrgency(true)
+                onUrgencies()
+              },
+              testID: 'home-pro-urgency-dialog-go',
+            },
+            {
+              label: 'Ahora no',
+              variant: 'secondary',
+              onPress: () => setAskedAboutUrgency(true),
+              testID: 'home-pro-urgency-dialog-later',
+            },
+          ]}
+        />
+
         <AssignmentConfirm
-          job={confirming}
+          job={showUrgencyDialog ? null : confirming}
           onDismiss={() => setAskedToConfirm(true)}
           testID="home-pro-confirm"
         />

@@ -40,8 +40,18 @@ export interface MyJobsPageProps {
    * Buscar otro profesional para un trabajo que se quedó sin nadie. Lleva el
    * oficio, para filtrar el directorio, y a quién dijo que no, para apagarlo
    * allí y que no se le vuelva a elegir por error.
+   *
+   * Y el tipo, porque una urgencia no se busca en el mismo sitio: manda a la
+   * lista de los que están de guardia ahora, no al directorio entero. De poco
+   * sirve una lista de carpinteros cuando lo que hace falta es uno que salga
+   * de casa esta noche.
    */
-  onReassign?: (jobId: string, trade: string, declinedProId: string | null) => void
+  onReassign?: (
+    jobId: string,
+    trade: string,
+    declinedProId: string | null,
+    type: ApiJobType,
+  ) => void
 }
 
 export function MyJobsPage({
@@ -256,7 +266,7 @@ export function MyJobsPage({
                       })}
                       {...(onReassign && {
                         onReassign: () =>
-                          onReassign(job.id, job.trade, job.proId),
+                          onReassign(job.id, job.trade, job.proId, job.type),
                       })}
                       onRespondSubstitute={(accept) => decideSubstitute(job, accept)}
                       isRespondingSubstitute={isResponding}

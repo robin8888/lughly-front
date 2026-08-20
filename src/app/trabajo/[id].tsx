@@ -22,6 +22,23 @@ export default function JobDetailRoute() {
       onSeeBids={(jobId, title) =>
         router.navigate({ pathname: '/pujas', params: { jobId, title } })
       }
+      /*
+       * Buscar a otro, igual que desde la tarjeta de Mis trabajos: al
+       * directorio con el oficio puesto, salvo una urgencia, que va a los que
+       * están de guardia ahora mismo.
+       */
+      onReassign={(jobId, trade, declinedProId, type) =>
+        type === 'URGENT'
+          ? router.navigate({ pathname: '/urgencia/[id]', params: { id: jobId } })
+          : router.navigate({
+              pathname: '/pros',
+              params: {
+                trade,
+                reassign: jobId,
+                ...(declinedProId ? { declined: declinedProId } : {}),
+              },
+            })
+      }
     />
   )
 }
