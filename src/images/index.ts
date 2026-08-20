@@ -50,7 +50,18 @@ export const images = {
   carruselFondo: require('./carrusel-fondo.jpg'),
   asistente: require('./asistente-icono.png'),
   loader: require('./robot-hormiga-loader.png'),
-  saludando: require('./robot-hormiga-saludando.png'),
+  /**
+   * Uhiro con el pulgar arriba y la marca debajo. 512x512 con alfa.
+   *
+   * Es la que sale en **todos los avisos** de la app —los `EmptyState` con
+   * `illustration="greeting"`, que son casi treinta pantallas—: cuando falta
+   * algo, cuando no hay nada que enseñar todavía o cuando algo no ha cargado.
+   *
+   * Cuadrada a propósito. El hueco donde se dibuja es de 160x160 y con
+   * `contain`, así que la que había antes —vertical, 1024x1536— se quedaba en
+   * 107 puntos de ancho y con aire a los lados; esta lo llena.
+   */
+  pulgar: require('./robot-hormiga-pulgar.png'),
   senalando: require('./robot-hormiga-senalando.png'),
   subastador: require('./robot-hormiga-subastador.png'),
   trofeo: require('./robot-hormiga-trofeo.png'),

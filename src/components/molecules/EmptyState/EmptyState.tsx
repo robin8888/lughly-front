@@ -33,7 +33,7 @@ export interface EmptyStateProps {
 
 const ILLUSTRATIONS = {
   pointing: images.senalando,
-  greeting: images.saludando,
+  greeting: images.pulgar,
 } as const
 
 export function EmptyState({
