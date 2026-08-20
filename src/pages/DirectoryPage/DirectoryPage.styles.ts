@@ -151,6 +151,7 @@ export const styles = StyleSheet.create({
   /** El aviso de que se está buscando sustituto, con su salida */
   reassigning: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
@@ -167,10 +168,22 @@ export const styles = StyleSheet.create({
     lineHeight: theme.typography.sizes.tiny * 1.45,
     color: theme.colors.pendingText,
   },
+  /**
+   * "Dejarlo", con forma de botón. Era un texto subrayado, y en una pantalla
+   * donde cada toque encarga un trabajo, la salida tiene que verse tan clara
+   * como lo que se está haciendo.
+   */
+  reassigningButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.pending,
+    backgroundColor: '#ffffff',
+  },
   reassigningCancel: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.pendingText,
-    textDecorationLine: 'underline',
   },
 })

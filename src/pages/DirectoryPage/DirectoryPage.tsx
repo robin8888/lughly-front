@@ -189,11 +189,12 @@ export function DirectoryPage({
         {reassign && (
           <View style={styles.reassigning}>
             <Text style={styles.reassigningText}>
-              Elige a quién le encargas ahora este trabajo.
+              Elige otro profesional que pueda encargarse de tu trabajo.
             </Text>
             <Pressable
               onPress={reassign.onCancel}
               accessibilityRole="button"
+              style={styles.reassigningButton}
               testID="directory-reassign-cancel"
             >
               <Text style={styles.reassigningCancel}>Dejarlo</Text>
