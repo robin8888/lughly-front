@@ -19,6 +19,22 @@ export const styles = StyleSheet.create({
     ...theme.shadows.card,
   },
   /** Se sombrea al tocarla: es lo que hace que se sienta pulsable entera */
+  /**
+   * Apagada: se ve pero no se toca. Medio velo y no invisible, para que se
+   * entienda que sigue existiendo y solo que ahora no vale.
+   */
+  cardDisabled: {
+    opacity: 0.55,
+  },
+  disabledNote: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.pendingText,
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.pendingSoft,
+  },
   cardPressed: {
     backgroundColor: theme.colors.surfaceSoft,
   },

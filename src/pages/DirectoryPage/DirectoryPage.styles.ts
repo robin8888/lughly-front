@@ -147,4 +147,30 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 24,
   },
+
+  /** El aviso de que se está buscando sustituto, con su salida */
+  reassigning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.field,
+    backgroundColor: theme.colors.pendingSoft,
+  },
+  reassigningText: {
+    flex: 1,
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.45,
+    color: theme.colors.pendingText,
+  },
+  reassigningCancel: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.pendingText,
+    textDecorationLine: 'underline',
+  },
 })

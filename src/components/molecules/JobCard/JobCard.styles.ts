@@ -192,14 +192,30 @@ export const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: theme.colors.pending,
   },
+  needsYouBlock: {
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.pendingSoft,
+  },
   needsYouNote: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.4,
     color: theme.colors.pendingText,
-    marginBottom: 10,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.pendingSoft,
+  },
+  /** La salida del aviso: naranja rellena, que es la acción que se espera */
+  reassign: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.pending,
+  },
+  reassignText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: '#ffffff',
   },
 })

@@ -30,12 +30,25 @@ export interface DirectoryPageProps {
   onSelectPro: (id: string) => void
   /** Volver a la home; se ofrece cuando no hay resultados */
   onBack: () => void
+  /**
+   * Se ha entrado a buscar otro profesional para un trabajo que se quedó sin
+   * nadie. Cambia lo que hace tocar una ficha: en vez de abrirla, se le
+   * encarga el trabajo.
+   */
+  reassign?: {
+    jobId: string
+    /** Quién dijo que no. Su ficha sale apagada para no volver a elegirle */
+    declinedProId?: string
+    onChoose: (proId: string, proName: string) => void
+    onCancel: () => void
+  }
 }
 
 export function DirectoryPage({
   initialTrade,
   onSelectPro,
   onBack,
+  reassign,
 }: DirectoryPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
@@ -168,6 +181,26 @@ export function DirectoryPage({
           </Pressable>
         </View>
 
+        {/*
+          Buscando sustituto. Se dice arriba y con salida: el directorio se ve
+          igual que siempre y sin esto nadie sabría por qué al tocar una ficha
+          pasa algo distinto.
+        */}
+        {reassign && (
+          <View style={styles.reassigning}>
+            <Text style={styles.reassigningText}>
+              Elige a quién le encargas ahora este trabajo.
+            </Text>
+            <Pressable
+              onPress={reassign.onCancel}
+              accessibilityRole="button"
+              testID="directory-reassign-cancel"
+            >
+              <Text style={styles.reassigningCancel}>Dejarlo</Text>
+            </Pressable>
+          </View>
+        )}
+
         {isPending ? (
           <View style={styles.state} testID="directory-loading">
             <ActivityIndicator size="large" color={theme.colors.accent} />
@@ -269,7 +302,17 @@ export function DirectoryPage({
                   <ProDirectoryCard
                     key={pro.id}
                     pro={pro}
-                    onPress={() => onSelectPro(pro.id)}
+                    /*
+                      Reasignando, tocar una ficha le encarga el trabajo en vez
+                      de abrirla: se ha entrado a elegir, no a mirar.
+                    */
+                    onPress={() =>
+                      reassign
+                        ? reassign.onChoose(pro.id, pro.name)
+                        : onSelectPro(pro.id)
+                    }
+                    disabled={reassign?.declinedProId === pro.id}
+                    disabledNote="Ya te ha dicho que no puede con este trabajo"
                     testID={`pro-${pro.id}`}
                   />
                 ))}

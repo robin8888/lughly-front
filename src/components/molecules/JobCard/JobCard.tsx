@@ -31,6 +31,11 @@ export interface JobCardProps {
    * está mirando, y sacarla fuera obligaría a memorizar a quién pidió.
    */
   onRespondSubstitute?: (accept: boolean) => void
+  /**
+   * Buscar otro profesional para un trabajo que se quedó sin nadie. Sin esto
+   * el aviso de "no pueden" es un callejón: dice qué ha pasado y no a dónde ir.
+   */
+  onReassign?: () => void
   isRespondingSubstitute?: boolean
   testID?: string
 }
@@ -39,6 +44,7 @@ export function JobCard({
   job,
   onPress,
   onRespondSubstitute,
+  onReassign,
   isRespondingSubstitute = false,
   testID,
 }: JobCardProps) {
@@ -75,11 +81,24 @@ export function JobCard({
     >
       <InfoCard style={needsYou ? styles.needsYou : undefined}>
         {needsYou && (
-          <Text style={styles.needsYouNote}>
-            {job.status === 'DECLINED'
-              ? 'No pueden hacerlo. Ya puedes encargárselo a otro.'
-              : 'Nadie respondió a tiempo. Ya puedes encargárselo a otro.'}
-          </Text>
+          <View style={styles.needsYouBlock}>
+            <Text style={styles.needsYouNote}>
+              {job.status === 'DECLINED'
+                ? 'No pueden hacerlo. Ya puedes encargárselo a otro.'
+                : 'Nadie respondió a tiempo. Ya puedes encargárselo a otro.'}
+            </Text>
+
+            {onReassign && (
+              <Pressable
+                onPress={onReassign}
+                accessibilityRole="button"
+                style={styles.reassign}
+                testID={`job-${job.id}-reassign`}
+              >
+                <Text style={styles.reassignText}>Buscar otro profesional</Text>
+              </Pressable>
+            )}
+          </View>
         )}
 
         <View style={styles.row}>

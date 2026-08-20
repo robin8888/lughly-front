@@ -64,3 +64,39 @@ export function useCancelJob() {
     isCancelling: mutation.isPending,
   }
 }
+
+/**
+ * Volver a encargar un trabajo a otro profesional.
+ *
+ * Cambia su ficha y su sitio en la lista —vuelve a estar esperando respuesta—,
+ * así que se refresca todo lo de trabajos.
+ */
+export function useReassignJob() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ jobId, proId }: { jobId: string; proId: string }) =>
+      jobsApi.reassign(jobId, proId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    reassign: async (jobId: string, proId: string) => {
+      try {
+        return { ok: true as const, result: await mutation.mutateAsync({ jobId, proId }), error: null }
+      } catch (error) {
+        return {
+          ok: false as const,
+          result: null,
+          error:
+            error instanceof NetworkError || error instanceof ApiError
+              ? error.message
+              : null,
+        }
+      }
+    },
+    isReassigning: mutation.isPending,
+  }
+}

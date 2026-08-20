@@ -47,6 +47,8 @@ export interface ApiJob {
    * quien se le encargó. Null en lo publicado al aire, que todavía no es de
    * nadie.
    */
+  /** Su id, para poder señalarlo en el directorio al buscar a otro */
+  proId: string | null
   proName: string | null
   proAvatarUrl: string | null
   /** Quién propone mandar la empresa en su lugar, si lo ha propuesto */
@@ -165,6 +167,23 @@ export const jobsApi = {
    * Cancelar un trabajo propio. Solo mientras nadie ha movido nada: una vez
    * adjudicado hay alguien que ha reservado sus horas.
    */
+  /**
+   * Volver a encargar un trabajo que se quedó sin nadie. Es el mismo trabajo:
+   * cambia a quién se le pide y se le reabre el plazo.
+   */
+  reassign: (jobId: string, proId: string) =>
+    apiRequest<{
+      jobId: string
+      status: ApiJobStatus
+      requestedProName: string
+      respondedByName: string
+      respondByAt: string
+    }>(`/v1/jobs/${jobId}/reassign`, {
+      method: 'POST',
+      auth: true,
+      body: { proId },
+    }),
+
   cancel: (jobId: string) =>
     apiRequest<{ jobId: string; status: ApiJobStatus }>(
       `/v1/jobs/${jobId}/cancel`,

@@ -36,9 +36,20 @@ export interface MyJobsPageProps {
   onBack: () => void
   /** Solo tiene sentido en una subasta: lleva a sus pujas */
   onSelectJob?: (jobId: string, title: string) => void
+  /**
+   * Buscar otro profesional para un trabajo que se quedó sin nadie. Lleva el
+   * oficio, para filtrar el directorio, y a quién dijo que no, para apagarlo
+   * allí y que no se le vuelva a elegir por error.
+   */
+  onReassign?: (jobId: string, trade: string, declinedProId: string | null) => void
 }
 
-export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) {
+export function MyJobsPage({
+  onPublish,
+  onBack,
+  onSelectJob,
+  onReassign,
+}: MyJobsPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
    * las pantallas con scroll, no solo en el inicio: si en una se moviera
@@ -242,6 +253,10 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
                       */
                       {...(onSelectJob && {
                         onPress: () => onSelectJob(job.id, job.title),
+                      })}
+                      {...(onReassign && {
+                        onReassign: () =>
+                          onReassign(job.id, job.trade, job.proId),
                       })}
                       onRespondSubstitute={(accept) => decideSubstitute(job, accept)}
                       isRespondingSubstitute={isResponding}

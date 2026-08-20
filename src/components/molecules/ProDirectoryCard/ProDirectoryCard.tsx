@@ -46,19 +46,44 @@ const MAX_STRIP = 4
 export interface ProDirectoryCardProps {
   pro: ApiPro
   onPress: () => void
+  /**
+   * Apagada y sin tocar. Se usa al buscar otro profesional para un trabajo que
+   * este ya ha rechazado: **se apaga en vez de esconderse** porque quien no lo
+   * encuentra en la lista cree que la app lo ha perdido, y porque saber que
+   * dijo que no es información útil.
+   */
+  disabled?: boolean
+  /** Por qué está apagada. Sin esto, apagarla parece un fallo */
+  disabledNote?: string
   testID?: string
 }
 
-export function ProDirectoryCard({ pro, onPress, testID }: ProDirectoryCardProps) {
+export function ProDirectoryCard({
+  pro,
+  onPress,
+  disabled = false,
+  disabledNote,
+  testID,
+}: ProDirectoryCardProps) {
   const otherTrades = pro.trades.filter((trade) => trade.slug !== pro.trade)
 
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       testID={testID}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && !disabled && styles.cardPressed,
+        disabled && styles.cardDisabled,
+      ]}
     >
+      {disabled && disabledNote && (
+        <Text style={styles.disabledNote}>{disabledNote}</Text>
+      )}
+
       <View style={styles.row}>
         {/*
           El estado va en un anillo alrededor de la cara: verde si atiende

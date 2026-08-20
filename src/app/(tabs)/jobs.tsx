@@ -41,6 +41,21 @@ export default function JobsRoute() {
         onSelectJob={(jobId) =>
           router.navigate({ pathname: '/trabajo/[id]', params: { id: jobId } })
         }
+        /*
+         * Al directorio con el oficio puesto y sabiendo quién dijo que no,
+         * para apagarlo allí. `reassign` lleva el trabajo: lo que se elija se
+         * le encarga a él, en vez de crear otro igual.
+         */
+        onReassign={(jobId, trade, declinedProId) =>
+          router.navigate({
+            pathname: '/pros',
+            params: {
+              trade,
+              reassign: jobId,
+              ...(declinedProId ? { declined: declinedProId } : {}),
+            },
+          })
+        }
       />
     </RoleGate>
   )
