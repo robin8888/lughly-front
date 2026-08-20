@@ -30,12 +30,15 @@ export interface DirectoryPageProps {
   onSelectPro: (id: string) => void
   /** Volver a la home; se ofrece cuando no hay resultados */
   onBack: () => void
+  /** TEMPORAL: abre esta misma pantalla con el aspecto propuesto */
+  onSeeNewLook?: () => void
 }
 
 export function DirectoryPage({
   initialTrade,
   onSelectPro,
   onBack,
+  onSeeNewLook,
 }: DirectoryPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
@@ -83,9 +86,28 @@ export function DirectoryPage({
   return (
     <View style={styles.screen} testID="directory-page">
       <View style={styles.header}>
-        <Text style={styles.title}>Profesionales</Text>
-        {trade !== '' && (
-          <Text style={styles.subtitle}>{getTradeLabel(trade)}</Text>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>Profesionales</Text>
+          {trade !== '' && (
+            <Text style={styles.subtitle}>{getTradeLabel(trade)}</Text>
+          )}
+        </View>
+
+        {/*
+          TEMPORAL, 20 Agosto 2026. Lleva a la misma pantalla con el aspecto
+          propuesto, y se pone aquí porque es donde se compara: se mira esta,
+          se toca, y se mira la otra. Se quita al decidir, con la ruta y todo
+          lo demás.
+        */}
+        {onSeeNewLook && (
+          <Pressable
+            onPress={onSeeNewLook}
+            accessibilityRole="button"
+            testID="directory-new-look"
+            style={styles.newLook}
+          >
+            <Text style={styles.newLookText}>Aspecto nuevo</Text>
+          </Pressable>
         )}
       </View>
 

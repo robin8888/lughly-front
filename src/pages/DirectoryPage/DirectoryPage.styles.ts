@@ -11,7 +11,26 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.bg,
   },
+  /** TEMPORAL: la fila del rótulo con el acceso al aspecto nuevo a la derecha */
+  headerText: {
+    flex: 1,
+  },
+  newLook: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.accent,
+  },
+  newLookText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: '#ffffff',
+  },
   header: {
+    /* En fila mientras esté el acceso temporal al aspecto nuevo */
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     paddingTop: 56,
     paddingHorizontal: 16,
     paddingBottom: 12,
