@@ -32,14 +32,23 @@ export default function UrgentRoute() {
 
   return (
     <UrgencyPage
-      onPublished={(_jobId, photosFailed) => {
-        Alert.alert(
-          'Aviso enviado',
-          photosFailed > 0
-            ? `Ya estamos avisando a los profesionales disponibles. ${photosFailed === 1 ? 'Una foto no se pudo enviar' : `${photosFailed} fotos no se pudieron enviar`}.`
-            : 'Ya estamos avisando a los profesionales disponibles de tu zona. Cada uno tiene 30 minutos para aceptar.',
-        )
-        router.navigate('/jobs')
+      onPublished={(jobId, photosFailed) => {
+        /*
+          Solo se avisa si algo salió mal. Antes salía un aviso siempre —"ya
+          estamos avisando a los disponibles"— y era un paso de nada en medio
+          de una urgencia; ahora lo siguiente es elegir a quién llamar, y una
+          ventana por delante solo estorba.
+        */
+        if (photosFailed > 0) {
+          Alert.alert(
+            'Publicada, pero faltan fotos',
+            photosFailed === 1
+              ? 'Una foto no se pudo enviar. Sigue adelante y elige profesional.'
+              : `${photosFailed} fotos no se pudieron enviar. Sigue adelante y elige profesional.`,
+          )
+        }
+
+        router.navigate({ pathname: '/urgencia/[id]', params: { id: jobId } })
       }}
       onPublishNormal={() => router.navigate('/publish')}
       onBack={() => router.navigate('/inicio')}

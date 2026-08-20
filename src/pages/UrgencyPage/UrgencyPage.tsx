@@ -10,8 +10,10 @@
  * - **Se dice antes de escribir si hay alguien**, con el indicador de
  *   cobertura en vivo. Rellenar un formulario entero con una fuga en casa
  *   para descubrir al final que no hay nadie sería cruel.
- * - **El recargo se avisa por adelantado**, como exige el README: entre un
- *   25% y un 50% según la hora y la disponibilidad.
+ * - **El precio se ve antes de elegir**. El README pedía avisar del recargo por
+ *   adelantado; desde el 20 Agosto 2026 se hace mejor que eso: cada profesional
+ *   publica su tarifa de urgencia y el cliente las compara en la pantalla
+ *   siguiente. Un porcentaje sobre una tarifa que no se conoce no es un aviso.
  *
  * Este formulario es más corto a propósito. Quien tiene una urgencia no está
  * para elegir presupuesto máximo ni fecha preferida.
@@ -36,7 +38,6 @@ import {
 } from '@/hooks/domain/useShareLocation'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import { TRADE_OPTIONS } from '@/utils/trades'
-import { URGENCY_SURCHARGE } from '@/utils/surcharges'
 import { styles } from './UrgencyPage.styles'
 
 /** Título automático: en una urgencia nadie quiere pensar un titular. */
@@ -145,8 +146,8 @@ export function UrgencyPage({
       >
         <InfoCard variant="accent" style={styles.introCard}>
           <Text style={styles.intro}>
-            Avisamos ahora mismo a los profesionales disponibles que lleguen a
-            tu dirección. El primero que acepte va para allá.
+            Al terminar te enseñamos quién está de guardia ahora mismo y llega a
+            tu dirección, con su precio de urgencia. Eliges tú.
           </Text>
         </InfoCard>
 
@@ -277,10 +278,9 @@ export function UrgencyPage({
             <Text style={styles.surchargeTitle}>Recargo por urgencia</Text>
           </View>
           <Text style={styles.surchargeBody}>
-            Entre un {URGENCY_SURCHARGE.min}% y un {URGENCY_SURCHARGE.max}% sobre
-            la tarifa, según la hora y la disponibilidad. Lo concreta el
-            profesional al aceptar, y verás el importe exacto antes de
-            confirmar nada.
+            Cada profesional pone su propio precio por hora para las urgencias,
+            con el recargo ya dentro. Los verás todos en la lista antes de
+            elegir a nadie.
           </Text>
         </View>
 
@@ -292,13 +292,13 @@ export function UrgencyPage({
           style={styles.submit}
           testID="urgency-submit"
         >
-          Avisar a los disponibles
+          Ver quién puede ir
         </Button>
 
         {!located && address.trim().length > 0 && (
           <Text style={styles.hint}>
-            Necesitamos situar la dirección en el mapa antes de poder avisar a
-            nadie.
+            Necesitamos situar la dirección en el mapa para saber quién llega
+            hasta ahí.
           </Text>
         )}
       </Animated.ScrollView>
