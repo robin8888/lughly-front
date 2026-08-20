@@ -87,9 +87,68 @@ export interface MyJobsPage {
   total: number
 }
 
+
+/** Quién hace el trabajo, cuando ya está decidido. */
+export interface ApiAssignedPro {
+  id: string
+  /** A quién se contrató: la empresa, si la hay */
+  name: string
+  /** Quién va a ir, si es distinto de lo anterior */
+  workerName: string | null
+  rating: number
+  reviewCount: number
+  /** Solo lo ve el cliente, y solo cuando ya hay alguien asignado */
+  phone: string | null
+}
+
+/**
+ * La ficha completa de un trabajo.
+ * Contrato: lughly-backend/src/modules/jobs/jobs.controller.ts (GET /v1/jobs/:id)
+ *
+ * Lo que llega depende de quién mira, y eso lo decide el servidor: el cliente
+ * ve su dirección, su tope y las pujas; quien va a hacerlo ve la dirección y
+ * el teléfono del cliente pero no el dinero de los demás. `viewer` dice desde
+ * qué lado se está mirando, para no tener que deducirlo comparando
+ * identificadores.
+ */
+export interface ApiJobDetail {
+  id: string
+  type: ApiJobType
+  status: ApiJobStatus
+  title: string
+  description: string
+  trade: string
+  tradeLabel: string
+  city: string
+  viewer: 'client' | 'pro'
+  addressLine: string | null
+  latitude: number | null
+  longitude: number | null
+  preferredDate: string | null
+  biddingEndsAt: string | null
+  /** Hasta cuándo hay para responder, si se espera a alguien */
+  respondByAt: string | null
+  maxBudget: number | null
+  /** El precio acordado, cuando lo hay */
+  amount: number | null
+  assignedPro: ApiAssignedPro | null
+  /** A quién propone la empresa, si se espera al cliente */
+  substituteProName: string | null
+  clientName: string | null
+  clientPhone: string | null
+  bidCount: number | null
+  lowestBid: number | null
+  photoCount: number
+  createdAt: string
+}
+
 export const jobsApi = {
   create: (payload: CreateJobPayload) =>
     apiRequest<ApiJob>('/v1/jobs', { method: 'POST', auth: true, body: payload }),
 
   mine: () => apiRequest<MyJobsPage>('/v1/jobs', { auth: true }),
+
+  /** La ficha completa de un trabajo, para quien tiene algo que ver con él */
+  detail: (jobId: string) =>
+    apiRequest<ApiJobDetail>(`/v1/jobs/${jobId}`, { auth: true }),
 }

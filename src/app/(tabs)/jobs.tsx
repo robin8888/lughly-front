@@ -30,11 +30,16 @@ export default function JobsRoute() {
         onPublish={() => router.navigate('/publish')}
         onBack={() => router.navigate('/inicio')}
         /**
-         * Tocar una subasta lleva a sus pujas, que es lo único que se puede
-         * hacer con ella: comparar y adjudicar.
+         * Tocar cualquier trabajo lleva a su ficha: qué pasa con él, a quién
+         * se espera y quién lo hace. Desde ahí se llega a las pujas si es una
+         * subasta, que es donde se comparan y se adjudica.
+         *
+         * Antes solo las subastas llevaban a alguna parte, y era justo al
+         * revés de lo que hacía falta: en una subasta abierta no hay nada que
+         * preguntarse, y en un encargo sin respuesta sí.
          */
-        onSelectJob={(jobId, title) =>
-          router.navigate({ pathname: '/pujas', params: { jobId, title } })
+        onSelectJob={(jobId) =>
+          router.navigate({ pathname: '/trabajo/[id]', params: { id: jobId } })
         }
       />
     </RoleGate>

@@ -70,4 +70,16 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
+
+  /** Cada grupo: subastas, presupuestos, reservas y urgencias */
+  group: {
+    gap: 12,
+    marginBottom: 8,
+  },
+  groupLabel: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+    marginTop: 4,
+  },
 })

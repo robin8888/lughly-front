@@ -15,6 +15,7 @@ import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { EmptyState } from '@/components/molecules/EmptyState'
+import { jobTypeLabel } from '@/utils/jobStatus'
 import { JobCard } from '@/components/molecules/JobCard'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
 import { useRespondSubstitute } from '@/hooks/domain/useInbox'
@@ -41,6 +42,29 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
   const { respond, isResponding } = useRespondSubstitute()
 
   const jobs = data?.items ?? []
+
+  /**
+   * Los trabajos, agrupados por cómo se contrata.
+   *
+   * Son formas distintas de esperar y se siguen distinto: una subasta espera
+   * pujas que hay que comparar, una reserva espera la confirmación de alguien
+   * concreto y una urgencia espera a que alguien la coja en minutos. Mezcladas
+   * en una sola lista, la subasta que aún no ha cerrado y el encargo que no
+   * contestan se leían igual.
+   *
+   * El orden es fijo y no el de llegada: es el mismo en el que se ofrecen al
+   * publicar, y así la lista no cambia de forma cada vez que entra algo nuevo.
+   *
+   * Las etiquetas salen de `jobTypeLabel`, que es donde ya vive el nombre de
+   * cada tipo: dos sitios con los mismos nombres acabarían discrepando.
+   */
+  const groups = (['AUCTION', 'QUOTE', 'INSTANT', 'URGENT'] as const)
+    .map((type) => ({
+      type,
+      label: jobTypeLabel(type),
+      jobs: jobs.filter((job) => job.type === type),
+    }))
+    .filter((group) => group.jobs.length > 0)
 
   /**
    * Rechazar cancela el encargo, así que se pregunta antes. Aceptar no: es
@@ -135,18 +159,37 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
             </Text>
 
             <View style={styles.list}>
-              {jobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  {...(onSelectJob &&
-                    job.type === 'AUCTION' && {
-                      onPress: () => onSelectJob(job.id, job.title),
-                    })}
-                  onRespondSubstitute={(accept) => decideSubstitute(job, accept)}
-                  isRespondingSubstitute={isResponding}
-                  testID={`job-${job.id}`}
-                />
+              {groups.map((group) => (
+                <View key={group.type} style={styles.group}>
+                  {/*
+                    El rótulo solo si hay más de un grupo: con uno solo es un
+                    título para una lista y nada más.
+                  */}
+                  {groups.length > 1 && (
+                    <Text style={styles.groupLabel}>
+                      {group.label} · {group.jobs.length}
+                    </Text>
+                  )}
+
+                  {group.jobs.map((job) => (
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      /*
+                        Todas llevan a su ficha, no solo las subastas: hasta
+                        ahora tocar un encargo directo no hacía nada, y era
+                        justo donde había algo que preguntar —a quién se espera
+                        y en qué punto está—.
+                      */
+                      {...(onSelectJob && {
+                        onPress: () => onSelectJob(job.id, job.title),
+                      })}
+                      onRespondSubstitute={(accept) => decideSubstitute(job, accept)}
+                      isRespondingSubstitute={isResponding}
+                      testID={`job-${job.id}`}
+                    />
+                  ))}
+                </View>
               ))}
             </View>
 
