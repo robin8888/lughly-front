@@ -54,6 +54,18 @@ export function JobCard({
     job.status === 'IN_PROGRESS' ||
     job.status === 'COMPLETED'
 
+  /**
+   * Se quedó sin nadie y le toca mover a él.
+   *
+   * Va remarcado en naranja porque es lo único de la lista donde el trabajo se
+   * ha parado esperándole: "no pueden" y "se cumplió el plazo" acaban en lo
+   * mismo —hay que buscar a otro— y entre diez tarjetas se pasan por alto.
+   *
+   * El naranja es el de los encargos sin responder, no un rojo: no ha fallado
+   * nada, hay algo que hacer.
+   */
+  const needsYou = job.status === 'DECLINED' || job.status === 'EXPIRED'
+
   return (
     <Pressable
       onPress={onPress}
@@ -61,7 +73,15 @@ export function JobCard({
       accessibilityRole={onPress ? 'button' : undefined}
       testID={testID}
     >
-      <InfoCard>
+      <InfoCard style={needsYou ? styles.needsYou : undefined}>
+        {needsYou && (
+          <Text style={styles.needsYouNote}>
+            {job.status === 'DECLINED'
+              ? 'No pueden hacerlo. Ya puedes encargárselo a otro.'
+              : 'Nadie respondió a tiempo. Ya puedes encargárselo a otro.'}
+          </Text>
+        )}
+
         <View style={styles.row}>
           <View style={styles.thumb}>
             {image && <Image source={image} style={styles.thumbImage} resizeMode="contain" />}

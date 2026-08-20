@@ -182,4 +182,24 @@ export const styles = StyleSheet.create({
     color: theme.colors.cardText,
     opacity: 0.85,
   },
+
+  /**
+   * El trabajo que se quedó sin nadie. Contorno naranja y una línea que dice
+   * qué hacer: el color llama la atención y las palabras explican, que quien
+   * no distingue el naranja también tiene que enterarse.
+   */
+  needsYou: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.pending,
+  },
+  needsYouNote: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.4,
+    color: theme.colors.pendingText,
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.pendingSoft,
+  },
 })
