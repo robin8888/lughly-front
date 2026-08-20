@@ -16,15 +16,24 @@
  * dejar creer que la lista está completa.
  */
 
-import { View, Text, ActivityIndicator, Pressable } from 'react-native'
+import { useState } from 'react'
+import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { Switch } from '@/components/atoms/Switch'
+import { Button } from '@/components/atoms/Button'
+import { Input } from '@/components/atoms/Input'
+import { FormField } from '@/components/molecules/FormField'
+import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import type { ApiHoliday } from '@/api/pros.api'
-import { useMyHolidays, useSetHolidayChoice } from '@/hooks/domain/useMyHolidays'
+import {
+  useMyHolidays,
+  useSetHolidayChoice,
+  useLocalHolidays,
+} from '@/hooks/domain/useMyHolidays'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
-import { formatDate, parseIsoDate } from '@/utils/dates'
+import { formatDate, parseIsoDate, toIsoDate } from '@/utils/dates'
 import { theme } from '@/theme'
 import { styles } from './HolidaysPage.styles'
 
@@ -36,6 +45,7 @@ function readable(day: string): string {
 
 /** De dónde viene la fiesta. Las tres se trabajan igual; cambia de quién es. */
 function origin(kind: ApiHoliday['kind']): string {
+  if (kind === 'local') return 'De tu municipio'
   return kind === 'regional' ? 'De tu comunidad' : 'De toda España'
 }
 
@@ -66,6 +76,39 @@ export function HolidaysPage({
    */
   const { data, isPending, isError, refetch } = useMyHolidays(year, true, employeeId)
   const { choose, isSaving } = useSetHolidayChoice(year, employeeId)
+  const { add, remove, isWorking } = useLocalHolidays(year)
+
+  /**
+   * Los del municipio se ponen a mano, así que hace falta un sitio donde
+   * escribirlos. Cerrado por defecto: la pantalla es para consultar el
+   * calendario, y añadir es lo que se hace una vez al año.
+   */
+  const [adding, setAdding] = useState(false)
+  const [newDate, setNewDate] = useState(() => new Date())
+  const [newName, setNewName] = useState('')
+
+  const saveLocal = async () => {
+    const { ok, error } = await add(toIsoDate(newDate), newName.trim())
+
+    if (!ok) {
+      Alert.alert('No se ha podido añadir', error ?? 'Inténtalo de nuevo.')
+      return
+    }
+
+    setNewName('')
+    setAdding(false)
+  }
+
+  const confirmRemove = (date: string, name: string) => {
+    Alert.alert('¿Quitar este festivo?', `Dejará de contar como festivo ${name}.`, [
+      { text: 'Volver', style: 'cancel' },
+      {
+        text: 'Quitar',
+        style: 'destructive',
+        onPress: () => void remove(date),
+      },
+    ])
+  }
 
   const canDecide = data ? isForEmployee || !data.setByEmployer : false
 
@@ -176,9 +219,9 @@ export function HolidaysPage({
           </Text>
 
           <Text style={styles.note}>
-            Faltan los dos festivos de tu municipio: los pone tu ayuntamiento y
-            no salen del BOE. Si trabajas uno de esos días, tenlo en cuenta al
-            presupuestar.
+            Los dos festivos de tu municipio no salen del BOE —los pone tu
+            ayuntamiento—, así que los añades tú aquí abajo y cuentan igual que
+            los demás.
           </Text>
         </InfoCard>
 
@@ -197,7 +240,14 @@ export function HolidaysPage({
               <Text style={styles.name}>{holiday.name}</Text>
 
               <View style={styles.tags}>
-                <Text style={styles.tag}>{origin(holiday.kind)}</Text>
+                <Text
+                  style={[
+                    styles.tag,
+                    holiday.kind === 'local' && styles.tagLocal,
+                  ]}
+                >
+                  {origin(holiday.kind)}
+                </Text>
                 {holiday.away && (
                   <Text style={[styles.tag, styles.tagAway]}>
                     {isForEmployee ? 'No está' : 'Estás fuera'}
@@ -209,6 +259,19 @@ export function HolidaysPage({
                   </Text>
                 )}
               </View>
+
+              {/* Los suyos se quitan; los del BOE no, que no son suyos */}
+              {holiday.kind === 'local' && canDecide && (
+                <Pressable
+                  onPress={() => confirmRemove(holiday.date, holiday.name)}
+                  disabled={isWorking}
+                  accessibilityRole="button"
+                  style={styles.removeLocal}
+                  testID={`holidays-remove-${holiday.date}`}
+                >
+                  <Text style={styles.removeLocalText}>Quitar este festivo</Text>
+                </Pressable>
+              )}
 
               <View style={styles.choice}>
                 <Text style={styles.choiceLabel}>
@@ -226,6 +289,65 @@ export function HolidaysPage({
             </InfoCard>
           ))}
         </View>
+
+        {/*
+          Añadir los del municipio. Al final y plegado: la pantalla se abre
+          para consultar el calendario, y esto se hace una vez al año.
+        */}
+        {canDecide && (
+          <View style={styles.addBlock}>
+            {adding ? (
+              <>
+                <FormField label="Qué día es">
+                  <DateTimeField
+                    value={newDate}
+                    onChange={setNewDate}
+                    mode="date"
+                    testID="holidays-new-date"
+                  />
+                </FormField>
+
+                <FormField label="Qué se celebra">
+                  <Input
+                    value={newName}
+                    onChangeText={setNewName}
+                    placeholder="San Isidro, la patrona…"
+                    maxLength={60}
+                    testID="holidays-new-name"
+                  />
+                </FormField>
+
+                <Button
+                  fullWidth
+                  onPress={() => void saveLocal()}
+                  disabled={newName.trim().length < 2 || isWorking}
+                  testID="holidays-new-save"
+                >
+                  {isWorking ? 'Guardando…' : 'Añadir el festivo'}
+                </Button>
+
+                <Button
+                  fullWidth
+                  variant="secondary"
+                  onPress={() => setAdding(false)}
+                  style={styles.addCancel}
+                  testID="holidays-new-cancel"
+                >
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <Button
+                fullWidth
+                variant="secondary"
+                onPress={() => setAdding(true)}
+                testID="holidays-add"
+              >
+                Añadir un festivo de mi municipio
+              </Button>
+            )}
+          </View>
+        )}
       </Animated.ScrollView>
     </View>
   )

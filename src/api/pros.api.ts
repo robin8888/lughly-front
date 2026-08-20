@@ -281,8 +281,11 @@ export interface ApiHoliday {
   /** "AAAA-MM-DD" */
   date: string
   name: string
-  /** De dónde viene la fiesta: del Estado o de su comunidad */
-  kind: 'national' | 'national-kept' | 'regional'
+  /**
+   * De dónde viene la fiesta: del Estado, de su comunidad, o `local` si la ha
+   * puesto él —los dos días de su municipio, que el BOE no publica—.
+   */
+  kind: 'national' | 'national-kept' | 'regional' | 'local'
   /** Si tiene horario ese día de la semana */
   worksThatDay: boolean
   /** Si ese día cae dentro de una ausencia suya */
@@ -421,6 +424,24 @@ export const prosApi = {
       method: 'PUT',
       auth: true,
       body: payload,
+    }),
+
+  /**
+   * Añadir un festivo de su municipio. Los locales no los publica el BOE, así
+   * que se le preguntan a quien vive allí.
+   */
+  addLocalHoliday: (date: string, name: string) =>
+    apiRequest<{ date: string; name: string }>('/v1/pro/holidays/local', {
+      method: 'POST',
+      auth: true,
+      body: { date, name },
+    }),
+
+  /** Quitar uno de los suyos. Los del BOE no se quitan: no son suyos */
+  removeLocalHoliday: (date: string) =>
+    apiRequest<null>(`/v1/pro/holidays/local/${date}`, {
+      method: 'DELETE',
+      auth: true,
     }),
 
   /** Los festivos de su comunidad ese año, con lo que hace en cada uno */

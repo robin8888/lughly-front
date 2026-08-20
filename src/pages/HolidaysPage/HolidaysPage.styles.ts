@@ -138,4 +138,35 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     color: theme.colors.cardText,
   },
+
+  /** Los que ha puesto él, marcados: son los únicos que puede quitar */
+  tagLocal: {
+    color: theme.colors.accent700,
+    borderColor: theme.colors.accent300,
+    backgroundColor: theme.colors.accent100,
+    opacity: 1,
+  },
+  removeLocal: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.urgency,
+  },
+  removeLocalText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.urgency,
+  },
+
+  /** Añadir los del municipio: al final, porque se hace una vez al año */
+  addBlock: {
+    marginTop: 24,
+    gap: 4,
+  },
+  addCancel: {
+    marginTop: 8,
+  },
 })

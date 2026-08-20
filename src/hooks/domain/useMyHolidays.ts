@@ -83,3 +83,51 @@ export function useSetHolidayChoice(year: number, employeeId?: string) {
     isSaving: mutation.isPending,
   }
 }
+
+/**
+ * Los festivos que pone el profesional a mano: los de su municipio.
+ *
+ * Al cambiarlos se recarga el calendario entero en vez de tocarlo a mano: un
+ * festivo nuevo entra en su sitio por fecha, y colocarlo aquí sería repetir
+ * un orden que ya decide el servidor.
+ */
+export function useLocalHolidays(year: number) {
+  const queryClient = useQueryClient()
+
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: holidaysQueryKey(year) })
+
+  const add = useMutation({
+    mutationFn: ({ date, name }: { date: string; name: string }) =>
+      prosApi.addLocalHoliday(date, name),
+    onSuccess: refresh,
+  })
+
+  const remove = useMutation({
+    mutationFn: (date: string) => prosApi.removeLocalHoliday(date),
+    onSuccess: refresh,
+  })
+
+  const message = (error: unknown) =>
+    error instanceof NetworkError || error instanceof ApiError ? error.message : null
+
+  return {
+    add: async (date: string, name: string) => {
+      try {
+        await add.mutateAsync({ date, name })
+        return { ok: true as const, error: null }
+      } catch (error) {
+        return { ok: false as const, error: message(error) }
+      }
+    },
+    remove: async (date: string) => {
+      try {
+        await remove.mutateAsync(date)
+        return { ok: true as const, error: null }
+      } catch (error) {
+        return { ok: false as const, error: message(error) }
+      }
+    },
+    isWorking: add.isPending || remove.isPending,
+  }
+}
