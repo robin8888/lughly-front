@@ -93,6 +93,15 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSoft,
     marginBottom: 6,
   },
+  /** La cara y el nombre, en fila */
+  proRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  proText: {
+    flex: 1,
+  },
   proName: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: 17,

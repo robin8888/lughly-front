@@ -20,10 +20,12 @@
 import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
+import { Avatar } from '@/components/atoms/Avatar'
 import { Countdown } from '@/components/atoms/Countdown'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { useJob } from '@/hooks/domain/useJob'
+import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { formatJobWhen } from '@/utils/dates'
@@ -183,13 +185,32 @@ export function JobDetailPage({ jobId, onBack, onSeeBids }: JobDetailPageProps) 
         {job.assignedPro && (
           <InfoCard style={styles.block}>
             <Text style={styles.blockTitle}>Quién lo hace</Text>
-            <Text style={styles.proName}>{job.assignedPro.name}</Text>
 
-            {job.assignedPro.workerName && (
-              <Text style={styles.proWorker}>
-                Va {job.assignedPro.workerName}
-              </Text>
-            )}
+            <View style={styles.proRow}>
+              {/*
+                La cara de quien va a ir, aunque se contratara a la empresa:
+                quien llama al timbre es una persona, y es a quien hay que
+                reconocer al abrir la puerta.
+              */}
+              <Avatar
+                uri={
+                  job.assignedPro.avatarUrl
+                    ? `${API_BASE_URL}${job.assignedPro.avatarUrl}`
+                    : null
+                }
+                size={52}
+              />
+
+              <View style={styles.proText}>
+                <Text style={styles.proName}>{job.assignedPro.name}</Text>
+
+                {job.assignedPro.workerName && (
+                  <Text style={styles.proWorker}>
+                    Va {job.assignedPro.workerName}
+                  </Text>
+                )}
+              </View>
+            </View>
 
             <Text style={styles.proRating}>
               ★ {job.assignedPro.rating.toFixed(1)} ·{' '}

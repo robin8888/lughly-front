@@ -167,4 +167,19 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.cardText,
   },
+
+  /** Con quién está el trabajo: su cara y su nombre */
+  pro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+  },
+  proName: {
+    flex: 1,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+    opacity: 0.85,
+  },
 })

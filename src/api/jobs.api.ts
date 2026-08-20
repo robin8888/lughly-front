@@ -42,6 +42,13 @@ export interface ApiJob {
    * Null en lo publicado al aire.
    */
   requestedProName: string | null
+  /**
+   * Con quién está el trabajo: quien lo hace si ya está adjudicado, y si no, a
+   * quien se le encargó. Null en lo publicado al aire, que todavía no es de
+   * nadie.
+   */
+  proName: string | null
+  proAvatarUrl: string | null
   /** Quién propone mandar la empresa en su lugar, si lo ha propuesto */
   substituteProName: string | null
   /** Hasta cuándo tiene para responder quien recibió el encargo */
@@ -91,6 +98,8 @@ export interface MyJobsPage {
 /** Quién hace el trabajo, cuando ya está decidido. */
 export interface ApiAssignedPro {
   id: string
+  /** La foto de quien va a ir, aunque se contratara a la empresa */
+  avatarUrl: string | null
   /** A quién se contrató: la empresa, si la hay */
   name: string
   /** Quién va a ir, si es distinto de lo anterior */

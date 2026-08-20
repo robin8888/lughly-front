@@ -15,6 +15,8 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { Countdown } from '@/components/atoms/Countdown'
 import { Tag } from '@/components/atoms/Tag'
 import { Money } from '@/components/atoms/Money'
+import { Avatar } from '@/components/atoms/Avatar'
+import { API_BASE_URL } from '@/api'
 import type { ApiJob } from '@/api/jobs.api'
 import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
 import { getTradeImage } from '@/utils/trades'
@@ -42,6 +44,15 @@ export function JobCard({
 }: JobCardProps) {
   const status = jobStatusLook(job.status)
   const image = getTradeImage(job.trade)
+
+  /**
+   * Si el trabajo ya tiene dueño. Cambia lo que se dice de la persona: "se lo
+   * has encargado" mientras se espera, y "lo hace" cuando ya está cerrado.
+   */
+  const isDecided =
+    job.status === 'AWARDED' ||
+    job.status === 'IN_PROGRESS' ||
+    job.status === 'COMPLETED'
 
   return (
     <Pressable
@@ -107,10 +118,27 @@ export function JobCard({
           )}
         </View>
 
-        {job.status === 'PENDING_PRO' && job.requestedProName && (
-          <Text style={styles.requested}>
-            Se lo has encargado a {job.requestedProName}.
-          </Text>
+        {/*
+          Con quién está el trabajo, con su cara. En una lista de diez se
+          reconoce antes una foto que un nombre, y era lo que faltaba para
+          saber de un vistazo a quién se espera o quién va a ir.
+
+          En una propuesta de cambio no sale: ahí manda el bloque de abajo,
+          que cuenta las dos personas y es donde se decide.
+        */}
+        {job.proName && job.status !== 'SUBSTITUTE_PROPOSED' && (
+          <View style={styles.pro}>
+            <Avatar
+              uri={
+                job.proAvatarUrl ? `${API_BASE_URL}${job.proAvatarUrl}` : null
+              }
+              size={32}
+            />
+            <Text style={styles.proName} numberOfLines={1}>
+              {isDecided ? 'Lo hace ' : 'Se lo has encargado a '}
+              <Text style={styles.strong}>{job.proName}</Text>
+            </Text>
+          </View>
         )}
 
         {/**
@@ -158,7 +186,12 @@ export function JobCard({
          * Las pujas solo tienen sentido en una subasta: una reserva
          * instantánea es a tarifa fija y una urgencia se acepta, no se puja.
          */}
-        {job.type === 'AUCTION' && (
+        {/*
+          Y solo mientras la subasta siga abierta: una vez adjudicada, "sin
+          pujas todavía" habla de algo que ya terminó, y el trabajo ya tiene
+          quien lo haga.
+        */}
+        {job.type === 'AUCTION' && job.status === 'OPEN' && (
           <Text style={styles.bids}>
             {job.bidCount === 0 ? (
               'Sin pujas todavía'
