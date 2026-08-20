@@ -78,8 +78,16 @@ export function CoveragePage({
    * El código postal del sitio elegido. No se enseña en ninguna parte: se
    * guarda porque sus dos primeras cifras son la provincia, y de ahí sale la
    * comunidad cuyo calendario de festivos se le aplica.
+   *
+   * Va con el punto del que salió, porque la base se mueve tocando el mapa y
+   * eso no pasa por ningún geocodificador: sin recordar a qué punto pertenece,
+   * quien arrastra el marcador de Madrid a Toledo guardaría el código postal
+   * de Madrid y vería los festivos que no son.
    */
   const [postcode, setPostcode] = useState<string | undefined>(undefined)
+  const [postcodeAt, setPostcodeAt] = useState<{ lat: number; lng: number } | null>(
+    null,
+  )
   const [query, setQuery] = useState('')
   const [matches, setMatches] = useState<ApiGeocodeMatch[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -94,6 +102,12 @@ export function CoveragePage({
 
     if (data.latitude !== null && data.longitude !== null) {
       setPoint({ lat: data.latitude, lng: data.longitude })
+
+      // El que ya estaba guardado es el de ese punto: no hay que volver a pedirlo
+      if (data.postcode) {
+        setPostcode(data.postcode)
+        setPostcodeAt({ lat: data.latitude, lng: data.longitude })
+      }
     }
 
     setRadiusKm(data.radiusKm)
@@ -121,7 +135,8 @@ export function CoveragePage({
     setPoint({ lat: match.lat, lng: match.lng })
     // La ciudad viaja solo si viene del buscador: es por donde se le busca
     if (match.city) setCity(match.city)
-    if (match.postcode) setPostcode(match.postcode)
+    setPostcode(match.postcode ?? undefined)
+    setPostcodeAt({ lat: match.lat, lng: match.lng })
     setMatches(null)
     setQuery(match.label)
   }
@@ -132,9 +147,40 @@ export function CoveragePage({
 
     setPoint({ lat: position.lat, lng: position.lng })
     if (position.city) setCity(position.city)
-    if (position.postcode) setPostcode(position.postcode)
+    setPostcode(position.postcode ?? undefined)
+    setPostcodeAt({ lat: position.lat, lng: position.lng })
     if (position.label) setQuery(position.label)
     setMatches(null)
+  }
+
+  /**
+   * El código postal del punto que se va a guardar.
+   *
+   * Si la base se ha movido tocando el mapa —que es como se pone casi
+   * siempre— no ha pasado por ningún geocodificador y no hay código postal, o
+   * peor, queda el del sitio anterior. Se pide aquí, una sola vez y solo
+   * cuando hace falta, en vez de en cada arrastre del marcador.
+   *
+   * Si el geocodificador no responde se guarda igual: la zona es lo que ha
+   * venido a hacer. Lo único que se queda sin saber es su comunidad, y el
+   * calendario ya sabe decirlo.
+   */
+  const resolvePostcode = async (): Promise<string | null> => {
+    if (!point) return null
+
+    const isKnown =
+      postcodeAt !== null &&
+      postcodeAt.lat === point.lat &&
+      postcodeAt.lng === point.lng
+
+    if (postcode && isKnown) return postcode
+
+    try {
+      const { match } = await geocodeApi.reverse(point.lat, point.lng)
+      return match?.postcode ?? null
+    } catch {
+      return null
+    }
   }
 
   const handleSave = async () => {
@@ -145,7 +191,7 @@ export function CoveragePage({
       longitude: point.lng,
       radiusKm,
       city,
-      postcode,
+      postcode: await resolvePostcode(),
     })
 
     if (!ok) {

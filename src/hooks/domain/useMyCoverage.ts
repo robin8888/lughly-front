@@ -28,7 +28,7 @@ export interface CoverageInput {
    * es la base, y sin comunidad la pantalla de festivos no tiene nada que
    * enseñar.
    */
-  postcode?: string
+  postcode?: string | null
 }
 
 export function useMyCoverage(enabled = true, employeeId?: string) {
@@ -53,6 +53,20 @@ export function useSetMyCoverage(employeeId?: string) {
       queryClient.setQueryData(coverageQueryKey(employeeId), saved)
       // Su radio y su ciudad salen en el directorio y en su ficha
       void queryClient.invalidateQueries({ queryKey: ['pros'] })
+      /**
+       * Y su calendario de festivos, que cuelga del código postal de la base:
+       * mover la zona puede cambiarle de comunidad.
+       *
+       * Sin esto pasaba lo peor que podía pasar: el calendario decía "te falta
+       * la zona", se ponía la zona, se volvía, y seguía diciendo lo mismo
+       * —porque la respuesta de antes aún estaba fresca—, así que parecía que
+       * no se había guardado.
+       */
+      void queryClient.invalidateQueries({
+        queryKey: employeeId
+          ? ['employees', employeeId, 'holidays']
+          : ['pro', 'holidays'],
+      })
     },
   })
 

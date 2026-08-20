@@ -182,7 +182,8 @@ export const employeesApi = {
       longitude: number
       radiusKm: number
       city?: string
-      postcode?: string
+      /** `null` lo vacía: mover la base sin saber el nuevo no puede dejar el viejo */
+      postcode?: string | null
     },
   ) =>
     apiRequest<ApiCoverageSettings>(`/v1/employees/${id}/coverage`, {
