@@ -74,6 +74,12 @@ export function CoveragePage({
   const [point, setPoint] = useState<{ lat: number; lng: number } | null>(null)
   const [radiusKm, setRadiusKm] = useState(15)
   const [city, setCity] = useState<string | undefined>(undefined)
+  /**
+   * El código postal del sitio elegido. No se enseña en ninguna parte: se
+   * guarda porque sus dos primeras cifras son la provincia, y de ahí sale la
+   * comunidad cuyo calendario de festivos se le aplica.
+   */
+  const [postcode, setPostcode] = useState<string | undefined>(undefined)
   const [query, setQuery] = useState('')
   const [matches, setMatches] = useState<ApiGeocodeMatch[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -115,6 +121,7 @@ export function CoveragePage({
     setPoint({ lat: match.lat, lng: match.lng })
     // La ciudad viaja solo si viene del buscador: es por donde se le busca
     if (match.city) setCity(match.city)
+    if (match.postcode) setPostcode(match.postcode)
     setMatches(null)
     setQuery(match.label)
   }
@@ -125,6 +132,7 @@ export function CoveragePage({
 
     setPoint({ lat: position.lat, lng: position.lng })
     if (position.city) setCity(position.city)
+    if (position.postcode) setPostcode(position.postcode)
     if (position.label) setQuery(position.label)
     setMatches(null)
   }
@@ -137,6 +145,7 @@ export function CoveragePage({
       longitude: point.lng,
       radiusKm,
       city,
+      postcode,
     })
 
     if (!ok) {

@@ -32,6 +32,8 @@ export interface SharedLocation {
   /** Dirección legible; vacía si el punto no tiene nada reconocible */
   label: string
   city: string | null
+  /** De aquí sale la comunidad, y de la comunidad su calendario de festivos */
+  postcode: string | null
 }
 
 export interface UseShareLocationResult {
@@ -67,6 +69,7 @@ export function useShareLocation(): UseShareLocationResult {
         // válidas y el profesional puede navegar hasta el punto.
         label: match?.label ?? '',
         city: match?.city ?? null,
+        postcode: match?.postcode ?? null,
       }
     } catch {
       /**
@@ -75,7 +78,13 @@ export function useShareLocation(): UseShareLocationResult {
        * no responde sería absurdo.
        */
       setStatus('done')
-      return { lat: position.lat, lng: position.lng, label: '', city: null }
+      return {
+        lat: position.lat,
+        lng: position.lng,
+        label: '',
+        city: null,
+        postcode: null,
+      }
     }
   }, [request])
 

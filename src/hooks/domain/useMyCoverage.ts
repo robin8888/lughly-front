@@ -23,6 +23,12 @@ export interface CoverageInput {
   longitude: number
   radiusKm: number
   city?: string
+  /**
+   * Viaja cuando el geocodificador lo da. Sin él no se sabe de qué comunidad
+   * es la base, y sin comunidad la pantalla de festivos no tiene nada que
+   * enseñar.
+   */
+  postcode?: string
 }
 
 export function useMyCoverage(enabled = true, employeeId?: string) {

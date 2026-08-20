@@ -964,11 +964,217 @@ alguien lo use de verdad.
 
 ### Día 24-25: Recargos y Ausencias
 **Tareas**:
-- [ ] Sección de recargos
-  - Sábado +20%
-  - Domingo/festivo +35%
-  - Nocturno +25%
-  - Vista previa de precio
+- [ ] **Los recargos los pone cada profesional, con la ley de base**
+
+      Hoy son tres constantes en `src/utils/surcharges.ts` —sábado +20%,
+      domingo y festivo +35%, nocturno +25%—, iguales para todo el mundo y sin
+      nadie que las aplique. Pasan a ser de cada quien: el autónomo pone los
+      suyos, y **el empleador los pone para cada uno de sus trabajadores**,
+      igual que ya le pone el horario, la zona y las ausencias.
+
+      Se entra con los valores de la ley ya puestos y una nota que dice qué
+      manda la ley en cada caso, con dos salidas: dejarlos como están o
+      cambiarlos. **Lo que la app sugiere es ajustarse a la ley**, y así lo
+      dice.
+
+      **Qué manda la ley, que no es un porcentaje para todo:**
+
+      | | Lo que dice | De base |
+      |---|---|---|
+      | **Nocturno** (22:00–06:00) | Obliga a pagarlo aparte pero **no dice cuánto**: lo fija el convenio (art. 36.2 ET). El 25% es lo más extendido. | +25% |
+      | **Domingo y festivo** | Trabajar el día de descanso semanal o un festivo, sin descanso compensatorio, se paga con **+75% como mínimo** (art. 47 del RD 2001/1983, que sigue vigente). | +75% |
+      | **Sábado** | No existe recargo de sábado en la ley. Lo que sí dice es que el descanso semanal comprende "la tarde del sábado […] y el día completo del domingo" (art. 37.1 ET), así que para quien descansa entonces la tarde del sábado cae en la casilla de arriba. | +20%, sin respaldo legal y se puede quitar |
+
+      **Esto cambia dos de los tres números de hoy.** El de domingo y festivo
+      se queda muy corto: +35% donde la ley pide +75%. El de sábado no lo
+      manda ninguna ley, así que se ofrece como costumbre del oficio y no como
+      obligación.
+
+      **Cuidado con lo que promete la nota.** Todo lo de la tabla es lo que una
+      empresa debe **pagarle a su trabajador en nómina**. No es lo que un
+      autónomo le cobra a un cliente: ahí el precio es libre y la ley no fija
+      nada. La nota tiene que decirlo con esas palabras, porque si no le
+      estamos colocando a un autónomo una obligación que no tiene, y dándole a
+      un empleador la idea de que cobrándole el recargo al cliente ya cumple
+      con su gente. Son dos cosas distintas y la app las ve las dos: al
+      autónomo se le habla de precio y se le da la ley como referencia; al
+      empleador se le recuerda que ese porcentaje es además lo que le debe a
+      quien va a hacer el trabajo.
+
+      **Lo que hay que construir:**
+
+      - Backend: dónde viven los porcentajes de cada profesional —tres campos
+        en `ProProfile` o tabla propia, según cuántos tipos acaben siendo— y
+        `GET`/`PUT /v1/pro/surcharges`, con la variante del empleador sobre la
+        ficha de su trabajador. Los casos de uso ya están partidos en "quién
+        puede" y "qué se guarda" desde el horario y la zona: aquí solo cambia
+        lo primero.
+      - Móvil: pantalla `/mis-recargos` colgando de Mi cuenta, con la nota y un
+        botón de "dejar lo que dice la ley" que devuelve los valores de base.
+        Al empleado se le explica que los pone su empresa, como en las otras
+        tres pantallas.
+      - `utils/surcharges.ts` deja de ser la fuente: se queda con los valores
+        legales de referencia y el texto de la nota. Los que se enseñan salen
+        del profesional.
+      - Los dos sitios que hoy pintan la constante —la ficha del profesional y
+        el aviso de Publicar— pasan a leer los del profesional.
+
+      **Lo que no se toca:**
+
+      - **No se acumulan, se aplica el más alto.** Un sábado por la noche es
+        nocturno, no nocturno más sábado. Con porcentajes libres eso pasa a
+        importar de verdad: alguien puede poner el sábado por encima del
+        nocturno y entonces manda el sábado.
+      - **La tarifa de urgencia sigue llevando los recargos dentro** (decisión
+        del 18 Agosto). Sobre una franja de urgencia no se aplica nada de
+        esto: el empleador ya eligió el día y la hora al ponerle precio.
+      - La franja nocturna cruza la medianoche, y partirla ya está resuelto en
+        `common/local-time` para el horario y las urgencias. Se reutiliza.
+
+      **Sin decidir:**
+
+      1. **Qué es festivo.** Hoy no hay ningún calendario en el proyecto, así
+         que "domingo y festivo" solo sabe de domingos. Cómo se resuelve, en el
+         apartado siguiente.
+      2. **Si hay techo.** Nada impide poner +500% y que la app lo enseñe. O se
+         acota, o se avisa al cliente, o se deja al mercado.
+      3. **Qué hereda un trabajador nuevo**: los de su empresa o los de la ley.
+      4. **Si se permite el 0** —trabajar el domingo al mismo precio—. Para un
+         autónomo es legítimo; para un empleador es una señal de que a su
+         trabajador tampoco le está pagando el recargo.
+#### Los festivos: de dónde salen y hasta dónde llegamos
+
+Sí se puede automatizar, con una corrección: **no los descarga la app**. Los
+descarga el backend una vez al año y los guarda en la base. Si los bajara cada
+móvil serían miles de peticiones a la misma fuente para leer lo mismo, no
+habría festivos sin cobertura, y el día que un boletín cambie de formato
+habría que actualizar la app en las dos tiendas en vez de tocar un servidor.
+
+**Son tres niveles y solo dos son fáciles.**
+
+- **Nacionales y autonómicos** (los 14 del año: 8 comunes y el resto que cada
+  comunidad fija o sustituye). Salen de **una sola resolución del BOE cada
+  octubre** —la de 2026 es `BOE-A-2025-21667`—, y el BOE tiene datos abiertos
+  con XML por documento. Son unas 250 filas al año de una fuente estable y
+  oficial, que además se puede citar en pantalla: "según el BOE". Esto se
+  automatiza entero.
+- **Locales**: dos días por municipio, y aquí se rompe. No los publica el BOE
+  sino cada comunidad en su boletín, con formatos distintos. Madrid, Andalucía,
+  Catalunya y Euskadi tienen datos abiertos —Euskadi incluso una API REST—; de
+  otras solo hay PDF. Son **8.131 municipios por dos días**, de diecisiete
+  fuentes que cambian de forma cuando quieren.
+
+**Lo que se propone**: automatizar los nacionales y autonómicos desde el BOE;
+para los locales, empezar por las comunidades que publican datos abiertos e ir
+sumando, y en las demás **dejar que el profesional añada sus dos días**,
+diciéndole de dónde salen los que ya ve y cuáles ha puesto él. Prometer los
+8.131 municipios desde el primer día es prometer lo que no se puede sostener,
+y un festivo local que falta significa cobrar de menos sin enterarse.
+
+**Falta saber de qué comunidad es cada base.** Hoy de la base solo se guarda
+`city` —el texto que devuelve Photon— más las coordenadas y el radio. Photon
+devuelve también `state` (la comunidad) y `postcode`, y `toMatch` los tira.
+
+Lo sólido no es el nombre del municipio, que se repite por toda España, sino
+**el código postal: sus dos primeras cifras son la provincia**, sin excepciones.
+De ahí a la comunidad hay una tabla de 52 filas que no cambia. Con eso el
+calendario autonómico sale sin depender de nadie más. Para el local hace falta
+el municipio de verdad —el código del INE—, y eso es otra conversación.
+
+**Qué festivo cuenta: el de la base.** Un fontanero de Móstoles que arregla
+una avería en Madrid capital el 15 de mayo está trabajando en un festivo que no
+es el suyo, y aun así se le aplica el de Móstoles: es el que puede saber por
+adelantado y el que se le puede enseñar en una lista.
+
+**La pantalla**: los festivos del año de su comunidad, en una lista, diciendo
+de cuáles cobra recargo y cuáles ha añadido él. Y no confundirla con las
+ausencias: un festivo es un día en que se cobra más, no un día en que no se
+trabaja.
+
+**Decidido: manda el festivo de la base** (20 Agosto 2026). El calendario que
+se le aplica a alguien es el de la comunidad donde tiene puesta la base, no el
+del sitio al que va. Es lo que puede saber por adelantado y lo que puede
+enseñársele en una lista; el trabajo todavía no existe cuando pone sus precios.
+
+**Ya construido** (20 Agosto 2026, backend):
+
+- `src/common/spanish-region.ts`: código postal → provincia → comunidad, las 52
+  provincias y las 19 columnas del BOE.
+- `scripts/fetch-holidays.ts`: baja la resolución del BOE de un año y deja
+  `src/common/holidays/<año>.ts` generado. El de 2026 ya está: 36 fechas.
+- `src/common/holidays/index.ts`: `holidaysFor(año, comunidad)` y
+  `holidayOn(día, comunidad)`.
+
+La prueba que lo valida es contar: **12 festivos por comunidad**, que son los
+14 de ley menos los 2 locales. Salen 12 en dieciocho y 11 en Canarias, que es
+exactamente la nota (1) del BOE —allí el duodécimo lo pone cada isla—. Si
+alguna vez sale otro número, algo se rompió al bajarlo.
+
+Dos cosas que costaron y conviene no volver a descubrir: el BOE numera con
+sufijo las fiestas que caen el mismo día (`header2304A`, `header2304B`), y en
+2026 escribe `headerheaderCastillaLM` con el prefijo duplicado. Saltarse las
+casillas raras en silencio dejaba 27 fechas de 36 y un calendario que parecía
+correcto. Ahora una columna desconocida **para el script**.
+
+#### El aviso en el horario y quién decide cobrar el recargo
+
+**El editor del horario semanal no puede marcar festivos, y no es un olvido**:
+`AvailabilityWindow` va por `weekday` —0 a 6, cada semana igual—, y un festivo
+es una fecha. En "los martes" no cabe "el 8 de diciembre".
+
+Lo que sí se puede, y es lo que se hará:
+
+- **Avisar en el editor.** Al abrir o guardar el horario, los festivos que
+  vienen y caen en días que trabaja: "El martes 8 de diciembre es festivo
+  (Inmaculada Concepción) y tienes horario de 9:00 a 18:00". Sirve de puente
+  entre las dos pantallas sin meter fechas en una tabla de días de la semana.
+- **Decidir fecha a fecha, en el calendario de festivos.** Tres respuestas por
+  festivo: no trabajo, trabajo con recargo, trabajo sin recargo. Por defecto,
+  lo que tenga puesto en sus recargos —que arranca en lo que dice la ley—, y
+  el mismo botón de "dejar lo que dice la ley" pero para ese día.
+- **"Ese día no trabajo" ya existe: es una ausencia de un día.** No hace falta
+  inventar nada para eso; se marca como ausencia y manda sobre el horario,
+  igual que las vacaciones. Lo único que hay que guardar de verdad es **si
+  cobra el recargo ese día**, y solo cuando se aparta de lo que tiene puesto:
+  una fila por excepción, no una por festivo.
+
+**Quién decide**: el autónomo, él. El empleado, no —se lo pone su empresa,
+como el horario, la zona y las ausencias—. Y ahí la app dice una vez lo que
+toca y no vuelve a insistir: la empresa es libre de no cobrarle el recargo al
+cliente, pero el recargo del festivo se lo debe igual a su trabajador, en
+nómina o en descanso compensatorio. Son dos bolsillos distintos.
+
+
+#### Lo construido el 20 de agosto de 2026
+
+**Backend, entero.**
+
+- `ProProfile` guarda `postcode` y los tres recargos, con la ley de base:
+  `sunday_surcharge` a 75, `night_surcharge` a 25 y `saturday_surcharge` a 20.
+  Migración `recargos_y_festivos`, aplicada.
+- `HolidayChoice`, tabla **solo de excepciones**: quien cobra el recargo todos
+  los festivos no tiene ninguna fila. Volver a lo de siempre borra la fila en
+  vez de guardarla, porque si guardara las coincidencias, cambiar el recargo
+  general dejaría de afectar a los días que nadie tocó nunca.
+- `GET`/`PUT /v1/pro/surcharges`, `GET /v1/pro/holidays?year=` y
+  `PUT /v1/pro/holidays/:date`, con las cuatro variantes del empleador sobre
+  `/v1/employees/:id/…`. Los casos de uso, partidos en "quién puede" y "qué se
+  guarda" como el horario y la zona.
+- La respuesta de los recargos **lleva dentro los valores de la ley**. No se
+  dejan solo en el móvil a propósito: con una copia en cada lado, el día que
+  cambie una enseñaríamos una cosa y cobraríamos otra.
+- Un festivo que no lo es en la comunidad de quien pregunta se rechaza con
+  `NOT_A_HOLIDAY` en vez de guardarse por si acaso.
+
+**Móvil**: los tipos espejo de los cuatro endpoints, y el **código postal
+viajando** desde el buscador de direcciones y desde "usar mi ubicación" hasta
+`PUT /v1/pro/coverage`. Sin eso el calendario no sabría de qué comunidad es
+nadie, que era el único cabo suelto que dejaba la pantalla de la zona.
+
+**Falta**: las dos pantallas —`/mis-recargos` y el calendario de festivos— y el
+aviso de festivos dentro del editor del horario. El cálculo del recargo sobre
+un importe sigue sin existir; llegará con la reserva instantánea (Fase 7).
+
 - [x] **Ausencias** (19 Agosto 2026). Tabla `absences`, `GET`/`POST`/`DELETE
       /v1/pro/absences` y la pantalla `/mis-ausencias`.
 
@@ -985,7 +1191,9 @@ alguien lo use de verdad.
       urgencias, y su ficha dice el día que vuelve —el siguiente al último que
       está fuera, que enseñar el último diría "vuelve el 25" de alguien que el
       25 sigue fuera—.
-- [ ] Hook useSurcharge (fórmula completa)
+- [ ] Vista previa de precio, con los porcentajes de quien lo mira.
+- [ ] Hook useSurcharge (fórmula completa), leyendo los del profesional y no
+      la constante.
 
 ---
 

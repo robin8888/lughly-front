@@ -241,6 +241,72 @@ export interface ApiCoverageSettings {
   longitude: number | null
   radiusKm: number
   city: string
+  /** El de la base. De sus dos primeras cifras sale la comunidad */
+  postcode: string | null
+  /**
+   * La comunidad autónoma que se deduce del código postal, en ISO ("ES-MD").
+   * Es la del calendario de festivos que se le aplica: cambiar la base a otra
+   * comunidad le cambia los festivos, y eso hay que poder decírselo.
+   */
+  region: string | null
+  regionName: string | null
+}
+
+
+/**
+ * Los recargos horarios de un profesional, en porcentaje sobre su tarifa.
+ * **No se acumulan: se aplica el más alto.**
+ *
+ * `legal` es lo que dice la ley, y viene del servidor a propósito para que no
+ * haya dos copias de los mismos números: el nocturno lo obliga el art. 36.2
+ * del Estatuto sin decir cuánto —de ahí que se ofrezca el 25% de los
+ * convenios—, el de domingos y festivos es el +75% mínimo del art. 47 del RD
+ * 2001/1983, y el del sábado es `null` porque no lo manda ninguna ley.
+ *
+ * Y una distinción que la pantalla no puede perder: esto es lo que se le cobra
+ * al cliente. Lo que una empresa le debe a su trabajador por ese mismo día va
+ * por nómina y no se decide aquí.
+ */
+export interface ApiSurcharges {
+  saturday: number
+  sunday: number
+  night: number
+  legal: { saturday: number | null; sunday: number; night: number }
+  /** Si se los pone su empresa: entonces la pantalla se lee, no se edita */
+  setByEmployer: boolean
+}
+
+/** Un festivo del calendario de su comunidad, y qué hace ese día. */
+export interface ApiHoliday {
+  /** "AAAA-MM-DD" */
+  date: string
+  name: string
+  /** De dónde viene la fiesta: del Estado o de su comunidad */
+  kind: 'national' | 'national-kept' | 'regional'
+  /** Si tiene horario ese día de la semana */
+  worksThatDay: boolean
+  /** Si ese día cae dentro de una ausencia suya */
+  away: boolean
+  appliesSurcharge: boolean
+  /** Si lo decidió a mano para ese día, en vez de heredarlo */
+  chosen: boolean
+  percent: number
+}
+
+export interface ApiHolidayCalendar {
+  year: number
+  /** Null si todavía no tiene base: sin ella no se sabe qué calendario le toca */
+  region: string | null
+  regionName: string | null
+  /**
+   * Si el servidor tiene el calendario de ese año. **No es lo mismo que la
+   * lista vacía**: una comunidad siempre tiene festivos, así que `known` en
+   * false significa que el BOE todavía no lo ha publicado —pasa cada año hasta
+   * octubre— y hay que decirlo con otras palabras.
+   */
+  known: boolean
+  setByEmployer: boolean
+  holidays: ApiHoliday[]
 }
 
 /** En qué estado está cada cosa que se le pide a un profesional. */
@@ -345,6 +411,33 @@ export const prosApi = {
   removeAbsence: (id: string) =>
     apiRequest<null>(`/v1/pro/absences/${id}`, { method: 'DELETE', auth: true }),
 
+
+  /** Sus recargos por sábado, domingo/festivo y nocturno */
+  mySurcharges: () => apiRequest<ApiSurcharges>('/v1/pro/surcharges', { auth: true }),
+
+  /** Los tres a la vez. El cero vale y significa "no lo cobro" */
+  setMySurcharges: (payload: { saturday: number; sunday: number; night: number }) =>
+    apiRequest<ApiSurcharges>('/v1/pro/surcharges', {
+      method: 'PUT',
+      auth: true,
+      body: payload,
+    }),
+
+  /** Los festivos de su comunidad ese año, con lo que hace en cada uno */
+  myHolidays: (year: number) =>
+    apiRequest<ApiHolidayCalendar>(`/v1/pro/holidays?year=${year}`, { auth: true }),
+
+  /**
+   * Decide si cobra el recargo un festivo concreto. Para no trabajar ese día
+   * no se usa esto, sino una ausencia: ya es exactamente eso.
+   */
+  setMyHolidayChoice: (date: string, appliesSurcharge: boolean) =>
+    apiRequest<ApiHoliday>(`/v1/pro/holidays/${date}`, {
+      method: 'PUT',
+      auth: true,
+      body: { appliesSurcharge },
+    }),
+
   /** Su zona de cobertura, para editarla */
   myCoverage: () =>
     apiRequest<ApiCoverageSettings>('/v1/pro/coverage', { auth: true }),
@@ -359,6 +452,7 @@ export const prosApi = {
     longitude: number
     radiusKm: number
     city?: string
+    postcode?: string
   }) =>
     apiRequest<ApiCoverageSettings>('/v1/pro/coverage', {
       method: 'PUT',

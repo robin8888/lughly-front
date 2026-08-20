@@ -11,6 +11,9 @@ import type {
   ApiAbsence,
   ApiAvailabilityWindow,
   ApiCoverageSettings,
+  ApiHoliday,
+  ApiHolidayCalendar,
+  ApiSurcharges,
 } from './pros.api'
 
 export type LegalForm = 'SELF_EMPLOYED' | 'COMPANY'
@@ -137,12 +140,50 @@ export const employeesApi = {
       body: { windows },
     }),
 
+  /**
+   * Los recargos de un trabajador. Los pone la empresa, igual que su horario,
+   * su zona y sus ausencias: es ella quien le cobra al cliente y quien
+   * factura. Lo que le deba a él por trabajar ese día va por nómina y no se
+   * decide aquí.
+   */
+  surcharges: (id: string) =>
+    apiRequest<ApiSurcharges>(`/v1/employees/${id}/surcharges`, { auth: true }),
+
+  setSurcharges: (
+    id: string,
+    payload: { saturday: number; sunday: number; night: number },
+  ) =>
+    apiRequest<ApiSurcharges>(`/v1/employees/${id}/surcharges`, {
+      method: 'PUT',
+      auth: true,
+      body: payload,
+    }),
+
+  /** Sus festivos: los de la comunidad donde la empresa le ha puesto la base */
+  holidays: (id: string, year: number) =>
+    apiRequest<ApiHolidayCalendar>(`/v1/employees/${id}/holidays?year=${year}`, {
+      auth: true,
+    }),
+
+  setHolidayChoice: (id: string, date: string, appliesSurcharge: boolean) =>
+    apiRequest<ApiHoliday>(`/v1/employees/${id}/holidays/${date}`, {
+      method: 'PUT',
+      auth: true,
+      body: { appliesSurcharge },
+    }),
+
   coverage: (id: string) =>
     apiRequest<ApiCoverageSettings>(`/v1/employees/${id}/coverage`, { auth: true }),
 
   setCoverage: (
     id: string,
-    payload: { latitude: number; longitude: number; radiusKm: number; city?: string },
+    payload: {
+      latitude: number
+      longitude: number
+      radiusKm: number
+      city?: string
+      postcode?: string
+    },
   ) =>
     apiRequest<ApiCoverageSettings>(`/v1/employees/${id}/coverage`, {
       method: 'PUT',
