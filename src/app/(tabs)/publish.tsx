@@ -44,6 +44,14 @@ export default function PublishRoute() {
           router.navigate('/jobs')
         }}
         onUrgent={() => router.navigate('/urgent')}
+        /*
+         * Una reserva es contratar a alguien concreto, así que se elige en el
+         * directorio y se cierra en su ficha. Publicarla al aire creaba un
+         * trabajo que no veía nadie y se quedaba abierto para siempre.
+         */
+        onChoosePro={(trade) =>
+          router.navigate({ pathname: '/pros', params: { trade } })
+        }
         onBack={() => router.navigate('/inicio')}
       />
     </RoleGate>

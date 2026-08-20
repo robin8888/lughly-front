@@ -47,15 +47,20 @@ export const styles = StyleSheet.create({
     paddingBottom: 96,
   },
 
+  /**
+   * La emergencia, como botón: relleno en el rojo de urgencia y redondeado
+   * como el resto. Antes era un recuadro con un velo del 7% que se leía como
+   * un aviso más de la pantalla, y es lo único de aquí que lleva a otro sitio.
+   */
   urgent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(163, 69, 58, 0.25)',
-    backgroundColor: 'rgba(163, 69, 58, 0.07)',
+    padding: 14,
+    marginTop: 14,
+    marginBottom: 14,
+    borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.urgency,
   },
   urgentText: {
     flex: 1,
@@ -63,19 +68,84 @@ export const styles = StyleSheet.create({
   urgentTitle: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
+    color: '#ffffff',
   },
   urgentBody: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.text,
-    opacity: 0.75,
+    color: '#ffffff',
+    opacity: 0.9,
     marginTop: 2,
   },
   urgentArrow: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.h5,
-    color: theme.colors.urgency,
+    color: '#ffffff',
+  },
+
+  /** El texto que explica los dos modos, sobre el azul */
+  intro: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.5,
+    color: '#ffffff',
+  },
+  note: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.5,
+    color: '#ffffff',
+    opacity: 0.92,
+    marginTop: 10,
+  },
+  noteStrong: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    opacity: 1,
+  },
+
+  /** Las fotos, con presencia: son lo que decide si alguien puja */
+  photosCard: {
+    marginTop: 4,
+    marginBottom: 14,
+  },
+  photosHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 4,
+  },
+  photosTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  photosTag: {
+    paddingVertical: 3,
+    paddingHorizontal: 9,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.accent100,
+  },
+  photosTagText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+  },
+  photosHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.75,
+    marginBottom: 12,
+  },
+  /** Lo de la ubicación, al pie: importa, pero no es lo primero que se lee */
+  photosPrivacy: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+    opacity: 0.65,
+    marginTop: 10,
   },
 
   modes: {

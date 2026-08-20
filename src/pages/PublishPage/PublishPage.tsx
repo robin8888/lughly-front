@@ -24,6 +24,7 @@ import { Input } from '@/components/atoms/Input'
 import { FormField } from '@/components/molecules/FormField'
 import { Picker } from '@/components/molecules/Picker'
 import { PhotoPicker } from '@/components/molecules/PhotoPicker'
+import { InfoCard } from '@/components/molecules/InfoCard'
 import { usePublishJob } from '@/hooks/domain/usePublishJob'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useDraftJobStore, useJobDraft, type JobDraftType } from '@/stores/useDraftJobStore'
@@ -68,10 +69,24 @@ export interface PublishPageProps {
   /** `photosFailed` es 0 salvo que alguna foto no llegara; el trabajo se publica igual */
   onPublished: (jobId: string, photosFailed: number) => void
   onUrgent: () => void
+  /**
+   * Elegir profesional para una reserva instantánea, con el oficio ya puesto.
+   *
+   * Una reserva es contratar a alguien concreto a su tarifa, así que **no se
+   * puede publicar al aire**: hasta hoy se creaba un trabajo sin destinatario
+   * que no veía nadie —los profesionales solo ven subastas, y sin elegido no
+   * entra en los encargos de nadie— y se quedaba abierto para siempre.
+   */
+  onChoosePro: (tradeSlug: string) => void
   onBack: () => void
 }
 
-export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps) {
+export function PublishPage({
+  onPublished,
+  onUrgent,
+  onChoosePro,
+  onBack,
+}: PublishPageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
    * las pantallas con scroll, no solo en el inicio: si en una se moviera
@@ -152,7 +167,37 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Pressable onPress={onUrgent} style={styles.urgent} testID="publish-go-urgent">
+        <InfoCard variant="accent">
+          <Text style={styles.intro}>
+            Hay dos formas de encargar un trabajo, y la diferencia está en quién
+            elige el precio.
+          </Text>
+
+          <Text style={styles.note}>
+            <Text style={styles.noteStrong}>Subasta inversa. </Text>
+            Cuentas lo que necesitas y los profesionales te ofrecen su precio y
+            su plazo. Eliges tú comparando, con calma y sin compromiso. Es
+            gratis y es lo que conviene cuando no tienes prisa.
+          </Text>
+
+          <Text style={styles.note}>
+            <Text style={styles.noteStrong}>Reserva instantánea. </Text>
+            Eliges tú al profesional y contratas a su tarifa, sin esperar
+            ofertas. Tiene 30 minutos para confirmar. Como se reserva a alguien
+            concreto, primero hay que elegirlo en el directorio.
+          </Text>
+        </InfoCard>
+
+        {/*
+          La emergencia, como botón y en rojo: es lo único de esta pantalla que
+          lleva a otro sitio, y quien tiene una fuga no está para leer.
+        */}
+        <Pressable
+          onPress={onUrgent}
+          style={styles.urgent}
+          accessibilityRole="button"
+          testID="publish-go-urgent"
+        >
           <View style={styles.urgentText}>
             <Text style={styles.urgentTitle}>¿Es una emergencia?</Text>
             <Text style={styles.urgentBody}>
@@ -337,17 +382,37 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
           </FormField>
         )}
 
-        <FormField
-          label="Fotos del trabajo (opcional)"
-          hint="Sube fotos del problema para que el profesional pueda valorarlo mejor. Se borra su ubicación antes de enviarlas."
-        >
+        {/*
+          Las fotos, en tarjeta propia y no como un campo más: es lo que más
+          decide si alguien puja y a qué precio, y de campo suelto se leía como
+          un trámite del final del formulario.
+        */}
+        <InfoCard style={styles.photosCard}>
+          <View style={styles.photosHead}>
+            <Text style={styles.photosTitle}>Fotos del trabajo</Text>
+            <View style={styles.photosTag}>
+              <Text style={styles.photosTagText}>
+                {photos.length > 0 ? `${photos.length} elegidas` : 'Opcional'}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.photosHint}>
+            Una foto del problema vale más que dos párrafos: con ella el
+            profesional afina el precio y va sabiendo lo que va a encontrarse.
+          </Text>
+
           <PhotoPicker
             value={photos}
             onChange={setPhotos}
             disabled={isBusy}
             testID="publish-photos"
           />
-        </FormField>
+
+          <Text style={styles.photosPrivacy}>
+            Les quitamos la ubicación antes de enviarlas.
+          </Text>
+        </InfoCard>
 
         <Text style={styles.surcharges}>
           Recargos que pueden aplicarse: {surchargesSummary()}. No se suman
@@ -357,12 +422,18 @@ export function PublishPage({ onPublished, onUrgent, onBack }: PublishPageProps)
         <Button
           fullWidth
           loading={isBusy}
-          disabled={!canPublish}
-          onPress={() => void handlePublish()}
+          /*
+            Para reservar basta con el oficio: lo demás se rellena en la ficha
+            del profesional, que es donde se cierra la reserva.
+          */
+          disabled={isAuction ? !canPublish : draft.tradeSlug === ''}
+          onPress={() =>
+            isAuction ? void handlePublish() : onChoosePro(draft.tradeSlug)
+          }
           style={styles.submit}
           testID="publish-submit"
         >
-          {isAuction ? 'Publicar y recibir pujas' : 'Publicar reserva'}
+          {isAuction ? 'Publicar y recibir pujas' : 'Elegir profesional'}
         </Button>
 
         <Text style={styles.draftNote}>
