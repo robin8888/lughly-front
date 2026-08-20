@@ -37,6 +37,18 @@ export const colors = {
   accent: '#5980a6',
   accent2: '#728fab',
   divider: 'rgba(29, 31, 32, 0.16)',
+  /**
+   * El azul translúcido de la barra de abajo, tal cual
+   * (`BottomTabBar.styles.ts`). Lo usan las tarjetas que explican una
+   * pantalla, para que se lean como parte del mismo cristal que la barra.
+   *
+   * Sobre página blanca queda en un azul claro (#88a4bf), así que **el texto
+   * blanco encima se queda en 2,6:1**: por debajo del 4,5:1 que pide la WCAG
+   * para un cuerpo de 16 px. Es una decisión tomada a la vista de las dos
+   * opciones, no un descuido; si algún día se quiere corregir, o sube la
+   * opacidad o baja el color.
+   */
+  accentGlass: 'rgba(89, 128, 166, 0.72)',
 
   // Neutral ramp
   neutral100: '#f5f5f8',
