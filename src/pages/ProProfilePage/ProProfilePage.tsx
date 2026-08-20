@@ -15,6 +15,7 @@
  * justo lo que un marketplace de confianza no se puede permitir.
  */
 
+import { useState } from 'react'
 import { View, Text, Image, Pressable, ScrollView, ActivityIndicator } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -24,6 +25,7 @@ import { StarRating } from '@/components/atoms/StarRating'
 import { Tag } from '@/components/atoms/Tag'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
+import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { CoverageMap } from '@/components/organisms/CoverageMap'
 import { ReviewList } from '@/components/organisms/ReviewList'
@@ -166,24 +168,40 @@ export function ProProfilePage({
    * sus oficios, así que basta con recorrerlas: el primer grupo es el del
    * oficio que encabeza la ficha.
    */
+  /** Qué foto se está mirando a pantalla completa. `null` es ninguna */
+  const [viewing, setViewing] = useState<number | null>(null)
+
   const photoGroups = pro.photos.reduce<
-    { tradeSlug: string; tradeLabel: string; photos: string[] }[]
+    {
+      tradeSlug: string
+      tradeLabel: string
+      /* La reducida para la tira y la grande para abrirla */
+      photos: { url: string; fullUrl: string }[]
+    }[]
   >((groups, photo) => {
     const last = groups[groups.length - 1]
 
     if (last && last.tradeSlug === photo.tradeSlug) {
-      last.photos.push(photo.url)
+      last.photos.push({ url: photo.url, fullUrl: photo.fullUrl })
       return groups
     }
 
     groups.push({
       tradeSlug: photo.tradeSlug,
       tradeLabel: photo.tradeLabel,
-      photos: [photo.url],
+      photos: [{ url: photo.url, fullUrl: photo.fullUrl }],
     })
 
     return groups
   }, [])
+
+  /**
+   * Todas las fotos seguidas, para el visor. Se abre por la que se toca y se
+   * pasa a la siguiente sin salir, aunque sea de otro oficio: quien está
+   * mirando trabajos terminados quiere verlos todos, no volver a la ficha
+   * entre uno y otro.
+   */
+  const allPhotos = pro.photos.map((photo) => `${API_BASE_URL}${photo.fullUrl}`)
 
   return (
     <View style={styles.screen} testID="pro-profile-page">
@@ -289,14 +307,24 @@ export function ProProfilePage({
               style={styles.gallery}
               contentContainerStyle={styles.galleryContent}
             >
-              {group.photos.map((url) => (
-                <RemotePhoto
-                  key={url}
-                  uri={`${API_BASE_URL}${url}`}
-                  style={styles.galleryPhoto}
-                  fallback="Esta foto no se ha podido cargar"
-                  testID={`pro-photo-${url}`}
-                />
+              {group.photos.map((photo) => (
+                <Pressable
+                  key={photo.url}
+                  onPress={() =>
+                    setViewing(
+                      allPhotos.indexOf(`${API_BASE_URL}${photo.fullUrl}`),
+                    )
+                  }
+                  accessibilityRole="imagebutton"
+                  accessibilityLabel="Ver la foto más grande"
+                  testID={`pro-photo-${photo.url}`}
+                >
+                  <RemotePhoto
+                    uri={`${API_BASE_URL}${photo.url}`}
+                    style={styles.galleryPhoto}
+                    fallback="Esta foto no se ha podido cargar"
+                  />
+                </Pressable>
               ))}
             </ScrollView>
           </View>
@@ -469,6 +497,13 @@ export function ProProfilePage({
           <Text style={styles.report}>Denunciar este perfil</Text>
         </Pressable>
       </Animated.ScrollView>
+
+      <PhotoViewer
+        photos={allPhotos}
+        openAt={viewing}
+        onClose={() => setViewing(null)}
+        testID="pro-photo-viewer"
+      />
     </View>
   )
 }

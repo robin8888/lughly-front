@@ -7,8 +7,24 @@
  * no cambió.
  */
 
-import { StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
 import { theme } from '@/theme'
+
+/**
+ * El lado de cada miniatura de la tira.
+ *
+ * Medido y no `flex: 1`: con `flex` cada foto ocupaba lo que le tocara del
+ * ancho, así que una sola salía enorme y cinco salían pequeñas, y dos tarjetas
+ * seguidas no se parecían en nada. Se fija el tamaño que tienen cuando están
+ * las cinco —cuatro fotos más el "+N"— y así todas las tarjetas se leen igual.
+ *
+ * La cuenta: el ancho de la pantalla menos el margen de la página (16 a cada
+ * lado) y el relleno de la tarjeta (14 a cada lado), menos los cuatro huecos
+ * de 5, repartido entre cinco.
+ */
+const STRIP_SIZE = Math.floor(
+  (Dimensions.get('window').width - 32 - 28 - 4 * 5) / 5,
+)
 
 export const styles = StyleSheet.create({
   card: {
@@ -143,8 +159,8 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
   photo: {
-    flex: 1,
-    aspectRatio: 1,
+    width: STRIP_SIZE,
+    height: STRIP_SIZE,
     borderRadius: theme.radius.photo,
     backgroundColor: theme.colors.surfaceSoft,
   },
