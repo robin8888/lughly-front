@@ -39,8 +39,12 @@ export interface AvatarProps {
   testID?: string
 }
 
+/** Lo que el anillo añade a cada lado: su grosor más el hueco de aire */
+const RING_SPACE = 5
+
 export function Avatar({ uri, size = 48, available, testID }: AvatarProps) {
   const box = { width: size, height: size }
+  const ringBox = { width: size + RING_SPACE * 2, height: size + RING_SPACE * 2 }
 
   const circle = (
     <View
@@ -76,6 +80,7 @@ export function Avatar({ uri, size = 48, available, testID }: AvatarProps) {
     <View
       style={[
         styles.ring,
+        ringBox,
         available ? styles.ringAvailable : styles.ringUnavailable,
       ]}
       accessible

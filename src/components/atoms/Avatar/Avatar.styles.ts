@@ -19,12 +19,20 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.accent300,
   },
-  /** El anillo de disponibilidad, con su hueco de aire por dentro */
+  /**
+   * El anillo de disponibilidad, con su hueco de aire por dentro.
+   *
+   * El tamaño se lo pone quien lo usa, con el del avatar más el grosor y el
+   * hueco. Va medido y no con `padding`, porque un `View` con borde y sin
+   * medidas se estira a lo ancho del padre, y con `alignSelf` para evitarlo se
+   * descolocaba donde el padre centra —que es justo el caso de la cabecera de
+   * la home—.
+   */
   ring: {
     borderRadius: theme.radius.pill,
     borderWidth: 2,
-    padding: 3,
-    alignSelf: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ringAvailable: {
     borderColor: theme.colors.available,
