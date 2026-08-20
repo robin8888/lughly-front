@@ -166,11 +166,36 @@ export function InboxPage({ onBack }: InboxPageProps) {
               const deadline = job.respondByAt ? new Date(job.respondByAt) : null
               const isProposed = job.status === 'SUBSTITUTE_PROPOSED'
 
+              /**
+               * Los que esperan una respuesta suya, que son los que hay que
+               * encontrar de un vistazo en una lista larga. Un sustituto
+               * propuesto no cuenta: ese espera al cliente, no a él.
+               */
+              const unanswered = !isProposed
+
               return (
-                <InfoCard key={job.id} testID={`inbox-${job.id}`}>
+                <InfoCard
+                  key={job.id}
+                  style={unanswered ? styles.cardUnanswered : undefined}
+                  testID={`inbox-${job.id}`}
+                >
                   <View style={styles.cardHead}>
                     <Text style={styles.jobTitle}>{job.title}</Text>
-                    <Tag variant="outline">{jobTypeLabel(job.type as ApiJobType)}</Tag>
+                    <View style={styles.cardTags}>
+                      {/*
+                        En rojo y con palabras, no solo con color: quien no
+                        distingue el rojo tiene que poder encontrarlos igual.
+                        Va delante del tipo porque es lo que se busca.
+                      */}
+                      {unanswered && (
+                        <View style={styles.unansweredTag}>
+                          <Text style={styles.unansweredTagText}>Sin responder</Text>
+                        </View>
+                      )}
+                      <Tag variant="outline">
+                        {jobTypeLabel(job.type as ApiJobType)}
+                      </Tag>
+                    </View>
                   </View>
 
                   <Text style={styles.meta}>

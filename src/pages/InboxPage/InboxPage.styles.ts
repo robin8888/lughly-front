@@ -192,4 +192,36 @@ export const styles = StyleSheet.create({
     opacity: 0.65,
     marginTop: 1,
   },
+
+  /**
+   * Los que esperan respuesta, marcados en rojo para encontrarlos de un
+   * vistazo. Es el rojo de "ahora no" del resto de la app —el del anillo de
+   * disponibilidad— y no el de error: no responder todavía no es un fallo, es
+   * lo que hay que hacer.
+   *
+   * El contorno y no el relleno: son tarjetas con mucho texto dentro, y en
+   * rojo entero no se leería ninguna.
+   */
+  /** Las dos etiquetas de la cabecera, que en móvil estrecho caen a dos filas */
+  cardTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 5,
+  },
+  cardUnanswered: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.unavailable,
+  },
+  unansweredTag: {
+    paddingVertical: 3,
+    paddingHorizontal: 9,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.unavailable,
+  },
+  unansweredTagText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: '#ffffff',
+  },
 })

@@ -30,6 +30,7 @@ import { StatCard } from '@/components/molecules/StatCard'
 import { HeroCard } from '@/components/organisms/HeroCard'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
+import { Dialog } from '@/components/organisms/Dialog'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
@@ -114,8 +115,14 @@ export function HomePagePro({
 
   /** Lo que le han asignado y tiene que confirmar él */
   const toConfirm = items.filter((item) => item.status === 'PENDING_WORKER')
-  /** Lo que le han encargado y tiene que repartir o aceptar */
-  const pendingCount = items.length - toConfirm.length
+  /**
+   * Lo que le han encargado y sigue sin respuesta.
+   *
+   * Solo `PENDING_PRO`: lo ya propuesto a un sustituto está esperando al
+   * cliente, no a él, y contarlo aquí sería meterle prisa por algo que no
+   * depende de él.
+   */
+  const pendingCount = items.filter((item) => item.status === 'PENDING_PRO').length
 
   /**
    * El diálogo sale una vez y con el más urgente —la bandeja viene ordenada
@@ -125,6 +132,17 @@ export function HomePagePro({
    */
   const [askedToConfirm, setAskedToConfirm] = useState(false)
   const confirming = askedToConfirm ? null : (toConfirm[0] ?? null)
+
+  /**
+   * Y el aviso de los encargos sin responder, con cuántos son.
+   *
+   * Va **detrás** del de confirmar y nunca a la vez: dos diálogos al abrir la
+   * app se cierran los dos de un manotazo sin leer ninguno. Este solo sale
+   * cuando no hay nada que confirmar o ya se ha respondido a eso.
+   */
+  const [askedAboutInbox, setAskedAboutInbox] = useState(false)
+  const showInboxDialog =
+    !askedAboutInbox && confirming === null && pendingCount > 0
 
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page-pro">
@@ -186,6 +204,34 @@ export function HomePagePro({
           job={confirming}
           onDismiss={() => setAskedToConfirm(true)}
           testID="home-pro-confirm"
+        />
+
+        <Dialog
+          visible={showInboxDialog}
+          title={
+            pendingCount === 1
+              ? 'Tienes un encargo sin responder'
+              : `Tienes ${pendingCount} encargos sin responder`
+          }
+          message="Un cliente os ha elegido. Hay 24 horas para contestar; pasado el plazo queda libre para contratar a otro."
+          onDismiss={() => setAskedAboutInbox(true)}
+          testID="home-pro-inbox-dialog"
+          actions={[
+            {
+              label: pendingCount === 1 ? 'Ver el encargo' : 'Ver los encargos',
+              onPress: () => {
+                setAskedAboutInbox(true)
+                onInbox()
+              },
+              testID: 'home-pro-inbox-dialog-go',
+            },
+            {
+              label: 'Ahora no',
+              variant: 'secondary',
+              onPress: () => setAskedAboutInbox(true),
+              testID: 'home-pro-inbox-dialog-later',
+            },
+          ]}
         />
 
         {toConfirm.length > 0 && (
