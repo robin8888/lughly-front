@@ -823,6 +823,74 @@ sistema, es una persona sin dormir.
       Las dos opciones se apagan con el motivo en vez de esconderse: quien no
       encuentra a los suyos en la lista cree que la app los ha perdido.
 
+### El trabajador confirma el trabajo (acordado el 20 Agosto 2026)
+
+Hasta hoy, cuando la empresa asigna un trabajo a uno de los suyos, el trabajo
+pasa a adjudicado y se acabó: al trabajador se le avisa, pero no se le pregunta.
+La empresa compromete sus horas sin que él diga nada, y si ese día está de baja
+o ya tiene otra cosa, **el cliente se entera cuando no aparece nadie**.
+
+A partir de ahora, entre "asignado" y "adjudicado" hay un paso: **el trabajador
+acepta o rechaza**, y quien va a ir es quien lo dice.
+
+**El recorrido**
+
+1. La empresa asigna → el trabajo queda **pendiente de confirmar** y sale en
+   **Encargos del trabajador**, con un plazo corto —un par de horas—.
+2. **Acepta** → pasa a su Agenda y **se avisa al cliente**: confirmado, y quién
+   va.
+3. **Rechaza**, y entonces tiene que decir por qué. Con empresa, vuelve al jefe
+   para que mande a otro por la vía de la sustitución que ya existe; el cliente
+   solo se entera si eso le cambia la persona. Sin empresa —un autónomo— vuelve
+   al cliente y el trabajo queda libre, y ahí sí hay que decírselo, porque se
+   queda sin nadie.
+4. **Se le pasa el plazo** → lo mismo que un rechazo, sin motivo.
+
+**El motivo del rechazo no se le enseña al cliente.** Es el mismo criterio de
+las ausencias: el motivo es para quien organiza el trabajo, y una baja médica es
+asunto de quien la tiene. Al cliente le llega lo que le afecta —"te proponen a
+otro profesional"—, no la razón de nadie.
+
+**Modal para decidir, aviso para informar.** Al trabajador se le enseña un
+diálogo al entrar: bloquear la pantalla se justifica porque hay que responder.
+Al cliente, cuando solo se le informa de que su trabajo queda confirmado, no:
+un diálogo con un único botón de aceptar es un estorbo. El cliente ve diálogo
+cuando **hay algo que decidir**, que es el caso que ya existe de aceptar o
+cancelar un sustituto.
+
+Del diálogo del trabajador quedan dos cosas decididas:
+
+- **Sale el más urgente, no todos.** Tres diálogos encadenados al abrir la app
+  son una encerrona; el resto espera en Encargos y la home dice cuántos quedan.
+- **Se puede cerrar sin responder.** Quien abre la app para otra cosa tiene
+  derecho a hacerla, y el trabajo sigue esperando hasta que venza el plazo. Un
+  diálogo sin salida se acaba respondiendo de cualquier manera con tal de
+  quitarlo de en medio.
+
+**Los colores del diálogo**: aceptado va en el azul de la barra de abajo con su
+misma transparencia (`accentGlass`), y rechazado en el rojo del anillo de
+disponibilidad con esa misma transparencia — `rgba(209, 84, 74, 0.72)`—, que es
+el rojo que ya usa la app para decir "ahora no", no el de error. En los dos,
+Uhiro arriba.
+
+**Las urgencias se quedan fuera de todo esto.** Se deciden en minutos y su
+ventana existe justamente para que el cliente asigne al trabajador directo, sin
+intermediario: una confirmación en dos pasos la rompería.
+
+**Lo que hay que construir**
+
+- Backend: el estado de "pendiente de confirmar", el endpoint de aceptar y
+  rechazar con motivo, el plazo corto con su vencimiento en `expire-overdue`, y
+  los avisos que faltan.
+- Móvil: un diálogo reutilizable —hoy no hay ninguno, solo `Modal` suelto dentro
+  del selector y del campo de fecha—, la pantalla del motivo, y el aviso en la
+  home de cuántas confirmaciones quedan.
+
+**Y un agujero que hay que tapar en cualquier caso** (visto el 20 Agosto 2026):
+cuando la empresa asigna a la persona que el cliente eligió, el aviso se manda
+**solo al trabajador** (`assign-job.use-case.ts`). Al cliente no se le dice
+nada: el caso normal —"sí, va quien pediste"— hoy lo descubre entrando a mirar.
+
 ### Selectores de fecha y hora, en toda la app
 
 Va junto con esto porque las ventanas de urgencias son días y horas, y no
