@@ -40,11 +40,13 @@ export const styles = StyleSheet.create({
   },
   content: {
     /*
-     * Para que un vacío pueda centrarse en la pantalla: sin esto, el
-     * contenido de un scroll mide lo que mide su contenido y el
-     * `flex: 1` del `EmptyState` se queda en cero.
+     * Si el contenido no llena la pantalla, se centra en vez de quedarse
+     * pegado arriba con un desierto debajo. Cuando sí la llena, `flexGrow`
+     * deja el contenedor a la altura del contenido y el centrado no hace
+     * nada: por eso no hay que decidir a mano cuál es corta y cuál no.
      */
     flexGrow: 1,
+    justifyContent: 'center',
     padding: 16,
     // La barra inferior flota por encima
     paddingBottom: 96,

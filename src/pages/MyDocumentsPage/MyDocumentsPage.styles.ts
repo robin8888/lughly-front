@@ -33,6 +33,14 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   content: {
+    /*
+     * Si el contenido no llena la pantalla, se centra en vez de quedarse
+     * pegado arriba con un desierto debajo. Cuando sí la llena, `flexGrow`
+     * deja el contenedor a la altura del contenido y el centrado no hace
+     * nada: por eso no hay que decidir a mano cuál es corta y cuál no.
+     */
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: 12,
     // La barra inferior flota por encima del contenido
     paddingBottom: 96,
