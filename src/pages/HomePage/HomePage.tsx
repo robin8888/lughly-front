@@ -29,7 +29,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_BASE_URL } from '@/api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { HeroCard } from '@/components/organisms/HeroCard'
+import { JobAnswer, isAnswer } from '@/components/organisms/JobAnswer'
 import { TradesCarousel } from '@/components/organisms/TradesCarousel'
+import { useMyJobs } from '@/hooks/domain/useMyJobs'
+import { useSeenAnswers, useMarkAnswerSeen } from '@/stores/useSeenAnswersStore'
 import type { TradeSlug } from '@/utils/trades'
 import { useUser } from '@/stores/useAuthStore'
 import { styles } from './HomePage.styles'
@@ -44,6 +47,11 @@ export interface HomePageProps {
    * directorio y no hacía falta.
    */
   onHowItWorks: () => void
+  /**
+   * A la ficha de un trabajo. Se usa desde el aviso de "te han contestado":
+   * el modal da la noticia y la ficha dice qué hacer con ella.
+   */
+  onSeeJob?: (jobId: string) => void
 }
 
 export function HomePage({
@@ -51,14 +59,49 @@ export function HomePage({
   onUrgent,
   onSelectTrade,
   onHowItWorks,
+  onSeeJob,
 }: HomePageProps) {
   const isClient = role === 'client'
   // Al bajar el scroll, la barra inferior se encoge
   const onScroll = useNavScrollHandler()
   const user = useUser()
 
+  /**
+   * Si alguien le ha contestado desde la última vez que abrió la app.
+   *
+   * El aviso al móvil llega en el momento y llega una vez: con el teléfono
+   * silenciado, nadie se entera de que su urgencia ya tiene a alguien de
+   * camino. Aquí se lo decimos otra vez, igual que al profesional se le dice
+   * lo que tiene sin responder.
+   */
+  const { data: jobsData } = useMyJobs(isClient)
+  const seen = useSeenAnswers()
+  const markSeen = useMarkAnswerSeen()
+
+  /*
+    Uno cada vez, el primero de la lista. Tres ventanas encadenadas al abrir
+    la app se cierran de un manotazo sin leer ninguna; el resto sigue en Mis
+    trabajos, que es donde se resuelven.
+  */
+  const answered =
+    (jobsData?.items ?? []).find(
+      (job) => isAnswer(job) && seen[job.id] !== job.status,
+    ) ?? null
+
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page">
+      <JobAnswer
+        job={answered}
+        onSee={(jobId) => {
+          if (answered) markSeen(answered.id, answered.status)
+          onSeeJob?.(jobId)
+        }}
+        onDismiss={() => {
+          if (answered) markSeen(answered.id, answered.status)
+        }}
+        testID="home-job-answer"
+      />
+
       <Animated.ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

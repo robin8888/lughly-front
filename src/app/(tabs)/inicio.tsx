@@ -46,6 +46,14 @@ export default function InicioRoute() {
        * pantalla de pila que se apila sobre la home y de la que se vuelve.
        */
       onHowItWorks={() => router.push('/como-funciona')}
+      /*
+       * Del aviso de "te han contestado" a la ficha del trabajo: el modal da
+       * la noticia y la ficha dice qué hacer con ella —el teléfono de quien
+       * va, o el botón de buscar a otro si nadie puede.
+       */
+      onSeeJob={(jobId) =>
+        router.navigate({ pathname: '/trabajo/[id]', params: { id: jobId } })
+      }
     />
   )
 }

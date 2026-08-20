@@ -34,6 +34,7 @@
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@/stores/useAuthStore'
+import { useSeenAnswersStore } from '@/stores/useSeenAnswersStore'
 
 export function useResetCacheOnAccountChange(): void {
   const queryClient = useQueryClient()
@@ -55,6 +56,13 @@ export function useResetCacheOnAccountChange(): void {
        * que tirarlos, aunque eso signifique un momento de "cargando".
        */
       queryClient.clear()
+
+      /*
+        Y lo que se ha enseñado ya. Son ids de trabajos de otra cuenta: al
+        siguiente no le sirven de nada, y en el peor caso le taparían un aviso
+        suyo si dos ids coincidieran.
+      */
+      useSeenAnswersStore.getState().clear()
     }
 
     previous.current = userId

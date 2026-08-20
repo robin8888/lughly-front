@@ -58,3 +58,17 @@ jest.mock('react-native-reanimated', () => {
     runOnUI: identity,
   }
 })
+
+/**
+ * AsyncStorage tampoco existe en un test: su módulo nativo es `null` y
+ * cualquier store que se persista revienta al importarse, aunque el test no
+ * toque el disco para nada.
+ *
+ * Se usa el doble que trae la propia librería, que guarda en memoria. Va aquí
+ * y no en cada fichero por lo mismo que Reanimated: lo arrastra cualquier
+ * pantalla que lea un store persistido —el rol activo, el borrador de un
+ * trabajo, los avisos ya leídos—, y son casi todas.
+ */
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+)

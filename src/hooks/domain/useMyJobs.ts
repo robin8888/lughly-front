@@ -12,10 +12,12 @@ import { useQuery } from '@tanstack/react-query'
 import { jobsApi, type MyJobsPage } from '@/api/jobs.api'
 import { myJobsQueryKey } from './usePublishJob'
 
-export function useMyJobs() {
+export function useMyJobs(enabled = true) {
   return useQuery<MyJobsPage>({
     queryKey: myJobsQueryKey(),
     queryFn: () => jobsApi.mine(),
+    /* Es del cliente: en modo profesional el servidor no tiene qué contestar */
+    enabled,
     staleTime: 5_000,
   })
 }
