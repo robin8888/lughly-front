@@ -1,0 +1,235 @@
+/**
+ * HolidaysPage
+ * Los festivos del año, los de la comunidad donde está su base.
+ *
+ * El calendario sale de la resolución que el BOE publica cada octubre. **Se le
+ * aplica el de su base y no el del sitio del trabajo**: es el que puede saber
+ * por adelantado, y cuando pone sus precios todavía no hay ningún trabajo.
+ *
+ * No es la pantalla de ausencias aunque se le parezca: un festivo es un día en
+ * el que se cobra más, no un día en el que no se trabaja. Para no trabajarlo
+ * están las ausencias, y esta pantalla lo dice cuando el festivo cae dentro de
+ * unas.
+ *
+ * **Faltan los festivos locales** —los dos que pone cada ayuntamiento— y el de
+ * cada isla en Canarias. No los publica el BOE, así que se avisa en vez de
+ * dejar creer que la lista está completa.
+ */
+
+import { View, Text, ActivityIndicator, Pressable } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { Switch } from '@/components/atoms/Switch'
+import { EmptyState } from '@/components/molecules/EmptyState'
+import { InfoCard } from '@/components/molecules/InfoCard'
+import type { ApiHoliday } from '@/api/pros.api'
+import { useMyHolidays, useSetHolidayChoice } from '@/hooks/domain/useMyHolidays'
+import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { formatDate, parseIsoDate } from '@/utils/dates'
+import { theme } from '@/theme'
+import { styles } from './HolidaysPage.styles'
+
+/** Un día en texto, como se lee: "8 de diciembre de 2026" */
+function readable(day: string): string {
+  const date = parseIsoDate(day)
+  return date ? formatDate(date) : day
+}
+
+/** De dónde viene la fiesta. Las tres se trabajan igual; cambia de quién es. */
+function origin(kind: ApiHoliday['kind']): string {
+  return kind === 'regional' ? 'De tu comunidad' : 'De toda España'
+}
+
+export interface HolidaysPageProps {
+  onBack: () => void
+  /** Para el que todavía no tiene base: sin ella no hay calendario que enseñar */
+  onSetZone: () => void
+  /** Cuando los lleva la empresa: los festivos son los de ese trabajador */
+  employeeId?: string
+  employeeName?: string
+}
+
+export function HolidaysPage({
+  onBack,
+  onSetZone,
+  employeeId,
+  employeeName,
+}: HolidaysPageProps) {
+  const onScroll = useNavScrollHandler()
+
+  const isForEmployee = employeeId !== undefined
+  const year = new Date().getFullYear()
+
+  /**
+   * Un empleado **sí** ve su calendario, aunque no pueda tocarlo: son los días
+   * que va a trabajar. Lo que se apaga es el interruptor, con el motivo al
+   * lado; esconderle la lista sería peor.
+   */
+  const { data, isPending, isError, refetch } = useMyHolidays(year, true, employeeId)
+  const { choose, isSaving } = useSetHolidayChoice(year, employeeId)
+
+  const canDecide = data ? isForEmployee || !data.setByEmployer : false
+
+  const header = (
+    <View style={styles.header}>
+      <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
+        <Text style={styles.backIcon}>←</Text>
+      </Pressable>
+      <Text style={styles.title} numberOfLines={1}>
+        {isForEmployee ? (employeeName ?? 'Sus festivos') : 'Mis festivos'}
+      </Text>
+    </View>
+  )
+
+  if (isPending) {
+    return (
+      <View style={styles.screen} testID="holidays-page">
+        {header}
+        <View style={styles.state} testID="holidays-loading">
+          <ActivityIndicator size="large" color={theme.colors.accent} />
+        </View>
+      </View>
+    )
+  }
+
+  if (isError || !data) {
+    return (
+      <View style={styles.screen} testID="holidays-page">
+        {header}
+        <EmptyState
+          title="No hemos podido cargar el calendario"
+          message="Revisa tu conexión e inténtalo de nuevo."
+          illustration="greeting"
+          actions={[
+            {
+              label: 'Reintentar',
+              onPress: () => void refetch(),
+              testID: 'holidays-retry',
+            },
+          ]}
+          testID="holidays-error"
+        />
+      </View>
+    )
+  }
+
+  /**
+   * Sin base no se sabe de qué comunidad es, y los festivos de Andalucía no
+   * son los de Cataluña. Se manda a ponerla en vez de enseñar una lista vacía,
+   * que se leería como un año sin fiestas.
+   */
+  if (data.region === null) {
+    return (
+      <View style={styles.screen} testID="holidays-page">
+        {header}
+        <EmptyState
+          title={isForEmployee ? 'Le falta la zona' : 'Te falta la zona'}
+          message={
+            isForEmployee
+              ? 'Los festivos son los de la comunidad donde tenga la base, y todavía no la tiene puesta. Ponsela y aparecerán aquí.'
+              : 'Los festivos no son los mismos en toda España: dependen de la comunidad donde tengas la base. Pon tu zona de trabajo y aparecerán aquí.'
+          }
+          illustration="greeting"
+          actions={[
+            {
+              label: isForEmployee ? 'Poner su zona' : 'Poner mi zona',
+              onPress: onSetZone,
+              testID: 'holidays-set-zone',
+            },
+          ]}
+          testID="holidays-no-region"
+        />
+      </View>
+    )
+  }
+
+  /**
+   * Que no haya calendario de un año no es que no haya fiestas: es que el BOE
+   * todavía no lo ha publicado. Lo hace cada octubre, así que esto se ve de
+   * verdad los últimos meses del año anterior.
+   */
+  if (!data.known) {
+    return (
+      <View style={styles.screen} testID="holidays-page">
+        {header}
+        <EmptyState
+          title={`El calendario de ${year} todavía no está`}
+          message="El BOE publica las fiestas de cada año en octubre del anterior. En cuanto salga, aparecerán aquí."
+          illustration="greeting"
+          testID="holidays-unknown-year"
+        />
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.screen} testID="holidays-page">
+      {header}
+
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <InfoCard>
+          <Text style={styles.intro}>
+            Los festivos de {data.regionName} en {year}, que son los que te
+            tocan por tener ahí la base. El recargo que se aplica es el de
+            domingos y festivos.
+          </Text>
+
+          <Text style={styles.note}>
+            Faltan los dos festivos de tu municipio: los pone tu ayuntamiento y
+            no salen del BOE. Si trabajas uno de esos días, tenlo en cuenta al
+            presupuestar.
+          </Text>
+        </InfoCard>
+
+        {!canDecide && (
+          <Text style={styles.locked} testID="holidays-employee">
+            Los recargos los pone la empresa para la que trabajas, así que estos
+            días no los decides tú. Lo que te corresponda por trabajarlos va en
+            tu nómina.
+          </Text>
+        )}
+
+        <View style={styles.list}>
+          {data.holidays.map((holiday) => (
+            <InfoCard key={holiday.date} style={styles.holiday}>
+              <Text style={styles.day}>{readable(holiday.date)}</Text>
+              <Text style={styles.name}>{holiday.name}</Text>
+
+              <View style={styles.tags}>
+                <Text style={styles.tag}>{origin(holiday.kind)}</Text>
+                {holiday.away && (
+                  <Text style={[styles.tag, styles.tagAway]}>
+                    {isForEmployee ? 'No está' : 'Estás fuera'}
+                  </Text>
+                )}
+                {!holiday.away && holiday.worksThatDay && (
+                  <Text style={styles.tag}>
+                    {isForEmployee ? 'Tiene horario' : 'Tienes horario'}
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.choice}>
+                <Text style={styles.choiceLabel}>
+                  {holiday.percent === 0
+                    ? 'Sin recargo puesto'
+                    : `Cobrar el recargo (+${holiday.percent}%)`}
+                </Text>
+                <Switch
+                  value={holiday.appliesSurcharge}
+                  onValueChange={(value) => void choose(holiday.date, value)}
+                  disabled={!canDecide || isSaving || holiday.percent === 0}
+                  testID={`holidays-switch-${holiday.date}`}
+                />
+              </View>
+            </InfoCard>
+          ))}
+        </View>
+      </Animated.ScrollView>
+    </View>
+  )
+}

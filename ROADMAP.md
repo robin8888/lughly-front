@@ -1171,9 +1171,24 @@ viajando** desde el buscador de direcciones y desde "usar mi ubicación" hasta
 `PUT /v1/pro/coverage`. Sin eso el calendario no sabría de qué comunidad es
 nadie, que era el único cabo suelto que dejaba la pantalla de la zona.
 
-**Falta**: las dos pantallas —`/mis-recargos` y el calendario de festivos— y el
-aviso de festivos dentro del editor del horario. El cálculo del recargo sobre
-un importe sigue sin existir; llegará con la reserva instantánea (Fase 7).
+**Las dos pantallas, hechas el mismo día.** `/mis-recargos` con la nota de la
+ley y un botón para volver a ella —que **no toca el sábado**: ninguna ley lo
+fija, así que ponerle un número y llamarlo legal sería inventárselo—, y
+`/mis-festivos`, la lista del año con un interruptor por día. Las dos cuelgan
+de Mi cuenta y las dos las usa el empleador con la ficha de su gente, con el
+trabajador en la dirección, como el horario y la zona.
+
+Un empleado **sí ve** su calendario aunque no pueda tocarlo: son los días que
+va a trabajar. Lo que se apaga es el interruptor, con el motivo al lado.
+
+**El aviso en el editor del horario**, que era lo que no encajaba: el horario
+va por día de la semana y un festivo es una fecha, así que en "los martes" no
+cabe "el 8 de diciembre". Lo que hace es avisar de los tres festivos que vienen
+y caen en días con horario, y mandar al calendario a decidirlos. Se cruzan con
+el horario **guardado**, no con el que se está editando.
+
+**Falta**: el cálculo del recargo sobre un importe, que llegará con la reserva
+instantánea (Fase 7), y los festivos locales.
 
 - [x] **Ausencias** (19 Agosto 2026). Tabla `absences`, `GET`/`POST`/`DELETE
       /v1/pro/absences` y la pantalla `/mis-ausencias`.

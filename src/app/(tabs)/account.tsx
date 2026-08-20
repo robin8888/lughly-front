@@ -142,6 +142,24 @@ export default function AccountRoute() {
                       label: 'Mis ausencias y vacaciones',
                       onPress: () => router.push('/mis-ausencias'),
                     },
+                    /*
+                     * Los recargos van detrás del horario y las ausencias
+                     * porque son lo mismo mirado por el precio: cuándo
+                     * trabaja, cuándo no, y cuánto cuesta que sea a deshora.
+                     * Sin aviso de "falta": traen los de la ley puestos.
+                     */
+                    {
+                      label: 'Mis recargos',
+                      onPress: () => router.push('/mis-recargos'),
+                    },
+                    /*
+                     * Y los festivos justo detrás, que es donde se ve para qué
+                     * sirve el de domingos y festivos.
+                     */
+                    {
+                      label: 'Mis festivos',
+                      onPress: () => router.push('/mis-festivos'),
+                    },
                   ]),
             ],
           },

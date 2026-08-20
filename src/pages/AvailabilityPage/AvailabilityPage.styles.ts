@@ -127,4 +127,38 @@ export const styles = StyleSheet.create({
   save: {
     marginTop: 10,
   },
+
+  /**
+   * El aviso de los festivos que chocan con el horario. Fuera de tarjeta y
+   * pegado a la lista: no es parte de lo que se edita, es lo que hay que
+   * mirar antes de darlo por bueno.
+   */
+  holidays: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.urgency,
+  },
+  holidaysTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+    marginBottom: 6,
+  },
+  holidaysLine: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
+    color: theme.colors.text,
+    opacity: 0.9,
+  },
+  holidaysNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.text,
+    opacity: 0.7,
+    marginTop: 8,
+  },
 })

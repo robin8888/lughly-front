@@ -32,10 +32,18 @@ import {
   useMyAvailability,
   useSetMyAvailability,
 } from '@/hooks/domain/useMyAvailability'
+import { useMyHolidays } from '@/hooks/domain/useMyHolidays'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import type { ApiAvailabilityWindow } from '@/api/pros.api'
-import { WEEKDAY_NAMES, atTime, formatTime } from '@/utils/dates'
+import {
+  WEEKDAY_NAMES,
+  atTime,
+  formatDate,
+  formatTime,
+  parseIsoDate,
+  toIsoDate,
+} from '@/utils/dates'
 import { theme } from '@/theme'
 import { styles } from './AvailabilityPage.styles'
 
@@ -68,6 +76,12 @@ function toDate(value: string): Date {
   return atTime(new Date(), hours ?? 0, minutes ?? 0)
 }
 
+/** Un día en texto, como se lee: "8 de diciembre de 2026" */
+function readableDay(day: string): string {
+  const date = parseIsoDate(day)
+  return date ? formatDate(date) : day
+}
+
 export interface AvailabilityPageProps {
   onBack: () => void
   /**
@@ -96,6 +110,23 @@ export function AvailabilityPage({
   const { data, isPending, isError, refetch } = useMyAvailability(!blocked, employeeId)
   const { save, isSaving } = useSetMyAvailability(employeeId)
 
+  /**
+   * Los festivos que vienen y caen en días que trabaja.
+   *
+   * **Aquí no se pueden marcar**, y no es un olvido: el horario va por día de
+   * la semana —los martes, todos— y un festivo es una fecha. En "los martes"
+   * no cabe "el 8 de diciembre". Lo que sí se puede es avisar, para que nadie
+   * descubra en diciembre que tenía puesto trabajar la Inmaculada.
+   *
+   * Se cruzan con el horario **guardado**, no con el que se está editando: el
+   * aviso habla de lo que hay, no de lo que se está probando.
+   */
+  const { data: calendar } = useMyHolidays(
+    new Date().getFullYear(),
+    !blocked,
+    employeeId,
+  )
+
   const [windows, setWindows] = useState<ApiAvailabilityWindow[] | null>(null)
 
   /**
@@ -107,6 +138,20 @@ export function AvailabilityPage({
   }, [data, windows])
 
   const current = windows ?? []
+
+  /**
+   * Solo los que quedan por venir y en los que hay algo que decidir: los que
+   * ya pasaron no se pueden cambiar, y uno que cae dentro de sus vacaciones ya
+   * está resuelto. Tres como mucho: esto es un aviso, no la lista entera —para
+   * eso está su calendario—.
+   */
+  const today = toIsoDate(new Date())
+  const upcomingHolidays = (calendar?.holidays ?? [])
+    .filter(
+      (holiday) =>
+        holiday.date >= today && holiday.worksThatDay && !holiday.away,
+    )
+    .slice(0, 3)
 
   const add = () => {
     // Un lunes de mañana: se cambia en dos toques y evita la fila vacía
@@ -229,6 +274,23 @@ export function AvailabilityPage({
             las urgencias.
           </Text>
         </InfoCard>
+
+        {upcomingHolidays.length > 0 && (
+          <View style={styles.holidays} testID="availability-holidays">
+            <Text style={styles.holidaysTitle}>Ojo con estos festivos</Text>
+            {upcomingHolidays.map((holiday) => (
+              <Text key={holiday.date} style={styles.holidaysLine}>
+                {readableDay(holiday.date)} es festivo ({holiday.name}) y{' '}
+                {isForEmployee ? 'tiene' : 'tienes'} horario ese día.
+              </Text>
+            ))}
+            <Text style={styles.holidaysNote}>
+              {isForEmployee
+                ? 'Se decide festivo a festivo en su calendario: si lo trabaja, y si se cobra el recargo.'
+                : 'Se decide festivo a festivo en tus festivos: si lo trabajas, y si cobras el recargo. Para no trabajarlo, márcalo como ausencia.'}
+            </Text>
+          </View>
+        )}
 
         {current.length === 0 ? (
           <Text style={styles.empty}>

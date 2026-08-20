@@ -67,7 +67,7 @@ export interface EmployeesPageProps {
    * empresa tuviera dónde.
    */
   onEmployeeSetting: (
-    setting: 'horario' | 'zona' | 'ausencias',
+    setting: 'horario' | 'zona' | 'ausencias' | 'recargos' | 'festivos',
     employeeId: string,
     employeeName: string,
   ) => void
@@ -497,6 +497,35 @@ export function EmployeesPage({
                           testID={`employee-absences-${employee.id}`}
                         >
                           <Text style={styles.settingText}>Días que no está</Text>
+                        </Pressable>
+
+                        {/*
+                          Los recargos y los festivos, al final: son lo único
+                          de esta lista que habla de dinero, y quien entra aquí
+                          casi siempre viene a mover horarios.
+                        */}
+                        <Pressable
+                          onPress={() =>
+                            onEmployeeSetting('recargos', employee.id, employee.name)
+                          }
+                          disabled={isRemoving}
+                          accessibilityRole="button"
+                          style={styles.setting}
+                          testID={`employee-surcharges-${employee.id}`}
+                        >
+                          <Text style={styles.settingText}>Recargos</Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() =>
+                            onEmployeeSetting('festivos', employee.id, employee.name)
+                          }
+                          disabled={isRemoving}
+                          accessibilityRole="button"
+                          style={styles.setting}
+                          testID={`employee-holidays-${employee.id}`}
+                        >
+                          <Text style={styles.settingText}>Festivos</Text>
                         </Pressable>
                       </View>
 

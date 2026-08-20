@@ -23,6 +23,15 @@ jest.mock('@/hooks/domain/useIsEmployee', () => ({
   useIsEmployee: () => mockEsEmpleado,
 }))
 
+/*
+ * El aviso de festivos pide el calendario, que aquí no viene al caso: sin este
+ * doble, la pantalla llamaría al hook de verdad y se quedaría sin
+ * QueryClientProvider.
+ */
+jest.mock('@/hooks/domain/useMyHolidays', () => ({
+  useMyHolidays: () => ({ data: undefined }),
+}))
+
 jest.mock('@/hooks/domain/useMyAvailability', () => ({
   useMyAvailability: () => ({
     data: [

@@ -50,7 +50,11 @@ export default function EmployeesRoute() {
                 ? '/mi-horario'
                 : setting === 'zona'
                   ? '/mi-zona'
-                  : '/mis-ausencias',
+                  : setting === 'recargos'
+                    ? '/mis-recargos'
+                    : setting === 'festivos'
+                      ? '/mis-festivos'
+                      : '/mis-ausencias',
             params: { id, name },
           })
         }
