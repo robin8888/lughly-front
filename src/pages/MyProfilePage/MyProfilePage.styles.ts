@@ -74,4 +74,19 @@ export const styles = StyleSheet.create({
   save: {
     marginTop: 8,
   },
+
+  /*
+    A las descripciones por oficio. En texto y no como botón: es una salida
+    de la pantalla, no lo que se viene a hacer aquí.
+  */
+  toTrades: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+  },
+  toTradesText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
+    textDecorationLine: 'underline',
+  },
 })

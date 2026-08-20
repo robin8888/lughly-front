@@ -38,9 +38,17 @@ const MAX_BIO = 400
 
 export interface MyProfilePageProps {
   onBack: () => void
+  /**
+   * A Mis oficios, donde vive la descripción de cada uno.
+   *
+   * Desde aquí y no solo desde Mi cuenta: quien está escribiendo su
+   * descripción es justo quien tiene que saber que hay otra por oficio, y
+   * mandarle a buscarla por su cuenta es como no decírselo.
+   */
+  onEditTrades?: () => void
 }
 
-export function MyProfilePage({ onBack }: MyProfilePageProps) {
+export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
   const onScroll = useNavScrollHandler()
   const user = useUser()
   const isPro = useEffectiveRole() === 'pro'
@@ -180,9 +188,16 @@ export function MyProfilePage({ onBack }: MyProfilePageProps) {
           </FormField>
 
           {isPro && (
+            /**
+             * La general, la de la persona. Desde el 20 Agosto 2026 cada
+             * oficio puede tener la suya, y son dos cosas distintas: aquí va
+             * quién eres y cómo trabajas, y allí qué haces en ese oficio
+             * concreto. Esta se sigue enseñando en los oficios que no tengan
+             * la suya, así que no sobra ni se queda vieja.
+             */
             <FormField
-              label="Tu descripción"
-              hint={`${bio.length}/${MAX_BIO}. Qué haces y cómo trabajas. Vacía, no sale nada.`}
+              label="Sobre ti"
+              hint={`${bio.length}/${MAX_BIO}. Quién eres y cómo trabajas, no lo que haces en cada oficio: eso va en Mis oficios, uno a uno.`}
               error={bio.length > MAX_BIO ? 'Te has pasado de largo' : undefined}
             >
               {loadingBio ? (
@@ -193,7 +208,7 @@ export function MyProfilePage({ onBack }: MyProfilePageProps) {
                 <Input
                   value={bio}
                   onChangeText={setBio}
-                  placeholder="Ej. Fugas y reformas de baño. Presupuesto el mismo día."
+                  placeholder="Ej. Doce años en obra y reforma. Voy con el material, aviso si me retraso y dejo la casa recogida."
                   multiline
                   numberOfLines={4}
                   style={styles.bio}
@@ -201,6 +216,25 @@ export function MyProfilePage({ onBack }: MyProfilePageProps) {
                   error={bio.length > MAX_BIO}
                   testID="profile-bio"
                 />
+              )}
+
+              {/*
+                Y de aquí a la otra. Se enseña donde se está escribiendo esta,
+                que es cuando importa saber que existe: si no, quien tiene tres
+                oficios cuenta uno solo aquí y sale igual en los tres listados.
+              */}
+              {onEditTrades && (
+                <Pressable
+                  onPress={onEditTrades}
+                  disabled={isSaving}
+                  accessibilityRole="button"
+                  style={styles.toTrades}
+                  testID="profile-to-trades"
+                >
+                  <Text style={styles.toTradesText}>
+                    Escribir una por oficio
+                  </Text>
+                </Pressable>
               )}
             </FormField>
           )}
