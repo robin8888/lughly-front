@@ -386,8 +386,17 @@ export function ProProfilePage({
         {(pro.trades.length > 1 ||
           pro.trades.some((trade) => trade.description)) && (
           <InfoCard style={styles.section} testID="pro-trades">
-            <Text style={styles.sectionTitle}>Lo que hace y a qué precio</Text>
+            <Text style={styles.sectionTitle}>
+              {pro.trades.length > 1 ? 'Lo que hace en cada oficio' : 'Lo que hace'}
+            </Text>
 
+            {/*
+              Un bloque por oficio, no una fila de precios con texto colgando.
+              El nombre encabeza, el precio va a su lado y debajo lo que cuenta
+              de ESE oficio: quien ejerce carpintería y limpieza no hace lo
+              mismo en las dos, y hasta ahora el único párrafo del perfil valía
+              igual para las dos, que es no decir nada de ninguna.
+            */}
             {pro.trades.map((trade) => (
               <View key={trade.slug} style={styles.tradeBlock}>
                 <View style={styles.tradeRow}>
@@ -396,14 +405,18 @@ export function ProProfilePage({
                 </View>
 
                 {/*
-                  Lo que cuenta de ESE oficio. Antes solo estaba la descripción
-                  del perfil, arriba, y valía igual para los cuatro: quien
-                  ejerce carpintería y limpieza no hace lo mismo en las dos, y
-                  el mismo párrafo en ambas no dice nada de ninguna.
+                  Sin descripción propia se dice, en vez de dejar el hueco:
+                  entre dos oficios y uno con texto, el mudo parece un fallo de
+                  la app en vez de algo que su dueño no ha escrito.
                 */}
-                {trade.description && (
-                  <Text style={styles.tradeDescription}>{trade.description}</Text>
-                )}
+                <Text
+                  style={[
+                    styles.tradeDescription,
+                    !trade.description && styles.tradeNoDescription,
+                  ]}
+                >
+                  {trade.description ?? 'No ha contado nada de este oficio.'}
+                </Text>
               </View>
             ))}
           </InfoCard>

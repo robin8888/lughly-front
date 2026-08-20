@@ -248,8 +248,12 @@ export const styles = StyleSheet.create({
     siguiente. Antes iba en la fila del precio, y con la descripción debajo
     habría partido en dos lo que es una sola cosa.
   */
+  /*
+    Cada oficio, su bloque. La línea separa un oficio del siguiente y no el
+    precio de su texto, que es una sola cosa.
+  */
   tradeBlock: {
-    paddingVertical: 4,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.cardDivider,
   },
@@ -258,15 +262,19 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 5,
   },
   tradeDescription: {
     fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.55,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.5,
     color: theme.colors.cardText,
-    opacity: 0.8,
-    paddingBottom: 6,
+    opacity: 0.85,
+    marginTop: 5,
+  },
+  /** El "no ha contado nada": más apagado, para que no compita con lo escrito */
+  tradeNoDescription: {
+    fontStyle: 'italic',
+    opacity: 0.5,
   },
   tradeLabel: {
     flex: 1,
