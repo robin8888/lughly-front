@@ -17,6 +17,7 @@
  * El interruptor de "disponible ahora" sí es real y escribe en el perfil.
  */
 
+import { useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import Animated from 'react-native-reanimated'
 // El de `react-native` está deprecado; este además respeta el notch en Android
@@ -57,6 +58,13 @@ export function HomePagePro({
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
   const user = useUser()
+
+  /**
+   * Las valoraciones empiezan plegadas. Quien abre su propia home viene a ver
+   * si tiene avisos o a ponerse disponible, y con veinte reseñas desplegadas
+   * todo lo demás quedaba debajo de un minuto de scroll.
+   */
+  const [showReviews, setShowReviews] = useState(false)
   const {
     data: pro,
     isPending,
@@ -348,12 +356,72 @@ export function HomePagePro({
               )}
             </InfoCard>
 
-            <ReviewList
-              proId={pro.id}
-              proName={pro.name}
-              emptyMessage="Todavía no te han valorado. Al terminar tu primer trabajo, el cliente podrá puntuarte en ocho aspectos."
-              testID="home-pro-reviews"
-            />
+            {/*
+              Las valoraciones, plegadas.
+              Son la parte más larga de la pantalla con diferencia —van de
+              cuatro en cuatro y con su desglose por criterio—, y quien abre su
+              propia home viene casi siempre a otra cosa: a ver si tiene avisos
+              o a ponerse disponible. Con veinte reseñas, todo lo de abajo
+              quedaba a un minuto de scroll.
+
+              Plegadas de verdad, además: sin desplegar no se piden al
+              servidor, así que la home entra con una petición menos.
+            */}
+            {pro.reviewCount === 0 ? (
+              /*
+                Sin ninguna no hay nada que plegar, y el mensaje de "todavía no
+                te han valorado" explica cómo llega la primera: esconderlo tras
+                un botón sería esconder justo lo que hay que leer.
+              */
+              <ReviewList
+                proId={pro.id}
+                proName={pro.name}
+                emptyMessage="Todavía no te han valorado. Al terminar tu primer trabajo, el cliente podrá puntuarte en ocho aspectos."
+                testID="home-pro-reviews"
+              />
+            ) : showReviews ? (
+              <>
+                <ReviewList
+                  proId={pro.id}
+                  proName={pro.name}
+                  /*
+                    También aquí: el contador viene del perfil y la lista del
+                    servidor, y si alguna vez discrepan, el texto por defecto
+                    le hablaría de sí mismo en tercera persona.
+                  */
+                  emptyMessage="Todavía no te han valorado. Al terminar tu primer trabajo, el cliente podrá puntuarte en ocho aspectos."
+                  testID="home-pro-reviews"
+                />
+
+                <Button
+                  variant="secondary"
+                  onPress={() => setShowReviews(false)}
+                  style={styles.reviewsToggle}
+                  testID="home-pro-reviews-hide"
+                >
+                  Ocultar las valoraciones
+                </Button>
+              </>
+            ) : (
+              <InfoCard>
+                <Text style={styles.stateTitle}>Tus valoraciones</Text>
+                <Text style={styles.stateBody}>
+                  {pro.reviewCount === 1
+                    ? 'Tienes una valoración'
+                    : `Tienes ${pro.reviewCount} valoraciones`}
+                  , con una nota media de {pro.rating.toFixed(1)}.
+                </Text>
+
+                <Button
+                  variant="secondary"
+                  onPress={() => setShowReviews(true)}
+                  style={styles.reviewsToggle}
+                  testID="home-pro-reviews-show"
+                >
+                  Verlas
+                </Button>
+              </InfoCard>
+            )}
 
             <InfoCard style={styles.pendingCard}>
               <Text style={styles.stateTitle}>Todavía no disponible</Text>

@@ -190,6 +190,10 @@ export const styles = StyleSheet.create({
   reviews: {
     paddingHorizontal: 4,
   },
+  /** El botón de ver u ocultar las valoraciones */
+  reviewsToggle: {
+    marginTop: 12,
+  },
   pendingCard: {
     marginTop: 4,
   },
