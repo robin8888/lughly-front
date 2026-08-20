@@ -123,7 +123,8 @@ export const styles = StyleSheet.create({
     backgroundColor: feed.colors.subtle,
   },
   chipActive: {
-    backgroundColor: feed.colors.accent,
+    /* El oscuro de la app, que es el que sostiene texto blanco encima */
+    backgroundColor: feed.colors.accentStrong,
   },
   chipAvailable: {
     backgroundColor: feed.colors.availableSoft,

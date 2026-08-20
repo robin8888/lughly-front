@@ -173,6 +173,7 @@ export const styles = StyleSheet.create({
   tagText: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 11,
-    color: feed.colors.accent,
+    /* El oscuro: sobre el fondo pálido del distintivo, el claro no se lee */
+    color: feed.colors.accentStrong,
   },
 })

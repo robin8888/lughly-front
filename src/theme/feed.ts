@@ -27,9 +27,10 @@
  * 3. **Fondo blanco** en vez del gris `#f2f2f3`. El gris obliga a que la
  *    tarjeta sea casi blanca para destacar, y ahí se pierde el contraste;
  *    con fondo blanco la foto y la cara mandan.
- * 4. **Azul vivo**. El `#5980a6` de ahora es un azul agrisado que no llama a
- *    pulsar nada. El de la mascota es eléctrico, y con él la única acción de
- *    cada tarjeta se ve sin buscarla.
+ * 4. **El azul de la app se queda.** Se probó el eléctrico de la mascota y
+ *    para la tarifa y el distintivo resultaba un grito: no son botones, son
+ *    datos. Lo que sí cambia es dónde se usa el oscuro —`accent700`—, que es
+ *    el que aguanta texto blanco: los filtros activos.
  * 5. **Nada en mayúsculas**. Los rótulos en caja alta suenan a institución.
  *
  * Las **fuentes no se tocan**: Fredoka y Nunito son redondeadas y amables, y
@@ -41,6 +42,8 @@
  * estaba pensado y es lo que deja comparar dos profesionales de un vistazo.
  * Esto cambia cómo se ve, no dónde está cada cosa.
  */
+
+import { colors } from './colors'
 
 export const feed = {
   colors: {
@@ -54,9 +57,22 @@ export const feed = {
     /** Línea de un pelo. Solo donde de verdad hace falta separar */
     hairline: '#e9edf1',
 
-    /** El azul de la mascota. Una sola acción por tarjeta lo lleva */
-    accent: '#1d6ef5',
-    accentSoft: '#eaf1fe',
+    /**
+     * **El azul de la app, no uno nuevo** (decidido el 20 Agosto 2026, al ver
+     * el piloto). Se probó el eléctrico de la mascota y no encaja: la tarifa y
+     * el distintivo de identidad no son botones, y con ese azul gritaban.
+     *
+     * Salen del tema en vez de copiados a mano para que sigan siendo el mismo
+     * azul el día que el tema cambie.
+     *
+     * Son dos y no uno porque hacen cosas distintas: `accent` es para texto
+     * sobre fondo claro —la tarifa—, y `accentStrong` es el oscuro que aguanta
+     * texto blanco encima, que es la regla que ya sigue la app en sus botones
+     * rellenos.
+     */
+    accent: colors.accent,
+    accentStrong: colors.accent700,
+    accentSoft: colors.accent100,
     onAccent: '#ffffff',
 
     available: '#12a150',
