@@ -22,10 +22,18 @@ import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { Picker } from '@/components/molecules/Picker'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
+import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useRequestPro } from '@/hooks/domain/useRequestPro'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
-import { formatLongDateTime, startOfToday, toIsoDateTime } from '@/utils/dates'
+import type { PickedImage } from '@/hooks/media/usePickImage'
+import { useDraftJobStore } from '@/stores/useDraftJobStore'
+import {
+  formatLongDateTime,
+  parseIsoDateTime,
+  startOfToday,
+  toIsoDateTime,
+} from '@/utils/dates'
 import { theme } from '@/theme'
 import { styles } from './RequestProPage.styles'
 
@@ -51,13 +59,58 @@ export function RequestProPage({
   const { data: pro, isPending, isError } = useProProfile(proId)
   const { request, isRequesting, fieldErrors, formError, reset } = useRequestPro(proId)
 
-  const [trade, setTrade] = useState<string | null>(initialTrade ?? null)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [city, setCity] = useState('')
-  const [addressLine, setAddressLine] = useState('')
-  const [preferredDate, setPreferredDate] = useState<Date | null>(null)
-  const [maxBudget, setMaxBudget] = useState('')
+  /**
+   * Lo que ya escribió en Publicar, si viene de ahí.
+   *
+   * Hay dos formas de llegar a esta pantalla y solo una trae trabajo hecho:
+   *
+   * - Desde **Publicar**, eligiendo reserva instantánea y luego profesional.
+   *   Ahí el formulario ya está relleno, y volver a pedirlo todo es pedirle a
+   *   alguien que escriba dos veces la misma avería.
+   * - Desde el **directorio**, mirando fichas y reservando a quien le gusta.
+   *   Ahí no ha escrito nada todavía y el formulario sale en blanco.
+   *
+   * Se distinguen por el borrador: si tiene contenido y es de tipo reserva, es
+   * que viene del primer camino. Y se le dice, con un botón para vaciarlo, por
+   * si el borrador era de otra cosa.
+   */
+  const draft = useDraftJobStore((state) => state.draft)
+  const hasDraft = useDraftJobStore((state) => state.hasContent)()
+  const clearDraft = useDraftJobStore((state) => state.clear)
+  const [fromDraft, setFromDraft] = useState(
+    hasDraft && draft.type === 'INSTANT',
+  )
+
+  const [trade, setTrade] = useState<string | null>(
+    initialTrade ?? (fromDraft && draft.tradeSlug !== '' ? draft.tradeSlug : null),
+  )
+  const [title, setTitle] = useState(fromDraft ? draft.title : '')
+  const [description, setDescription] = useState(
+    fromDraft ? draft.description : '',
+  )
+  const [city, setCity] = useState(fromDraft ? draft.city : '')
+  const [addressLine, setAddressLine] = useState(
+    fromDraft ? draft.addressLine : '',
+  )
+  const [preferredDate, setPreferredDate] = useState<Date | null>(
+    fromDraft && draft.preferredDate !== ''
+      ? parseIsoDateTime(draft.preferredDate)
+      : null,
+  )
+  const [maxBudget, setMaxBudget] = useState(fromDraft ? draft.maxBudget : '')
+  /** Las fotos no se guardan en el borrador: se eligen aquí */
+  const [photos, setPhotos] = useState<PickedImage[]>([])
+
+  const startOver = () => {
+    setFromDraft(false)
+    setTitle('')
+    setDescription('')
+    setCity('')
+    setAddressLine('')
+    setPreferredDate(null)
+    setMaxBudget('')
+    clearDraft()
+  }
 
   const isInstant = type === 'INSTANT'
 
@@ -100,15 +153,25 @@ export function RequestProPage({
       ...(maxBudget !== '' &&
         Number.isFinite(budget) &&
         budget > 0 && { maxBudget: budget }),
-    })
+    }, photos)
 
     if (!sent) return
 
+    // El encargo ya existe: si el borrador venía de Publicar, ya no hace falta
+    if (fromDraft) clearDraft()
+
+    const { request: encargo, photosFailed } = sent
+
+    const quien =
+      encargo.respondedByName === encargo.requestedProName
+        ? `${encargo.requestedProName} tiene 24 horas para responderte. Lo verás en Mis trabajos.`
+        : `Responde ${encargo.respondedByName}, la empresa de ${encargo.requestedProName}, en un plazo de 24 horas. Si te proponen mandar a otra persona, decides tú.`
+
     Alert.alert(
       'Encargo enviado',
-      sent.respondedByName === sent.requestedProName
-        ? `${sent.requestedProName} tiene 24 horas para responderte. Lo verás en Mis trabajos.`
-        : `Responde ${sent.respondedByName}, la empresa de ${sent.requestedProName}, en un plazo de 24 horas. Si te proponen mandar a otra persona, decides tú.`,
+      photosFailed > 0
+        ? `${quien} ${photosFailed === 1 ? 'Una foto no se pudo enviar' : `${photosFailed} fotos no se pudieron enviar`}.`
+        : quien,
     )
     onSent()
   }
@@ -177,6 +240,28 @@ export function RequestProPage({
               : `${pro.name} tiene 24 horas para responderte.`}
           </Text>
         </InfoCard>
+
+        {/*
+          Viene de Publicar con todo escrito, así que aquí solo hay que
+          repasarlo. Se dice, porque encontrarse un formulario relleno sin
+          saber de dónde sale desconcierta; y se ofrece vaciarlo, por si el
+          borrador era de otra cosa.
+        */}
+        {fromDraft && (
+          <View style={styles.fromDraft}>
+            <Text style={styles.fromDraftText}>
+              Hemos traído lo que escribiste al publicar. Repásalo y añade las
+              fotos si quieres.
+            </Text>
+            <Pressable
+              onPress={startOver}
+              accessibilityRole="button"
+              testID="request-start-over"
+            >
+              <Text style={styles.fromDraftAction}>Empezar de cero</Text>
+            </Pressable>
+          </View>
+        )}
 
         {formError && <Text style={styles.formError}>{formError}</Text>}
 
@@ -298,6 +383,35 @@ export function RequestProPage({
             />
           </FormField>
         )}
+
+        {/*
+          Las fotos, como en Publicar: en oficios se valora mirando, y un
+          encargo directo sin ellas obliga al profesional a preguntar por chat
+          lo que se ve en un vistazo. No viajan en el borrador —son ficheros
+          temporales que el sistema borra—, así que se eligen aquí.
+        */}
+        <InfoCard style={styles.photosCard}>
+          <View style={styles.photosHead}>
+            <Text style={styles.photosTitle}>Fotos del trabajo</Text>
+            <View style={styles.photosTag}>
+              <Text style={styles.photosTagText}>
+                {photos.length > 0 ? `${photos.length} elegidas` : 'Opcional'}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.photosHint}>
+            Con una foto del problema afina el precio y sabe lo que va a
+            encontrarse. Les quitamos la ubicación antes de enviarlas.
+          </Text>
+
+          <PhotoPicker
+            value={photos}
+            onChange={setPhotos}
+            disabled={isRequesting}
+            testID="request-photos"
+          />
+        </InfoCard>
 
         {/**
          * La dirección no se pide aquí. Se entrega cuando hay alguien
