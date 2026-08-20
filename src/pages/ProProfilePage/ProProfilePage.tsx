@@ -89,6 +89,16 @@ export function ProProfilePage({
 
   const { data: pro, isPending, isError, error, refetch } = useProProfile(id)
 
+  /**
+   * Qué foto se está mirando a pantalla completa. `null` es ninguna.
+   *
+   * Aquí arriba con el resto de hooks, y no junto a las fotos donde se usa:
+   * más abajo hay dos salidas —cargando y error— y un hook detrás de un
+   * `return` no se ejecuta en esos renders. React cuenta los hooks y en cuanto
+   * el número baila, la pantalla revienta entera.
+   */
+  const [viewing, setViewing] = useState<number | null>(null)
+
   const header = (
     <View style={styles.header}>
       <Pressable
@@ -168,9 +178,6 @@ export function ProProfilePage({
    * sus oficios, así que basta con recorrerlas: el primer grupo es el del
    * oficio que encabeza la ficha.
    */
-  /** Qué foto se está mirando a pantalla completa. `null` es ninguna */
-  const [viewing, setViewing] = useState<number | null>(null)
-
   const photoGroups = pro.photos.reduce<
     {
       tradeSlug: string
