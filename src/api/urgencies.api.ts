@@ -14,6 +14,12 @@ export interface ApiUrgency {
   /** Distancia desde su base, en km */
   distanceKm: number | null
   photoCount: number
+  /**
+   * Lo que fotografió el cliente, para el que tiene que decidir si va.
+   * `url` es la reducida, para la tira; `fullUrl` la original, para mirarla
+   * de cerca.
+   */
+  photos: { url: string; fullUrl: string }[]
   /** Hasta cuándo tiene para contestar. Son minutos, no horas */
   respondByAt: string | null
   createdAt: string
