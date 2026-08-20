@@ -80,11 +80,68 @@ export const styles = StyleSheet.create({
     marginTop: 3,
   },
   /** El día, destacado: es lo que se viene a mirar */
+  /**
+   * El día, en su propia caja y destacado.
+   *
+   * Es una agenda: lo que se viene a mirar es cuándo toca, y como una línea
+   * más de texto se perdía entre el oficio y la dirección.
+   */
+  whenBox: {
+    marginTop: 10,
+    marginBottom: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.field,
+    backgroundColor: theme.colors.accent100,
+  },
+  whenLabel: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+    opacity: 0.8,
+  },
   when: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.accent700,
+    color: theme.colors.accent900,
+    marginTop: 2,
+  },
+
+  /**
+   * Llamar, como botón. Era un texto azul, y en la pantalla que se abre
+   * delante del portal lo que hace falta es algo que se toque sin apuntar.
+   */
+  call: {
+    alignSelf: 'flex-start',
     marginTop: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.accent700,
+  },
+  callText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: '#ffffff',
+  },
+
+  /** La tira de fotos del cliente */
+  photos: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  photo: {
+    width: 84,
+    height: 84,
+    borderRadius: theme.radius.photo,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
   },
 
   block: {
@@ -117,12 +174,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.cardText,
   },
   /** Llamar es la acción más usada de esta pantalla, así que se ve */
-  phone: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.small,
-    color: theme.colors.accent700,
-    marginTop: 2,
-  },
   noPhone: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

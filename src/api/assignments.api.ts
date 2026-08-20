@@ -132,6 +132,11 @@ export interface ApiAssignedJob {
   photoCount: number
   awardedAt: string | null
   createdAt: string
+  /**
+   * Las fotos que puso el cliente. `url` es la reducida —para la tira— y
+   * `fullUrl` la original, para abrirla y mirar el detalle.
+   */
+  photos: { url: string; fullUrl: string }[]
 }
 
 export const assignmentsApi = {

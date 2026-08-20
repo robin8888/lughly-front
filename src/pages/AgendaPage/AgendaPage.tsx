@@ -16,12 +16,16 @@
  * que le dio de alta. El servidor lo manda ya en null; aquí solo se respeta.
  */
 
+import { useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable, Linking, Alert } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { Money } from '@/components/atoms/Money'
 import { Tag } from '@/components/atoms/Tag'
 import { EmptyState } from '@/components/molecules/EmptyState'
+import { API_BASE_URL } from '@/api'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { RemotePhoto } from '@/components/molecules/RemotePhoto'
+import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { formatJobWhen } from '@/utils/dates'
@@ -38,6 +42,16 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
   const { data, isPending, isError, refetch, isFetching } = useAssignedJobs()
 
   const jobs = data?.items ?? []
+
+  /**
+   * Qué foto se está mirando, y de qué trabajo. Con el trabajo dentro porque
+   * la agenda tiene varios y cada uno sus fotos: solo con el índice, abrir la
+   * segunda del segundo trabajo enseñaría la segunda del primero.
+   */
+  const [viewing, setViewing] = useState<{ jobId: string; index: number } | null>(
+    null,
+  )
+  const viewingJob = jobs.find((job) => job.id === viewing?.jobId)
 
   /**
    * Llamar al cliente es lo que más se hace desde aquí: se va de camino y se
@@ -120,10 +134,13 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                       a la que nadie va a ir. El helper enseña la hora solo
                       cuando el dato la trae.
                     */}
-                    <Text style={styles.when}>
-                      {(job.preferredDate && formatJobWhen(job.preferredDate)) ??
-                        'Sin fecha acordada todavía'}
-                    </Text>
+                    <View style={styles.whenBox}>
+                      <Text style={styles.whenLabel}>Cuándo</Text>
+                      <Text style={styles.when}>
+                        {(job.preferredDate && formatJobWhen(job.preferredDate)) ??
+                          'Sin fecha acordada todavía'}
+                      </Text>
+                    </View>
 
                     <View style={styles.block}>
                       <Text style={styles.blockLabel}>Dónde</Text>
@@ -141,18 +158,60 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                         <Pressable
                           onPress={() => call(job.clientPhone!, job.clientName)}
                           accessibilityRole="button"
+                          accessibilityLabel={`Llamar a ${job.clientName}`}
+                          style={styles.call}
                           testID={`assigned-${job.id}-call`}
                         >
-                          <Text style={styles.phone}>{job.clientPhone} · Llamar</Text>
+                          <Text style={styles.callText}>
+                            Llamar · {job.clientPhone}
+                          </Text>
                         </Pressable>
                       ) : (
                         <Text style={styles.noPhone}>Sin teléfono en su cuenta</Text>
                       )}
                     </View>
 
-                    <Text style={styles.description} numberOfLines={5}>
-                      {job.description}
-                    </Text>
+                    <View style={styles.block}>
+                      <Text style={styles.blockLabel}>El trabajo</Text>
+                      <Text style={styles.description}>{job.description}</Text>
+                    </View>
+
+                    {/*
+                      Las fotos que puso el cliente. Se ven aquí y se abren de
+                      una en una: en una miniatura de 90 px no se distingue el
+                      modelo de un grifo, y es justo lo que hay que saber antes
+                      de coger las herramientas.
+                    */}
+                    {job.photos.length > 0 && (
+                      <View style={styles.block}>
+                        <Text style={styles.blockLabel}>
+                          {job.photos.length === 1
+                            ? 'Una foto del cliente'
+                            : `${job.photos.length} fotos del cliente`}
+                        </Text>
+
+                        <View style={styles.photos}>
+                          {job.photos.map((photo, index) => (
+                            <Pressable
+                              key={photo.fullUrl}
+                              onPress={() =>
+                                setViewing({ jobId: job.id, index })
+                              }
+                              accessibilityRole="imagebutton"
+                              accessibilityLabel="Ver la foto más grande"
+                              style={styles.photo}
+                              testID={`assigned-${job.id}-photo-${index}`}
+                            >
+                              <RemotePhoto
+                                uri={`${API_BASE_URL}${photo.url}`}
+                                style={styles.photoImage}
+                                fallback="No carga"
+                              />
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
+                    )}
 
                     {/**
                      * El importe solo si es suyo. A un empleado el servidor
@@ -177,6 +236,15 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
           </>
         )}
       </Animated.ScrollView>
+
+      <PhotoViewer
+        photos={(viewingJob?.photos ?? []).map(
+          (photo) => `${API_BASE_URL}${photo.fullUrl}`,
+        )}
+        openAt={viewingJob ? (viewing?.index ?? 0) : null}
+        onClose={() => setViewing(null)}
+        testID="agenda-photo-viewer"
+      />
     </View>
   )
 }
