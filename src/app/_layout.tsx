@@ -159,6 +159,13 @@ export default function RootLayout() {
             <Stack.Screen name="mis-recargos" />
             <Stack.Screen name="mis-festivos" />
             <Stack.Screen name="trabajo/[id]" />
+            {/*
+              A quién llamar para una urgencia. Va declarada como las demás:
+              `Stack.Protected` retira del navegador lo que no está en la
+              lista, y una pantalla sin declarar se pinta pero luego no hay
+              cómo salir de ella —la flecha de atrás dejaba la app colgada.
+            */}
+            <Stack.Screen name="urgencia/[id]" />
             <Stack.Screen name="mis-datos" />
             <Stack.Screen name="revisar-documentos" />
             <Stack.Screen name="pro/[id]" />

@@ -60,6 +60,15 @@ function whatIsHappening(job: ApiJobDetail): string {
 
   switch (job.status) {
     case 'OPEN':
+      /*
+        Una urgencia abierta no está esperando nada: está esperándole a él.
+        No se avisa a nadie por su cuenta, así que decirle "publicado y
+        esperando" sería dejarle mirando un trabajo que no se mueve.
+      */
+      if (job.type === 'URGENT') {
+        return 'Falta que elijas a quién llamar. Hasta entonces no lo sabe nadie.'
+      }
+
       return job.type === 'AUCTION'
         ? 'Abierta a pujas. Cuando cierre, eliges tú comparando precio, plazo y valoración.'
         : 'Publicado y esperando.'
@@ -199,10 +208,18 @@ export function JobDetailPage({
    * Se puede cancelar mientras nadie ha movido nada. Adjudicado ya no: hay
    * quien ha reservado sus horas, y eso no se deshace con un botón.
    */
-  /** Se quedó sin nadie: lo único que queda por hacer es buscar a otro */
+  /**
+   * Se quedó sin nadie: lo único que queda por hacer es buscar a otro.
+   *
+   * También una urgencia recién publicada, que está esperando a que elija a
+   * quién llamar. Si salió de esa pantalla sin elegir, no se avisa a nadie por
+   * su cuenta y la urgencia se queda quieta.
+   */
+  const pickUrgencyPro = job.type === 'URGENT' && job.status === 'OPEN'
+
   const canReassign =
     job.viewer === 'client' &&
-    (job.status === 'DECLINED' || job.status === 'EXPIRED')
+    (job.status === 'DECLINED' || job.status === 'EXPIRED' || pickUrgencyPro)
 
   const canCancel =
     job.viewer === 'client' &&
@@ -373,7 +390,7 @@ export function JobDetailPage({
             style={styles.bids}
             testID="job-detail-reassign"
           >
-            Buscar
+            {pickUrgencyPro ? 'Elegir profesional' : 'Buscar'}
           </Button>
         )}
 

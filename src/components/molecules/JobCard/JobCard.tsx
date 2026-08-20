@@ -72,6 +72,18 @@ export function JobCard({
    */
   const needsYou = job.status === 'DECLINED' || job.status === 'EXPIRED'
 
+  /**
+   * Y una urgencia abierta, que también le está esperando a él.
+   *
+   * Se publica y lo siguiente es elegir a quién llamar, así que si sale de esa
+   * pantalla sin elegir, la urgencia se queda quieta: no se avisa a nadie por
+   * su cuenta, que es justo lo que cambió del modelo anterior. Sin esto, la
+   * única salida sería cancelarla y volver a escribirla entera.
+   */
+  const pickPro = job.type === 'URGENT' && job.status === 'OPEN'
+
+  const waiting = needsYou || pickPro
+
   return (
     <Pressable
       onPress={onPress}
@@ -79,13 +91,15 @@ export function JobCard({
       accessibilityRole={onPress ? 'button' : undefined}
       testID={testID}
     >
-      <InfoCard style={needsYou ? styles.needsYou : undefined}>
-        {needsYou && (
+      <InfoCard style={waiting ? styles.needsYou : undefined}>
+        {waiting && (
           <View style={styles.needsYouBlock}>
             <Text style={styles.needsYouNote}>
-              {job.status === 'DECLINED'
-                ? 'No pueden hacerlo, puedes buscar otro profesional.'
-                : 'Nadie ha respondido a tiempo, puedes buscar otro profesional.'}
+              {pickPro
+                ? 'Falta elegir a quién llamar: nadie lo sabe todavía.'
+                : job.status === 'DECLINED'
+                  ? 'No pueden hacerlo, puedes buscar otro profesional.'
+                  : 'Nadie ha respondido a tiempo, puedes buscar otro profesional.'}
             </Text>
 
             {onReassign && (
@@ -96,7 +110,9 @@ export function JobCard({
                 testID={`job-${job.id}-reassign`}
               >
                 {/* Corto: la frase de arriba ya ha dicho qué se busca */}
-                <Text style={styles.reassignText}>Buscar</Text>
+                <Text style={styles.reassignText}>
+                  {pickPro ? 'Elegir' : 'Buscar'}
+                </Text>
               </Pressable>
             )}
           </View>
