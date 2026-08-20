@@ -1,9 +1,10 @@
 /**
  * ProFeedCard styles — PROPUESTA, 20 Agosto 2026.
  *
- * Todo sale de `@/theme/feed`, que es la propuesta, y nada de `@/theme`: así
- * se ve de un vistazo qué depende de lo nuevo, y adoptar o descartar es mover
- * un fichero o borrarlo.
+ * Mismo reparto que `ProDirectoryCard.styles.ts` —los mismos nombres y los
+ * mismos sitios— para que comparar sea comparar el aspecto y no el orden de
+ * las cosas. Los valores salen de `@/theme/feed`, que es la propuesta; del
+ * tema de la app solo se toman las fuentes, que no cambian.
  */
 
 import { StyleSheet } from 'react-native'
@@ -18,24 +19,44 @@ export const styles = StyleSheet.create({
     marginBottom: feed.space.cards,
     ...feed.shadow,
   },
-  /** Se hunde un poco al tocarla, que es lo que hace que se sienta pulsable */
+  /** Se sombrea al tocarla: es lo que hace que se sienta pulsable entera */
   cardPressed: {
     backgroundColor: feed.colors.subtle,
   },
 
-  head: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: feed.space.between,
+    gap: 10,
+  },
+  /**
+   * El anillo de disponibilidad, alrededor de la cara.
+   *
+   * Es un aro con un hueco de aire por dentro y no un borde pegado a la foto:
+   * pegado se confunde con el recorte de la propia imagen, y con el hueco se
+   * lee como un estado puesto encima.
+   */
+  avatarRing: {
+    borderRadius: feed.radius.pill,
+    borderWidth: 2,
+    padding: 2,
+    flexShrink: 0,
+  },
+  ringAvailable: {
+    borderColor: feed.colors.available,
+  },
+  ringUnavailable: {
+    borderColor: feed.colors.unavailable,
   },
   avatar: {
-    width: 52,
-    height: 52,
+    width: 44,
+    height: 44,
     borderRadius: feed.radius.pill,
+    flexShrink: 0,
+    overflow: 'hidden',
     backgroundColor: feed.colors.subtle,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
@@ -43,34 +64,16 @@ export const styles = StyleSheet.create({
   },
   identity: {
     flex: 1,
+    minWidth: 0,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
+  /** Sin `uppercase`: en caja alta el nombre de una persona suena a rótulo */
   name: {
-    flexShrink: 1,
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 17,
+    fontSize: 16,
     color: feed.colors.text,
   },
-  verified: {
-    width: 16,
-    height: 16,
-    borderRadius: feed.radius.pill,
-    backgroundColor: feed.colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  verifiedMark: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 10,
-    lineHeight: 13,
-    color: feed.colors.onAccent,
-  },
   worker: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 13,
     color: feed.colors.textSoft,
     marginTop: 1,
@@ -81,71 +84,63 @@ export const styles = StyleSheet.create({
     color: feed.colors.textSoft,
     marginTop: 2,
   },
+  distance: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 12,
+    color: feed.colors.textSoft,
+    marginTop: 3,
+  },
 
-  rating: {
+  numbers: {
+    alignItems: 'flex-end',
+  },
+  rate: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: 15,
+    color: feed.colors.accent,
+  },
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
+    marginTop: 3,
   },
   star: {
     fontSize: 13,
     color: feed.colors.star,
   },
-  ratingValue: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 14,
+  rating: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: 13,
     color: feed.colors.text,
   },
+  reviews: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 11,
+    color: feed.colors.textSoft,
+    marginTop: 2,
+  },
 
-  /** Píldora verde, y solo cuando lo está: lo que no se dice no ocupa sitio */
-  available: {
-    alignSelf: 'flex-start',
+  /** La tira, igual que ahora: todas del mismo tamaño y cuadradas de forma */
+  photos: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: feed.space.between,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: feed.radius.pill,
-    backgroundColor: feed.colors.availableSoft,
+    gap: 5,
+    marginTop: 10,
   },
-  availableDot: {
-    width: 7,
-    height: 7,
-    borderRadius: feed.radius.pill,
-    backgroundColor: feed.colors.available,
-  },
-  availableText: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: 12,
-    color: feed.colors.available,
-  },
-
-  cover: {
-    marginTop: feed.space.between,
-    borderRadius: feed.radius.photo,
-    overflow: 'hidden',
+  photo: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: 10,
     backgroundColor: feed.colors.subtle,
-    /** 16:9. Ancha y no cuadrada: cabe la habitación entera, no un rincón */
-    aspectRatio: 16 / 9,
   },
-  coverImage: {
-    width: '100%',
-    height: '100%',
+  photoMore: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  coverMore: {
-    position: 'absolute',
-    right: 10,
-    bottom: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: feed.radius.pill,
-    backgroundColor: 'rgba(17, 20, 23, 0.72)',
-  },
-  coverMoreText: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: 12,
-    color: '#ffffff',
+  photoMoreText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: 14,
+    color: feed.colors.textSoft,
   },
 
   bio: {
@@ -153,61 +148,31 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: feed.colors.text,
-    marginTop: feed.space.between,
+    marginTop: 10,
+  },
+  alsoDoes: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: feed.colors.textSoft,
+    marginTop: 8,
   },
 
-  chips: {
+  tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: feed.space.gap,
-    marginTop: feed.space.between,
+    gap: 5,
+    marginTop: 10,
   },
-  chip: {
-    paddingVertical: 5,
+  tag: {
+    paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: feed.radius.pill,
-    backgroundColor: feed.colors.subtle,
+    backgroundColor: feed.colors.accentSoft,
   },
-  chipText: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: 12,
-    color: feed.colors.textSoft,
-  },
-
-  foot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: feed.space.inset,
-    paddingTop: feed.space.between,
-    borderTopWidth: 1,
-    borderTopColor: feed.colors.hairline,
-  },
-  rate: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 17,
-    color: feed.colors.text,
-  },
-  reviews: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: 12,
-    color: feed.colors.textSoft,
-    marginTop: 1,
-  },
-  /**
-   * La única acción en azul de toda la tarjeta. No es un `Button` del sistema
-   * a propósito: los de ahora son rectangulares y llenos, y aquí hace falta
-   * una píldora.
-   */
-  action: {
-    paddingVertical: 9,
-    paddingHorizontal: 18,
-    borderRadius: feed.radius.pill,
-    backgroundColor: feed.colors.accent,
-  },
-  actionText: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: 14,
-    color: feed.colors.onAccent,
+  tagText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: 11,
+    color: feed.colors.accent,
   },
 })

@@ -34,6 +34,12 @@
  *
  * Las **fuentes no se tocan**: Fredoka y Nunito son redondeadas y amables, y
  * ya están donde tienen que estar.
+ *
+ * Y **la organización de la tarjeta tampoco** (decidido el 20 Agosto 2026, al
+ * ver el piloto): la identidad a la izquierda, los números en columna a la
+ * derecha y la tira de fotos debajo se quedan como estaban. Ese reparto ya
+ * estaba pensado y es lo que deja comparar dos profesionales de un vistazo.
+ * Esto cambia cómo se ve, no dónde está cada cosa.
  */
 
 export const feed = {
@@ -55,6 +61,12 @@ export const feed = {
 
     available: '#12a150',
     availableSoft: '#e8f7ee',
+    /**
+     * El anillo de quien no está disponible ahora. Es un rojo apagado y no el
+     * `urgency` de la app: aquí no ha fallado nada ni hay ninguna urgencia,
+     * solo dice que hoy no sale corriendo.
+     */
+    unavailable: '#d1544a',
     star: '#f5a524',
   },
 
