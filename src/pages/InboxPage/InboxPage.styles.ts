@@ -193,15 +193,6 @@ export const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  /**
-   * Los que esperan respuesta, marcados en rojo para encontrarlos de un
-   * vistazo. Es el rojo de "ahora no" del resto de la app —el del anillo de
-   * disponibilidad— y no el de error: no responder todavía no es un fallo, es
-   * lo que hay que hacer.
-   *
-   * El contorno y no el relleno: son tarjetas con mucho texto dentro, y en
-   * rojo entero no se leería ninguna.
-   */
   /** Las dos etiquetas de la cabecera, que en móvil estrecho caen a dos filas */
   cardTags: {
     flexDirection: 'row',
@@ -209,19 +200,31 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: 5,
   },
+
+  /**
+   * Los que esperan respuesta, marcados en naranja para encontrarlos de un
+   * vistazo. Naranja y no rojo: no hay nada roto ni vencido —el plazo sigue
+   * corriendo— y una lista en rojo se lee como una lista de errores.
+   *
+   * El contorno y no el relleno: son tarjetas con mucho texto dentro, y en
+   * color entero no se leería ninguna.
+   *
+   * El color no va solo: la etiqueta lo dice con palabras, porque quien no
+   * distingue el naranja tiene que poder encontrarlos igual.
+   */
   cardUnanswered: {
     borderWidth: 1.5,
-    borderColor: theme.colors.unavailable,
+    borderColor: theme.colors.pending,
   },
   unansweredTag: {
     paddingVertical: 3,
     paddingHorizontal: 9,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.unavailable,
+    backgroundColor: theme.colors.pendingSoft,
   },
   unansweredTagText: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
-    color: '#ffffff',
+    color: theme.colors.pendingText,
   },
 })

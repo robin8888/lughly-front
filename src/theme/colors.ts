@@ -97,6 +97,23 @@ export const colors = {
    * corriendo.
    */
   unavailable: '#d1544a',
+
+  /**
+   * Naranja de "esto espera por ti": los encargos sin responder.
+   *
+   * Naranja y no rojo porque no hay nada roto ni vencido —el plazo sigue
+   * corriendo—, y el rojo en una lista larga se lee como una fila de errores.
+   *
+   * Son tres y no uno porque hacen tres cosas distintas y cada una necesita su
+   * contraste: `pending` es el contorno de la tarjeta (3,5:1 sobre blanco, por
+   * encima del 3:1 que pide la WCAG 1.4.11 para delimitar un elemento),
+   * `pendingSoft` el fondo de la etiqueta y `pendingText` la letra encima, que
+   * juntos pasan de 7:1. Blanco sobre el naranja fuerte se quedaría en 3,5:1,
+   * por debajo de lo que se lee.
+   */
+  pending: '#c9741f',
+  pendingSoft: '#fceedd',
+  pendingText: '#8a4d0a',
   urgency: '#a3453a',
   error: '#a3453a',
   rating: '#d4a13a',
