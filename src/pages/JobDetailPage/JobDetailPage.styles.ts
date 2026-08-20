@@ -128,6 +128,14 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent700,
     marginTop: 8,
   },
+  noPhone: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.45,
+    color: theme.colors.cardText,
+    opacity: 0.7,
+    marginTop: 8,
+  },
 
   description: {
     fontFamily: theme.typography.fonts.body,

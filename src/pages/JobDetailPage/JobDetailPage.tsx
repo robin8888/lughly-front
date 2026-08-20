@@ -79,7 +79,15 @@ function whatIsHappening(job: ApiJobDetail): string {
     case 'SUBSTITUTE_PROPOSED':
       return `${quien} propone mandar a ${job.substituteProName ?? 'otra persona'}. Decides tú: puedes aceptarlo o cancelar sin coste, desde Mis trabajos.`
     case 'AWARDED':
-      return `Cerrado. Lo hará ${quien}, y ya tienes su teléfono por si necesitas hablar con alguien.`
+      /*
+        El teléfono solo se promete si está. No todo el mundo lo tiene en la
+        app —un trabajador dado de alta por su empresa puede no haberlo dejado—
+        y prometer un número que luego no aparece por ninguna parte es peor que
+        no decir nada.
+      */
+      return job.assignedPro?.phone
+        ? `Cerrado. Lo hará ${quien}, y ya tienes su teléfono por si necesitas hablar con alguien.`
+        : `Cerrado. Lo hará ${quien}.`
     case 'IN_PROGRESS':
       return `${quien} está con ello.`
     case 'COMPLETED':
@@ -302,11 +310,21 @@ export function JobDetailPage({
                 : `${job.assignedPro.reviewCount} reseñas`}
             </Text>
 
-            {job.assignedPro.phone && (
-              <Text style={styles.proPhone} selectable>
-                {job.assignedPro.phone}
-              </Text>
-            )}
+            {/*
+              Y si no hay teléfono se dice, en vez de dejar el hueco: quien
+              espera en casa mirando esta pantalla necesita saber si tiene por
+              dónde llamar o si tiene que esperar al timbre.
+            */}
+            {job.viewer === 'client' &&
+              (job.assignedPro.phone ? (
+                <Text style={styles.proPhone} selectable>
+                  {job.assignedPro.phone}
+                </Text>
+              ) : (
+                <Text style={styles.noPhone}>
+                  No tenemos su teléfono en la app. Te avisará al llegar.
+                </Text>
+              ))}
           </InfoCard>
         )}
 

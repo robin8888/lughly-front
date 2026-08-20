@@ -62,10 +62,15 @@ export function JobAnswer({ job, onSee, onDismiss, testID }: JobAnswerProps) {
       ? `${quien} no puede`
       : 'Nadie ha respondido a tiempo'
 
+  /*
+    Sin prometer el teléfono: no todo el mundo lo tiene en la app, y el modal
+    no sabe si este lo tiene. Lo que hay es en la ficha, y allí se dice tenga
+    número o no.
+  */
   const message = accepted
     ? isUrgency
-      ? `Ha aceptado tu urgencia "${job.title}" y ya tienes su teléfono por si necesitas hablar con él.`
-      : `Queda cerrado. Ya tienes su teléfono por si necesitas hablar con él.`
+      ? `Ha aceptado tu urgencia "${job.title}" y va para allá. En el trabajo tienes sus datos.`
+      : `Queda cerrado. En el trabajo tienes sus datos por si necesitas hablar con él.`
     : job.status === 'DECLINED'
       ? `No puede hacer "${job.title}". Puedes elegir a otro sin esperar nada.`
       : `Se cumplió el plazo de "${job.title}" sin respuesta. Puedes elegir a otro.`
