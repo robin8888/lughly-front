@@ -504,8 +504,8 @@ export function HomePagePro({
 
               {!isEmployee && pro.availableNow && (
                 <Text style={styles.availabilityNote}>
-                  Tienes 30 minutos para aceptar cada aviso. Si no respondes,
-                  pasa al siguiente profesional.
+                  Sales en la lista de quien tenga una urgencia cerca. Si te
+                  eligen, tienes cinco minutos para contestar.
                 </Text>
               )}
             </InfoCard>

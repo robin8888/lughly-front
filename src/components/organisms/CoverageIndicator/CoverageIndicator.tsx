@@ -66,8 +66,8 @@ export function CoverageIndicator({ state, testID }: CoverageIndicatorProps) {
               ` · el más cercano a ${formatDistance(state.coverage.nearestKm)}`}
           </Text>
           <Text style={styles.note}>
-            Cada uno tiene 30 minutos para aceptar. Si nadie responde, pasamos
-            al siguiente.
+            Al terminar los verás con su tarifa de urgencia y eliges tú. El que
+            elijas tiene cinco minutos para contestar.
           </Text>
         </>
       ) : (
