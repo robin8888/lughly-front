@@ -194,6 +194,14 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                /*
+                  `flexGrow: 0` no es adorno: dentro de un scroll vertical, uno
+                  horizontal se come todo el alto que quede, y las píldoras se
+                  estiran con él. Se veía al elegir una —el fondo de color
+                  ocupaba media pantalla— y cambiaba de tamaño según cuántos
+                  trabajos tuviera la pestaña, porque cambiaba el alto de abajo.
+                */
+                style={styles.tabsScroll}
                 contentContainerStyle={styles.tabs}
               >
                 {groups.map((group) => {

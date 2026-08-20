@@ -83,8 +83,14 @@ export const styles = StyleSheet.create({
    * caben repartidos a lo ancho, y en fila que se desliza caben todos sin
    * abreviar ninguno.
    */
+  /** Mide lo que miden las píldoras, no lo que quede de pantalla */
+  tabsScroll: {
+    flexGrow: 0,
+  },
   tabs: {
     flexDirection: 'row',
+    /* Y que cada píldora mida lo suyo, en vez de estirarse a lo alto */
+    alignItems: 'center',
     gap: 8,
     paddingBottom: 14,
     paddingRight: 16,
