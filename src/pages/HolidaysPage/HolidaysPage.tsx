@@ -98,7 +98,6 @@ export function HolidaysPage({
         <EmptyState
           title="No hemos podido cargar el calendario"
           message="Revisa tu conexión e inténtalo de nuevo."
-          illustration="greeting"
           actions={[
             {
               label: 'Reintentar',
@@ -128,7 +127,6 @@ export function HolidaysPage({
               ? 'Los festivos son los de la comunidad donde tenga la base, y todavía no la tiene puesta. Ponsela y aparecerán aquí.'
               : 'Los festivos no son los mismos en toda España: dependen de la comunidad donde tengas la base. Pon tu zona de trabajo y aparecerán aquí.'
           }
-          illustration="greeting"
           actions={[
             {
               label: isForEmployee ? 'Poner su zona' : 'Poner mi zona',
@@ -154,7 +152,6 @@ export function HolidaysPage({
         <EmptyState
           title={`El calendario de ${year} todavía no está`}
           message="El BOE publica las fiestas de cada año en octubre del anterior. En cuanto salga, aparecerán aquí."
-          illustration="greeting"
           testID="holidays-unknown-year"
         />
       </View>

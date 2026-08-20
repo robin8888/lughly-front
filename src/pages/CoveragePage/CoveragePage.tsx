@@ -231,7 +231,6 @@ export function CoveragePage({
         <EmptyState
           title="Tu zona la pone tu empresa"
           message="Quien te dio de alta decide desde dónde y hasta dónde trabajas, igual que tus oficios y tu horario. Si algo no cuadra, háblalo con ellos."
-          illustration="greeting"
           testID="coverage-employee"
         />
       </View>
@@ -256,7 +255,6 @@ export function CoveragePage({
         <EmptyState
           title="No hemos podido cargar tu zona"
           message="Revisa tu conexión e inténtalo de nuevo."
-          illustration="greeting"
           actions={[
             {
               label: 'Reintentar',

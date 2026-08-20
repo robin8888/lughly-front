@@ -142,7 +142,6 @@ export function SurchargesPage({
         <EmptyState
           title="Tus recargos los pone tu empresa"
           message="Es quien le cobra al cliente y quien factura, igual que con tu horario y tu zona. Lo que te corresponda a ti por trabajar un festivo va en tu nómina: eso háblalo con ellos."
-          illustration="greeting"
           testID="surcharges-employee"
         />
       </View>
@@ -167,7 +166,6 @@ export function SurchargesPage({
         <EmptyState
           title="No hemos podido cargar los recargos"
           message="Revisa tu conexión e inténtalo de nuevo."
-          illustration="greeting"
           actions={[
             {
               label: 'Reintentar',

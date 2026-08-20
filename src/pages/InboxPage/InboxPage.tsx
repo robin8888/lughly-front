@@ -113,7 +113,6 @@ export function InboxPage({ onBack }: InboxPageProps) {
         <EmptyState
           title="Los encargos los lleva tu empresa"
           message="Cuando un cliente te elige, el encargo le llega a quien te dio de alta. Verás el trabajo aquí en cuanto te lo asignen, con la dirección y el teléfono del cliente."
-          illustration="greeting"
           actions={[{ label: 'Volver', onPress: onBack, testID: 'inbox-employee-back' }]}
           testID="inbox-employee"
         />
@@ -139,7 +138,6 @@ export function InboxPage({ onBack }: InboxPageProps) {
           <EmptyState
             title="No hemos podido cargar los encargos"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               { label: 'Reintentar', onPress: () => void refetch(), testID: 'inbox-retry' },
             ]}
@@ -149,7 +147,6 @@ export function InboxPage({ onBack }: InboxPageProps) {
           <EmptyState
             title="Ningún encargo pendiente"
             message="Aquí aparecerán los trabajos que un cliente os encargue eligiéndoos en el directorio. Tenéis 24 horas para responder a cada uno."
-            illustration="none"
             testID="inbox-empty"
           />
         ) : (

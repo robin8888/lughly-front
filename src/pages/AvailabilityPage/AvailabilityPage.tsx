@@ -211,7 +211,6 @@ export function AvailabilityPage({
         <EmptyState
           title="Tu horario lo pone tu empresa"
           message="Quien te dio de alta decide a qué horas se te puede reservar, igual que tus oficios y tus tarifas. Si algo no cuadra, háblalo con ellos."
-          illustration="greeting"
           testID="availability-employee"
         />
       </View>
@@ -236,7 +235,6 @@ export function AvailabilityPage({
         <EmptyState
           title="No hemos podido cargar tu horario"
           message="Revisa tu conexión e inténtalo de nuevo."
-          illustration="greeting"
           actions={[
             {
               label: 'Reintentar',

@@ -121,7 +121,6 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
           <EmptyState
             title="Los lleva tu empresa"
             message="Tus oficios y lo que se cobra por tu hora los gestiona quien te dio de alta. Si haces algo que no aparece en tu ficha, díselo a ellos."
-            illustration="greeting"
             actions={[
               { label: 'Volver', onPress: onBack, testID: 'my-trades-employee-back' },
             ]}
@@ -151,7 +150,6 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
           <EmptyState
             title="No hemos podido cargar tus oficios"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               {
                 label: 'Reintentar',

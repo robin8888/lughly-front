@@ -142,7 +142,6 @@ export function RequestProPage({
         <EmptyState
           title="No hemos podido cargar el perfil"
           message="Revisa tu conexión e inténtalo de nuevo."
-          illustration="greeting"
           actions={[{ label: 'Volver', onPress: onBack, testID: 'request-pro-back' }]}
           testID="request-pro-error"
         />

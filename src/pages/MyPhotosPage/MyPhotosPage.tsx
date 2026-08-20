@@ -158,7 +158,6 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
           <EmptyState
             title="Las lleva tu empresa"
             message="Las fotos que se ven en el listado son las de quien te dio de alta. Si tienes trabajos que merece la pena enseñar, mándaselas a ellos."
-            illustration="greeting"
             actions={[{ label: 'Volver', onPress: onBack, testID: 'my-photos-employee-back' }]}
             testID="my-photos-employee"
           />
@@ -189,7 +188,6 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
           <EmptyState
             title="No hemos podido cargar tus fotos"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               {
                 label: 'Reintentar',

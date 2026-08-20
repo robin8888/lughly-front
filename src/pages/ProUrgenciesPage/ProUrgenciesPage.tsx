@@ -96,7 +96,6 @@ export function ProUrgenciesPage({
           <EmptyState
             title="No hemos podido cargar las urgencias"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               { label: 'Reintentar', onPress: () => void refetch(), testID: 'urgencies-retry' },
             ]}
@@ -139,7 +138,6 @@ export function ProUrgenciesPage({
           <EmptyState
             title="No estás recibiendo urgencias"
             message="Tienes el aviso de urgencias apagado, así que no te llega ninguna aunque las haya en tu zona. Puedes encenderlo desde tu inicio."
-            illustration="none"
             actions={[
               {
                 label: 'Ir a activarlo',
@@ -153,7 +151,6 @@ export function ProUrgenciesPage({
           <EmptyState
             title="Ninguna urgencia ahora mismo"
             message="Estás disponible. En cuanto alguien de tu zona necesite tu oficio con urgencia, aparecerá aquí."
-            illustration="none"
             testID="urgencies-empty"
           />
         ) : (

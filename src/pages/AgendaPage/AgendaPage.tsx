@@ -76,7 +76,6 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
           <EmptyState
             title="No hemos podido cargar tu agenda"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               { label: 'Reintentar', onPress: () => void refetch(), testID: 'agenda-retry' },
             ]}
@@ -86,7 +85,6 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
           <EmptyState
             title="Nada asignado por ahora"
             message="Aquí aparecerán los trabajos que tengas que hacer, con la dirección, cuándo es y el teléfono del cliente."
-            illustration="none"
             testID="agenda-empty"
           />
         ) : (

@@ -147,7 +147,6 @@ export function UrgencySchedulePage({
         <EmptyState
           title="No hemos podido cargar el horario"
           message="Revisa tu conexión e inténtalo de nuevo."
-          illustration="greeting"
           actions={[
             {
               label: 'Reintentar',

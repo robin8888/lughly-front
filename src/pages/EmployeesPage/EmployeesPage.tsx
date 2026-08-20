@@ -379,7 +379,6 @@ export function EmployeesPage({
           <EmptyState
             title="No hemos podido cargar tus trabajadores"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               { label: 'Reintentar', onPress: () => void refetch(), testID: 'employees-retry' },
             ]}
@@ -391,7 +390,6 @@ export function EmployeesPage({
               <EmptyState
                 title="Todavía no has dado de alta a nadie"
                 message="Cada trabajador tendrá su propia cuenta y aparecerá en el directorio con tu nombre encima. Tú pujas y facturas; ellos ejecutan."
-                illustration="none"
                 testID="employees-empty"
               />
             ) : (

@@ -177,7 +177,6 @@ export function DirectoryPage({
           <EmptyState
             title="No hemos podido cargar la lista"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               {
                 label: 'Reintentar',
@@ -254,7 +253,6 @@ export function DirectoryPage({
                 <EmptyState
                   title="Sin puntos que enseñar"
                   message="Ninguno de estos profesionales ha fijado todavía su base de trabajo. Míralos en la lista."
-                  illustration="none"
                   actions={[
                     {
                       label: 'Volver a la lista',

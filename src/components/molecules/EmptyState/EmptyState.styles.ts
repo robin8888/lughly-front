@@ -7,7 +7,18 @@ import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
+  /**
+   * Centrado en el hueco que le quede.
+   *
+   * `flex: 1` lo centra cuando cuelga de una pantalla, que es lo normal. El
+   * `minHeight` es para el otro caso: dentro del contenido de un scroll, un
+   * `flex: 1` se queda en cero y el vacío desaparecería del todo. Con los dos
+   * puestos, o llena la pantalla o mide eso, pero nunca nada.
+   */
   container: {
+    flex: 1,
+    minHeight: 380,
+    justifyContent: 'center',
     paddingVertical: 24,
   },
   card: {

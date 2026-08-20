@@ -119,7 +119,6 @@ export function AbsencesPage({
         <EmptyState
           title="Tus días libres los lleva tu empresa"
           message="Quien te dio de alta organiza cuándo trabajas, igual que tu horario y tus oficios. Habla con ellos para tus vacaciones."
-          illustration="greeting"
           testID="absences-employee"
         />
       </View>
@@ -144,7 +143,6 @@ export function AbsencesPage({
         <EmptyState
           title="No hemos podido cargar tus ausencias"
           message="Revisa tu conexión e inténtalo de nuevo."
-          illustration="greeting"
           actions={[
             {
               label: 'Reintentar',

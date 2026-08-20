@@ -70,7 +70,6 @@ export function OffersPage({ onBack }: OffersPageProps) {
           <EmptyState
             title="Las subastas las lleva tu empresa"
             message="Quien puja, factura y cobra es quien te dio de alta. Tú verás los trabajos que te asigne en tu agenda, con la dirección y la hora."
-            illustration="greeting"
             actions={[
               {
                 label: 'Volver al inicio',
@@ -120,7 +119,6 @@ export function OffersPage({ onBack }: OffersPageProps) {
           <EmptyState
             title="No hemos podido cargar las subastas"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               {
                 label: 'Reintentar',

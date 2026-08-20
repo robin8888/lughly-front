@@ -33,6 +33,12 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   content: {
+    /*
+     * Para que un vacío pueda centrarse en la pantalla: sin esto, el
+     * contenido de un scroll mide lo que mide su contenido y el
+     * `flex: 1` del `EmptyState` se queda en cero.
+     */
+    flexGrow: 1,
     paddingHorizontal: 12,
     // La barra inferior flota por encima del contenido
     paddingBottom: 96,

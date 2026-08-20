@@ -23,7 +23,6 @@ export default function AdminDocumentsRoute() {
       <EmptyState
         title="Esta pantalla no es para tu cuenta"
         message="La revisión de documentos la hace el equipo de Lughly. Si has llegado aquí por un enlace, vuelve al inicio."
-        illustration="none"
         actions={[
           {
             label: 'Volver al inicio',

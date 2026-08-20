@@ -143,7 +143,6 @@ export function AdminDocumentsPage({ onBack, testID }: AdminDocumentsPageProps) 
           <EmptyState
             title="No hemos podido leer la cola"
             message="Los documentos siguen donde estaban; es esta pantalla la que no ha podido consultarlos."
-            illustration="none"
             actions={[
               {
                 label: 'Reintentar',
@@ -157,7 +156,6 @@ export function AdminDocumentsPage({ onBack, testID }: AdminDocumentsPageProps) 
           <EmptyState
             title="No hay nada por revisar"
             message="Cuando alguien suba su documento, aparecerá aquí con su nombre al lado para poder cotejarlo."
-            illustration="greeting"
             testID="admin-documents-empty"
           />
         ) : (

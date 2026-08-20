@@ -134,7 +134,6 @@ export function ProProfilePage({
                 ? 'Puede que haya dejado la plataforma. Busca otro profesional del mismo oficio.'
                 : 'Revisa tu conexión e inténtalo de nuevo.'
             }
-            illustration="greeting"
             actions={[
               ...(isGone
                 ? []

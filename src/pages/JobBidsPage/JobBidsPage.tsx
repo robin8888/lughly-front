@@ -115,7 +115,6 @@ export function JobBidsPage({
           <EmptyState
             title="No hemos podido cargar las pujas"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               { label: 'Reintentar', onPress: () => void refetch(), testID: 'job-bids-retry' },
             ]}
@@ -125,7 +124,6 @@ export function JobBidsPage({
           <EmptyState
             title="Todavía no hay pujas"
             message="Los profesionales de tu oficio ven el trabajo en su lista de ofertas. Suele haber movimiento en las primeras horas."
-            illustration="none"
             testID="job-bids-empty"
           />
         ) : (

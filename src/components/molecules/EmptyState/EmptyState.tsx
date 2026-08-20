@@ -6,7 +6,14 @@
  * no sabe qué hacer. Por eso el componente exige un título y admite acciones,
  * y por eso el mensaje debe decir QUÉ falta, no un "sin resultados" genérico.
  *
- * Sirve también para errores: cambia el texto y la ilustración, no la forma.
+ * Sirve también para errores: cambia el texto, no la forma.
+ *
+ * **Siempre lleva a Uhiro y va centrado en la pantalla** (20 Agosto 2026).
+ * Antes había tres opciones —dos ilustraciones y ninguna—, y el resultado era
+ * que la misma situación se contaba distinta en cada pantalla: en unas con
+ * dibujo y en otras con un párrafo suelto arriba del todo, que se lee como si
+ * algo hubiera fallado. Un vacío no es un fallo, y con la mascota en medio se
+ * nota que la app sabe lo que está pasando.
  */
 
 import { View, Text, Image } from 'react-native'
@@ -25,35 +32,25 @@ export interface EmptyStateAction {
 export interface EmptyStateProps {
   title: string
   message?: string
-  /** `none` para casos donde la ilustración distrae más que ayuda */
-  illustration?: 'pointing' | 'greeting' | 'none'
   actions?: EmptyStateAction[]
   testID?: string
 }
 
-const ILLUSTRATIONS = {
-  pointing: images.senalando,
-  greeting: images.pulgar,
-} as const
-
 export function EmptyState({
   title,
   message,
-  illustration = 'pointing',
   actions = [],
   testID,
 }: EmptyStateProps) {
   return (
     <View style={styles.container} testID={testID}>
       <InfoCard style={styles.card}>
-        {illustration !== 'none' && (
-          <Image
-            source={ILLUSTRATIONS[illustration]}
-            style={styles.illustration}
-            resizeMode="contain"
-            accessibilityLabel=""
-          />
-        )}
+        <Image
+          source={images.pulgar}
+          style={styles.illustration}
+          resizeMode="contain"
+          accessibilityLabel=""
+        />
 
         <Text style={styles.title}>{title}</Text>
         {message && <Text style={styles.message}>{message}</Text>}

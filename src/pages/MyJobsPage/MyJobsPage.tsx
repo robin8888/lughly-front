@@ -105,7 +105,6 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
           <EmptyState
             title="No hemos podido cargar tus trabajos"
             message="Revisa tu conexión e inténtalo de nuevo."
-            illustration="greeting"
             actions={[
               {
                 label: 'Reintentar',
