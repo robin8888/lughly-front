@@ -44,7 +44,20 @@ export const registerSchema = z
      * lo mismo por las dos cosas.
      */
     trades: z
-      .array(z.object({ slug: z.string(), hourlyRate: z.string() }))
+      .array(
+        z.object({
+          slug: z.string(),
+          hourlyRate: z.string(),
+          /*
+            Los dos opcionales y como texto, que es lo que hay en el campo. El
+            alta usa el mismo formulario que "Mis oficios", así que si no
+            viajaran, quien los rellenase aquí los vería desaparecer sin que
+            nada se lo dijera.
+          */
+          urgencyRate: z.string().default(''),
+          description: z.string().default(''),
+        }),
+      )
       .default([]),
     city: z.string().optional(),
     acceptTerms: z.boolean(),
@@ -206,7 +219,15 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
           password: parsed.data.password,
           phone: parsed.data.phone,
           role: parsed.data.role,
-          trades: parsed.data.trades,
+          trades: parsed.data.trades.map((trade) => ({
+            slug: trade.slug,
+            hourlyRate: trade.hourlyRate,
+            urgencyHourlyRate:
+              trade.urgencyRate.trim() === ''
+                ? null
+                : Number(trade.urgencyRate.replace(',', '.')),
+            description: trade.description.trim(),
+          })),
           city: parsed.data.city,
           acceptTerms: parsed.data.acceptTerms,
           acceptComms: parsed.data.acceptComms,

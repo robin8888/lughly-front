@@ -20,6 +20,17 @@ import { Picker } from '@/components/molecules/Picker'
 import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
 import { styles } from './TradeRatesField.styles'
 
+/**
+ * Un ejemplo del propio oficio, no un "describe tu trabajo".
+ *
+ * Un marcador genérico se lee como un campo más que rellenar; uno que ya
+ * habla de lo suyo enseña de qué va esto —de lo que hace en ESE oficio— sin
+ * tener que explicarlo aparte.
+ */
+function placeholderFor(slug: string): string {
+  return `Ej. lo que sueles hacer en ${getTradeLabel(slug).toLowerCase()}, y lo que te distingue.`
+}
+
 export interface TradeRate {
   slug: string
   /** Como texto: es lo que hay en el campo, con la coma que teclee */
@@ -32,6 +43,16 @@ export interface TradeRate {
    * corriendo por una fuga pero no por un mueble.
    */
   urgencyRate: string
+  /**
+   * Qué hace en este oficio, con sus palabras.
+   *
+   * Una por oficio y no una del perfil: la ficha del directorio responde
+   * siempre a un oficio —el buscado, o el principal—, y con una sola
+   * descripción un carpintero que además hace limpieza salía en el listado de
+   * limpieza hablando de armarios a medida. Vacía es válido: quien no la
+   * escriba sigue saliendo con la general de su perfil.
+   */
+  description: string
 }
 
 export interface TradeRatesFieldProps {
@@ -60,7 +81,7 @@ export function TradeRatesField({
   const available = TRADE_OPTIONS.filter((option) => !chosen.has(option.value))
 
   const add = (slug: string) => {
-    onChange([...value, { slug, hourlyRate: '', urgencyRate: '' }])
+    onChange([...value, { slug, hourlyRate: '', urgencyRate: '', description: '' }])
     setPickerKey((key) => key + 1)
   }
 
@@ -72,6 +93,14 @@ export function TradeRatesField({
     onChange(
       value.map((trade) =>
         trade.slug === slug ? { ...trade, urgencyRate } : trade,
+      ),
+    )
+  }
+
+  const setDescription = (slug: string, description: string) => {
+    onChange(
+      value.map((trade) =>
+        trade.slug === slug ? { ...trade, description } : trade,
       ),
     )
   }
@@ -112,6 +141,7 @@ export function TradeRatesField({
                   marcador desaparece al teclear, que es justo cuando un número
                   suelto deja de decir si son euros por hora o por trabajo.
                 */}
+                <Text style={styles.rateLabel}>Hora normal</Text>
                 <Input
                   value={trade.hourlyRate}
                   onChangeText={(text) => setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))}
@@ -147,8 +177,8 @@ export function TradeRatesField({
             <View style={styles.urgencyRow}>
               <Text style={styles.urgencyLabel}>
                 {trade.urgencyRate.trim() === ''
-                  ? 'No atiendes urgencias de este oficio'
-                  : 'Urgencias de este oficio'}
+                  ? 'Hora en urgencia · no atiendes urgencias de este oficio'
+                  : 'Hora en urgencia'}
               </Text>
 
               <Input
@@ -165,11 +195,45 @@ export function TradeRatesField({
               />
             </View>
           )}
+
+          {/*
+            Y qué hace en este oficio. Va también cuando las tarifas están
+            escondidas —un empleado no ve lo que cobra su empresa, pero el
+            texto que sale en su ficha es suyo— y por eso queda fuera del
+            `hideRates`.
+          */}
+          <View style={styles.descriptionRow}>
+            <Text style={styles.fieldLabel}>Qué haces en este oficio</Text>
+
+            <Input
+              value={trade.description}
+              onChangeText={(text) => setDescription(trade.slug, text)}
+              placeholder={placeholderFor(trade.slug)}
+              multiline
+              numberOfLines={3}
+              maxLength={500}
+              editable={!disabled}
+              style={styles.descriptionInput}
+              testID={`trade-description-${trade.slug}`}
+            />
+
+            <Text style={styles.fieldHint}>
+              Sale en tu ficha del listado de {getTradeLabel(trade.slug).toLowerCase()}.
+              Si lo dejas vacío se enseña la descripción general de tu perfil.
+            </Text>
+          </View>
         </View>
       ))}
 
       {available.length > 0 && (
         <View style={styles.add}>
+          {/*
+            Con rótulo propio. El desplegable solo, al final de una lista de
+            oficios, se leía como parte del último en vez de como la forma de
+            añadir otro —que es lo que casi todo el mundo viene a hacer aquí.
+          */}
+          <Text style={styles.addLabel}>Añadir oficio</Text>
+
           <Picker
             key={pickerKey}
             options={available}

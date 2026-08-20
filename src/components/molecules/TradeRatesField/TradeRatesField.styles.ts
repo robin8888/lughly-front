@@ -1,26 +1,29 @@
 /**
  * TradeRatesField styles
- * Una fila por oficio: nombre, precio y la cruz de quitarlo.
+ * Un bloque por oficio: nombre y hora normal arriba, la hora en urgencia
+ * debajo y el qué haces al final.
  */
 
 import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
-  /** Cada oficio: su fila de siempre y debajo la de urgencias */
+  /** Cada oficio entero, separado del siguiente por una línea y aire */
   trade: {
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.hairline,
-    paddingBottom: 10,
-    marginBottom: 4,
+    paddingBottom: 14,
+    marginBottom: 14,
   },
+  /*
+   * Sin línea propia: la del bloque ya separa un oficio del siguiente, y con
+   * tres partes dentro una raya en medio parecía el final de algo.
+   */
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 8,
     paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
   },
   labelColumn: {
     flex: 1,
@@ -43,6 +46,17 @@ export const styles = StyleSheet.create({
     width: 112,
   },
   /*
+   * Con rótulo desde que hay dos precios. Sin él, el de urgencia se leía como
+   * una corrección del de arriba en vez de como otra tarifa.
+   */
+  rateLabel: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+    textAlign: 'right',
+    marginBottom: 3,
+  },
+  /*
    * El número pegado a su unidad. A la izquierda quedaba un hueco entre la
    * cifra y el "€/h" que hacía dudar de si formaban parte de lo mismo.
    */
@@ -63,6 +77,12 @@ export const styles = StyleSheet.create({
   },
   add: {
     marginTop: 10,
+  },
+  addLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+    marginBottom: 6,
   },
   empty: {
     fontFamily: theme.typography.fonts.body,
@@ -94,5 +114,33 @@ export const styles = StyleSheet.create({
   urgencyInput: {
     width: 128,
     textAlign: 'right',
+  },
+
+  /**
+   * Qué hace en este oficio.
+   *
+   * Una por oficio: la ficha del directorio responde siempre a un oficio, y
+   * con una sola descripción un carpintero que además hace limpieza salía en
+   * el listado de limpieza hablando de armarios a medida.
+   */
+  descriptionRow: {
+    marginTop: 10,
+  },
+  fieldLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.text,
+    marginBottom: 5,
+  },
+  descriptionInput: {
+    minHeight: 76,
+    textAlignVertical: 'top',
+  },
+  fieldHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.45,
+    color: theme.colors.textSoft,
+    marginTop: 5,
   },
 })

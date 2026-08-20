@@ -368,15 +368,31 @@ export function ProProfilePage({
          * Con más de un oficio hay más de un precio, y el titular solo puede
          * enseñar uno. Aquí van todos: quien viene buscando limpieza puede
          * descubrir que además pasea perros, y necesita saber a cuánto.
+         *
+         * Y también con uno solo si ha contado algo de él: si no, lo que
+         * escribió en su único oficio no se vería en ninguna parte.
          */}
-        {pro.trades.length > 1 && (
+        {(pro.trades.length > 1 ||
+          pro.trades.some((trade) => trade.description)) && (
           <InfoCard style={styles.section} testID="pro-trades">
             <Text style={styles.sectionTitle}>Lo que hace y a qué precio</Text>
 
             {pro.trades.map((trade) => (
-              <View key={trade.slug} style={styles.tradeRow}>
-                <Text style={styles.tradeLabel}>{trade.label}</Text>
-                <Text style={styles.tradeRate}>{trade.hourlyRate} €/h</Text>
+              <View key={trade.slug} style={styles.tradeBlock}>
+                <View style={styles.tradeRow}>
+                  <Text style={styles.tradeLabel}>{trade.label}</Text>
+                  <Text style={styles.tradeRate}>{trade.hourlyRate} €/h</Text>
+                </View>
+
+                {/*
+                  Lo que cuenta de ESE oficio. Antes solo estaba la descripción
+                  del perfil, arriba, y valía igual para los cuatro: quien
+                  ejerce carpintería y limpieza no hace lo mismo en las dos, y
+                  el mismo párrafo en ambas no dice nada de ninguna.
+                */}
+                {trade.description && (
+                  <Text style={styles.tradeDescription}>{trade.description}</Text>
+                )}
               </View>
             ))}
           </InfoCard>

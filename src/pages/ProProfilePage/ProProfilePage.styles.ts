@@ -217,14 +217,30 @@ export const styles = StyleSheet.create({
     opacity: 0.85,
   },
   /** Una línea por oficio: nombre a la izquierda, precio a la derecha */
+  /*
+    La línea separa el oficio entero —su precio y lo que cuenta de él— del
+    siguiente. Antes iba en la fila del precio, y con la descripción debajo
+    habría partido en dos lo que es una sola cosa.
+  */
+  tradeBlock: {
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.cardDivider,
+  },
   tradeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.cardDivider,
+    paddingVertical: 5,
+  },
+  tradeDescription: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.55,
+    color: theme.colors.cardText,
+    opacity: 0.8,
+    paddingBottom: 6,
   },
   tradeLabel: {
     flex: 1,

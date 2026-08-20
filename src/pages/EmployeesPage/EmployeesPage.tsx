@@ -254,6 +254,8 @@ export function EmployeesPage({
       trades: trades.map((trade) => ({
         slug: trade.slug,
         hourlyRate: rateOf(trade.hourlyRate),
+        /* Lo que el cliente leerá en su ficha, por oficio */
+        description: trade.description.trim(),
       })),
       city: form.city.trim(),
     })

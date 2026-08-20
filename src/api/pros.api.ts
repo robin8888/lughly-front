@@ -19,6 +19,15 @@ export interface ApiProTrade {
    * avería.
    */
   urgencyHourlyRate?: number | null
+  /**
+   * Qué hace en este oficio, con sus palabras.
+   *
+   * `null` significa que no lo ha escrito, y entonces se enseña la descripción
+   * general de su perfil. El servidor ya hace esa sustitución para la ficha
+   * del directorio: lo que llega en `bio` es la del oficio de la tarjeta si la
+   * hay, y la general si no.
+   */
+  description?: string | null
 }
 
 export interface ApiPro {

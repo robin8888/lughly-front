@@ -56,6 +56,8 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
           /* Vacío si no atiende urgencias de ese oficio, que es lo normal */
           urgencyRate:
             trade.urgencyHourlyRate == null ? '' : String(trade.urgencyHourlyRate),
+          /* Vacía = sale la descripción general del perfil, como hasta ahora */
+          description: trade.description ?? '',
         })),
       )
     }
@@ -101,6 +103,7 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
         hourlyRate: rateOf(trade.hourlyRate),
         urgencyHourlyRate:
           trade.urgencyRate.trim() === '' ? null : rateOf(trade.urgencyRate),
+        description: trade.description.trim(),
       })),
     })
 
@@ -182,8 +185,14 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
             <InfoCard variant="accent">
               <Text style={styles.intro}>
                 Añade todo lo que hagas de verdad: cada oficio te pone en el
-                listado de ese oficio. El precio es por hora y va por separado,
-                porque no se cobra igual limpiar una casa que cuidar a un mayor.
+                listado de ese oficio, con su hora normal, su hora en urgencia
+                y lo que cuentes de él.
+              </Text>
+
+              <Text style={styles.introNote}>
+                Va todo por oficio porque no se cobra igual limpiar una casa
+                que cuidar a un mayor, ni se cuenta lo mismo. Lo que escribas
+                en cada uno es lo que lee el cliente que busca ese oficio.
               </Text>
             </InfoCard>
 

@@ -59,7 +59,18 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.5,
     color: '#ffffff',
-    marginBottom: 12,
+  },
+  /** El porqué, debajo de lo que hay que hacer y separado por una línea */
+  introNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
+    color: '#ffffff',
+    opacity: 0.9,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.25)',
   },
   formError: {
     fontFamily: theme.typography.fonts.body,

@@ -77,7 +77,12 @@ export interface CreateEmployeePayload {
   phone: string
   nationalId: string
   /** Sus oficios, con la tarifa que cobra la empresa por cada uno */
-  trades: { slug: string; hourlyRate: number }[]
+  trades: {
+    slug: string
+    hourlyRate: number
+    /** Qué hace en ese oficio: es lo que lee el cliente en su ficha */
+    description?: string | null
+  }[]
   city: string
   radiusKm?: number
   latitude?: number
