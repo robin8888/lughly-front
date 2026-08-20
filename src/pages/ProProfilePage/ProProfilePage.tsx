@@ -297,21 +297,32 @@ export function ProProfilePage({
         </InfoCard>
 
         {/**
-         * Sus trabajos, a lo ancho y con desplazamiento lateral. Aquí sí se
-         * ven grandes: es la pantalla donde se decide, y recortarlas a
-         * cuadraditos como en la tarjeta desaprovecharía el sitio.
+         * Sus trabajos, a lo ancho y con desplazamiento lateral.
          *
-         * Una tira por oficio, con su nombre encima. En la tarjeta solo salen
-         * las del oficio buscado; en la ficha interesa lo contrario —ver todo
-         * lo que hace— pero sin mezclar, que es lo que hacía dudar de si esa
-         * cocina la había montado él o solo pintado.
+         * Una tira por oficio, con su rótulo y cuántas hay. En la tarjeta del
+         * directorio solo salen las del oficio buscado; en la ficha interesa
+         * lo contrario —ver todo lo que hace— pero sin mezclar, que es lo que
+         * hacía dudar de si esa cocina la había montado él o solo pintado.
+         *
+         * Las fotos son más pequeñas que antes (220 → 150). A ese tamaño se
+         * veían dos y media y la tira parecía cortada; ahora entran tres y
+         * pico, que es lo que dice sin palabras que hay más a la derecha. Y
+         * para mirar de cerca está el visor, que es su sitio.
          */}
         {photoGroups.map((group) => (
           <View key={group.tradeSlug} style={styles.galleryGroup}>
-            {/* El nombre del oficio solo si hay más de uno: con uno, sobra */}
-            {photoGroups.length > 1 && (
-              <Text style={styles.galleryLabel}>{group.tradeLabel}</Text>
-            )}
+            <View style={styles.galleryHead}>
+              {/* Con un solo oficio el nombre sobra: se sabe de qué son */}
+              <Text style={styles.galleryLabel}>
+                {photoGroups.length > 1 ? group.tradeLabel : 'Sus trabajos'}
+              </Text>
+
+              <Text style={styles.galleryCount}>
+                {group.photos.length === 1
+                  ? '1 foto'
+                  : `${group.photos.length} fotos`}
+              </Text>
+            </View>
 
             <ScrollView
               horizontal

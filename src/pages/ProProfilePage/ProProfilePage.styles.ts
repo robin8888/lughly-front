@@ -160,31 +160,57 @@ export const styles = StyleSheet.create({
    * que invita a arrastrar.
    */
   galleryGroup: {
-    marginBottom: 4,
+    marginBottom: 14,
+  },
+  /*
+    El rótulo de la tira y cuántas fotos hay, a los lados. El número no es un
+    adorno: dice si merece la pena arrastrar y cuánto queda por ver, que en una
+    tira horizontal no se sabe hasta el final.
+  */
+  galleryHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 8,
   },
   /** El oficio de la tira, en pequeño y en mayúsculas como el resto de rótulos */
   galleryLabel: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     color: theme.colors.cardText,
     opacity: 0.7,
-    marginBottom: 6,
+  },
+  galleryCount: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
   },
   gallery: {
     marginHorizontal: -16,
-    marginBottom: 12,
   },
   galleryContent: {
     paddingHorizontal: 16,
     gap: 8,
   },
+  /**
+   * Más pequeñas que antes: 220 de ancho dejaban ver dos y media y la tira
+   * parecía cortada. Con 150 entran tres y pico, y ese trozo de la cuarta es
+   * lo que dice sin palabras que hay más a la derecha.
+   *
+   * En 4:3 y no en 3:4 porque así se suele fotografiar una habitación
+   * terminada, y con el borde fino para que una foto clara no se derrame en
+   * el fondo de la página.
+   */
   galleryPhoto: {
-    width: 220,
-    height: 165,
+    width: 150,
+    height: 112,
     backgroundColor: theme.colors.accent100,
-    // Redondeadas como las tarjetas: era lo único que quedaba en esquina viva
-    borderRadius: theme.radius.card,
+    borderRadius: theme.radius.field,
+    borderWidth: 1,
+    borderColor: theme.colors.hairline,
   },
 
   bio: {
