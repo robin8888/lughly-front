@@ -128,6 +128,44 @@ export function useConfirmAssignment() {
   }
 }
 
+/**
+ * Decir que no se puede con un encargo, antes de que caduque.
+ *
+ * Es la otra mitad de `useConfirmAssignment`, y son dos y no una porque son
+ * dos preguntas a dos personas: aquella la responde el trabajador sobre lo que
+ * le han asignado, y esta quien recibió el encargo sobre si lo coge.
+ */
+export function useDeclineRequest() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ jobId, reason }: { jobId: string; reason: string }) =>
+      assignmentsApi.decline(jobId, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: inboxQueryKey() })
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    decline: async (jobId: string, reason: string) => {
+      try {
+        await mutation.mutateAsync({ jobId, reason })
+        return { ok: true as const, error: null }
+      } catch (error) {
+        return {
+          ok: false as const,
+          error:
+            error instanceof NetworkError || error instanceof ApiError
+              ? error.message
+              : null,
+        }
+      }
+    },
+    isDeclining: mutation.isPending,
+  }
+}
+
 export function useRespondSubstitute() {
   const queryClient = useQueryClient()
 

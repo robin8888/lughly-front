@@ -172,6 +172,20 @@ export const assignmentsApi = {
       body: { accept, ...(reason ? { reason } : {}) },
     }),
 
+  /**
+   * Decir que no se puede con un encargo, antes de que caduque.
+   *
+   * El motivo es obligatorio pero **al cliente no se le enseña**: sin jefe a
+   * quien contárselo, el único destinatario sería un desconocido. Se guarda
+   * para nosotros.
+   */
+  decline: (jobId: string, reason: string) =>
+    apiRequest<{ jobId: string; status: string }>(`/v1/jobs/${jobId}/decline`, {
+      method: 'POST',
+      auth: true,
+      body: { reason },
+    }),
+
   /** La respuesta del cliente al cambio de persona */
   respondSubstitute: (jobId: string, accept: boolean) =>
     apiRequest<ApiSubstituteDecision>(`/v1/jobs/${jobId}/substitute`, {

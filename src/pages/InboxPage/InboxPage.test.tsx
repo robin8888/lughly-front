@@ -52,6 +52,10 @@ jest.mock('@/hooks/domain/useInbox', () => ({
     confirm: () => Promise.resolve({ ok: true, error: null }),
     isConfirming: false,
   }),
+  useDeclineRequest: () => ({
+    decline: () => Promise.resolve({ ok: true, error: null }),
+    isDeclining: false,
+  }),
 }))
 
 jest.mock('@/hooks/domain/useEmployees', () => ({

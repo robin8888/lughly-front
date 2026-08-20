@@ -11,16 +11,27 @@
  *    saber si es una baja o un solape.
  *
  * **El motivo no le llega al cliente.** Es el mismo criterio que el motivo de
- * una ausencia —una baja médica es asunto de quien la tiene— y además está
- * escrito para el jefe, no para un desconocido. La pantalla lo dice, para que
- * nadie se lo calle por miedo a que lo lea el cliente.
+ * una ausencia —una baja médica es asunto de quien la tiene—. La pantalla lo
+ * dice, para que nadie se lo calle por miedo a que lo lea el cliente.
+ *
+ * Sirve para las dos formas de decir que no, porque la pregunta es la misma y
+ * el motivo se pide igual:
+ *
+ * - Lo que **te han asignado** (`PENDING_WORKER`): empieza preguntando si
+ *   puedes, y solo pide el motivo si dices que no.
+ * - Lo que **te han encargado** (`PENDING_PRO`): el "sí" de ahí es decir quién
+ *   va, y eso se hace en la lista de encargos. Aquí solo se entra a rechazar,
+ *   así que va directo al motivo.
  */
 
 import { useState } from 'react'
 import { View, Text } from 'react-native'
 import { Input } from '@/components/atoms/Input'
 import { Dialog } from '@/components/organisms/Dialog'
-import { useConfirmAssignment } from '@/hooks/domain/useInbox'
+import {
+  useConfirmAssignment,
+  useDeclineRequest,
+} from '@/hooks/domain/useInbox'
 import type { ApiInboxItem } from '@/api/assignments.api'
 import { formatJobWhen } from '@/utils/dates'
 import { styles } from './AssignmentConfirm.styles'
@@ -39,26 +50,39 @@ export function AssignmentConfirm({
   testID,
 }: AssignmentConfirmProps) {
   const { confirm, isConfirming } = useConfirmAssignment()
+  const { decline, isDeclining } = useDeclineRequest()
 
-  const [explaining, setExplaining] = useState(false)
+  const [asked, setAsked] = useState(false)
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   if (!job) return null
 
+  /** Lo que ya le han asignado y solo falta que confirme */
+  const isAssigned = job.status === 'PENDING_WORKER'
+
+  /**
+   * Un encargo sin asignar entra ya explicando: su "sí" es elegir quién va, y
+   * eso se decide en la lista, no aquí.
+   */
+  const explaining = !isAssigned || asked
+  const isWorking = isConfirming || isDeclining
+
   const close = () => {
-    setExplaining(false)
+    setAsked(false)
     setReason('')
     setError(null)
     onDismiss()
   }
 
   const answer = async (accept: boolean) => {
-    const { ok, error: failed } = await confirm(
-      job.id,
-      accept,
-      accept ? undefined : reason.trim(),
-    )
+    /*
+      Dos caminos porque son dos preguntas distintas al servidor: confirmar lo
+      asignado, o rechazar lo encargado. Lo que se escribe es lo mismo.
+    */
+    const { ok, error: failed } = isAssigned
+      ? await confirm(job.id, accept, accept ? undefined : reason.trim())
+      : await decline(job.id, reason.trim())
 
     if (!ok) {
       setError(failed ?? 'No hemos podido enviar tu respuesta.')
@@ -76,20 +100,25 @@ export function AssignmentConfirm({
         visible
         tone="danger"
         title="¿Por qué no puedes?"
-        message="Se lo decimos a tu empresa para que mande a otro. Al cliente no se le enseña lo que escribas aquí."
+        message={
+          isAssigned
+            ? 'Se lo decimos a tu empresa para que mande a otro. Al cliente no se le enseña lo que escribas aquí.'
+            : 'Al cliente le diremos que no puedes y quedará libre para buscar a otro, pero no verá lo que escribas aquí.'
+        }
         onDismiss={close}
         testID={testID}
         actions={[
           {
-            label: isConfirming ? 'Enviando…' : 'Enviar',
+            label: isWorking ? 'Enviando…' : 'Enviar',
             onPress: () => void answer(false),
-            disabled: reason.trim().length === 0 || isConfirming,
+            disabled: reason.trim().length === 0 || isWorking,
             testID: 'assignment-decline-send',
           },
           {
-            label: 'Volver',
+            /* Solo hay a dónde volver si antes hubo una pregunta */
+            label: isAssigned ? 'Volver' : 'Cancelar',
             variant: 'secondary',
-            onPress: () => setExplaining(false),
+            onPress: isAssigned ? () => setAsked(false) : close,
             testID: 'assignment-decline-back',
           },
         ]}
@@ -121,15 +150,15 @@ export function AssignmentConfirm({
       testID={testID}
       actions={[
         {
-          label: isConfirming ? 'Un momento…' : 'Puedo hacerlo',
+          label: isWorking ? 'Un momento…' : 'Puedo hacerlo',
           onPress: () => void answer(true),
-          disabled: isConfirming,
+          disabled: isWorking,
           testID: 'assignment-accept',
         },
         {
           label: 'No puedo',
           variant: 'secondary',
-          onPress: () => setExplaining(true),
+          onPress: () => setAsked(true),
           testID: 'assignment-decline',
         },
       ]}

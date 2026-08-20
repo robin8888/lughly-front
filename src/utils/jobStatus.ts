@@ -29,10 +29,18 @@ const STATUS: Record<ApiJobStatus, StatusLook> = {
    * que el cliente haga algo.
    */
   SUBSTITUTE_PROPOSED: { label: 'Te proponen un cambio', variant: 'accent2' },
+  /**
+   * Asignado y esperando que el profesional lo confirme. Al cliente se le dice
+   * así de neutro a propósito: quién va y cómo se organiza la empresa por
+   * dentro no es asunto suyo, pero sí lo es que todavía no es firme.
+   */
+  PENDING_WORKER: { label: 'Pendiente de confirmar', variant: 'accent' },
   AWARDED: { label: 'Adjudicada', variant: 'accent2' },
   IN_PROGRESS: { label: 'En curso', variant: 'available' },
   COMPLETED: { label: 'Terminada', variant: 'neutral' },
   EXPIRED: { label: 'Expirada', variant: 'outline' },
+  /** Dijeron que no. Se distingue de expirada: una es respuesta y otra silencio */
+  DECLINED: { label: 'No pueden', variant: 'outline' },
   CANCELLED: { label: 'Cancelada', variant: 'outline' },
 }
 

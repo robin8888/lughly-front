@@ -14,10 +14,14 @@ export type ApiJobStatus =
   | 'PENDING_PRO'
   /** La empresa propone mandar a otro y falta que el cliente conteste */
   | 'SUBSTITUTE_PROPOSED'
+  /** La empresa ya ha asignado a uno de los suyos y falta que él lo confirme */
+  | 'PENDING_WORKER'
   | 'AWARDED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
   | 'EXPIRED'
+  /** El profesional ha dicho que no puede. No es lo mismo que expirar */
+  | 'DECLINED'
   | 'CANCELLED'
 
 export interface ApiJob {

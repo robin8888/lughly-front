@@ -345,6 +345,28 @@ export function InboxPage({ onBack }: InboxPageProps) {
                             </Pressable>
                           )
                         })}
+
+                      {/*
+                        Decir que no, sin esperar a que caduque. Hasta ahora la
+                        única forma era dejarlo morir: el cliente pasaba 24
+                        horas mirando un "esperando respuesta" que ya no iba a
+                        llegar, y quien no podía no tenía cómo decirlo.
+
+                        Va al final y en contorno: lo que se espera de esta
+                        pantalla es repartir trabajo, no soltarlo.
+                      */}
+                      <Pressable
+                        onPress={() => setConfirming(job)}
+                        disabled={isAssigning}
+                        style={styles.choice}
+                        accessibilityRole="button"
+                        testID={`inbox-${job.id}-decline`}
+                      >
+                        <Text style={styles.choiceText}>No podemos</Text>
+                        <Text style={styles.choiceHint}>
+                          El cliente queda libre para buscar a otro
+                        </Text>
+                      </Pressable>
                     </View>
                   )}
                 </InfoCard>
