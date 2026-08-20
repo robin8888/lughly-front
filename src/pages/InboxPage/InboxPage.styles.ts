@@ -54,16 +54,18 @@ export const styles = StyleSheet.create({
     gap: 12,
   },
 
-  cardHead: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
+  /**
+   * El título, solo en su línea.
+   *
+   * Estaba en fila con las etiquetas y con dos —"Sin responder" y el tipo de
+   * encargo— se quedaba en un tercio del ancho: "Cambiar toda la grifería del
+   * piso" salía en cuatro líneas de tres palabras. El título es lo que
+   * identifica el trabajo, así que se lee entero y lo demás va debajo.
+   */
   jobTitle: {
-    flex: 1,
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.small,
+    fontSize: 17,
+    lineHeight: 17 * 1.3,
     color: theme.colors.cardText,
   },
   meta: {
@@ -193,12 +195,12 @@ export const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  /** Las dos etiquetas de la cabecera, que en móvil estrecho caen a dos filas */
+  /** Las etiquetas, debajo del título y alineadas con él */
   cardTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-end',
     gap: 5,
+    marginTop: 6,
   },
 
   /**

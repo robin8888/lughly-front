@@ -179,23 +179,22 @@ export function InboxPage({ onBack }: InboxPageProps) {
                   style={unanswered ? styles.cardUnanswered : undefined}
                   testID={`inbox-${job.id}`}
                 >
-                  <View style={styles.cardHead}>
-                    <Text style={styles.jobTitle}>{job.title}</Text>
-                    <View style={styles.cardTags}>
-                      {/*
-                        En rojo y con palabras, no solo con color: quien no
-                        distingue el rojo tiene que poder encontrarlos igual.
-                        Va delante del tipo porque es lo que se busca.
-                      */}
-                      {unanswered && (
-                        <View style={styles.unansweredTag}>
-                          <Text style={styles.unansweredTagText}>Sin responder</Text>
-                        </View>
-                      )}
-                      <Tag variant="outline">
-                        {jobTypeLabel(job.type as ApiJobType)}
-                      </Tag>
-                    </View>
+                  <Text style={styles.jobTitle}>{job.title}</Text>
+
+                  <View style={styles.cardTags}>
+                    {/*
+                      En rojo y con palabras, no solo con color: quien no
+                      distingue el rojo tiene que poder encontrarlos igual.
+                      Va delante del tipo porque es lo que se busca.
+                    */}
+                    {unanswered && (
+                      <View style={styles.unansweredTag}>
+                        <Text style={styles.unansweredTagText}>Sin responder</Text>
+                      </View>
+                    )}
+                    <Tag variant="outline">
+                      {jobTypeLabel(job.type as ApiJobType)}
+                    </Tag>
                   </View>
 
                   <Text style={styles.meta}>
