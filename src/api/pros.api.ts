@@ -44,11 +44,11 @@ export interface ApiPro {
   /** Kilómetros desde el punto enviado; null si no se envió ubicación */
   distanceKm: number | null
   /**
-   * Punto base para el mapa del directorio. Es la base de trabajo que el
-   * profesional declara, no su domicilio.
+   * **El punto base ya no viaja** (20 Agosto 2026). Lo mandaba el servidor
+   * para pintar el mapa del directorio, y eso era decirle a cualquiera dónde
+   * encontrar a una persona. Queda `distanceKm`, que es lo que el cliente
+   * necesita y no lleva a nadie a ninguna puerta.
    */
-  latitude: number | null
-  longitude: number | null
   /**
    * Para quién trabaja. Encabeza la tarjeta: es a quien se contrata, quien
    * pone el precio y quien factura. Null si trabaja por su cuenta.
@@ -98,8 +98,6 @@ export interface ApiProDetail extends Omit<ApiPro, 'distanceKm' | 'photos'> {
   licenseVerified: boolean
   /** Kilómetros que se desplaza desde su base */
   radiusKm: number
-  latitude: number | null
-  longitude: number | null
   /** Alta en la plataforma, en ISO */
   memberSince: string
   /**

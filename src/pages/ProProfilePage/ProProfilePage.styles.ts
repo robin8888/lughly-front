@@ -239,13 +239,6 @@ export const styles = StyleSheet.create({
   },
 
   /** Altura del mapa de cobertura. En el diseño web son 160 px. */
-  coverageMap: {
-    height: 180,
-    marginTop: 10,
-    // Dentro de una tarjeta redondeada, un mapa en esquina viva canta
-    borderRadius: theme.radius.card,
-    overflow: 'hidden',
-  },
   /*
    * Día a la izquierda y horas a la derecha, como el cartel de un negocio: es
    * la forma en la que ya se sabe leer un horario sin pararse a mirarlo.

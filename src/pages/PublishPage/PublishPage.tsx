@@ -192,20 +192,28 @@ export function PublishPage({
           La emergencia, como botón y en rojo: es lo único de esta pantalla que
           lleva a otro sitio, y quien tiene una fuga no está para leer.
         */}
-        <Pressable
-          onPress={onUrgent}
-          style={styles.urgent}
-          accessibilityRole="button"
-          testID="publish-go-urgent"
-        >
+        {/*
+          La emergencia: el aviso explica y el botón actúa. Antes el bloque
+          entero era pulsable, y una caja roja que se toca sin querer manda a
+          avisar a media ciudad; ahora hay que ir a por el botón.
+        */}
+        <View style={styles.urgent}>
           <View style={styles.urgentText}>
             <Text style={styles.urgentTitle}>¿Es una emergencia?</Text>
             <Text style={styles.urgentBody}>
               Avisamos a todos los disponibles de tu zona ahora mismo.
             </Text>
           </View>
-          <Text style={styles.urgentArrow}>→</Text>
-        </Pressable>
+
+          <Pressable
+            onPress={onUrgent}
+            style={styles.urgentButton}
+            accessibilityRole="button"
+            testID="publish-go-urgent"
+          >
+            <Text style={styles.urgentButtonText}>Avisar</Text>
+          </Pressable>
+        </View>
 
         <View style={styles.modes}>
           {(['AUCTION', 'INSTANT'] as const).map((mode) => (

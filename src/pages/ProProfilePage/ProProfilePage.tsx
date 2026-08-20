@@ -28,7 +28,6 @@ import { Avatar } from '@/components/atoms/Avatar'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
-import { CoverageMap } from '@/components/organisms/CoverageMap'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { surchargesSummary } from '@/utils/surcharges'
@@ -461,19 +460,12 @@ export function ProProfilePage({
             Se desplaza hasta {pro.radiusKm} km desde su base en {pro.city}.
           </Text>
 
-          {/**
-           * El mapa solo si hay punto base. Un profesional que no lo haya
-           * fijado se queda con la frase, que ya dice lo esencial.
-           */}
-          {pro.latitude !== null && pro.longitude !== null && (
-            <CoverageMap
-              center={[pro.longitude, pro.latitude]}
-              radiusKm={pro.radiusKm}
-              // El cliente lo mira, no lo edita: el radio es del profesional
-              style={styles.coverageMap}
-              testID="pro-coverage-map"
-            />
-          )}
+          {/*
+            Sin mapa (20 Agosto 2026). Enseñaba su punto base, y eso es decirle
+            a cualquiera dónde encontrar a una persona por haber entrado a
+            mirar su ficha. El radio en palabras dice lo que el cliente
+            necesita —si le llega— sin llevar a nadie a ninguna puerta.
+          */}
         </InfoCard>
 
         <ReviewList proId={pro.id} proName={pro.name} testID="pro-reviews" />

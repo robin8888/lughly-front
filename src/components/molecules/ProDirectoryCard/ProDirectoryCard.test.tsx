@@ -30,8 +30,6 @@ function makePro(photos: string[]): ApiPro {
     verified: true,
     bio: 'Reparaciones y reformas de baño.',
     distanceKm: null,
-    latitude: null,
-    longitude: null,
     employerName: null,
   }
 }

@@ -54,6 +54,7 @@ export const styles = StyleSheet.create({
    */
   urgent: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
     padding: 14,
@@ -77,10 +78,17 @@ export const styles = StyleSheet.create({
     opacity: 0.9,
     marginTop: 2,
   },
-  urgentArrow: {
+  /** Blanco sobre el rojo: es la acción, y tiene que verse como tal */
+  urgentButton: {
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: theme.radius.pill,
+    backgroundColor: '#ffffff',
+  },
+  urgentButtonText: {
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.h5,
-    color: '#ffffff',
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.urgency,
   },
 
   /** El texto que explica los dos modos, sobre el azul */
