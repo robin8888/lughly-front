@@ -21,7 +21,12 @@ import { ReactNode } from 'react'
 import { View, type ViewStyle } from 'react-native'
 import { styles } from './InfoCard.styles'
 
-export type InfoCardVariant = 'light' | 'dark'
+/**
+ * `accent` es para el texto que explica la pantalla: fondo en el azul de la
+ * barra de abajo y letra blanca. Le da a esos párrafos una identidad propia y
+ * los separa de lo que se rellena.
+ */
+export type InfoCardVariant = 'light' | 'dark' | 'accent'
 
 export interface InfoCardProps {
   children: ReactNode
@@ -38,11 +43,7 @@ export function InfoCard({
 }: InfoCardProps) {
   return (
     <View
-      style={[
-        styles.base,
-        variant === 'dark' ? styles.dark : styles.light,
-        style,
-      ]}
+      style={[styles.base, styles[variant], style]}
       testID={testID}
     >
       {children}

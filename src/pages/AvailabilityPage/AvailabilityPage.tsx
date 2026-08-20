@@ -261,7 +261,12 @@ export function AvailabilityPage({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <InfoCard>
+        {/*
+          El texto que explica la pantalla, en el azul de la barra de abajo.
+          Lo que se rellena va en tarjetas blancas, así que de un vistazo se
+          distingue lo que hay que leer de lo que hay que tocar.
+        */}
+        <InfoCard variant="accent">
           <Text style={styles.intro}>
             {isForEmployee
               ? 'A qué horas trabaja normalmente. Es lo que dirá qué huecos se le pueden reservar, así que pon las horas a las que de verdad puede ir.'
