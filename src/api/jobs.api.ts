@@ -160,4 +160,14 @@ export const jobsApi = {
   /** La ficha completa de un trabajo, para quien tiene algo que ver con él */
   detail: (jobId: string) =>
     apiRequest<ApiJobDetail>(`/v1/jobs/${jobId}`, { auth: true }),
+
+  /**
+   * Cancelar un trabajo propio. Solo mientras nadie ha movido nada: una vez
+   * adjudicado hay alguien que ha reservado sus horas.
+   */
+  cancel: (jobId: string) =>
+    apiRequest<{ jobId: string; status: ApiJobStatus }>(
+      `/v1/jobs/${jobId}/cancel`,
+      { method: 'POST', auth: true },
+    ),
 }

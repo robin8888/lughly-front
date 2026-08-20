@@ -17,14 +17,14 @@
  * del cliente—, así que aquí solo hay que no enseñar lo que llegue vacío.
  */
 
-import { View, Text, ActivityIndicator, Pressable } from 'react-native'
+import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Countdown } from '@/components/atoms/Countdown'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
-import { useJob } from '@/hooks/domain/useJob'
+import { useJob, useCancelJob } from '@/hooks/domain/useJob'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -96,6 +96,38 @@ export interface JobDetailPageProps {
 export function JobDetailPage({ jobId, onBack, onSeeBids }: JobDetailPageProps) {
   const onScroll = useNavScrollHandler()
   const { data: job, isPending, isError, refetch } = useJob(jobId)
+  const { cancel, isCancelling } = useCancelJob()
+
+  /**
+   * Se pregunta antes, y con lo que pasa dicho: cancelar no se deshace, y si
+   * había pujas se caen con el trabajo.
+   */
+  const confirmCancel = (id: string, hasBids: boolean) => {
+    Alert.alert(
+      '¿Cancelar este trabajo?',
+      hasBids
+        ? 'Se cerrarán las pujas que has recibido y se avisará a quien estuviera esperando. No se puede deshacer.'
+        : 'Se avisará a quien estuviera esperando respuesta. No se puede deshacer.',
+      [
+        { text: 'Volver', style: 'cancel' },
+        {
+          text: 'Cancelar el trabajo',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              const { ok, error } = await cancel(id)
+              if (!ok) {
+                Alert.alert(
+                  'No se ha podido cancelar',
+                  error ?? 'Inténtalo de nuevo en un momento.',
+                )
+              }
+            })()
+          },
+        },
+      ],
+    )
+  }
 
   const header = (
     <View style={styles.header}>
@@ -143,6 +175,16 @@ export function JobDetailPage({ jobId, onBack, onSeeBids }: JobDetailPageProps) 
   const look = jobStatusLook(job.status)
   const isWaiting =
     job.status === 'PENDING_PRO' || job.status === 'PENDING_WORKER'
+
+  /**
+   * Se puede cancelar mientras nadie ha movido nada. Adjudicado ya no: hay
+   * quien ha reservado sus horas, y eso no se deshace con un botón.
+   */
+  const canCancel =
+    job.viewer === 'client' &&
+    ['DRAFT', 'OPEN', 'PENDING_PRO', 'PENDING_WORKER', 'SUBSTITUTE_PROPOSED'].includes(
+      job.status,
+    )
 
   return (
     <View style={styles.screen} testID="job-detail-page">
@@ -291,6 +333,24 @@ export function JobDetailPage({ jobId, onBack, onSeeBids }: JobDetailPageProps) 
               </Text>
             )}
           </>
+        )}
+
+        {/*
+          Cancelar, al final y en contorno: es la salida, no lo que se viene a
+          hacer aquí. En rojo de urgencia porque no se deshace.
+        */}
+        {canCancel && (
+          <Pressable
+            onPress={() => confirmCancel(job.id, (job.bidCount ?? 0) > 0)}
+            disabled={isCancelling}
+            accessibilityRole="button"
+            style={styles.cancel}
+            testID="job-detail-cancel"
+          >
+            <Text style={styles.cancelText}>
+              {isCancelling ? 'Cancelando…' : 'Cancelar este trabajo'}
+            </Text>
+          </Pressable>
         )}
       </Animated.ScrollView>
     </View>

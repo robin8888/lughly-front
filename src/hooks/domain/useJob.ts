@@ -6,7 +6,8 @@
  * así que aquí no hay dos hooks ni dos rutas.
  */
 
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ApiError, NetworkError } from '@/api'
 import { jobsApi, type ApiJobDetail } from '@/api/jobs.api'
 
 export function jobQueryKey(jobId: string) {
@@ -27,4 +28,39 @@ export function useJob(jobId: string | undefined) {
      */
     staleTime: 15_000,
   })
+}
+
+/**
+ * Cancelar un trabajo propio.
+ *
+ * Al cancelar cambian su ficha y la lista, y si era una subasta también las
+ * pujas: se refresca todo lo de trabajos en vez de ir campo a campo.
+ */
+export function useCancelJob() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (jobId: string) => jobsApi.cancel(jobId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    cancel: async (jobId: string) => {
+      try {
+        await mutation.mutateAsync(jobId)
+        return { ok: true as const, error: null }
+      } catch (error) {
+        return {
+          ok: false as const,
+          error:
+            error instanceof NetworkError || error instanceof ApiError
+              ? error.message
+              : null,
+        }
+      }
+    },
+    isCancelling: mutation.isPending,
+  }
 }

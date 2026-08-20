@@ -169,4 +169,20 @@ export const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
+
+  /** La salida: en contorno y al final, que no es lo que se viene a hacer */
+  cancel: {
+    alignSelf: 'center',
+    marginTop: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.urgency,
+  },
+  cancelText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.urgency,
+  },
 })
