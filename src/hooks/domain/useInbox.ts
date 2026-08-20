@@ -82,6 +82,52 @@ export function useAssignJob() {
   }
 }
 
+/**
+ * El trabajador confirma o rechaza lo que su empresa le ha asignado.
+ *
+ * Al aceptar, el trabajo sale de sus encargos y entra en su agenda; al
+ * rechazar, sale de los suyos y vuelve a los de su empresa. En los dos casos
+ * cambian las dos listas, así que se refrescan las dos.
+ */
+export function useConfirmAssignment() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({
+      jobId,
+      accept,
+      reason,
+    }: {
+      jobId: string
+      accept: boolean
+      reason?: string
+    }) => assignmentsApi.confirm(jobId, accept, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: inboxQueryKey() })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    confirm: async (jobId: string, accept: boolean, reason?: string) => {
+      try {
+        await mutation.mutateAsync({ jobId, accept, reason })
+        return { ok: true as const, error: null }
+      } catch (error) {
+        return {
+          ok: false as const,
+          error:
+            error instanceof NetworkError || error instanceof ApiError
+              ? error.message
+              : null,
+        }
+      }
+    },
+    isConfirming: mutation.isPending,
+  }
+}
+
 export function useRespondSubstitute() {
   const queryClient = useQueryClient()
 

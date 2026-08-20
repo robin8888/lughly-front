@@ -49,6 +49,12 @@ export const colors = {
    * opacidad o baja el color.
    */
   accentGlass: 'rgba(89, 128, 166, 0.72)',
+  /**
+   * El mismo cristal, en el rojo de "ahora no" (`unavailable`) y no en el de
+   * error: rechazar un trabajo que no se puede hacer no es un fallo de nadie,
+   * y con el rojo de error el trabajador leería que ha hecho algo mal.
+   */
+  unavailableGlass: 'rgba(209, 84, 74, 0.72)',
 
   // Neutral ramp
   neutral100: '#f5f5f8',

@@ -47,6 +47,11 @@ jest.mock('@/hooks/domain/useInbox', () => ({
     refetch: () => {},
   }),
   useAssignJob: () => ({ assign: () => Promise.resolve({ ok: true }), isAssigning: false }),
+  /* El diálogo de confirmar cuelga de la pantalla aunque no haya nada que confirmar */
+  useConfirmAssignment: () => ({
+    confirm: () => Promise.resolve({ ok: true, error: null }),
+    isConfirming: false,
+  }),
 }))
 
 jest.mock('@/hooks/domain/useEmployees', () => ({

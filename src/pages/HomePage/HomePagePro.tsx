@@ -29,6 +29,7 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { StatCard } from '@/components/molecules/StatCard'
 import { HeroCard } from '@/components/organisms/HeroCard'
 import { ReviewList } from '@/components/organisms/ReviewList'
+import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
@@ -103,8 +104,27 @@ export function HomePagePro({
    * móvil. Por eso el número va aquí arriba, donde se entra todos los días,
    * y no escondido en Mi cuenta.
    */
-  const { data: inboxData } = useInbox(!isEmployee)
-  const pendingCount = inboxData?.items.length ?? 0
+  /**
+   * También para un empleado, desde el 20 Agosto 2026: antes no se le pedía
+   * —no tenía nada que responder— y ahora sí, porque lo que su empresa le
+   * asigna espera aquí a que lo confirme.
+   */
+  const { data: inboxData } = useInbox()
+  const items = inboxData?.items ?? []
+
+  /** Lo que le han asignado y tiene que confirmar él */
+  const toConfirm = items.filter((item) => item.status === 'PENDING_WORKER')
+  /** Lo que le han encargado y tiene que repartir o aceptar */
+  const pendingCount = items.length - toConfirm.length
+
+  /**
+   * El diálogo sale una vez y con el más urgente —la bandeja viene ordenada
+   * por plazo—, no con todos. Tres diálogos encadenados al abrir la app son
+   * una encerrona; el resto espera en Encargos, que es donde también se
+   * responden.
+   */
+  const [askedToConfirm, setAskedToConfirm] = useState(false)
+  const confirming = askedToConfirm ? null : (toConfirm[0] ?? null)
 
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page-pro">
@@ -161,6 +181,34 @@ export function HomePagePro({
           onSecondary={onSecondary}
           testID="home-pro-hero"
         />
+
+        <AssignmentConfirm
+          job={confirming}
+          onDismiss={() => setAskedToConfirm(true)}
+          testID="home-pro-confirm"
+        />
+
+        {toConfirm.length > 0 && (
+          <Pressable
+            onPress={onInbox}
+            style={styles.inbox}
+            accessibilityRole="button"
+            testID="home-pro-to-confirm"
+          >
+            <View style={styles.employeesText}>
+              <Text style={styles.inboxTitle}>
+                {toConfirm.length === 1
+                  ? 'Tienes un trabajo por confirmar'
+                  : `Tienes ${toConfirm.length} trabajos por confirmar`}
+              </Text>
+              <Text style={styles.inboxBody}>
+                Tu empresa te los ha asignado y espera que digas si puedes. Si
+                no contestas, vuelven a ella para que mande a otro.
+              </Text>
+            </View>
+            <Text style={styles.inboxArrow}>→</Text>
+          </Pressable>
+        )}
 
         {pendingCount > 0 && (
           <Pressable

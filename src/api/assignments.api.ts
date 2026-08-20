@@ -48,7 +48,16 @@ export interface ApiDirectRequest {
 export interface ApiInboxItem {
   id: string
   type: string
-  status: 'PENDING_PRO' | 'SUBSTITUTE_PROPOSED'
+  /**
+   * Qué hay que decidir con este encargo:
+   *
+   * - `PENDING_PRO`: te han elegido y hay que decir quién lo hace. Lo ve un
+   *   autónomo con lo suyo y una empresa con lo de su gente.
+   * - `SUBSTITUTE_PROPOSED`: ya se propuso a otro y se espera al cliente.
+   * - `PENDING_WORKER`: tu empresa te lo ha asignado y **tienes que
+   *   confirmarlo**. Es lo único que ve aquí un trabajador por cuenta ajena.
+   */
+  status: 'PENDING_PRO' | 'SUBSTITUTE_PROPOSED' | 'PENDING_WORKER'
   title: string
   description: string
   trade: string
@@ -72,6 +81,14 @@ export interface ApiInboxItem {
    * que aquí se ofrecía "Yo mismo" siempre y el error llegaba tras pulsar.
    */
   canAssignToSelf: boolean
+}
+
+/** Lo que devuelve confirmar o rechazar un trabajo asignado */
+export interface ApiConfirmation {
+  jobId: string
+  status: string
+  /** Si al rechazarlo vuelve a su empresa */
+  backToEmployer: boolean
 }
 
 export interface ApiAssignment {
@@ -140,6 +157,19 @@ export const assignmentsApi = {
       method: 'POST',
       auth: true,
       body: { proId },
+    }),
+
+  /**
+   * El trabajador dice si puede con lo que le han asignado.
+   *
+   * Al rechazar hace falta el motivo, y ese motivo es para su empresa: es
+   * quien tiene que mandar a otro. Al cliente no se le enseña.
+   */
+  confirm: (jobId: string, accept: boolean, reason?: string) =>
+    apiRequest<ApiConfirmation>(`/v1/jobs/${jobId}/confirm`, {
+      method: 'POST',
+      auth: true,
+      body: { accept, ...(reason ? { reason } : {}) },
     }),
 
   /** La respuesta del cliente al cambio de persona */

@@ -12,11 +12,13 @@
  * a él y también tiene 24 horas para contestar.
  */
 
+import { useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { Countdown } from '@/components/atoms/Countdown'
 import { Tag } from '@/components/atoms/Tag'
 import { EmptyState } from '@/components/molecules/EmptyState'
+import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { useInbox, useAssignJob } from '@/hooks/domain/useInbox'
 import { useEmployees, useEmployer } from '@/hooks/domain/useEmployees'
@@ -39,7 +41,15 @@ export function InboxPage({ onBack }: InboxPageProps) {
   const user = useUser()
   const isEmployee = useIsEmployee()
 
-  const { data, isPending, isError, refetch } = useInbox(!isEmployee)
+  /**
+   * También para un empleado desde el 20 Agosto 2026: aquí es donde confirma
+   * lo que su empresa le asigna. Antes no se le pedía nada porque no tenía
+   * nada que responder.
+   */
+  const { data, isPending, isError, refetch } = useInbox()
+
+  /** El que se está respondiendo en el diálogo, si hay alguno */
+  const [confirming, setConfirming] = useState<ApiInboxItem | null>(null)
   const { assign, isAssigning } = useAssignJob()
 
   /**
@@ -103,16 +113,17 @@ export function InboxPage({ onBack }: InboxPageProps) {
   )
 
   /**
-   * Un empleado no responde encargos: los responde su empresa. Se le explica
-   * en vez de dejarle llegar a un 403 sin motivo aparente.
+   * A un empleado se le explica solo cuando no tiene nada: los encargos los
+   * responde su empresa, pero **lo que ella le asigna lo confirma él**, y eso
+   * sí vive aquí. Antes se le cerraba la pantalla entera.
    */
-  if (isEmployee) {
+  if (isEmployee && !isPending && items.length === 0) {
     return (
       <View style={styles.screen} testID="inbox-page">
         {header}
         <EmptyState
           title="Los encargos los lleva tu empresa"
-          message="Cuando un cliente te elige, el encargo le llega a quien te dio de alta. Verás el trabajo aquí en cuanto te lo asignen, con la dirección y el teléfono del cliente."
+          message="Cuando un cliente te elige, el encargo le llega a quien te dio de alta. Lo que te asigne aparecerá aquí para que digas si puedes hacerlo."
           actions={[{ label: 'Volver', onPress: onBack, testID: 'inbox-employee-back' }]}
           testID="inbox-employee"
         />
@@ -200,7 +211,27 @@ export function InboxPage({ onBack }: InboxPageProps) {
                     </View>
                   )}
 
-                  {isProposed ? (
+                  {job.status === 'PENDING_WORKER' ? (
+                    /**
+                     * Lo que le han asignado y tiene que confirmar. Se responde
+                     * en el mismo diálogo que sale al entrar en la app, para
+                     * que la pregunta y el motivo se pidan igual en los dos
+                     * sitios.
+                     */
+                    <Pressable
+                      onPress={() => setConfirming(job)}
+                      style={styles.primaryChoice}
+                      accessibilityRole="button"
+                      testID={`inbox-${job.id}-answer`}
+                    >
+                      <Text style={styles.primaryChoiceText}>
+                        ¿Puedes hacerlo?
+                      </Text>
+                      <Text style={styles.primaryChoiceHint}>
+                        Te lo ha asignado tu empresa
+                      </Text>
+                    </Pressable>
+                  ) : isProposed ? (
                     /**
                      * Ya se propuso a alguien y toca esperar. Se deja a la
                      * vista en vez de sacarlo de la lista: si desapareciera,
@@ -322,6 +353,12 @@ export function InboxPage({ onBack }: InboxPageProps) {
           </View>
         )}
       </Animated.ScrollView>
+
+      <AssignmentConfirm
+        job={confirming}
+        onDismiss={() => setConfirming(null)}
+        testID="inbox-confirm"
+      />
     </View>
   )
 }
