@@ -2,6 +2,11 @@
  * DirectoryPage
  * Directorio de profesionales, según MobileApp.dc.html (isProfesionales).
  *
+ * **Sin mapa** (20 Agosto 2026). Lo tenía, y enseñaba a cada profesional en su
+ * punto: eso es decirle a cualquiera dónde encontrar a una persona. La
+ * cercanía se sigue diciendo, pero como distancia —"a 2,4 km de ti"—, que es
+ * lo que el cliente necesita saber y no lleva a nadie a ninguna puerta.
+ *
  * El orden lo decide el backend (cercanía y disponibilidad, según README):
  * la app no reordena nada. Si lo hiciera, la regla de negocio viviría en dos
  * sitios y acabarían discrepando.
@@ -15,7 +20,6 @@ import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { ProDirectoryCard } from '@/components/molecules/ProDirectoryCard'
-import { ProsMap } from '@/components/organisms/ProsMap'
 import { usePros } from '@/hooks/domain/usePros'
 import { searchTrades } from '@/utils/tradeSearch'
 import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
@@ -60,7 +64,6 @@ export function DirectoryPage({
   const [trade, setTrade] = useState(initialTrade ?? '')
   const [availableNow, setAvailableNow] = useState(false)
   const [query, setQuery] = useState('')
-  const [showMap, setShowMap] = useState(false)
 
   /**
    * La pestaña no se desmonta al salir de ella, así que el valor inicial solo
@@ -82,16 +85,6 @@ export function DirectoryPage({
   })
 
   const pros = data?.items ?? []
-
-  /**
-   * Solo se pueden pintar los que tienen punto base. Filtrarlo aquí y no
-   * dentro de `ProsMap` deja al mapa recibiendo coordenadas garantizadas, en
-   * vez de tener que decidir qué hacer con las que faltan.
-   */
-  const mappable = pros.filter(
-    (pro): pro is typeof pro & { latitude: number; longitude: number } =>
-      pro.latitude !== null && pro.longitude !== null,
-  )
 
   return (
     <View style={styles.screen} testID="directory-page">
@@ -151,9 +144,11 @@ export function DirectoryPage({
             accessibilityState={{ checked: availableNow }}
             style={[styles.chip, availableNow && styles.chipActive]}
           >
-            <View style={styles.chipDot} />
+            <View
+              style={[styles.chipDot, availableNow && styles.chipDotActive]}
+            />
             <Text style={[styles.chipText, availableNow && styles.chipTextActive]}>
-              Ahora
+              Disponibles
             </Text>
           </Pressable>
 
@@ -167,18 +162,6 @@ export function DirectoryPage({
               testID="directory-trade"
             />
           </View>
-
-          <Pressable
-            onPress={() => setShowMap((value) => !value)}
-            testID="directory-toggle-map"
-            accessibilityRole="button"
-            accessibilityState={{ selected: showMap }}
-            style={[styles.chip, showMap && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, showMap && styles.chipTextActive]}>
-              {showMap ? 'Lista' : 'Mapa'}
-            </Text>
-          </Pressable>
         </View>
 
         {/*
@@ -269,56 +252,26 @@ export function DirectoryPage({
               {isFetching ? ' · actualizando…' : ''}
             </Text>
 
-            {showMap ? (
-              /**
-               * El mapa se monta solo cuando se pide (MAPS_MOBILE.md §7):
-               * mantenerlo vivo bajo la lista consumiría teselas y batería
-               * sin que nadie lo mire.
-               */
-              mappable.length > 0 ? (
-                <ProsMap
-                  pros={mappable}
-                  center={[mappable[0]!.longitude, mappable[0]!.latitude]}
-                  onSelectPro={onSelectPro}
-                  style={styles.map}
-                  testID="directory-map"
+            <View style={styles.list}>
+              {pros.map((pro) => (
+                <ProDirectoryCard
+                  key={pro.id}
+                  pro={pro}
+                  /*
+                    Reasignando, tocar una ficha le encarga el trabajo en vez
+                    de abrirla: se ha entrado a elegir, no a mirar.
+                  */
+                  onPress={() =>
+                    reassign
+                      ? reassign.onChoose(pro.id, pro.name)
+                      : onSelectPro(pro.id)
+                  }
+                  disabled={reassign?.declinedProId === pro.id}
+                  disabledNote="Ya te ha dicho que no puede con este trabajo"
+                  testID={`pro-${pro.id}`}
                 />
-              ) : (
-                <EmptyState
-                  title="Sin puntos que enseñar"
-                  message="Ninguno de estos profesionales ha fijado todavía su base de trabajo. Míralos en la lista."
-                  actions={[
-                    {
-                      label: 'Volver a la lista',
-                      onPress: () => setShowMap(false),
-                      testID: 'directory-back-to-list',
-                    },
-                  ]}
-                  testID="directory-map-empty"
-                />
-              )
-            ) : (
-              <View style={styles.list}>
-                {pros.map((pro) => (
-                  <ProDirectoryCard
-                    key={pro.id}
-                    pro={pro}
-                    /*
-                      Reasignando, tocar una ficha le encarga el trabajo en vez
-                      de abrirla: se ha entrado a elegir, no a mirar.
-                    */
-                    onPress={() =>
-                      reassign
-                        ? reassign.onChoose(pro.id, pro.name)
-                        : onSelectPro(pro.id)
-                    }
-                    disabled={reassign?.declinedProId === pro.id}
-                    disabledNote="Ya te ha dicho que no puede con este trabajo"
-                    testID={`pro-${pro.id}`}
-                  />
-                ))}
-              </View>
-            )}
+              ))}
+            </View>
           </>
         )}
       </Animated.ScrollView>

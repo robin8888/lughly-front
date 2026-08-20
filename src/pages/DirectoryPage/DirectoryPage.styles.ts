@@ -93,34 +93,47 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  /**
+   * El filtro de disponibles.
+   *
+   * Píldora rellena, como el resto de los filtros de la app: era un recuadro
+   * de esquinas casi rectas con borde gris, del tema de antes, y al lado del
+   * buscador redondeado se veía de otro sitio.
+   */
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.divider,
-    backgroundColor: theme.colors.surface,
-  },
-  chipActive: {
-    borderColor: theme.colors.available,
-    backgroundColor: 'rgba(63, 143, 90, 0.12)',
-  },
-  chipDot: {
-    width: 7,
-    height: 7,
+    gap: 7,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  /**
+   * Puesto, va en verde relleno: es el color de "está disponible" en toda la
+   * app —el anillo, el distintivo de la ficha— y aquí se filtra justo por eso.
+   */
+  chipActive: {
     backgroundColor: theme.colors.available,
+  },
+  /** Apagado mientras no se filtra: el punto verde encendido prometía algo */
+  chipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.textSoft,
+  },
+  chipDotActive: {
+    backgroundColor: '#ffffff',
   },
   chipText: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: 14,
-    color: theme.colors.text,
+    color: theme.colors.textSoft,
   },
+  /* Sobre el verde relleno: blanco, que llega a 4,6:1 */
   chipTextActive: {
-    color: '#2f6f45',
+    color: '#ffffff',
   },
   tradeFilter: {
     flex: 1,
