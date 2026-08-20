@@ -16,6 +16,15 @@ export const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: 'rgba(4, 7, 15, 0.62)',
   },
+  /**
+   * El envoltorio que aparta la tarjeta cuando sube el teclado. Con `flex: 1`
+   * porque `KeyboardAvoidingView` calcula el hueco sobre su propio alto: sin
+   * él mide lo que mide la tarjeta y no tiene de dónde apartarla.
+   */
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   card: {
     alignItems: 'center',
     padding: 20,

@@ -15,10 +15,25 @@
  * El tono decide el color: `accent` es el azul de la barra de abajo y `danger`
  * el rojo del anillo de disponibilidad —el de "ahora no", no el de error—, los
  * dos con la misma transparencia que la barra.
+ *
+ * **Con teclado abierto se comporta distinto**, y hace falta: cuando el
+ * diálogo pide escribir algo, el teclado tapa los botones y lo primero que uno
+ * hace es tocar fuera para quitárselo. Si eso cerrara el diálogo, se perdería
+ * lo escrito justo al terminar de escribirlo. Así que mientras el teclado está
+ * arriba, tocar fuera **solo lo baja**; el segundo toque ya cierra.
  */
 
-import { ReactNode } from 'react'
-import { Modal, View, Text, Pressable, Image } from 'react-native'
+import { ReactNode, useEffect, useState } from 'react'
+import {
+  Modal,
+  View,
+  Text,
+  Pressable,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native'
 import { Button } from '@/components/atoms/Button'
 import { images } from '@/images'
 import { styles } from './Dialog.styles'
@@ -57,6 +72,23 @@ export function Dialog({
   onDismiss,
   testID,
 }: DialogProps) {
+  const [keyboardUp, setKeyboardUp] = useState(false)
+
+  useEffect(() => {
+    /*
+      `Did` y no `Will`: en Android solo existen los `Did`, y usar distintos
+      eventos en cada sistema haría que el diálogo se comportara distinto según
+      el móvil.
+    */
+    const shown = Keyboard.addListener('keyboardDidShow', () => setKeyboardUp(true))
+    const hidden = Keyboard.addListener('keyboardDidHide', () => setKeyboardUp(false))
+
+    return () => {
+      shown.remove()
+      hidden.remove()
+    }
+  }, [])
+
   return (
     <Modal
       visible={visible}
@@ -66,41 +98,56 @@ export function Dialog({
     >
       {/*
         El fondo oscuro cierra al tocarlo, que es lo que todo el mundo intenta
-        primero. La tarjeta no: un toque dentro no debe cerrar lo que se está
-        leyendo.
+        primero —salvo con el teclado arriba, que entonces solo lo baja—. La
+        tarjeta no cierra: un toque dentro no debe tirar lo que se está
+        leyendo o escribiendo.
       */}
-      <Pressable style={styles.backdrop} onPress={onDismiss} testID={testID}>
-        <Pressable
-          style={[styles.card, tone === 'danger' ? styles.danger : styles.accent]}
-          onPress={() => {}}
+      <Pressable
+        style={styles.backdrop}
+        onPress={() => (keyboardUp ? Keyboard.dismiss() : onDismiss())}
+        testID={testID}
+      >
+        {/*
+          Que el teclado no se coma los botones: sin esto, quien escribe el
+          motivo no llega a "Enviar" sin bajarlo antes a mano.
+        */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.centered}
         >
-          <Image
-            source={images.pulgar}
-            style={styles.illustration}
-            resizeMode="contain"
-            accessibilityLabel=""
-          />
+          <Pressable
+            style={[styles.card, tone === 'danger' ? styles.danger : styles.accent]}
+            /* Tocar dentro baja el teclado, que es lo que se intenta primero */
+            onPress={Keyboard.dismiss}
+          >
+            <Image
+              source={images.pulgar}
+              style={styles.illustration}
+              resizeMode="contain"
+              accessibilityLabel=""
+            />
 
-          <Text style={styles.title}>{title}</Text>
-          {message && <Text style={styles.message}>{message}</Text>}
+            <Text style={styles.title}>{title}</Text>
+            {message && <Text style={styles.message}>{message}</Text>}
 
-          {children}
+            {children}
 
-          <View style={styles.actions}>
-            {actions.map((action) => (
-              <Button
-                key={action.label}
-                fullWidth
-                variant={action.variant ?? 'primary'}
-                disabled={action.disabled}
-                onPress={action.onPress}
-                testID={action.testID}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </View>
-        </Pressable>
+            <View style={styles.actions}>
+              {actions.map((action) => (
+                <Button
+                  key={action.label}
+                  fullWidth
+                  variant={action.variant ?? 'primary'}
+                  disabled={action.disabled}
+                  onPress={action.onPress}
+                  testID={action.testID}
+                >
+                  {action.label}
+                </Button>
+              ))}
+            </View>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   )
