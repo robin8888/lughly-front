@@ -65,12 +65,21 @@ export const styles = StyleSheet.create({
     minHeight: 88,
     textAlignVertical: 'top',
   },
+  /** La salida de quien no sabe su dirección: con forma de botón */
+  share: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.accent,
+    backgroundColor: theme.colors.accent100,
+  },
   shareLink: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.accent700,
-    textDecorationLine: 'underline',
-    marginTop: 6,
   },
   shareNote: {
     fontFamily: theme.typography.fonts.body,
@@ -91,18 +100,72 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
+  /**
+   * El aviso del recargo. Redondeado y con el rojo de urgencia de verdad, no
+   * un velo del 7% sobre un recuadro cuadrado: es lo último que se lee antes
+   * de avisar a media ciudad, y tiene que verse.
+   */
   surcharge: {
-    marginTop: 14,
-    padding: 12,
+    marginTop: 16,
+    padding: 14,
+    borderRadius: theme.radius.card,
     borderWidth: 1,
-    borderColor: 'rgba(163, 69, 58, 0.25)',
-    backgroundColor: 'rgba(163, 69, 58, 0.07)',
+    borderColor: theme.colors.urgency,
+    backgroundColor: 'rgba(163, 69, 58, 0.06)',
+  },
+  surchargeHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  surchargeDot: {
+    width: 9,
+    height: 9,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.urgency,
   },
   surchargeTitle: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
+    color: theme.colors.urgency,
+  },
+
+  /** Las fotos, con presencia: en una urgencia se decide con lo que se ve */
+  photosCard: {
+    marginTop: 4,
     marginBottom: 4,
+  },
+  photosHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 4,
+  },
+  photosTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  photosTag: {
+    paddingVertical: 3,
+    paddingHorizontal: 9,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.accent100,
+  },
+  photosTagText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+  },
+  photosHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.75,
+    marginBottom: 12,
   },
   surchargeBody: {
     fontFamily: theme.typography.fonts.body,

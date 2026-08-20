@@ -176,10 +176,16 @@ export function UrgencyPage({
             testID="urgency-address"
           />
 
+          {/*
+            Como botón y no como enlace: quien tiene una fuga a las tres de la
+            mañana no sabe el número de su portal, y esta es su salida. Un
+            texto azul entre dos campos se pasa por alto.
+          */}
           <Pressable
             onPress={() => void handleShareLocation()}
             disabled={isBusy || shareStatus === 'locating'}
             accessibilityRole="button"
+            style={styles.share}
             testID="urgency-share-location"
           >
             <Text style={styles.shareLink}>
@@ -237,20 +243,39 @@ export function UrgencyPage({
           />
         </FormField>
 
-        <FormField
-          label="Fotos (opcional pero ayuda)"
-          hint="Se borra su ubicación antes de enviarlas."
-        >
+        {/*
+          Las fotos, en su tarjeta como al publicar. Aquí importan todavía
+          más: quien acepta una urgencia sale de casa en minutos y decide con
+          lo que vea, sin tiempo de preguntar nada por chat.
+        */}
+        <InfoCard style={styles.photosCard}>
+          <View style={styles.photosHead}>
+            <Text style={styles.photosTitle}>Fotos de la avería</Text>
+            <View style={styles.photosTag}>
+              <Text style={styles.photosTagText}>
+                {photos.length > 0 ? `${photos.length} elegidas` : 'Opcional'}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.photosHint}>
+            Con una foto sabe qué se va a encontrar y qué herramienta llevar.
+            Les quitamos la ubicación antes de enviarlas.
+          </Text>
+
           <PhotoPicker
             value={photos}
             onChange={setPhotos}
             disabled={isBusy}
             testID="urgency-photos"
           />
-        </FormField>
+        </InfoCard>
 
         <View style={styles.surcharge}>
-          <Text style={styles.surchargeTitle}>Recargo por urgencia</Text>
+          <View style={styles.surchargeHead}>
+            <View style={styles.surchargeDot} />
+            <Text style={styles.surchargeTitle}>Recargo por urgencia</Text>
+          </View>
           <Text style={styles.surchargeBody}>
             Entre un {URGENCY_SURCHARGE.min}% y un {URGENCY_SURCHARGE.max}% sobre
             la tarifa, según la hora y la disponibilidad. Lo concreta el
