@@ -162,12 +162,20 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
             testID="my-trades-error"
           />
         ) : (
-          <InfoCard>
-            <Text style={styles.intro}>
-              Añade todo lo que hagas de verdad: cada oficio te pone en el
-              listado de ese oficio. El precio es por hora y va por separado,
-              porque no se cobra igual limpiar una casa que cuidar a un mayor.
-            </Text>
+          <>
+            {/*
+              El párrafo que explica, en su propia tarjeta azul y fuera
+              de la blanca: lo que se lee y lo que se toca, separados.
+            */}
+            <InfoCard variant="accent">
+              <Text style={styles.intro}>
+                Añade todo lo que hagas de verdad: cada oficio te pone en el
+                listado de ese oficio. El precio es por hora y va por separado,
+                porque no se cobra igual limpiar una casa que cuidar a un mayor.
+              </Text>
+            </InfoCard>
+
+            <InfoCard>
 
             {/**
              * El aviso de las fotos va antes de guardar, no después: quitar un
@@ -210,6 +218,7 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
               </Text>
             )}
           </InfoCard>
+          </>
         )}
       </Animated.ScrollView>
     </View>

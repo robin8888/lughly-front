@@ -169,7 +169,7 @@ export function AbsencesPage({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <InfoCard>
+        <InfoCard variant="accent">
           <Text style={styles.intro}>
             {isForEmployee
               ? 'Los días que no está. Mandan sobre su horario: esos días no aparecerá disponible, no le llegarán urgencias, y su ficha dirá hasta cuándo.'

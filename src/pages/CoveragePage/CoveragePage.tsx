@@ -281,7 +281,7 @@ export function CoveragePage({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <InfoCard>
+        <InfoCard variant="accent">
           <Text style={styles.intro}>
             {isForEmployee
               ? 'Desde dónde sale y hasta dónde se desplaza. El cliente lo ve en su ficha antes de escribirle, así que decide cuánta gente le encuentra.'

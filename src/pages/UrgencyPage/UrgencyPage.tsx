@@ -23,6 +23,7 @@ import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
+import { InfoCard } from '@/components/molecules/InfoCard'
 import { FormField } from '@/components/molecules/FormField'
 import { Picker } from '@/components/molecules/Picker'
 import { PhotoPicker } from '@/components/molecules/PhotoPicker'
@@ -142,10 +143,12 @@ export function UrgencyPage({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.intro}>
-          Avisamos ahora mismo a los profesionales disponibles que lleguen a tu
-          dirección. El primero que acepte va para allá.
-        </Text>
+        <InfoCard variant="accent" style={styles.introCard}>
+          <Text style={styles.intro}>
+            Avisamos ahora mismo a los profesionales disponibles que lleguen a
+            tu dirección. El primero que acepte va para allá.
+          </Text>
+        </InfoCard>
 
         {formError && <Text style={styles.formError}>{formError}</Text>}
 

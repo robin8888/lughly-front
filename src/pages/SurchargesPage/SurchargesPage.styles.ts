@@ -49,11 +49,10 @@ export const styles = StyleSheet.create({
   },
 
   intro: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.5,
-    color: theme.colors.cardText,
-    opacity: 0.85,
+    color: '#ffffff',
   },
 
   legal: {

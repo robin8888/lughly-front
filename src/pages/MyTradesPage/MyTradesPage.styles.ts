@@ -49,11 +49,10 @@ export const styles = StyleSheet.create({
    * de urgencias y en el propio: es el mismo papel en las tres.
    */
   intro: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.5,
-    color: theme.colors.cardText,
-    opacity: 0.8,
+    color: '#ffffff',
     marginBottom: 12,
   },
   formError: {

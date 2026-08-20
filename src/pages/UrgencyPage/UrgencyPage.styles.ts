@@ -39,13 +39,15 @@ export const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 96,
   },
+  /** La tarjeta azul del texto que explica */
+  introCard: {
+    marginBottom: 14,
+  },
   intro: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.55,
-    color: theme.colors.text,
-    opacity: 0.8,
-    marginBottom: 14,
+    color: '#ffffff',
   },
   formError: {
     fontFamily: theme.typography.fonts.body,

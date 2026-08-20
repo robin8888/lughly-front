@@ -47,13 +47,15 @@ export const styles = StyleSheet.create({
     paddingVertical: 40,
     alignItems: 'center',
   },
+  /** La tarjeta azul del texto que explica */
+  introCard: {
+    marginBottom: 14,
+  },
   intro: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.55,
-    color: theme.colors.text,
-    opacity: 0.8,
-    marginBottom: 14,
+    color: '#ffffff',
   },
   list: {
     gap: 12,

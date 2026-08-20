@@ -203,14 +203,22 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
             testID="my-photos-error"
           />
         ) : (
-          <InfoCard>
-            <Text style={styles.intro}>
-              Enseña trabajos terminados, no herramientas ni el furgón: quien
-              busca quiere ver cómo queda.
-              {myTrades.length > 1
-                ? ` Van por oficio, ${MAX_WORK_PHOTOS} en cada uno, porque quien busca limpieza solo ve las de limpieza.`
-                : ` Caben ${MAX_WORK_PHOTOS}, y por eso conviene que sean tus mejores ${MAX_WORK_PHOTOS}.`}
-            </Text>
+          <>
+            {/*
+              El párrafo que explica, en su propia tarjeta azul y fuera
+              de la blanca: lo que se lee y lo que se toca, separados.
+            */}
+            <InfoCard variant="accent">
+              <Text style={styles.intro}>
+                Enseña trabajos terminados, no herramientas ni el furgón: quien
+                busca quiere ver cómo queda.
+                {myTrades.length > 1
+                  ? ` Van por oficio, ${MAX_WORK_PHOTOS} en cada uno, porque quien busca limpieza solo ve las de limpieza.`
+                  : ` Caben ${MAX_WORK_PHOTOS}, y por eso conviene que sean tus mejores ${MAX_WORK_PHOTOS}.`}
+              </Text>
+            </InfoCard>
+
+            <InfoCard>
 
             {notice && (
               <Text
@@ -290,6 +298,7 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
               )
             })}
           </InfoCard>
+          </>
         )}
       </Animated.ScrollView>
     </View>

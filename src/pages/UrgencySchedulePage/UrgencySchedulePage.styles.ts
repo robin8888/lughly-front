@@ -50,22 +50,21 @@ export const styles = StyleSheet.create({
    * va en el tamaño de texto normal y no en el pequeño de las notas al pie.
    */
   intro: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.5,
-    color: theme.colors.cardText,
-    opacity: 0.85,
+    color: '#ffffff',
   },
   rateNote: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.45,
-    color: theme.colors.cardText,
-    opacity: 0.7,
+    color: '#ffffff',
+    opacity: 0.9,
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.cardDivider,
+    borderTopColor: 'rgba(255, 255, 255, 0.25)',
   },
 
   empty: {

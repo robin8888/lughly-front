@@ -172,7 +172,7 @@ export function UrgencySchedulePage({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <InfoCard>
+        <InfoCard variant="accent">
           <Text style={styles.intro}>
             {employeeName ? `${employeeName} aparecerá` : 'Aparecerá'} disponible
             para urgencias solo dentro de estas horas, y el cliente podrá

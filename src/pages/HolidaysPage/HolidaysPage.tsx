@@ -171,7 +171,7 @@ export function HolidaysPage({
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <InfoCard>
+        <InfoCard variant="accent">
           <Text style={styles.intro}>
             Los festivos de {data.regionName} en {year}, que son los que te
             tocan por tener ahí la base. El recargo que se aplica es el de

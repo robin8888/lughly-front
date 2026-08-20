@@ -73,7 +73,7 @@ export function ChangePasswordPage({ onBack }: ChangePasswordPageProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <InfoCard>
+        <InfoCard variant="accent">
           <Text style={styles.intro}>
             Al cambiarla cerraremos la sesión en los demás dispositivos. En este
             seguirás dentro.

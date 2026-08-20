@@ -120,7 +120,7 @@ export function MyProfilePage({ onBack }: MyProfilePageProps) {
         showsVerticalScrollIndicator={false}
       >
         {isPro && (
-          <InfoCard>
+          <InfoCard variant="accent">
             <Text style={styles.intro}>
               Tu nombre y tu descripción salen en tu ficha y en el listado, que
               es lo que ve el cliente antes de escribirte.

@@ -192,7 +192,7 @@ export function SurchargesPage({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <InfoCard>
+        <InfoCard variant="accent">
           <Text style={styles.intro}>
             {isForEmployee
               ? 'Lo que se le cobra al cliente cuando el trabajo cae en sábado, en domingo o festivo, o de noche. No se acumulan: se aplica el más alto.'

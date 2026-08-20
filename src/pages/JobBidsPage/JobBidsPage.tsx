@@ -130,11 +130,13 @@ export function JobBidsPage({
           />
         ) : (
           <>
-            <Text style={styles.intro}>
-              Compara las tres cosas, no solo el precio: cuánto, en cuánto
-              tiempo y con qué valoración. La más barata no siempre sale más
-              barata.
-            </Text>
+            <InfoCard variant="accent" style={styles.introCard}>
+              <Text style={styles.intro}>
+                Compara las tres cosas, no solo el precio: cuánto, en cuánto
+                tiempo y con qué valoración. La más barata no siempre sale más
+                barata.
+              </Text>
+            </InfoCard>
 
             <View style={styles.list}>
               {bids.map((bid) => (

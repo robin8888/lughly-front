@@ -65,11 +65,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   intro: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.55,
-    color: theme.colors.cardText,
-    opacity: 0.8,
+    color: '#ffffff',
     marginBottom: 12,
   },
   /*
