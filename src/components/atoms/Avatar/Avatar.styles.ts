@@ -19,6 +19,19 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.accent300,
   },
+  /** El anillo de disponibilidad, con su hueco de aire por dentro */
+  ring: {
+    borderRadius: theme.radius.pill,
+    borderWidth: 2,
+    padding: 3,
+    alignSelf: 'flex-start',
+  },
+  ringAvailable: {
+    borderColor: theme.colors.available,
+  },
+  ringUnavailable: {
+    borderColor: theme.colors.unavailable,
+  },
   image: {
     width: '100%',
     height: '100%',

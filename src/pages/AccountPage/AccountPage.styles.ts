@@ -46,6 +46,24 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  /**
+   * El anillo de disponibilidad. Sin saberlo va transparente y no invisible:
+   * así la fila no se mueve cuando llega el dato.
+   */
+  avatarRing: {
+    borderRadius: theme.radius.pill,
+    borderWidth: 2,
+    padding: 3,
+  },
+  avatarRingUnknown: {
+    borderColor: 'transparent',
+  },
+  avatarRingAvailable: {
+    borderColor: theme.colors.available,
+  },
+  avatarRingUnavailable: {
+    borderColor: theme.colors.unavailable,
+  },
   avatar: {
     width: 44,
     height: 44,

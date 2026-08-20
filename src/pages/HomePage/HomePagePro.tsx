@@ -135,6 +135,16 @@ export function HomePagePro({
             user?.avatarUrl ? `${API_BASE_URL}${user.avatarUrl}` : null
           }
           /*
+           * El anillo de disponibilidad alrededor de su foto, como en el
+           * directorio: verde si atiende urgencias ahora y rojo si no. Es el
+           * mismo dato que mueve el interruptor de más abajo, así que los dos
+           * cambian a la vez.
+           *
+           * Mientras la ficha carga no hay anillo, en vez de uno rojo: decirle
+           * que no está disponible antes de saberlo sería mentirle.
+           */
+          available={pro?.availableNow}
+          /*
            * Su oficio, su ciudad y su valoración, que es lo que convierte la
            * cabecera en su ficha. Va sin comprobar `isPending`: mientras la
            * ficha carga se queda en `undefined` y el hero enseña foto y nombre,

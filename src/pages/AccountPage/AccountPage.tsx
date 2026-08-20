@@ -26,6 +26,7 @@ import { Button } from '@/components/atoms/Button'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { VerifyEmailNotice } from '@/components/molecules/VerifyEmailNotice'
 import { useAvatarUpload } from '@/hooks/auth/useAvatarUpload'
+import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useLogout } from '@/hooks/auth/useLogout'
 import { useMyDocuments } from '@/hooks/domain/useMyDocuments'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
@@ -118,6 +119,13 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
   const isPro = role === 'pro'
   const { hasIdentity, isPending: isLoadingDocuments } = useMyDocuments(isPro)
   const { chooseAndUpload, isUploading } = useAvatarUpload()
+
+  /**
+   * Su ficha, solo por el anillo de disponibilidad de la foto. Se pide únicamente
+   * en modo profesional: un cliente no tiene disponibilidad que enseñar, y en
+   * modo cliente tampoco la tiene quien sí es profesional.
+   */
+  const { data: proProfile } = useProProfile(isPro ? user?.id : undefined)
   /** Solo una cuenta profesional puede alternar entre los dos modos */
   const canSwitchMode = user?.role === 'pro'
 
@@ -158,27 +166,47 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
 
         <InfoCard style={styles.identityCard}>
           <View style={styles.identityRow}>
-            <Pressable
-              onPress={() => chooseAndUpload(Boolean(user?.avatarUrl))}
-              disabled={isUploading}
-              style={styles.avatar}
-              accessibilityRole="button"
-              accessibilityLabel={
-                user?.avatarUrl ? 'Cambiar foto de perfil' : 'Añadir foto de perfil'
-              }
-              testID="account-avatar"
+            {/*
+              El anillo de disponibilidad alrededor de la foto, igual que en la
+              home y en el directorio: verde si atiende urgencias ahora, rojo si
+              no. Envuelve al botón en vez de ser su borde, para que el hueco de
+              aire lo separe de la propia foto.
+
+              Solo sale si se sabe: mientras la ficha carga, o en modo cliente,
+              no hay anillo en vez de uno rojo.
+            */}
+            <View
+              style={[
+                styles.avatarRing,
+                proProfile?.availableNow === undefined
+                  ? styles.avatarRingUnknown
+                  : proProfile.availableNow
+                    ? styles.avatarRingAvailable
+                    : styles.avatarRingUnavailable,
+              ]}
             >
-              {isUploading ? (
-                <ActivityIndicator size="small" color={theme.colors.accent} />
-              ) : user?.avatarUrl ? (
-                <Image
-                  source={{ uri: `${API_BASE_URL}${user.avatarUrl}` }}
-                  style={styles.avatarImage}
-                />
-              ) : (
-                <Icon name="user-circle" size={30} color={theme.colors.accent700} />
-              )}
-            </Pressable>
+              <Pressable
+                onPress={() => chooseAndUpload(Boolean(user?.avatarUrl))}
+                disabled={isUploading}
+                style={styles.avatar}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  user?.avatarUrl ? 'Cambiar foto de perfil' : 'Añadir foto de perfil'
+                }
+                testID="account-avatar"
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color={theme.colors.accent} />
+                ) : user?.avatarUrl ? (
+                  <Image
+                    source={{ uri: `${API_BASE_URL}${user.avatarUrl}` }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <Icon name="user-circle" size={30} color={theme.colors.accent700} />
+                )}
+              </Pressable>
+            </View>
 
             <View style={styles.identityText}>
               <Text style={styles.name} numberOfLines={1}>

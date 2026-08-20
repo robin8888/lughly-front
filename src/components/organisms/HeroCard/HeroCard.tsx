@@ -69,6 +69,11 @@ export interface HeroCardProps {
    */
   avatarUri?: string | null
   /**
+   * Si atiende urgencias ahora. Pinta el anillo del avatar, verde o rojo. Solo
+   * lo manda la home del profesional: un cliente no tiene disponibilidad.
+   */
+  available?: boolean
+  /**
    * Oficio, ciudad y valoración, solo en la home del profesional.
    *
    * Es opcional entero porque la cabecera se dibuja antes de que su ficha
@@ -94,6 +99,7 @@ export function HeroCard({
   role,
   userName,
   avatarUri,
+  available,
   profile,
   variant = 'dark',
   onSecondary,
@@ -145,7 +151,12 @@ export function HeroCard({
       />
 
       <View style={styles.profile}>
-        <Avatar uri={avatarUri} size={88} testID="hero-avatar" />
+        <Avatar
+          uri={avatarUri}
+          size={88}
+          available={available}
+          testID="hero-avatar"
+        />
 
         {userName ? (
           <Text style={[styles.userName, palette.userName]} numberOfLines={2}>

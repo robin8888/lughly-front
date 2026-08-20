@@ -29,14 +29,24 @@ export interface AvatarProps {
   uri?: string | null
   /** Lado del círculo, en puntos */
   size?: number
+  /**
+   * Si atiende urgencias ahora mismo. Dibuja el anillo alrededor de la foto:
+   * verde si sí, rojo si no. **Sin pasarlo no hay anillo**, que es lo que
+   * quiere un cliente —no tiene disponibilidad— y lo que quiere cualquier
+   * avatar que no hable de eso.
+   */
+  available?: boolean
   testID?: string
 }
 
-export function Avatar({ uri, size = 48, testID }: AvatarProps) {
+export function Avatar({ uri, size = 48, available, testID }: AvatarProps) {
   const box = { width: size, height: size }
 
-  return (
-    <View style={[styles.container, box]} testID={testID}>
+  const circle = (
+    <View
+      style={[styles.container, box]}
+      testID={available === undefined ? testID : undefined}
+    >
       {uri ? (
         <Image
           source={{ uri }}
@@ -50,6 +60,29 @@ export function Avatar({ uri, size = 48, testID }: AvatarProps) {
           color={theme.colors.accent700}
         />
       )}
+    </View>
+  )
+
+  if (available === undefined) return circle
+
+  /*
+    El anillo va en una capa de fuera y no como borde de la foto: pegado se
+    confunde con el recorte de la propia imagen, y con el hueco de aire se lee
+    como un estado puesto encima. Es el mismo gesto que en el directorio.
+
+    El texto no se pierde para quien escucha la pantalla: va en la etiqueta.
+  */
+  return (
+    <View
+      style={[
+        styles.ring,
+        available ? styles.ringAvailable : styles.ringUnavailable,
+      ]}
+      accessible
+      accessibilityLabel={available ? 'Disponible ahora' : 'No disponible ahora'}
+      testID={testID}
+    >
+      {circle}
     </View>
   )
 }
