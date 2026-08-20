@@ -37,13 +37,11 @@ export const styles = StyleSheet.create({
   },
   content: {
     /*
-     * Si el contenido no llena la pantalla, se centra en vez de quedarse
-     * pegado arriba con un desierto debajo. Cuando sí la llena, `flexGrow`
-     * deja el contenedor a la altura del contenido y el centrado no hace
-     * nada: por eso no hay que decidir a mano cuál es corta y cuál no.
+     * Arriba y no centrado, aunque sobre sitio: aquí se escribe, y al abrirse
+     * el teclado el hueco visible se encoge. Con el contenido centrado, los
+     * campos dan un salto justo mientras se teclea.
      */
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 16,
     paddingBottom: 96,
   },
