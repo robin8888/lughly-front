@@ -10,7 +10,15 @@
  * Se dice al pie en vez de dejar huecos silenciosos.
  */
 
-import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
+import { useState } from 'react'
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Alert,
+} from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
@@ -19,7 +27,7 @@ import { jobTypeLabel } from '@/utils/jobStatus'
 import { JobCard } from '@/components/molecules/JobCard'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
 import { useRespondSubstitute } from '@/hooks/domain/useInbox'
-import type { ApiJob } from '@/api/jobs.api'
+import type { ApiJob, ApiJobType } from '@/api/jobs.api'
 import { theme } from '@/theme'
 import { styles } from './MyJobsPage.styles'
 
@@ -65,6 +73,26 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
       jobs: jobs.filter((job) => job.type === type),
     }))
     .filter((group) => group.jobs.length > 0)
+
+  /**
+   * Se ve un grupo cada vez, con pestañas para cambiar.
+   *
+   * Con los cuatro seguidos, quien tiene diez trabajos abre la pantalla y ve
+   * un muro: para llegar a sus urgencias hay que pasar por encima de todo lo
+   * demás. Cada pestaña lleva su número, así que lo que no se está mirando
+   * sigue estando a la vista.
+   *
+   * Sin pestaña de "todos" a propósito: sería volver al muro con un nombre.
+   */
+  const [openTab, setOpenTab] = useState<ApiJobType | null>(null)
+
+  /**
+   * La elegida, o la primera que tenga algo. Se resuelve al pintar y no al
+   * elegir para que la pantalla nunca quede en una pestaña que se ha vaciado
+   * —al adjudicar la última subasta, por ejemplo—.
+   */
+  const current =
+    groups.find((group) => group.type === openTab) ?? groups[0] ?? null
 
   /**
    * Rechazar cancela el encargo, así que se pregunta antes. Aceptar no: es
@@ -158,20 +186,43 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
               {isFetching ? ' · actualizando…' : ''}
             </Text>
 
-            <View style={styles.list}>
-              {groups.map((group) => (
-                <View key={group.type} style={styles.group}>
-                  {/*
-                    El rótulo solo si hay más de un grupo: con uno solo es un
-                    título para una lista y nada más.
-                  */}
-                  {groups.length > 1 && (
-                    <Text style={styles.groupLabel}>
-                      {group.label} · {group.jobs.length}
-                    </Text>
-                  )}
+            {/*
+              Las pestañas solo si hay más de un tipo: con uno solo serían una
+              pestaña sola, que no elige nada.
+            */}
+            {groups.length > 1 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tabs}
+              >
+                {groups.map((group) => {
+                  const isOpen = group.type === current?.type
 
-                  {group.jobs.map((job) => (
+                  return (
+                    <Pressable
+                      key={group.type}
+                      onPress={() => setOpenTab(group.type)}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: isOpen }}
+                      style={[styles.tab, isOpen && styles.tabOpen]}
+                      testID={`my-jobs-tab-${group.type}`}
+                    >
+                      <Text
+                        style={[styles.tabText, isOpen && styles.tabTextOpen]}
+                      >
+                        {group.label} · {group.jobs.length}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </ScrollView>
+            )}
+
+            <View style={styles.list}>
+              {current && (
+                <View key={current.type} style={styles.group}>
+                  {current.jobs.map((job) => (
                     <JobCard
                       key={job.id}
                       job={job}
@@ -190,7 +241,7 @@ export function MyJobsPage({ onPublish, onBack, onSelectJob }: MyJobsPageProps) 
                     />
                   ))}
                 </View>
-              ))}
+              )}
             </View>
 
             <Button

@@ -71,15 +71,40 @@ export const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  /** Cada grupo: subastas, presupuestos, reservas y urgencias */
+  /** El grupo abierto */
   group: {
     gap: 12,
-    marginBottom: 8,
   },
-  groupLabel: {
-    fontFamily: theme.typography.fonts.bodyBold,
+
+  /**
+   * Las pestañas: una por tipo de contratación, con cuántos hay.
+   *
+   * Píldoras y no una barra segmentada: son cuatro nombres largos que no
+   * caben repartidos a lo ancho, y en fila que se desliza caben todos sin
+   * abreviar ninguno.
+   */
+  tabs: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 14,
+    paddingRight: 16,
+  },
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  tabOpen: {
+    /* El azul oscuro, que es el que sostiene texto blanco encima */
+    backgroundColor: theme.colors.accent700,
+  },
+  tabText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.textSoft,
-    marginTop: 4,
+  },
+  tabTextOpen: {
+    color: '#ffffff',
   },
 })
