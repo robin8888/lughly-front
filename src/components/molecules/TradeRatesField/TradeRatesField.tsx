@@ -7,10 +7,15 @@
  * Es el mismo dato en los tres, y con tres formularios distintos acabarían
  * validando cosas distintas.
  *
- * Cada oficio lleva su tarifa porque no se cobra lo mismo por limpiar una
- * casa que por cuidar a un mayor. Con un precio único habría que elegir entre
- * malvender el trabajo caro o parecer caro en el barato, y en un directorio
- * donde el cliente compara precios eso deja fuera de las dos búsquedas.
+ * Cada oficio lleva lo suyo —los dos precios y lo que cuenta de él— porque no
+ * se cobra lo mismo por limpiar una casa que por cuidar a un mayor, ni se
+ * cuenta lo mismo. Con un precio único habría que elegir entre malvender el
+ * trabajo caro o parecer caro en el barato, y en un directorio donde el
+ * cliente compara precios eso deja fuera de las dos búsquedas.
+ *
+ * Los dos precios van uno al lado del otro: son la misma pregunta —cuánto
+ * vale tu hora— contestada en dos situaciones, y en columna el de abajo
+ * parecía una corrección del de arriba.
  */
 
 import { useState } from 'react'
@@ -119,7 +124,7 @@ export function TradeRatesField({
           style={styles.trade}
           testID={`trade-row-${trade.slug}`}
         >
-          <View style={styles.row}>
+          <View style={styles.head}>
             <View style={styles.labelColumn}>
               <Text style={styles.label} numberOfLines={2}>
                 {getTradeLabel(trade.slug)}
@@ -134,27 +139,6 @@ export function TradeRatesField({
               )}
             </View>
 
-            {!hideRates && (
-              <View style={styles.rateColumn}>
-                {/*
-                  La unidad va fija dentro del campo y no de marca de agua: el
-                  marcador desaparece al teclear, que es justo cuando un número
-                  suelto deja de decir si son euros por hora o por trabajo.
-                */}
-                <Text style={styles.rateLabel}>Hora normal</Text>
-                <Input
-                  value={trade.hourlyRate}
-                  onChangeText={(text) => setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))}
-                  placeholder="0"
-                  suffix="€/h"
-                  keyboardType="decimal-pad"
-                  editable={!disabled}
-                  style={styles.rateInput}
-                  testID={`trade-rate-${trade.slug}`}
-                />
-              </View>
-            )}
-
             <Pressable
               onPress={() => remove(trade.slug)}
               disabled={disabled}
@@ -168,32 +152,62 @@ export function TradeRatesField({
           </View>
 
           {/*
-            La tarifa de urgencia, debajo y aparte: es otra decisión. Vacía
-            significa que no atiende urgencias de este oficio, y por eso se
-            dice con palabras en vez de dejar un campo mudo que parezca que
-            falta rellenar.
+            Los dos precios, uno al lado del otro y cada uno con su rótulo.
+            Son la misma pregunta —cuánto vale tu hora— contestada en dos
+            situaciones, y en columna parecía que el de abajo corregía al de
+            arriba. Al lado se comparan, que es como se decide el recargo.
+
+            La unidad va fija dentro del campo y no de marca de agua: el
+            marcador desaparece al teclear, que es justo cuando un número
+            suelto deja de decir si son euros por hora o por trabajo.
           */}
           {!hideRates && (
-            <View style={styles.urgencyRow}>
-              <Text style={styles.urgencyLabel}>
-                {trade.urgencyRate.trim() === ''
-                  ? 'Hora en urgencia · no atiendes urgencias de este oficio'
-                  : 'Hora en urgencia'}
-              </Text>
+            <>
+              <View style={styles.rates}>
+                <View style={styles.rateField}>
+                  <Text style={styles.fieldLabel}>Hora normal</Text>
+                  <Input
+                    value={trade.hourlyRate}
+                    onChangeText={(text) =>
+                      setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))
+                    }
+                    placeholder="0"
+                    suffix="€/h"
+                    keyboardType="decimal-pad"
+                    editable={!disabled}
+                    style={styles.rateInput}
+                    testID={`trade-rate-${trade.slug}`}
+                  />
+                </View>
 
-              <Input
-                value={trade.urgencyRate}
-                onChangeText={(text) =>
-                  setUrgencyRate(trade.slug, text.replace(/[^0-9.,]/g, ''))
-                }
-                placeholder="Sin urgencias"
-                suffix="€/h"
-                keyboardType="decimal-pad"
-                editable={!disabled}
-                style={styles.urgencyInput}
-                testID={`trade-urgency-${trade.slug}`}
-              />
-            </View>
+                <View style={styles.rateField}>
+                  <Text style={styles.fieldLabel}>Hora en urgencia</Text>
+                  <Input
+                    value={trade.urgencyRate}
+                    onChangeText={(text) =>
+                      setUrgencyRate(trade.slug, text.replace(/[^0-9.,]/g, ''))
+                    }
+                    placeholder="0"
+                    suffix="€/h"
+                    keyboardType="decimal-pad"
+                    editable={!disabled}
+                    style={styles.rateInput}
+                    testID={`trade-urgency-${trade.slug}`}
+                  />
+                </View>
+              </View>
+
+              {/*
+                Que esté vacío significa algo, y por eso se dice debajo y no
+                dentro del campo: un marcador que ponga "sin urgencias" ocupa
+                el sitio del precio y desaparece justo al escribirlo.
+              */}
+              <Text style={styles.fieldHint}>
+                {trade.urgencyRate.trim() === ''
+                  ? 'Sin la hora en urgencia no atiendes urgencias de este oficio: no saldrás en la lista de quien tenga una.'
+                  : 'Es lo que cobras por salir a una urgencia de este oficio, con el recargo ya dentro.'}
+              </Text>
+            </>
           )}
 
           {/*

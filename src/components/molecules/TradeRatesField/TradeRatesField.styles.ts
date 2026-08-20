@@ -1,7 +1,7 @@
 /**
  * TradeRatesField styles
- * Un bloque por oficio: nombre y hora normal arriba, la hora en urgencia
- * debajo y el qué haces al final.
+ * Un bloque por oficio: el nombre arriba con su cruz, los dos precios a la
+ * par debajo y el qué haces al final.
  */
 
 import { StyleSheet } from 'react-native'
@@ -16,14 +16,15 @@ export const styles = StyleSheet.create({
     marginBottom: 14,
   },
   /*
-   * Sin línea propia: la del bloque ya separa un oficio del siguiente, y con
-   * tres partes dentro una raya en medio parecía el final de algo.
+   * El nombre del oficio y la cruz de quitarlo. Sin línea propia: la del
+   * bloque ya separa un oficio del siguiente, y con tres partes dentro una
+   * raya en medio parecía el final de algo.
    */
-  row: {
+  head: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: 8,
-    paddingVertical: 6,
+    marginBottom: 8,
   },
   labelColumn: {
     flex: 1,
@@ -40,21 +41,19 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent600,
     marginTop: 1,
   },
-  /** Ancho fijo: los precios alineados se comparan de un vistazo */
-  rateColumn: {
-    // 112 y no 92: dentro del campo va ahora la unidad, y antes se apretaba
-    width: 112,
-  },
-  /*
-   * Con rótulo desde que hay dos precios. Sin él, el de urgencia se leía como
-   * una corrección del de arriba en vez de como otra tarifa.
+  /**
+   * Los dos precios a la par y del mismo ancho.
+   *
+   * En columna, el de urgencia se leía como una corrección del de arriba; al
+   * lado se comparan, que es como se decide el recargo. Del mismo ancho para
+   * que ninguno parezca el importante.
    */
-  rateLabel: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.textSoft,
-    textAlign: 'right',
-    marginBottom: 3,
+  rates: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  rateField: {
+    flex: 1,
   },
   /*
    * El número pegado a su unidad. A la izquierda quedaba un hueco entre la
@@ -91,29 +90,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
     opacity: 0.7,
     marginTop: 8,
-  },
-
-  /**
-   * La tarifa de urgencia. Debajo y con su rótulo, no como un segundo campo
-   * sin nombre: es otra decisión, y vacía significa que no atiende urgencias
-   * de ese oficio.
-   */
-  urgencyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginTop: 2,
-  },
-  urgencyLabel: {
-    flex: 1,
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.textSoft,
-  },
-  urgencyInput: {
-    width: 128,
-    textAlign: 'right',
   },
 
   /**
