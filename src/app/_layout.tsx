@@ -27,6 +27,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { StripeProvider } from '@stripe/stripe-react-native'
 import { setupSessionBridge } from '@/api/sessionBridge'
 import { useResetCacheOnAccountChange } from '@/hooks/auth/useResetCacheOnAccountChange'
 import { usePushRegistration } from '@/hooks/push/usePushRegistration'
@@ -56,6 +57,8 @@ SplashScreen.preventAutoHideAsync()
 
 // Conecta el store de sesión con el cliente HTTP (renovación automática de tokens)
 setupSessionBridge()
+
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ''
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -110,95 +113,98 @@ export default function RootLayout() {
     // Sin este contenedor en la raíz, los gestos (arrastrar el carrusel)
     // no llegan a los componentes.
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* Punto de entrada: decide entre splash y tabs */}
-          <Stack.Screen name="index" />
+      <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} urlScheme="lughly">
+        <QueryClientProvider client={queryClient}>
+          <Stack screenOptions={{ headerShown: false }}>
+            {/* Punto de entrada: decide entre splash y tabs */}
+            <Stack.Screen name="index" />
+
+            {/*
+              Registro sin proteger a propósito: durante el alta hay una sesión
+              activa momentánea para poder subir los documentos. Si estuviera
+              protegido con `!isAuthenticated`, la pantalla se desmontaría en
+              mitad de las subidas. Al terminar, la sesión se cierra y el
+              usuario entra por el login.
+            */}
+            <Stack.Screen name="registro" />
+
+            {/*
+              Quien entró con la contraseña que le puso su empleador no pasa de
+              aquí. No es un aviso que se pueda cerrar: mientras esa contraseña
+              siga viva, el empleador puede entrar como él, y entonces nada de
+              lo que haga esa cuenta prueba quién lo hizo. Al retirar las tabs
+              del navegador tampoco vale entrar por un enlace directo.
+            */}
+            <Stack.Protected guard={isAuthenticated && mustChangePassword}>
+              <Stack.Screen name="cambiar-contrasena" />
+            </Stack.Protected>
+
+            <Stack.Protected guard={isAuthenticated && !mustChangePassword}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="empleados" />
+              <Stack.Screen name="oficios" />
+              <Stack.Screen name="mis-fotos" />
+              <Stack.Screen name="horario-urgencias" />
+              <Stack.Screen name="encargos" />
+              <Stack.Screen name="encargar" />
+              <Stack.Screen name="pujas" />
+              <Stack.Screen name="como-funciona" />
+              <Stack.Screen name="mis-documentos" />
+              {/*
+                La voluntaria, desde Mi cuenta. No comparte ruta con
+                `cambiar-contrasena`, que es la obligatoria y vive tras el
+                guardián de arriba: allí dentro, a un usuario normal no se le
+                abriría nunca.
+              */}
+              <Stack.Screen name="contrasena" />
+              <Stack.Screen name="mi-horario" />
+              <Stack.Screen name="mi-zona" />
+              <Stack.Screen name="mis-ausencias" />
+              <Stack.Screen name="mis-recargos" />
+              <Stack.Screen name="mis-festivos" />
+              <Stack.Screen name="trabajo/[id]" />
+              {/*
+                A quién llamar para una urgencia. Va declarada como las demás:
+                `Stack.Protected` retira del navegador lo que no está en la
+                lista, y una pantalla sin declarar se pinta pero luego no hay
+                cómo salir de ella —la flecha de atrás dejaba la app colgada.
+              */}
+              <Stack.Screen name="urgencia/[id]" />
+              <Stack.Screen name="mis-datos" />
+              <Stack.Screen name="revisar-documentos" />
+              <Stack.Screen name="pro/[id]" />
+              <Stack.Screen name="mis-pagos" />
+            </Stack.Protected>
+
+            <Stack.Protected guard={!isAuthenticated}>
+              <Stack.Screen name="login" />
+              <Stack.Screen name="recuperar" />
+            </Stack.Protected>
+          </Stack>
 
           {/*
-            Registro sin proteger a propósito: durante el alta hay una sesión
-            activa momentánea para poder subir los documentos. Si estuviera
-            protegido con `!isAuthenticated`, la pantalla se desmontaría en
-            mitad de las subidas. Al terminar, la sesión se cierra y el
-            usuario entra por el login.
+            La barra va fuera del Stack, no dentro del navegador de pestañas:
+            así también sale en las pantallas de pila —el perfil de un
+            profesional, el alta de trabajadores— y no aparece y desaparece
+            según dónde esté el usuario. Ella misma se esconde en las pantallas
+            de antes de entrar.
           */}
-          <Stack.Screen name="registro" />
+          {isAuthenticated && !mustChangePassword && <BottomTabBar />}
 
           {/*
-            Quien entró con la contraseña que le puso su empleador no pasa de
-            aquí. No es un aviso que se pueda cerrar: mientras esa contraseña
-            siga viva, el empleador puede entrar como él, y entonces nada de
-            lo que haga esa cuenta prueba quién lo hizo. Al retirar las tabs
-            del navegador tampoco vale entrar por un enlace directo.
+            Vacía la caché al cambiar de cuenta. Va dentro del proveedor porque
+            necesita su cliente, y sin renderizar nada: solo vigila.
           */}
-          <Stack.Protected guard={isAuthenticated && mustChangePassword}>
-            <Stack.Screen name="cambiar-contrasena" />
-          </Stack.Protected>
+          <CacheGuard />
 
-          <Stack.Protected guard={isAuthenticated && !mustChangePassword}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="empleados" />
-            <Stack.Screen name="oficios" />
-            <Stack.Screen name="mis-fotos" />
-            <Stack.Screen name="horario-urgencias" />
-            <Stack.Screen name="encargos" />
-            <Stack.Screen name="encargar" />
-            <Stack.Screen name="pujas" />
-            <Stack.Screen name="como-funciona" />
-            <Stack.Screen name="mis-documentos" />
-            {/*
-              La voluntaria, desde Mi cuenta. No comparte ruta con
-              `cambiar-contrasena`, que es la obligatoria y vive tras el
-              guardián de arriba: allí dentro, a un usuario normal no se le
-              abriría nunca.
-            */}
-            <Stack.Screen name="contrasena" />
-            <Stack.Screen name="mi-horario" />
-            <Stack.Screen name="mi-zona" />
-            <Stack.Screen name="mis-ausencias" />
-            <Stack.Screen name="mis-recargos" />
-            <Stack.Screen name="mis-festivos" />
-            <Stack.Screen name="trabajo/[id]" />
-            {/*
-              A quién llamar para una urgencia. Va declarada como las demás:
-              `Stack.Protected` retira del navegador lo que no está en la
-              lista, y una pantalla sin declarar se pinta pero luego no hay
-              cómo salir de ella —la flecha de atrás dejaba la app colgada.
-            */}
-            <Stack.Screen name="urgencia/[id]" />
-            <Stack.Screen name="mis-datos" />
-            <Stack.Screen name="revisar-documentos" />
-            <Stack.Screen name="pro/[id]" />
-          </Stack.Protected>
-
-          <Stack.Protected guard={!isAuthenticated}>
-            <Stack.Screen name="login" />
-            <Stack.Screen name="recuperar" />
-          </Stack.Protected>
-        </Stack>
-
-        {/*
-          La barra va fuera del Stack, no dentro del navegador de pestañas:
-          así también sale en las pantallas de pila —el perfil de un
-          profesional, el alta de trabajadores— y no aparece y desaparece
-          según dónde esté el usuario. Ella misma se esconde en las pantallas
-          de antes de entrar.
-        */}
-        {isAuthenticated && !mustChangePassword && <BottomTabBar />}
-
-        {/*
-          Vacía la caché al cambiar de cuenta. Va dentro del proveedor porque
-          necesita su cliente, y sin renderizar nada: solo vigila.
-        */}
-        <CacheGuard />
-
-        {/* Se monta una sola vez y lo controla useLoadingStore desde donde sea */}
-        <LoadingOverlay
-          visible={isLoading}
-          message={loadingMessage ?? undefined}
-          testID="loading-overlay"
-        />
-      </QueryClientProvider>
+          {/* Se monta una sola vez y lo controla useLoadingStore desde donde sea */}
+          <LoadingOverlay
+            visible={isLoading}
+            message={loadingMessage ?? undefined}
+            testID="loading-overlay"
+          />
+        </QueryClientProvider>
+      </StripeProvider>
     </GestureHandlerRootView>
   )
 }

@@ -72,6 +72,32 @@ export const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+  accountRow: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  accountWarning: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.urgency,
+  },
+  accountAction: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.accent700,
+  },
+  accountActionText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: '#ffffff',
+  },
+
   count: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

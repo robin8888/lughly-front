@@ -32,6 +32,11 @@ import {
   useRemoveEmployee,
   useBecomeEmployer,
 } from '@/hooks/domain/useEmployees'
+import {
+  useAccountStatus,
+  useRefreshAccountStatusOnForeground,
+  useRequestOnboardingLink,
+} from '@/hooks/domain/usePaymentAccount'
 import type { LegalForm } from '@/api/employees.api'
 import { TRADE_OPTIONS } from '@/utils/trades'
 import { theme } from '@/theme'
@@ -221,6 +226,26 @@ export function EmployeesPage({
   const { create, isCreating, fieldErrors, formError, reset } = useCreateEmployee()
   const { remove, isRemoving, resetRemove } = useRemoveEmployee()
 
+  /**
+   * Sin cuenta de cobro no se puede contratar (COMO_SE_CONTRATA.md v3 §9):
+   * se enseña su estado aquí, donde ya está lo demás que sostiene poder
+   * cobrar por la app.
+   */
+  const { data: accountStatus } = useAccountStatus(employer !== null)
+  useRefreshAccountStatusOnForeground(employer !== null)
+  const { start: startOnboarding, isStarting: isStartingOnboarding } =
+    useRequestOnboardingLink()
+
+  const handleOnboarding = async () => {
+    const { ok, error } = await startOnboarding()
+    if (!ok) {
+      Alert.alert(
+        'No se ha podido abrir la cuenta de cobro',
+        error ?? 'Inténtalo de nuevo en un momento.',
+      )
+    }
+  }
+
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [trades, setTrades] = useState<TradeRate[]>([])
@@ -370,6 +395,35 @@ export function EmployeesPage({
                 trabajadores, no se declaran.
               </Text>
             )}
+
+            <View style={styles.accountRow}>
+              {accountStatus?.transfersEnabled ? (
+                <Tag variant="available">Cuenta de cobro activa</Tag>
+              ) : (
+                <>
+                  <Text style={styles.accountWarning}>
+                    {accountStatus?.hasAccount
+                      ? 'Cuenta de cobro sin terminar: todavía no puedes cobrar por la app.'
+                      : 'Todavía no tienes cuenta de cobro: sin ella no puedes cobrar por la app.'}
+                  </Text>
+                  <Pressable
+                    onPress={() => void handleOnboarding()}
+                    disabled={isStartingOnboarding}
+                    style={styles.accountAction}
+                    accessibilityRole="button"
+                    testID="employer-connect-onboarding"
+                  >
+                    <Text style={styles.accountActionText}>
+                      {isStartingOnboarding
+                        ? 'Abriendo…'
+                        : accountStatus?.hasAccount
+                          ? 'Terminar cuenta de cobro'
+                          : 'Configurar cuenta de cobro'}
+                    </Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
           </InfoCard>
         )}
 

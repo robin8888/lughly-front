@@ -234,7 +234,7 @@ export default function AccountRoute() {
                 label: 'Cambiar contraseña',
                 onPress: () => router.push('/contrasena'),
               },
-              { label: 'Métodos de pago', comingSoon: true },
+              { label: 'Métodos de pago', onPress: () => router.push('/mis-pagos') },
               { label: 'Notificaciones', comingSoon: true },
               { label: 'Configuración', comingSoon: true },
             ],

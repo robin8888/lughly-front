@@ -20,3 +20,10 @@ export type {
   AvatarResponse,
   DocumentResponse,
 } from './upload.api'
+export { paymentsApi } from './payments.api'
+export type {
+  ApiOnboardingLink,
+  ApiAccountStatus,
+  ApiSetupIntent,
+  ApiPaymentMethod,
+} from './payments.api'
