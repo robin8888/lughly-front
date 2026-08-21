@@ -30,8 +30,11 @@
  * quien se contrata es a la empresa.
  */
 
+import { useState } from 'react'
 import { View, Text, Pressable, Image } from 'react-native'
+import { Checkbox } from '@/components/atoms/Checkbox'
 import { Icon } from '@/components/atoms/Icon'
+import { Money, formatAmount } from '@/components/atoms/Money'
 import { API_BASE_URL } from '@/api'
 import type { ApiPro } from '@/api/pros.api'
 import { theme } from '@/theme'
@@ -77,6 +80,32 @@ export function ProDirectoryCard({
   const isVisitMode = featuredTrade?.visitFee != null
   const pricingMode = isVisitMode ? 'Visita y presupuesto' : 'Por hora'
   const priceLabel = isVisitMode ? `Visita ${pro.visitFee} €` : `${pro.hourlyRate} €/h`
+
+  /**
+   * La carta del oficio de la tarjeta, desplegable y solo para mirar: elegir
+   * aquí no contrata nada, es para comparar el total entre profesionales
+   * antes de entrar en ninguna ficha. Para contratar de verdad se toca el
+   * resto de la tarjeta, que lleva al perfil.
+   */
+  const [showCarta, setShowCarta] = useState(false)
+  const [selectedServices, setSelectedServices] = useState<string[]>([])
+
+  const cartaServices = featuredTrade?.services ?? []
+  const hasCarta = isVisitMode && cartaServices.length > 0
+
+  const cartaTotal =
+    (featuredTrade?.visitFee ?? 0) +
+    cartaServices
+      .filter((service) => selectedServices.includes(service.id))
+      .reduce((sum, service) => sum + service.price, 0)
+
+  const toggleService = (serviceId: string) => {
+    setSelectedServices((current) =>
+      current.includes(serviceId)
+        ? current.filter((id) => id !== serviceId)
+        : [...current, serviceId],
+    )
+  }
 
   return (
     <Pressable
@@ -242,6 +271,50 @@ export function ProDirectoryCard({
           </View>
         )}
       </View>
+
+      {/*
+        La carta, desplegable: con varios oficios con carta en la lista,
+        pintarla siempre alargaría cada tarjeta y sería difícil comparar de
+        un vistazo. Cerrada de entrada; quien quiera el detalle la abre.
+      */}
+      {hasCarta && (
+        <View style={styles.carta} testID="pro-card-carta">
+          <Pressable
+            onPress={() => setShowCarta((open) => !open)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showCarta }}
+            testID="pro-card-carta-toggle"
+          >
+            <Text style={styles.cartaToggle}>
+              {showCarta
+                ? 'Ocultar trabajos a precio fijo'
+                : `Trabajos a precio fijo (${cartaServices.length})`}
+            </Text>
+          </Pressable>
+
+          {showCarta && (
+            <View style={styles.cartaBody} testID="pro-card-carta-body">
+              <View style={styles.cartaServices}>
+                {cartaServices.map((service) => (
+                  <Checkbox
+                    key={service.id}
+                    checked={selectedServices.includes(service.id)}
+                    onChange={() => toggleService(service.id)}
+                    testID={`pro-card-carta-service-${service.id}`}
+                  >
+                    {`${service.name} · ${formatAmount(service.price)} €`}
+                  </Checkbox>
+                ))}
+              </View>
+
+              <View style={styles.cartaTotalRow}>
+                <Text style={styles.cartaTotalLabel}>Total</Text>
+                <Money amount={cartaTotal} style={styles.cartaTotal} />
+              </View>
+            </View>
+          )}
+        </View>
+      )}
     </Pressable>
   )
 }

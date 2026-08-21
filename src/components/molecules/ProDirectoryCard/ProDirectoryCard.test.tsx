@@ -8,7 +8,7 @@
  * no debería parecer lo segundo.
  */
 
-import { render } from '@testing-library/react-native'
+import { fireEvent, render } from '@testing-library/react-native'
 import { ProDirectoryCard } from './ProDirectoryCard'
 import type { ApiPro } from '@/api/pros.api'
 
@@ -32,6 +32,28 @@ function makePro(photos: string[]): ApiPro {
     bio: 'Reparaciones y reformas de baño.',
     distanceKm: null,
     employerName: null,
+  }
+}
+
+function makeProConCarta(): ApiPro {
+  const base = makePro([])
+
+  return {
+    ...base,
+    hourlyRate: null,
+    visitFee: 35,
+    trades: [
+      {
+        slug: 'fontaneria',
+        label: 'Fontanería',
+        hourlyRate: null,
+        visitFee: 35,
+        services: [
+          { id: 'svc-1', name: 'Cambio de grifo', price: 40 },
+          { id: 'svc-2', name: 'Desatasco', price: 60 },
+        ],
+      },
+    ],
   }
 }
 
@@ -65,5 +87,39 @@ describe('ProDirectoryCard', () => {
     // Cuatro caben en la tira; la quinta se anuncia para que se sepa que en la
     // ficha hay más, en vez de cortarla sin avisar
     expect(getByText('+1')).toBeTruthy()
+  })
+
+  it('sin carta en el oficio de la tarjeta, no dibuja el desplegable', () => {
+    const { queryByTestId } = render(
+      <ProDirectoryCard pro={makePro([])} onPress={() => {}} />,
+    )
+
+    expect(queryByTestId('pro-card-carta')).toBeNull()
+  })
+
+  it('con carta, empieza cerrada y al abrirla se ve la lista y el total', () => {
+    const { getByTestId, queryByTestId, getByText } = render(
+      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} />,
+    )
+
+    expect(queryByTestId('pro-card-carta-body')).toBeNull()
+
+    fireEvent.press(getByTestId('pro-card-carta-toggle'))
+
+    expect(getByTestId('pro-card-carta-body')).toBeTruthy()
+    expect(getByText('Cambio de grifo · 40,00 €')).toBeTruthy()
+    // Solo la visita, sin nada marcado todavía
+    expect(getByText('35,00€')).toBeTruthy()
+  })
+
+  it('marcar un servicio suma su precio a la visita', () => {
+    const { getByTestId, getByText } = render(
+      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} />,
+    )
+
+    fireEvent.press(getByTestId('pro-card-carta-toggle'))
+    fireEvent.press(getByTestId('pro-card-carta-service-svc-1'))
+
+    expect(getByText('75,00€')).toBeTruthy()
   })
 })

@@ -207,4 +207,43 @@ export const styles = StyleSheet.create({
     /* El oscuro: sobre el fondo pálido del distintivo, el claro no se lee */
     color: theme.colors.accent700,
   },
+
+  /** El desplegable de la carta, mismo patrón de enlace subrayado que ReviewCard */
+  carta: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  cartaToggle: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: 12.5,
+    color: theme.colors.accent700,
+    textDecorationLine: 'underline',
+  },
+  cartaBody: {
+    marginTop: 8,
+  },
+  cartaServices: {
+    gap: 6,
+    marginBottom: 8,
+  },
+  cartaTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  cartaTotalLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  cartaTotal: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.h6,
+    color: theme.colors.accent700,
+  },
 })
