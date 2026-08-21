@@ -13,12 +13,14 @@
 
 import { useState } from 'react'
 import {
+  StyleSheet,
   TextInput,
   View,
   Text,
   type TextInputProps,
   type StyleProp,
   type TextStyle,
+  type ViewStyle,
 } from 'react-native'
 import { styles } from './Input.styles'
 import { theme } from '@/theme'
@@ -29,6 +31,42 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
   /** Unidad fija a la derecha, dentro del campo: "€/h", "km" */
   suffix?: string
   style?: StyleProp<TextStyle>
+}
+
+/**
+ * De `style` solo lo que decide el sitio del campo dentro de su fila —ancho,
+ * flex, márgenes— vale para el envoltorio de la unidad. Lo demás (relleno,
+ * alineación del texto) es del campo de dentro; dárselo también al
+ * envoltorio metería, por ejemplo, un `paddingRight` pensado para estrechar
+ * el hueco del texto y en el envoltorio recortaría el propio campo.
+ */
+const WRAPPER_KEYS = [
+  'width',
+  'minWidth',
+  'maxWidth',
+  'flex',
+  'flexGrow',
+  'flexShrink',
+  'flexBasis',
+  'alignSelf',
+  'margin',
+  'marginHorizontal',
+  'marginVertical',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+] as const
+
+function wrapperSizing(style: StyleProp<TextStyle>): StyleProp<ViewStyle> {
+  const flat = StyleSheet.flatten(style) ?? {}
+  const sizing: ViewStyle = {}
+
+  for (const key of WRAPPER_KEYS) {
+    if (flat[key] !== undefined) (sizing as Record<string, unknown>)[key] = flat[key]
+  }
+
+  return sizing
 }
 
 export function Input({
@@ -76,7 +114,11 @@ export function Input({
   if (!suffix) return field
 
   return (
-    <View style={styles.wrapper}>
+    // El ancho/flex que traiga `style` es cosa del envoltorio, no del campo:
+    // si solo se lo quedara el `TextInput` de dentro (como antes), un ancho
+    // fijo —el precio de un servicio, por ejemplo— no llegaba a la fila que
+    // lo coloca y el campo se salía de su sitio.
+    <View style={[styles.wrapper, wrapperSizing(style)]}>
       {field}
       {/*
         `pointerEvents="none"` para que tocar encima de la unidad abra el

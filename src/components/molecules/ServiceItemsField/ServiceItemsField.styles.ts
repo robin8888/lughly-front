@@ -37,8 +37,15 @@ export const styles = StyleSheet.create({
   nameInput: {
     flex: 1,
   },
+  /**
+   * Justo para cinco cifras y el símbolo: un servicio no llega a costar
+   * 100.000 €, así que sobraba ancho que le hacía falta al nombre.
+   * `paddingRight` va por debajo del que trae `Input` con `suffix` —pensado
+   * para algo como "€/h", tres letras— porque aquí es un solo símbolo.
+   */
   priceInput: {
-    width: 96,
+    width: 80,
+    paddingRight: 24,
     textAlign: 'right',
   },
   remove: {
@@ -87,7 +94,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   addPriceField: {
-    width: 110,
+    width: 80,
   },
   addFieldLabel: {
     fontFamily: theme.typography.fonts.bodySemiBold,
@@ -96,6 +103,7 @@ export const styles = StyleSheet.create({
     marginBottom: 5,
   },
   addPriceInput: {
+    paddingRight: 24,
     textAlign: 'right',
   },
   addButton: {

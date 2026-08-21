@@ -20,6 +20,7 @@
 
 import { useState, type ReactNode } from 'react'
 import { View, Text, Pressable } from 'react-native'
+import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
 import { TRADE_OPTIONS, getTradeLabel, isVisitEligibleTrade } from '@/utils/trades'
@@ -212,41 +213,27 @@ export function TradeRatesField({
               */}
               {allowVisitMode && isVisitEligibleTrade(trade.slug) && (
                 <View style={styles.modes} testID={`trade-mode-${trade.slug}`}>
-                  <Pressable
+                  <Button
+                    variant={trade.pricingMode === 'HOURLY' ? 'primary' : 'secondary'}
+                    size="small"
                     onPress={() => setPricingMode(trade.slug, 'HOURLY')}
                     disabled={disabled}
-                    style={[styles.mode, trade.pricingMode === 'HOURLY' && styles.modeActive]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: trade.pricingMode === 'HOURLY' }}
+                    style={styles.modeButton}
                     testID={`trade-mode-hourly-${trade.slug}`}
                   >
-                    <Text
-                      style={[
-                        styles.modeText,
-                        trade.pricingMode === 'HOURLY' && styles.modeTextActive,
-                      ]}
-                    >
-                      Por hora
-                    </Text>
-                  </Pressable>
+                    Por hora
+                  </Button>
 
-                  <Pressable
+                  <Button
+                    variant={trade.pricingMode === 'VISIT' ? 'primary' : 'secondary'}
+                    size="small"
                     onPress={() => setPricingMode(trade.slug, 'VISIT')}
                     disabled={disabled}
-                    style={[styles.mode, trade.pricingMode === 'VISIT' && styles.modeActive]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: trade.pricingMode === 'VISIT' }}
+                    style={styles.modeButton}
                     testID={`trade-mode-visit-${trade.slug}`}
                   >
-                    <Text
-                      style={[
-                        styles.modeText,
-                        trade.pricingMode === 'VISIT' && styles.modeTextActive,
-                      ]}
-                    >
-                      Visita para presupuestar
-                    </Text>
-                  </Pressable>
+                    Visita y presupuesto
+                  </Button>
                 </View>
               )}
 
@@ -288,14 +275,16 @@ export function TradeRatesField({
                 </View>
 
                 <View style={styles.rateField}>
-                  <Text style={styles.fieldLabel}>Hora en urgencia</Text>
+                  <Text style={styles.fieldLabel}>
+                    {trade.pricingMode === 'VISIT' ? 'Visita en urgencia' : 'Hora en urgencia'}
+                  </Text>
                   <Input
                     value={trade.urgencyRate}
                     onChangeText={(text) =>
                       setUrgencyRate(trade.slug, text.replace(/[^0-9.,]/g, ''))
                     }
                     placeholder="0"
-                    suffix="€/h"
+                    suffix={trade.pricingMode === 'VISIT' ? '€' : '€/h'}
                     keyboardType="decimal-pad"
                     editable={!disabled}
                     style={styles.rateInput}
@@ -319,8 +308,12 @@ export function TradeRatesField({
               */}
               <Text style={styles.fieldHint}>
                 {trade.urgencyRate.trim() === ''
-                  ? 'Sin la hora en urgencia no atiendes urgencias de este oficio: no saldrás en la lista de quien tenga una.'
-                  : 'Es lo que cobras por salir a una urgencia de este oficio, con el recargo ya dentro.'}
+                  ? trade.pricingMode === 'VISIT'
+                    ? 'Sin la visita en urgencia no atiendes urgencias de este oficio: no saldrás en la lista de quien tenga una.'
+                    : 'Sin la hora en urgencia no atiendes urgencias de este oficio: no saldrás en la lista de quien tenga una.'
+                  : trade.pricingMode === 'VISIT'
+                    ? 'Es lo que cobras por presentarte a una urgencia de este oficio, con el recargo ya dentro.'
+                    : 'Es lo que cobras por salir a una urgencia de este oficio, con el recargo ya dentro.'}
               </Text>
             </>
           )}

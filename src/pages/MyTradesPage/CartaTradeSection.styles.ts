@@ -46,28 +46,6 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     color: theme.colors.accent700,
   },
-  visitRow: {
-    marginBottom: 12,
-  },
-  fieldLabel: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.text,
-    marginBottom: 5,
-  },
-  fieldHint: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.45,
-    color: theme.colors.textSoft,
-    marginTop: 5,
-  },
-  /** Un número corto, no un campo a lo ancho: parecería más importante de lo que es */
-  visitInput: {
-    alignSelf: 'flex-start',
-    minWidth: 140,
-    textAlign: 'right',
-  },
   notice: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

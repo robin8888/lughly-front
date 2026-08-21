@@ -41,54 +41,49 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent600,
     marginTop: 1,
   },
-  /** El elige-por-hora-o-visita, un par de píldoras como en AccountPage */
+  /**
+   * El elige-por-hora-o-visita: los mismos `Button` de siempre, uno relleno
+   * —el modo activo— y uno con borde, en vez de una píldora propia que no se
+   * pareciera a ningún otro botón de la app.
+   */
   modes: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
     marginBottom: 10,
   },
-  mode: {
+  modeButton: {
     flex: 1,
-    paddingVertical: 9,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.divider,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-  },
-  modeActive: {
-    borderColor: theme.colors.accent,
-    backgroundColor: theme.colors.accent100,
-  },
-  modeText: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.text,
-    opacity: 0.7,
-  },
-  modeTextActive: {
-    color: theme.colors.accent700,
-    opacity: 1,
   },
   /**
-   * Los dos precios a la par y del mismo ancho.
+   * Los dos precios a la par.
    *
    * En columna, el de urgencia se leía como una corrección del de arriba; al
-   * lado se comparan, que es como se decide el recargo. Del mismo ancho para
-   * que ninguno parezca el importante.
+   * lado se comparan, que es como se decide el recargo.
    */
   rates: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 16,
   },
+  /**
+   * Sin `flex: 1`: a la par para compararlos, pero repartir la fila entre
+   * los dos estiraba cada campo a la mitad del ancho de la tarjeta para un
+   * número de dos o tres cifras. Del ancho del campo de abajo, no de la fila
+   * —y la etiqueta parte en dos líneas si hace falta, en vez de ensanchar la
+   * columna para caber en una.
+   */
   rateField: {
-    flex: 1,
+    width: 110,
   },
   /*
    * El número pegado a su unidad. A la izquierda quedaba un hueco entre la
    * cifra y el "€/h" que hacía dudar de si formaban parte de lo mismo.
+   *
+   * Ancho justo para cuatro o cinco cifras y la unidad: lo normal es "35" o
+   * "120", y un campo suelto de medio ancho de tarjeta se leía como un hueco
+   * a medio rellenar.
    */
   rateInput: {
+    width: 110,
     textAlign: 'right',
   },
   remove: {
