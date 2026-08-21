@@ -41,6 +41,10 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent600,
     marginTop: 1,
   },
+  /** El elige-por-hora-o-visita entero, con su etiqueta encima */
+  modesGroup: {
+    marginBottom: 10,
+  },
   /**
    * El elige-por-hora-o-visita: los mismos `Button` de siempre, uno relleno
    * —el modo activo— y uno con borde, en vez de una píldora propia que no se
@@ -49,7 +53,7 @@ export const styles = StyleSheet.create({
   modes: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 10,
+    marginTop: 5,
   },
   modeButton: {
     flex: 1,
@@ -65,25 +69,22 @@ export const styles = StyleSheet.create({
     gap: 16,
   },
   /**
-   * Sin `flex: 1`: a la par para compararlos, pero repartir la fila entre
-   * los dos estiraba cada campo a la mitad del ancho de la tarjeta para un
-   * número de dos o tres cifras. Del ancho del campo de abajo, no de la fila
-   * —y la etiqueta parte en dos líneas si hace falta, en vez de ensanchar la
-   * columna para caber en una.
+   * `flex: 1` a propósito, no un ancho fijo: un número fijo de píxeles
+   * —probado y roto— no sabe cuánto sitio hay de verdad en la tarjeta y se
+   * sale por el lado en cuanto la pantalla es más estrecha de lo calculado.
+   * `flex: 1` siempre cabe, sea cual sea el ancho real.
    */
   rateField: {
-    width: 110,
+    flex: 1,
   },
   /*
    * El número pegado a su unidad. A la izquierda quedaba un hueco entre la
    * cifra y el "€/h" que hacía dudar de si formaban parte de lo mismo.
    *
-   * Ancho justo para cuatro o cinco cifras y la unidad: lo normal es "35" o
-   * "120", y un campo suelto de medio ancho de tarjeta se leía como un hueco
-   * a medio rellenar.
+   * Sin ancho propio: llena su columna (`rateField`, `flex: 1`), así que
+   * mide lo que de verdad hay disponible y no un número inventado.
    */
   rateInput: {
-    width: 110,
     textAlign: 'right',
   },
   remove: {

@@ -212,28 +212,32 @@ export function TradeRatesField({
                 siempre es por hora y no se pregunta.
               */}
               {allowVisitMode && isVisitEligibleTrade(trade.slug) && (
-                <View style={styles.modes} testID={`trade-mode-${trade.slug}`}>
-                  <Button
-                    variant={trade.pricingMode === 'HOURLY' ? 'primary' : 'secondary'}
-                    size="small"
-                    onPress={() => setPricingMode(trade.slug, 'HOURLY')}
-                    disabled={disabled}
-                    style={styles.modeButton}
-                    testID={`trade-mode-hourly-${trade.slug}`}
-                  >
-                    Por hora
-                  </Button>
+                <View style={styles.modesGroup}>
+                  <Text style={styles.fieldLabel}>Selecciona modo de cobro</Text>
 
-                  <Button
-                    variant={trade.pricingMode === 'VISIT' ? 'primary' : 'secondary'}
-                    size="small"
-                    onPress={() => setPricingMode(trade.slug, 'VISIT')}
-                    disabled={disabled}
-                    style={styles.modeButton}
-                    testID={`trade-mode-visit-${trade.slug}`}
-                  >
-                    Visita y presupuesto
-                  </Button>
+                  <View style={styles.modes} testID={`trade-mode-${trade.slug}`}>
+                    <Button
+                      variant={trade.pricingMode === 'HOURLY' ? 'primary' : 'secondary'}
+                      size="small"
+                      onPress={() => setPricingMode(trade.slug, 'HOURLY')}
+                      disabled={disabled}
+                      style={styles.modeButton}
+                      testID={`trade-mode-hourly-${trade.slug}`}
+                    >
+                      Por hora
+                    </Button>
+
+                    <Button
+                      variant={trade.pricingMode === 'VISIT' ? 'primary' : 'secondary'}
+                      size="small"
+                      onPress={() => setPricingMode(trade.slug, 'VISIT')}
+                      disabled={disabled}
+                      style={styles.modeButton}
+                      testID={`trade-mode-visit-${trade.slug}`}
+                    >
+                      Visita y presupuesto
+                    </Button>
+                  </View>
                 </View>
               )}
 
@@ -241,7 +245,9 @@ export function TradeRatesField({
                 <View style={styles.rateField}>
                   {trade.pricingMode === 'VISIT' ? (
                     <>
-                      <Text style={styles.fieldLabel}>Tarifa de visita</Text>
+                      <Text style={styles.fieldLabel} numberOfLines={1} adjustsFontSizeToFit>
+                        Tarifa de visita
+                      </Text>
                       <Input
                         value={trade.visitFee}
                         onChangeText={(text) =>
@@ -257,7 +263,9 @@ export function TradeRatesField({
                     </>
                   ) : (
                     <>
-                      <Text style={styles.fieldLabel}>Hora normal</Text>
+                      <Text style={styles.fieldLabel} numberOfLines={1} adjustsFontSizeToFit>
+                        Hora normal
+                      </Text>
                       <Input
                         value={trade.hourlyRate}
                         onChangeText={(text) =>
@@ -275,7 +283,7 @@ export function TradeRatesField({
                 </View>
 
                 <View style={styles.rateField}>
-                  <Text style={styles.fieldLabel}>
+                  <Text style={styles.fieldLabel} numberOfLines={1} adjustsFontSizeToFit>
                     {trade.pricingMode === 'VISIT' ? 'Visita en urgencia' : 'Hora en urgencia'}
                   </Text>
                   <Input
