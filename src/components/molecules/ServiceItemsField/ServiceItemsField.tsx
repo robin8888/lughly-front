@@ -122,25 +122,30 @@ export function ServiceItemsField({
         <Text style={styles.addLabel}>Añadir servicio</Text>
 
         <View style={styles.addRow}>
-          <Input
-            value={draftName}
-            onChangeText={setDraftName}
-            placeholder="Ej. Corte de pelo"
-            editable={!disabled}
-            style={styles.nameInput}
-            testID="carta-service-draft-name"
-          />
+          <View style={styles.addNameField}>
+            <Text style={styles.addFieldLabel}>Nombre del servicio</Text>
+            <Input
+              value={draftName}
+              onChangeText={setDraftName}
+              placeholder="Ej. Corte de pelo"
+              editable={!disabled}
+              testID="carta-service-draft-name"
+            />
+          </View>
 
-          <Input
-            value={draftPrice}
-            onChangeText={(text) => setDraftPrice(text.replace(/[^0-9.,]/g, ''))}
-            placeholder="0"
-            suffix="€"
-            keyboardType="decimal-pad"
-            editable={!disabled}
-            style={styles.priceInput}
-            testID="carta-service-draft-price"
-          />
+          <View style={styles.addPriceField}>
+            <Text style={styles.addFieldLabel}>Tarifa</Text>
+            <Input
+              value={draftPrice}
+              onChangeText={(text) => setDraftPrice(text.replace(/[^0-9.,]/g, ''))}
+              placeholder="0"
+              suffix="€"
+              keyboardType="decimal-pad"
+              editable={!disabled}
+              style={styles.addPriceInput}
+              testID="carta-service-draft-price"
+            />
+          </View>
         </View>
 
         <Button
