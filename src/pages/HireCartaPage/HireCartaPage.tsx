@@ -69,7 +69,15 @@ export function HireCartaPage({
   const services = (trade?.services ?? []).filter((service) =>
     serviceIds.includes(service.id),
   )
-  const total = (trade?.visitFee ?? 0) + services.reduce((sum, service) => sum + service.price, 0)
+  /**
+   * Un servicio de la carta ya lleva el desplazamiento metido en su precio
+   * —no es "visita + arreglo", es un precio cerrado de puerta a puerta—, así
+   * que la visita solo se cobra aparte cuando no se ha marcado ninguno.
+   */
+  const total =
+    services.length > 0
+      ? services.reduce((sum, service) => sum + service.price, 0)
+      : (trade?.visitFee ?? 0)
 
   const method = methods?.[0] ?? null
   const canSubmit =
@@ -144,10 +152,16 @@ export function HireCartaPage({
             {pro.employerName ?? pro.name} · {trade.label}
           </Text>
 
-          <View style={styles.line}>
-            <Text style={styles.lineLabel}>Visita a domicilio</Text>
-            <Money amount={trade.visitFee} style={styles.lineAmount} />
-          </View>
+          {/*
+            Solo cuando no hay ningún servicio marcado: si lo hay, su precio
+            ya lleva el desplazamiento dentro y la visita no se cobra aparte.
+          */}
+          {services.length === 0 && (
+            <View style={styles.line}>
+              <Text style={styles.lineLabel}>Visita a domicilio</Text>
+              <Money amount={trade.visitFee} style={styles.lineAmount} />
+            </View>
+          )}
 
           {services.map((service) => (
             <View key={service.id} style={styles.line}>

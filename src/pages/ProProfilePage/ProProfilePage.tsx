@@ -446,11 +446,19 @@ export function ProProfilePage({
               const hasCarta = trade.visitFee != null
               const services = trade.services ?? []
               const selected = selectedServices[trade.slug] ?? []
+              const selectedServiceItems = services.filter((service) =>
+                selected.includes(service.id),
+              )
+              /**
+               * Un servicio de la carta ya lleva el desplazamiento metido en
+               * su precio: no es "visita + arreglo", es un precio cerrado de
+               * puerta a puerta. La visita solo se cobra aparte cuando no se
+               * marca ningún servicio —ahí sí es lo único que se contrata.
+               */
               const total =
-                (trade.visitFee ?? 0) +
-                services
-                  .filter((service) => selected.includes(service.id))
-                  .reduce((sum, service) => sum + service.price, 0)
+                selectedServiceItems.length > 0
+                  ? selectedServiceItems.reduce((sum, service) => sum + service.price, 0)
+                  : (trade.visitFee ?? 0)
 
               return (
                 <View key={trade.slug} style={styles.tradeBlock}>
@@ -478,9 +486,10 @@ export function ProProfilePage({
                   </Text>
 
                   {/*
-                    La carta: la visita se cobra siempre, y encima lo que se
-                    marque. Elegir cero servicios también es válido —solo la
-                    visita, para cuando no se sabe qué hace falta todavía—.
+                    La carta: sin marcar nada, se cobra la visita —para
+                    cuando no se sabe qué hace falta todavía—; en cuanto se
+                    marca un servicio, ese precio ya lleva el desplazamiento
+                    dentro y la visita deja de cobrarse aparte.
                   */}
                   {hasCarta && (
                     <View style={styles.cartaBlock} testID={`pro-carta-${trade.slug}`}>

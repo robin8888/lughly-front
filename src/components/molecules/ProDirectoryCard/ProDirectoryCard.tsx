@@ -96,23 +96,25 @@ export function ProDirectoryCard({
   const pricingMode = isVisitMode ? 'Visita y presupuesto' : 'Por hora'
   const priceLabel = isVisitMode ? `Visita ${pro.visitFee} €` : `${pro.hourlyRate} €/h`
 
-  /**
-   * La carta del oficio de la tarjeta, desplegable y solo para mirar: elegir
-   * aquí no contrata nada, es para comparar el total entre profesionales
-   * antes de entrar en ninguna ficha. Para contratar de verdad se toca el
-   * resto de la tarjeta, que lleva al perfil.
-   */
+  /** La carta del oficio de la tarjeta, desplegable: se puede contratar sin salir de aquí */
   const [showCarta, setShowCarta] = useState(false)
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
   const cartaServices = featuredTrade?.services ?? []
   const hasCarta = isVisitMode && cartaServices.length > 0
 
+  const selectedCartaServices = cartaServices.filter((service) =>
+    selectedServices.includes(service.id),
+  )
+  /**
+   * Un servicio de la carta ya lleva el desplazamiento metido en su precio
+   * —no es "visita + arreglo", es un precio cerrado de puerta a puerta—, así
+   * que la visita solo se cobra aparte cuando no se marca ningún servicio.
+   */
   const cartaTotal =
-    (featuredTrade?.visitFee ?? 0) +
-    cartaServices
-      .filter((service) => selectedServices.includes(service.id))
-      .reduce((sum, service) => sum + service.price, 0)
+    selectedCartaServices.length > 0
+      ? selectedCartaServices.reduce((sum, service) => sum + service.price, 0)
+      : (featuredTrade?.visitFee ?? 0)
 
   const toggleService = (serviceId: string) => {
     setSelectedServices((current) =>

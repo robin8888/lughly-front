@@ -120,7 +120,7 @@ describe('ProDirectoryCard', () => {
     expect(getByTestId('pro-card-carta-hire')).toBeTruthy()
   })
 
-  it('marcar un servicio suma su precio a la visita', () => {
+  it('marcar un servicio no suma la visita: su precio ya lleva el desplazamiento', () => {
     const { getByTestId, getByText } = render(
       <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} onHireCarta={noopHireCarta} />,
     )
@@ -128,7 +128,19 @@ describe('ProDirectoryCard', () => {
     fireEvent.press(getByTestId('pro-card-carta-toggle'))
     fireEvent.press(getByTestId('pro-card-carta-service-svc-1'))
 
-    expect(getByText('75,00€')).toBeTruthy()
+    expect(getByText('40,00€')).toBeTruthy()
+  })
+
+  it('marcar dos servicios suma solo entre ellos', () => {
+    const { getByTestId, getByText } = render(
+      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} onHireCarta={noopHireCarta} />,
+    )
+
+    fireEvent.press(getByTestId('pro-card-carta-toggle'))
+    fireEvent.press(getByTestId('pro-card-carta-service-svc-1'))
+    fireEvent.press(getByTestId('pro-card-carta-service-svc-2'))
+
+    expect(getByText('100,00€')).toBeTruthy()
   })
 
   it('contratar desde la tarjeta manda el profesional, el oficio y lo marcado', () => {
