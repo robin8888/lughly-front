@@ -207,7 +207,7 @@ export function ProProfilePage({
   const headlinePrice =
     headlineTrade?.visitFee != null
       ? `Visita ${formatAmount(headlineTrade.visitFee)} €`
-      : `${formatAmount(pro.hourlyRate)} €/h`
+      : `${formatAmount(headlineTrade?.hourlyRate ?? pro.hourlyRate ?? 0)} €/h`
 
   /**
    * Las fotos, agrupadas por oficio. El servidor ya las manda en el orden de
@@ -450,7 +450,7 @@ export function ProProfilePage({
                     <Text style={styles.tradeRate}>
                       {hasCarta
                         ? `Visita ${formatAmount(trade.visitFee!)} €`
-                        : `${formatAmount(trade.hourlyRate)} €/h`}
+                        : `${formatAmount(trade.hourlyRate ?? 0)} €/h`}
                     </Text>
                   </View>
 

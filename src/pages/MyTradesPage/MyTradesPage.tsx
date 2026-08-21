@@ -54,7 +54,9 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
       setTrades(
         data.map((trade) => ({
           slug: trade.slug,
-          hourlyRate: String(trade.hourlyRate),
+          pricingMode: trade.visitFee !== null ? 'VISIT' : 'HOURLY',
+          hourlyRate: trade.hourlyRate === null ? '' : String(trade.hourlyRate),
+          visitFee: trade.visitFee === null ? '' : String(trade.visitFee),
           /* Vacío si no atiende urgencias de ese oficio, que es lo normal */
           urgencyRate:
             trade.urgencyHourlyRate == null ? '' : String(trade.urgencyHourlyRate),
@@ -94,7 +96,9 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
 
   const canSave =
     current.length > 0 &&
-    current.every((trade) => rateOf(trade.hourlyRate) > 0) &&
+    current.every((trade) =>
+      trade.pricingMode === 'VISIT' ? rateOf(trade.visitFee) > 0 : rateOf(trade.hourlyRate) > 0,
+    ) &&
     /*
       La de urgencia puede estar vacía —significa que no las atiende—, pero si
       escribe algo tiene que ser un número: un "no sé" a medio teclear se
@@ -110,7 +114,8 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
     const saved = await save({
       trades: current.map((trade) => ({
         slug: trade.slug,
-        hourlyRate: rateOf(trade.hourlyRate),
+        hourlyRate: trade.pricingMode === 'VISIT' ? null : rateOf(trade.hourlyRate),
+        visitFee: trade.pricingMode === 'VISIT' ? rateOf(trade.visitFee) : null,
         urgencyHourlyRate:
           trade.urgencyRate.trim() === '' ? null : rateOf(trade.urgencyRate),
         description: trade.description.trim(),
@@ -228,8 +233,9 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
               value={current}
               onChange={setTrades}
               disabled={isSaving}
+              allowVisitMode
               renderExtra={(trade) =>
-                savedSlugs.has(trade.slug) ? (
+                trade.pricingMode !== 'VISIT' ? null : savedSlugs.has(trade.slug) ? (
                   <CartaTradeSection
                     tradeSlug={trade.slug}
                     label={getTradeLabel(trade.slug)}

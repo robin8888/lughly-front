@@ -23,6 +23,7 @@ function makePro(photos: string[]): ApiPro {
     photos,
     city: 'Madrid',
     hourlyRate: 28,
+    visitFee: null,
     rating: 4.5,
     reviewCount: 10,
     completedJobs: 20,

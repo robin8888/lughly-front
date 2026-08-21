@@ -22,7 +22,7 @@ import { useState, type ReactNode } from 'react'
 import { View, Text, Pressable } from 'react-native'
 import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
-import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
+import { TRADE_OPTIONS, getTradeLabel, isVisitEligibleTrade } from '@/utils/trades'
 import { styles } from './TradeRatesField.styles'
 
 /**
@@ -38,8 +38,17 @@ function placeholderFor(slug: string): string {
 
 export interface TradeRate {
   slug: string
+  /**
+   * Cómo cobra este oficio: por hora, o por una visita para evaluar y
+   * presupuestar. No los dos — es la misma pregunta ("cuánto cuesta este
+   * oficio") contestada de una forma u otra, y es lo que sale en la tarjeta
+   * del directorio.
+   */
+  pricingMode: 'HOURLY' | 'VISIT'
   /** Como texto: es lo que hay en el campo, con la coma que teclee */
   hourlyRate: string
+  /** Lo que cobra por presentarse a evaluar y presupuestar, también como texto */
+  visitFee: string
   /**
    * Lo que cobra por una urgencia de este oficio, también como texto.
    *
@@ -67,6 +76,13 @@ export interface TradeRatesFieldProps {
   /** Se esconde el precio: al trabajador no se le enseña lo que cobra su empresa */
   hideRates?: boolean
   /**
+   * Deja elegir, oficio a oficio, entre cobrar por hora o por visita para
+   * presupuestar. Solo lo activa "Mis oficios y tarifas": en el registro y en
+   * el alta de un trabajador no hay carta que montar todavía, así que el
+   * modo se queda fijo en "por hora" como siempre.
+   */
+  allowVisitMode?: boolean
+  /**
    * Algo más que pintar dentro del bloque de CADA oficio, después de su
    * descripción — la carta de "Mis oficios y tarifas", por ejemplo. Vive
    * aquí y no en el llamador porque el bloque por oficio lo dibuja este
@@ -82,6 +98,7 @@ export function TradeRatesField({
   onChange,
   disabled = false,
   hideRates = false,
+  allowVisitMode = false,
   renderExtra,
   testID,
 }: TradeRatesFieldProps) {
@@ -95,7 +112,10 @@ export function TradeRatesField({
   const available = TRADE_OPTIONS.filter((option) => !chosen.has(option.value))
 
   const add = (slug: string) => {
-    onChange([...value, { slug, hourlyRate: '', urgencyRate: '', description: '' }])
+    onChange([
+      ...value,
+      { slug, pricingMode: 'HOURLY', hourlyRate: '', visitFee: '', urgencyRate: '', description: '' },
+    ])
     setPickerKey((key) => key + 1)
   }
 
@@ -122,6 +142,18 @@ export function TradeRatesField({
   const setRate = (slug: string, hourlyRate: string) => {
     onChange(
       value.map((trade) => (trade.slug === slug ? { ...trade, hourlyRate } : trade)),
+    )
+  }
+
+  const setVisitFee = (slug: string, visitFee: string) => {
+    onChange(
+      value.map((trade) => (trade.slug === slug ? { ...trade, visitFee } : trade)),
+    )
+  }
+
+  const setPricingMode = (slug: string, pricingMode: TradeRate['pricingMode']) => {
+    onChange(
+      value.map((trade) => (trade.slug === slug ? { ...trade, pricingMode } : trade)),
     )
   }
 
@@ -172,21 +204,87 @@ export function TradeRatesField({
           */}
           {!hideRates && (
             <>
+              {/*
+                El modo de cobro solo se elige en los oficios donde tiene
+                sentido: en los de servicio continuo —limpieza, clases,
+                cuidados— no hay nada que evaluar antes de empezar, así que
+                siempre es por hora y no se pregunta.
+              */}
+              {allowVisitMode && isVisitEligibleTrade(trade.slug) && (
+                <View style={styles.modes} testID={`trade-mode-${trade.slug}`}>
+                  <Pressable
+                    onPress={() => setPricingMode(trade.slug, 'HOURLY')}
+                    disabled={disabled}
+                    style={[styles.mode, trade.pricingMode === 'HOURLY' && styles.modeActive]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: trade.pricingMode === 'HOURLY' }}
+                    testID={`trade-mode-hourly-${trade.slug}`}
+                  >
+                    <Text
+                      style={[
+                        styles.modeText,
+                        trade.pricingMode === 'HOURLY' && styles.modeTextActive,
+                      ]}
+                    >
+                      Por hora
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => setPricingMode(trade.slug, 'VISIT')}
+                    disabled={disabled}
+                    style={[styles.mode, trade.pricingMode === 'VISIT' && styles.modeActive]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: trade.pricingMode === 'VISIT' }}
+                    testID={`trade-mode-visit-${trade.slug}`}
+                  >
+                    <Text
+                      style={[
+                        styles.modeText,
+                        trade.pricingMode === 'VISIT' && styles.modeTextActive,
+                      ]}
+                    >
+                      Visita para presupuestar
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
               <View style={styles.rates}>
                 <View style={styles.rateField}>
-                  <Text style={styles.fieldLabel}>Hora normal</Text>
-                  <Input
-                    value={trade.hourlyRate}
-                    onChangeText={(text) =>
-                      setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))
-                    }
-                    placeholder="0"
-                    suffix="€/h"
-                    keyboardType="decimal-pad"
-                    editable={!disabled}
-                    style={styles.rateInput}
-                    testID={`trade-rate-${trade.slug}`}
-                  />
+                  {trade.pricingMode === 'VISIT' ? (
+                    <>
+                      <Text style={styles.fieldLabel}>Tarifa de visita</Text>
+                      <Input
+                        value={trade.visitFee}
+                        onChangeText={(text) =>
+                          setVisitFee(trade.slug, text.replace(/[^0-9.,]/g, ''))
+                        }
+                        placeholder="0"
+                        suffix="€"
+                        keyboardType="decimal-pad"
+                        editable={!disabled}
+                        style={styles.rateInput}
+                        testID={`trade-visit-fee-${trade.slug}`}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.fieldLabel}>Hora normal</Text>
+                      <Input
+                        value={trade.hourlyRate}
+                        onChangeText={(text) =>
+                          setRate(trade.slug, text.replace(/[^0-9.,]/g, ''))
+                        }
+                        placeholder="0"
+                        suffix="€/h"
+                        keyboardType="decimal-pad"
+                        editable={!disabled}
+                        style={styles.rateInput}
+                        testID={`trade-rate-${trade.slug}`}
+                      />
+                    </>
+                  )}
                 </View>
 
                 <View style={styles.rateField}>
@@ -205,6 +303,14 @@ export function TradeRatesField({
                   />
                 </View>
               </View>
+
+              {trade.pricingMode === 'VISIT' && (
+                <Text style={styles.fieldHint}>
+                  Es lo que cobras por presentarte a evaluar y presupuestar.
+                  Para vender servicios a precio cerrado de este oficio,
+                  añádelos debajo.
+                </Text>
+              )}
 
               {/*
                 Que esté vacío significa algo, y por eso se dice debajo y no

@@ -18,7 +18,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { Button } from '@/components/atoms/Button'
-import { Input } from '@/components/atoms/Input'
 import { ServiceItemsField, type ServiceItemRate } from '@/components/molecules/ServiceItemsField'
 import { useMyCarta, useSetMyCarta } from '@/hooks/domain/useMyCarta'
 import { theme } from '@/theme'
@@ -34,7 +33,6 @@ export function CartaTradeSection({ tradeSlug, label, disabled = false }: CartaT
   const { data, isPending, isError, refetch } = useMyCarta(tradeSlug)
   const { save, isSaving, formError } = useSetMyCarta(tradeSlug)
 
-  const [visitFee, setVisitFee] = useState('')
   const [services, setServices] = useState<ServiceItemRate[]>([])
   const [loaded, setLoaded] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -46,7 +44,6 @@ export function CartaTradeSection({ tradeSlug, label, disabled = false }: CartaT
   useEffect(() => {
     if (!data || loaded) return
 
-    setVisitFee(data.visitFee === null ? '' : String(data.visitFee))
     setServices(
       data.services.map((service) => ({
         id: service.id,
@@ -57,12 +54,9 @@ export function CartaTradeSection({ tradeSlug, label, disabled = false }: CartaT
     setLoaded(true)
   }, [data, loaded])
 
-  const visitFeeOf = Number(visitFee.trim().replace(',', '.'))
   const canSave =
     !disabled &&
     !isSaving &&
-    visitFee.trim() !== '' &&
-    visitFeeOf > 0 &&
     services.every((service) => {
       const price = Number(service.price.trim().replace(',', '.'))
       return service.name.trim().length >= 2 && price > 0
@@ -70,7 +64,6 @@ export function CartaTradeSection({ tradeSlug, label, disabled = false }: CartaT
 
   const handleSave = async () => {
     const saved = await save({
-      visitFee: visitFeeOf,
       services: services.map((service) => ({
         name: service.name.trim(),
         price: Number(service.price.trim().replace(',', '.')),
@@ -79,9 +72,9 @@ export function CartaTradeSection({ tradeSlug, label, disabled = false }: CartaT
 
     setNotice(
       saved
-        ? `Carta guardada: la visita y ${saved.services.length} ${
+        ? `Carta guardada: ${saved.services.length} ${
             saved.services.length === 1 ? 'servicio' : 'servicios'
-          }.`
+          }, además de la visita.`
         : null,
     )
   }
@@ -116,31 +109,13 @@ export function CartaTradeSection({ tradeSlug, label, disabled = false }: CartaT
       <View style={styles.sectionHead}>
         <Text style={styles.sectionTitle}>Carta</Text>
         <Text style={styles.sectionHint}>
-          Opcional: tarifa de visita y servicios a precio fijo. No todos los
-          oficios la necesitan.
+          Opcional: servicios a precio fijo que se suman a tu tarifa de
+          visita{data && data.visitFee !== null ? ` (${data.visitFee} €)` : ''}.
+          El cliente marca lo que necesite y paga todo junto al contratar.
         </Text>
       </View>
 
       {formError && <Text style={styles.error}>{formError}</Text>}
-
-      <View style={styles.visitRow}>
-        <Text style={styles.fieldLabel}>Tarifa de visita a domicilio</Text>
-        <Input
-          value={visitFee}
-          onChangeText={(text) => setVisitFee(text.replace(/[^0-9.,]/g, ''))}
-          placeholder="0"
-          suffix="€"
-          keyboardType="decimal-pad"
-          editable={!disabled && !isSaving}
-          style={styles.visitInput}
-          testID={`carta-visit-fee-${tradeSlug}`}
-        />
-        <Text style={styles.fieldHint}>
-          Lo que cobras por presentarte, con o sin servicio de la carta
-          detrás. Es lo mínimo que se paga aunque no se marque ningún
-          servicio.
-        </Text>
-      </View>
 
       <ServiceItemsField
         value={services}

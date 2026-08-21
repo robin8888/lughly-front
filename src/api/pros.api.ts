@@ -16,7 +16,12 @@ export interface ApiServiceItem {
 export interface ApiProTrade {
   slug: string
   label: string
-  hourlyRate: number
+  /**
+   * `null` si cobra por visita en vez de por hora — ver `visitFee` más
+   * abajo. Son dos modos de cobrar el mismo oficio, no dos datos
+   * independientes: exactamente uno de los dos está puesto.
+   */
+  hourlyRate: number | null
   /**
    * Lo que cobra por una urgencia de este oficio.
    *
@@ -36,10 +41,10 @@ export interface ApiProTrade {
    */
   description?: string | null
   /**
-   * Lo que cobra por presentarse en este oficio, con o sin servicio de la
-   * carta detrás. `null` significa que no tiene carta montada aquí — no
-   * todos los oficios la usan, limpieza, clases o cuidado siguen siendo por
-   * horas. Es el dato que decide si la ficha enseña el selector de la carta.
+   * Lo que cobra por presentarse en este oficio, alternativa a `hourlyRate`
+   * — no todos los oficios la usan, limpieza, clases o cuidado siguen
+   * siendo por horas. Con esta puesta, la ficha enseña el selector de la
+   * carta (servicios a precio fijo, además de la visita).
    */
   visitFee?: number | null
   /** Solo viene relleno en la ficha completa, no en el listado del directorio */
@@ -55,9 +60,12 @@ export interface ApiPro {
   city: string
   /**
    * El precio del oficio al que responde esta tarjeta —el buscado si se
-   * filtró, y si no el principal—, no una media de todos los suyos.
+   * filtró, y si no el principal—, no una media de todos los suyos. `null`
+   * si ese oficio cobra por visita — ver `visitFee`.
    */
-  hourlyRate: number
+  hourlyRate: number | null
+  /** Lo que cobra por presentarse en el oficio de la tarjeta, si cobra por visita */
+  visitFee: number | null
   /** Todos los que ejerce, en su orden, para las etiquetas de la tarjeta */
   trades: ApiProTrade[]
   /**
@@ -241,21 +249,32 @@ function toQueryString(filters: ProsFilters | ProReviewsFilters): string {
   return query ? `?${query}` : ''
 }
 
-/** Respuesta de PUT /v1/pro/trades */
+/**
+ * Respuesta de PUT /v1/pro/trades. Por hora o por visita, nunca los dos:
+ * exactamente uno de `hourlyRate`/`visitFee` va puesto en cada oficio.
+ */
 export interface SetTradesPayload {
-  trades: { slug: string; hourlyRate: number; urgencyHourlyRate?: number | null }[]
+  trades: {
+    slug: string
+    hourlyRate?: number | null
+    visitFee?: number | null
+    urgencyHourlyRate?: number | null
+  }[]
 }
 
 /** Respuesta de GET/PUT /v1/pro/trades/:tradeSlug/carta */
 export interface ApiCarta {
   tradeSlug: string
+  /** La tarifa de visita del oficio, informativa: se pone en `setMyTrades`, no aquí */
   visitFee: number | null
   services: ApiServiceItem[]
 }
 
-/** Cuerpo de PUT /v1/pro/trades/:tradeSlug/carta. Se manda entera, como los oficios. */
+/**
+ * Cuerpo de PUT /v1/pro/trades/:tradeSlug/carta. Solo los servicios: la
+ * tarifa de visita se guarda con "Mis oficios y tarifas" (`setMyTrades`).
+ */
 export interface SetCartaPayload {
-  visitFee: number
   services: { name: string; price: number }[]
 }
 

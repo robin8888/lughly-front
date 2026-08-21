@@ -74,8 +74,9 @@ export function ProDirectoryCard({
    * todos los oficios usan la carta, así que esto no siempre sale.
    */
   const featuredTrade = pro.trades.find((trade) => trade.slug === pro.trade)
-  const pricingMode =
-    featuredTrade?.visitFee != null ? 'Visita y presupuesto' : 'Por hora'
+  const isVisitMode = featuredTrade?.visitFee != null
+  const pricingMode = isVisitMode ? 'Visita y presupuesto' : 'Por hora'
+  const priceLabel = isVisitMode ? `Visita ${pro.visitFee} €` : `${pro.hourlyRate} €/h`
 
   return (
     <Pressable
@@ -156,7 +157,7 @@ export function ProDirectoryCard({
         </View>
 
         <View style={styles.numbers}>
-          <Text style={styles.rate}>{pro.hourlyRate} €/h</Text>
+          <Text style={styles.rate}>{priceLabel}</Text>
           <View style={styles.ratingRow}>
             <Text style={styles.star}>★</Text>
             <Text style={styles.rating}>{pro.rating.toFixed(1)}</Text>
@@ -215,7 +216,11 @@ export function ProDirectoryCard({
         <Text style={styles.alsoDoes} numberOfLines={2}>
           También:{' '}
           {otherTrades
-            .map((trade) => `${trade.label} ${trade.hourlyRate} €/h`)
+            .map((trade) =>
+              trade.visitFee != null
+                ? `${trade.label} visita ${trade.visitFee} €`
+                : `${trade.label} ${trade.hourlyRate} €/h`,
+            )
             .join(' · ')}
         </Text>
       )}

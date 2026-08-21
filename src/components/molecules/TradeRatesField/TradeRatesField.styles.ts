@@ -41,6 +41,35 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent600,
     marginTop: 1,
   },
+  /** El elige-por-hora-o-visita, un par de píldoras como en AccountPage */
+  modes: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 10,
+  },
+  mode: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.divider,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+  },
+  modeActive: {
+    borderColor: theme.colors.accent,
+    backgroundColor: theme.colors.accent100,
+  },
+  modeText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.text,
+    opacity: 0.7,
+  },
+  modeTextActive: {
+    color: theme.colors.accent700,
+    opacity: 1,
+  },
   /**
    * Los dos precios a la par y del mismo ancho.
    *

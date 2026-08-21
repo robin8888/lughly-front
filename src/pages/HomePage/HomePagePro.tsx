@@ -442,12 +442,31 @@ export function HomePagePro({
                      * Con varios oficios no cabe un precio por cada uno, así
                      * que se enseña el más bajo como "desde". Decir solo el
                      * del principal daría a entender que es el único.
+                     *
+                     * Por hora o por visita, según lo que tenga la mayoría:
+                     * se prioriza mostrar una tarifa por hora si tiene
+                     * alguna, porque es la unidad que más gente reconoce de
+                     * un vistazo; si todos sus oficios cobran por visita, se
+                     * enseña esa.
                      */
-                    value={
-                      pro.trades.length > 1
-                        ? `desde ${Math.min(...pro.trades.map((t) => t.hourlyRate))} €/h`
-                        : `${pro.hourlyRate} €/h`
-                    }
+                    value={(() => {
+                      const hourly = pro.trades
+                        .map((t) => t.hourlyRate)
+                        .filter((rate): rate is number => rate !== null)
+                      const visits = pro.trades
+                        .map((t) => t.visitFee)
+                        .filter((fee): fee is number => fee !== null)
+
+                      if (pro.trades.length > 1) {
+                        return hourly.length > 0
+                          ? `desde ${Math.min(...hourly)} €/h`
+                          : `desde ${Math.min(...visits)} € visita`
+                      }
+
+                      return pro.hourlyRate !== null
+                        ? `${pro.hourlyRate} €/h`
+                        : `Visita ${pro.visitFee} €`
+                    })()}
                     hint={
                       pro.trades.length > 1
                         ? `en ${pro.trades.length} oficios`
