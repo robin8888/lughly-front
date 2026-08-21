@@ -89,4 +89,13 @@ export const styles = StyleSheet.create({
     opacity: 0.75,
     marginTop: 10,
   },
+  cartaPending: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.45,
+    color: theme.colors.cardText,
+    opacity: 0.55,
+    fontStyle: 'italic',
+    marginTop: 14,
+  },
 })

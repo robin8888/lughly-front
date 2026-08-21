@@ -118,10 +118,6 @@ export default function AccountRoute() {
                       ...(checklist?.trades === 'MISSING' && { note: blocking }),
                     },
                     {
-                      label: 'Mi carta',
-                      onPress: () => router.navigate('/mi-carta'),
-                    },
-                    {
                       label: 'Mis fotos de trabajo',
                       onPress: () => router.navigate('/mis-fotos'),
                       ...(checklist?.photos === 'MISSING' && { note: optional }),

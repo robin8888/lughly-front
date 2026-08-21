@@ -69,40 +69,48 @@ export function ServiceItemsField({
 
   return (
     <View testID={testID}>
-      {value.map((service) => (
-        <View key={service.id} style={styles.row} testID={`carta-service-${service.id}`}>
-          <Input
-            value={service.name}
-            onChangeText={(text) => setName(service.id, text)}
-            placeholder="Nombre del servicio"
-            editable={!disabled}
-            style={styles.nameInput}
-            testID={`carta-service-name-${service.id}`}
-          />
+      {value.length > 0 && (
+        <>
+          <Text style={styles.listLabel}>Servicios</Text>
 
-          <Input
-            value={service.price}
-            onChangeText={(text) => setPrice(service.id, text.replace(/[^0-9.,]/g, ''))}
-            placeholder="0"
-            suffix="€"
-            keyboardType="decimal-pad"
-            editable={!disabled}
-            style={styles.priceInput}
-            testID={`carta-service-price-${service.id}`}
-          />
+          <View style={styles.list}>
+            {value.map((service) => (
+              <View key={service.id} style={styles.row} testID={`carta-service-${service.id}`}>
+                <Input
+                  value={service.name}
+                  onChangeText={(text) => setName(service.id, text)}
+                  placeholder="Nombre del servicio"
+                  editable={!disabled}
+                  style={styles.nameInput}
+                  testID={`carta-service-name-${service.id}`}
+                />
 
-          <Pressable
-            onPress={() => remove(service.id)}
-            disabled={disabled}
-            style={styles.remove}
-            accessibilityRole="button"
-            accessibilityLabel={`Quitar ${service.name || 'este servicio'}`}
-            testID={`carta-service-remove-${service.id}`}
-          >
-            <Text style={styles.removeIcon}>×</Text>
-          </Pressable>
-        </View>
-      ))}
+                <Input
+                  value={service.price}
+                  onChangeText={(text) => setPrice(service.id, text.replace(/[^0-9.,]/g, ''))}
+                  placeholder="0"
+                  suffix="€"
+                  keyboardType="decimal-pad"
+                  editable={!disabled}
+                  style={styles.priceInput}
+                  testID={`carta-service-price-${service.id}`}
+                />
+
+                <Pressable
+                  onPress={() => remove(service.id)}
+                  disabled={disabled}
+                  style={styles.remove}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Quitar ${service.name || 'este servicio'}`}
+                  testID={`carta-service-remove-${service.id}`}
+                >
+                  <Text style={styles.removeIcon}>×</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
 
       {value.length === 0 && (
         <Text style={styles.empty}>

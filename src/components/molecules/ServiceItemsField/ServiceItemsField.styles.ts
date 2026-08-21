@@ -1,24 +1,40 @@
 /**
  * ServiceItemsField styles
- * Una fila por servicio: nombre, precio y quitar. Al final, el formulario
- * corto para añadir uno nuevo.
+ *
+ * Una etiqueta de columna ("Servicios") y una fila por servicio, cada una
+ * separada de la siguiente por una línea fina — igual que un oficio se
+ * separa del siguiente en `TradeRatesField`, para que la lista se lea como
+ * lista y no como un bloque de campos sueltos. Al final, el formulario
+ * corto para añadir uno nuevo, con su propio rótulo.
  */
 
 import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
+  listLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.text,
+    marginBottom: 6,
+  },
+  list: {
+    marginBottom: 4,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
+    paddingBottom: 10,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.hairline,
   },
   nameInput: {
     flex: 1,
   },
   priceInput: {
-    width: 90,
+    width: 96,
     textAlign: 'right',
   },
   remove: {
@@ -39,17 +55,14 @@ export const styles = StyleSheet.create({
     lineHeight: theme.typography.sizes.tiny * 1.5,
     color: theme.colors.text,
     opacity: 0.7,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   add: {
-    marginTop: 6,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.hairline,
+    paddingTop: 4,
   },
   addLabel: {
     fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.small,
+    fontSize: theme.typography.sizes.tiny,
     color: theme.colors.text,
     marginBottom: 6,
   },

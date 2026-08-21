@@ -22,7 +22,9 @@ import { useMyPhotos } from '@/hooks/domain/useMyPhotos'
 import { useMyTrades, useSetMyTrades } from '@/hooks/domain/useMyTrades'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { getTradeLabel } from '@/utils/trades'
 import { theme } from '@/theme'
+import { CartaTradeSection } from './CartaTradeSection'
 import { styles } from './MyTradesPage.styles'
 
 export interface MyTradesPageProps {
@@ -66,6 +68,14 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
   const rateOf = (value: string) => Number(value.replace(',', '.'))
 
   const current = trades ?? []
+
+  /**
+   * Solo los oficios que YA están guardados en el servidor pueden tener
+   * carta: `SetMyCartaUseCase` exige un `ProTrade` existente, y uno recién
+   * añadido en este formulario todavía no lo es hasta que se pulse
+   * "Guardar" más abajo.
+   */
+  const savedSlugs = new Set((data ?? []).map((trade) => trade.slug))
 
   /**
    * Los oficios que tenía, tienen fotos y ya no están en la lista. El servidor
@@ -185,8 +195,8 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
             <InfoCard variant="accent">
               <Text style={styles.intro}>
                 Añade todo lo que hagas de verdad: cada oficio te pone en el
-                listado de ese oficio, con su hora normal, su hora en urgencia
-                y lo que cuentes de él.
+                listado de ese oficio, con su hora normal, su hora en urgencia,
+                lo que cuentes de él y, si quieres, su carta.
               </Text>
 
               <Text style={styles.introNote}>
@@ -218,6 +228,19 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
               value={current}
               onChange={setTrades}
               disabled={isSaving}
+              renderExtra={(trade) =>
+                savedSlugs.has(trade.slug) ? (
+                  <CartaTradeSection
+                    tradeSlug={trade.slug}
+                    label={getTradeLabel(trade.slug)}
+                    disabled={isSaving}
+                  />
+                ) : (
+                  <Text style={styles.cartaPending}>
+                    Guarda este oficio para poder ponerle una carta.
+                  </Text>
+                )
+              }
               testID="my-trades-field"
             />
 

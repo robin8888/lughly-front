@@ -18,7 +18,7 @@
  * parecía una corrección del de arriba.
  */
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { View, Text, Pressable } from 'react-native'
 import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
@@ -66,6 +66,14 @@ export interface TradeRatesFieldProps {
   disabled?: boolean
   /** Se esconde el precio: al trabajador no se le enseña lo que cobra su empresa */
   hideRates?: boolean
+  /**
+   * Algo más que pintar dentro del bloque de CADA oficio, después de su
+   * descripción — la carta de "Mis oficios y tarifas", por ejemplo. Vive
+   * aquí y no en el llamador porque el bloque por oficio lo dibuja este
+   * componente; sin este hueco, cualquier cosa que dependiera de "en qué
+   * oficio estoy" tendría que reconstruir la lista de oficios por su cuenta.
+   */
+  renderExtra?: (trade: TradeRate) => ReactNode
   testID?: string
 }
 
@@ -74,6 +82,7 @@ export function TradeRatesField({
   onChange,
   disabled = false,
   hideRates = false,
+  renderExtra,
   testID,
 }: TradeRatesFieldProps) {
   /**
@@ -236,6 +245,8 @@ export function TradeRatesField({
               Si lo dejas vacío se enseña la descripción general de tu perfil.
             </Text>
           </View>
+
+          {renderExtra?.(trade)}
         </View>
       ))}
 
