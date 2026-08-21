@@ -46,11 +46,18 @@ function whatIsHappening(job: ApiJobDetail): string {
   if (job.viewer === 'pro') {
     switch (job.status) {
       case 'PENDING_PRO':
+        /*
+          En el aire, pero a quién se espera lo dice la cita: a quien recibió
+          el encargo, al trabajador que tiene que confirmar, o al cliente
+          ante un cambio de persona.
+        */
+        if (job.appointmentStatus === 'PENDING_WORKER') {
+          return 'Te lo han asignado y falta que confirmes que puedes.'
+        }
+        if (job.appointmentStatus === 'SUBSTITUTE_PROPOSED') {
+          return 'Habéis propuesto mandar a otra persona y falta que el cliente lo acepte.'
+        }
         return 'Te lo han encargado y esperan tu respuesta.'
-      case 'PENDING_WORKER':
-        return 'Te lo han asignado y falta que confirmes que puedes.'
-      case 'SUBSTITUTE_PROPOSED':
-        return 'Habéis propuesto mandar a otra persona y falta que el cliente lo acepte.'
       case 'AWARDED':
         return 'Es tuyo. Tienes la dirección y el teléfono del cliente.'
       default:
@@ -73,11 +80,13 @@ function whatIsHappening(job: ApiJobDetail): string {
         ? 'Abierta a pujas. Cuando cierre, eliges tú comparando precio, plazo y valoración.'
         : 'Publicado y esperando.'
     case 'PENDING_PRO':
+      if (job.appointmentStatus === 'PENDING_WORKER') {
+        return `${quien} lo ha asignado y falta que quien va a ir lo confirme. Te avisaremos en cuanto esté cerrado.`
+      }
+      if (job.appointmentStatus === 'SUBSTITUTE_PROPOSED') {
+        return `${quien} propone mandar a ${job.substituteProName ?? 'otra persona'}. Decides tú: puedes aceptarlo o cancelar sin coste, desde Mis trabajos.`
+      }
       return `Esperando la respuesta de ${quien}. Si no contesta en el plazo, quedarás libre para encargárselo a otro.`
-    case 'PENDING_WORKER':
-      return `${quien} lo ha asignado y falta que quien va a ir lo confirme. Te avisaremos en cuanto esté cerrado.`
-    case 'SUBSTITUTE_PROPOSED':
-      return `${quien} propone mandar a ${job.substituteProName ?? 'otra persona'}. Decides tú: puedes aceptarlo o cancelar sin coste, desde Mis trabajos.`
     case 'AWARDED':
       /*
         El teléfono solo se promete si está. No todo el mundo lo tiene en la
@@ -208,9 +217,14 @@ export function JobDetailPage({
     )
   }
 
-  const look = jobStatusLook(job.status)
+  const look = jobStatusLook(job.status, job.appointmentStatus)
+  /**
+   * Esperando a alguien del lado profesional, con su reloj a la vista. Ante
+   * un cambio de persona quien tiene que contestar es el propio cliente, y
+   * eso se resuelve en Mis trabajos, no con una cuenta atrás aquí.
+   */
   const isWaiting =
-    job.status === 'PENDING_PRO' || job.status === 'PENDING_WORKER'
+    job.status === 'PENDING_PRO' && job.appointmentStatus !== 'SUBSTITUTE_PROPOSED'
 
   /**
    * Se puede cancelar mientras nadie ha movido nada. Adjudicado ya no: hay
@@ -230,10 +244,7 @@ export function JobDetailPage({
     (job.status === 'DECLINED' || job.status === 'EXPIRED' || pickUrgencyPro)
 
   const canCancel =
-    job.viewer === 'client' &&
-    ['DRAFT', 'OPEN', 'PENDING_PRO', 'PENDING_WORKER', 'SUBSTITUTE_PROPOSED'].includes(
-      job.status,
-    )
+    job.viewer === 'client' && ['DRAFT', 'OPEN', 'PENDING_PRO'].includes(job.status)
 
   return (
     <View style={styles.screen} testID="job-detail-page">

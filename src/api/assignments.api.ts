@@ -8,7 +8,7 @@
  */
 
 import { apiRequest } from './http'
-import type { ApiJobStatus, ApiJobType } from './jobs.api'
+import type { ApiAppointmentStatus, ApiJobStatus, ApiJobType } from './jobs.api'
 
 export interface RequestProPayload {
   /** Presupuesto directo o reserva; una urgencia no pasa por aquí */
@@ -48,16 +48,18 @@ export interface ApiDirectRequest {
 export interface ApiInboxItem {
   id: string
   type: string
+  /** Siempre en el aire: es lo único que hay en la bandeja */
+  status: 'PENDING_PRO'
   /**
    * Qué hay que decidir con este encargo:
    *
-   * - `PENDING_PRO`: te han elegido y hay que decir quién lo hace. Lo ve un
-   *   autónomo con lo suyo y una empresa con lo de su gente.
+   * - `null`: te han elegido y hay que decir quién lo hace. Lo ve un autónomo
+   *   con lo suyo y una empresa con lo de su gente.
    * - `SUBSTITUTE_PROPOSED`: ya se propuso a otro y se espera al cliente.
    * - `PENDING_WORKER`: tu empresa te lo ha asignado y **tienes que
    *   confirmarlo**. Es lo único que ve aquí un trabajador por cuenta ajena.
    */
-  status: 'PENDING_PRO' | 'SUBSTITUTE_PROPOSED' | 'PENDING_WORKER'
+  appointmentStatus: Extract<ApiAppointmentStatus, 'PENDING_WORKER' | 'SUBSTITUTE_PROPOSED'> | null
   title: string
   description: string
   trade: string
@@ -94,6 +96,8 @@ export interface ApiConfirmation {
 export interface ApiAssignment {
   jobId: string
   status: string
+  /** En qué punto queda la cita que se acaba de abrir */
+  appointmentStatus: ApiAppointmentStatus
   /** Quién lo hará, si ya está decidido */
   assignedProName: string | null
   /** Si falta que el cliente acepte el cambio */

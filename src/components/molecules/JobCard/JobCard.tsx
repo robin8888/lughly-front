@@ -48,8 +48,11 @@ export function JobCard({
   isRespondingSubstitute = false,
   testID,
 }: JobCardProps) {
-  const status = jobStatusLook(job.status)
+  const status = jobStatusLook(job.status, job.appointmentStatus)
   const image = getTradeImage(job.trade)
+
+  /** La empresa propone a otra persona y el cliente tiene que decir */
+  const isSubstituteProposed = job.appointmentStatus === 'SUBSTITUTE_PROPOSED'
 
   /**
    * Si el trabajo ya tiene dueño. Cambia lo que se dice de la persona: "se lo
@@ -164,7 +167,7 @@ export function JobCard({
            * plazo de quien tiene que contestar. Es el mismo dato para el
            * cliente: cuándo deja de esperar.
            */}
-          {job.status === 'PENDING_PRO' && (
+          {job.status === 'PENDING_PRO' && !isSubstituteProposed && (
             <Countdown
               target={job.respondByAt}
               prefix="Responde en"
@@ -182,7 +185,7 @@ export function JobCard({
           En una propuesta de cambio no sale: ahí manda el bloque de abajo,
           que cuenta las dos personas y es donde se decide.
         */}
-        {job.proName && job.status !== 'SUBSTITUTE_PROPOSED' && (
+        {job.proName && !isSubstituteProposed && (
           <View style={styles.pro}>
             <Avatar
               uri={
@@ -202,7 +205,7 @@ export function JobCard({
          * porque eligió mirando una ficha concreta y esa es justamente la
          * información que necesita para decidir.
          */}
-        {job.status === 'SUBSTITUTE_PROPOSED' && onRespondSubstitute && (
+        {isSubstituteProposed && onRespondSubstitute && (
           <View style={styles.substitute}>
             <Text style={styles.substituteText}>
               Pediste a <Text style={styles.strong}>{job.requestedProName}</Text>,

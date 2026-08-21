@@ -118,15 +118,15 @@ export function HomePagePro({
   const items = inboxData?.items ?? []
 
   /** Lo que le han asignado y tiene que confirmar él */
-  const toConfirm = items.filter((item) => item.status === 'PENDING_WORKER')
+  const toConfirm = items.filter((item) => item.appointmentStatus === 'PENDING_WORKER')
   /**
    * Lo que le han encargado y sigue sin respuesta.
    *
-   * Solo `PENDING_PRO`: lo ya propuesto a un sustituto está esperando al
-   * cliente, no a él, y contarlo aquí sería meterle prisa por algo que no
-   * depende de él.
+   * Solo lo que no tiene cita abierta: lo ya propuesto a un sustituto está
+   * esperando al cliente, no a él, y contarlo aquí sería meterle prisa por
+   * algo que no depende de él.
    */
-  const pendingCount = items.filter((item) => item.status === 'PENDING_PRO').length
+  const pendingCount = items.filter((item) => item.appointmentStatus === null).length
 
   /**
    * El diálogo sale una vez y con el más urgente —la bandeja viene ordenada

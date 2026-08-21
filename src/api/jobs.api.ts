@@ -11,12 +11,12 @@ export type ApiJobType = 'AUCTION' | 'QUOTE' | 'INSTANT' | 'URGENT'
 export type ApiJobStatus =
   | 'DRAFT'
   | 'OPEN'
-  /** Encargado a alguien concreto, esperando su respuesta o la de su empresa */
+  /**
+   * Encargado a alguien concreto y en el aire. A quién se espera lo dice
+   * `appointmentStatus`: a quien recibió el encargo si es null, al
+   * trabajador si es `PENDING_WORKER`, al cliente si es `SUBSTITUTE_PROPOSED`.
+   */
   | 'PENDING_PRO'
-  /** La empresa propone mandar a otro y falta que el cliente conteste */
-  | 'SUBSTITUTE_PROPOSED'
-  /** La empresa ya ha asignado a uno de los suyos y falta que él lo confirme */
-  | 'PENDING_WORKER'
   | 'AWARDED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
@@ -25,10 +25,32 @@ export type ApiJobStatus =
   | 'DECLINED'
   | 'CANCELLED'
 
+/**
+ * En qué punto está la cita de un trabajo: quién va y si lo ha dicho.
+ * Contrato: lughly-backend/prisma/schema.prisma (`AppointmentStatus`)
+ *
+ * Hasta el 21 Agosto 2026 los dos primeros eran estados del propio trabajo.
+ * Dejaron de serlo al separar la cita del contrato: un trabajo con visita y
+ * después arreglo pasa dos veces por "falta que el trabajador confirme".
+ */
+export type ApiAppointmentStatus =
+  /** La empresa ha mandado a uno de los suyos y falta que él confirme */
+  | 'PENDING_WORKER'
+  /** Va alguien distinto de quien pidió el cliente, y falta que lo acepte */
+  | 'SUBSTITUTE_PROPOSED'
+  | 'CONFIRMED'
+  | 'STARTED'
+  | 'DONE'
+  | 'NO_SHOW_PRO'
+  | 'NO_SHOW_CLIENT'
+  | 'CANCELLED'
+
 export interface ApiJob {
   id: string
   type: ApiJobType
   status: ApiJobStatus
+  /** La cita en juego, si la hay. Null mientras no haya nadie que vaya a ir */
+  appointmentStatus: ApiAppointmentStatus | null
   title: string
   description: string
   trade: string
@@ -127,6 +149,8 @@ export interface ApiJobDetail {
   id: string
   type: ApiJobType
   status: ApiJobStatus
+  /** La cita en juego, si la hay */
+  appointmentStatus: ApiAppointmentStatus | null
   title: string
   description: string
   trade: string

@@ -164,7 +164,7 @@ export function InboxPage({ onBack }: InboxPageProps) {
           <View style={styles.list}>
             {items.map((job) => {
               const deadline = job.respondByAt ? new Date(job.respondByAt) : null
-              const isProposed = job.status === 'SUBSTITUTE_PROPOSED'
+              const isProposed = job.appointmentStatus === 'SUBSTITUTE_PROPOSED'
 
               /**
                * Los que esperan una respuesta suya, que son los que hay que
@@ -235,7 +235,7 @@ export function InboxPage({ onBack }: InboxPageProps) {
                     </View>
                   )}
 
-                  {job.status === 'PENDING_WORKER' ? (
+                  {job.appointmentStatus === 'PENDING_WORKER' ? (
                     /**
                      * Lo que le han asignado y tiene que confirmar. Se responde
                      * en el mismo diálogo que sale al entrar en la app, para

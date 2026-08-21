@@ -7,7 +7,7 @@
  * aquí, en un único sitio.
  */
 
-import type { ApiJobStatus, ApiJobType } from '@/api/jobs.api'
+import type { ApiAppointmentStatus, ApiJobStatus, ApiJobType } from '@/api/jobs.api'
 import type { TagVariant } from '@/components/atoms/Tag'
 
 interface StatusLook {
@@ -23,6 +23,21 @@ const STATUS: Record<ApiJobStatus, StatusLook> = {
    * una empresa, quien responde es ella.
    */
   PENDING_PRO: { label: 'Esperando respuesta', variant: 'accent' },
+  AWARDED: { label: 'Adjudicada', variant: 'accent2' },
+  IN_PROGRESS: { label: 'En curso', variant: 'available' },
+  COMPLETED: { label: 'Terminada', variant: 'neutral' },
+  EXPIRED: { label: 'Expirada', variant: 'outline' },
+  /** Dijeron que no. Se distingue de expirada: una es respuesta y otra silencio */
+  DECLINED: { label: 'No pueden', variant: 'outline' },
+  CANCELLED: { label: 'Cancelada', variant: 'outline' },
+}
+
+/**
+ * Lo que cambia la frase mientras el trabajo está en el aire: a quién se
+ * espera. Eran dos estados del trabajo hasta el 21 Agosto 2026; ahora son de
+ * la cita, y se pintan igual que entonces.
+ */
+const WAITING: Partial<Record<ApiAppointmentStatus, StatusLook>> = {
   /**
    * La empresa propone mandar a otra persona y falta que el cliente diga.
    * Va en el color de urgencia porque es lo único de la lista que necesita
@@ -35,16 +50,16 @@ const STATUS: Record<ApiJobStatus, StatusLook> = {
    * dentro no es asunto suyo, pero sí lo es que todavía no es firme.
    */
   PENDING_WORKER: { label: 'Pendiente de confirmar', variant: 'accent' },
-  AWARDED: { label: 'Adjudicada', variant: 'accent2' },
-  IN_PROGRESS: { label: 'En curso', variant: 'available' },
-  COMPLETED: { label: 'Terminada', variant: 'neutral' },
-  EXPIRED: { label: 'Expirada', variant: 'outline' },
-  /** Dijeron que no. Se distingue de expirada: una es respuesta y otra silencio */
-  DECLINED: { label: 'No pueden', variant: 'outline' },
-  CANCELLED: { label: 'Cancelada', variant: 'outline' },
 }
 
-export function jobStatusLook(status: ApiJobStatus): StatusLook {
+export function jobStatusLook(
+  status: ApiJobStatus,
+  appointmentStatus: ApiAppointmentStatus | null = null,
+): StatusLook {
+  if (status === 'PENDING_PRO' && appointmentStatus !== null) {
+    return WAITING[appointmentStatus] ?? STATUS[status]
+  }
+
   return STATUS[status]
 }
 

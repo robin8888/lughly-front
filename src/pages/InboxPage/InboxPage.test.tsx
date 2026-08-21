@@ -24,6 +24,7 @@ jest.mock('@/hooks/domain/useInbox', () => ({
           id: 'job-1',
           type: 'AUCTION',
           status: 'PENDING_PRO',
+          appointmentStatus: null,
           title: 'Cambiar un grifo',
           description: '',
           trade: 'fontaneria',

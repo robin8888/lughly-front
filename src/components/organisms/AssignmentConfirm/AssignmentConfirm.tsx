@@ -58,8 +58,8 @@ export function AssignmentConfirm({
 
   if (!job) return null
 
-  /** Lo que ya le han asignado y solo falta que confirme */
-  const isAssigned = job.status === 'PENDING_WORKER'
+  /** Lo que ya le han asignado y solo falta que confirme: una cita a su nombre */
+  const isAssigned = job.appointmentStatus === 'PENDING_WORKER'
 
   /**
    * Un encargo sin asignar entra ya explicando: su "sí" es elegir quién va, y
