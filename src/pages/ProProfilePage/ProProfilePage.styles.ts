@@ -288,6 +288,41 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent700,
   },
 
+  /**
+   * La carta: los servicios que se pueden marcar, el total que va cambiando
+   * y el botón para contratarlo. Separado del texto del oficio por aire, no
+   * por línea: la línea de abajo ya la pone `tradeBlock` entre un oficio y
+   * el siguiente.
+   */
+  cartaBlock: {
+    marginTop: 10,
+  },
+  cartaServices: {
+    gap: 6,
+    marginBottom: 8,
+  },
+  cartaTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  cartaTotalLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  cartaTotal: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.h6,
+    color: theme.colors.accent700,
+  },
+  cartaHire: {
+    marginTop: 10,
+  },
+
   /** Altura del mapa de cobertura. En el diseño web son 160 px. */
   /*
    * Día a la izquierda y horas a la derecha, como el cartel de un negocio: es

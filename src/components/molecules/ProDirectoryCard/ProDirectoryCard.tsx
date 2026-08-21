@@ -67,6 +67,16 @@ export function ProDirectoryCard({
 }: ProDirectoryCardProps) {
   const otherTrades = pro.trades.filter((trade) => trade.slug !== pro.trade)
 
+  /**
+   * Si el oficio de la tarjeta cobra por hora o por visita y presupuesto
+   * (COMO_SE_CONTRATA.md v3 §2): lo dice `visitFee` — puesto, tiene carta
+   * montada y cobra por presentarse; sin poner, sigue siendo por horas. No
+   * todos los oficios usan la carta, así que esto no siempre sale.
+   */
+  const featuredTrade = pro.trades.find((trade) => trade.slug === pro.trade)
+  const pricingMode =
+    featuredTrade?.visitFee != null ? 'Visita y presupuesto' : 'Por hora'
+
   return (
     <Pressable
       onPress={onPress}
@@ -210,13 +220,23 @@ export function ProDirectoryCard({
         </Text>
       )}
 
-      {pro.verified && (
-        <View style={styles.tags}>
+      <View style={styles.tags}>
+        {/*
+          Solo si se sabe: `featuredTrade` puede faltar en una respuesta
+          antigua de la caché, y ahí no se afirma nada en vez de adivinar.
+        */}
+        {featuredTrade && (
+          <View style={styles.tag} testID="pro-card-pricing-mode">
+            <Text style={styles.tagText}>{pricingMode}</Text>
+          </View>
+        )}
+
+        {pro.verified && (
           <View style={styles.tag}>
             <Text style={styles.tagText}>Identidad verificada</Text>
           </View>
-        </View>
-      )}
+        )}
+      </View>
     </Pressable>
   )
 }

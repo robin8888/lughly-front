@@ -1,2 +1,2 @@
-export { Money } from './Money'
+export { Money, formatAmount } from './Money'
 export type { MoneyProps, MoneySize } from './Money'

@@ -20,7 +20,9 @@ import { View, Text, Image, Pressable, ScrollView, ActivityIndicator } from 'rea
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Button } from '@/components/atoms/Button'
+import { Checkbox } from '@/components/atoms/Checkbox'
 import { Icon } from '@/components/atoms/Icon'
+import { Money, formatAmount } from '@/components/atoms/Money'
 import { StarRating } from '@/components/atoms/StarRating'
 import { Tag } from '@/components/atoms/Tag'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -70,6 +72,8 @@ export interface ProProfilePageProps {
   onQuote: () => void
   onMessage: () => void
   onReport: () => void
+  /** Contratar la carta de un oficio: la visita, más lo que haya marcado */
+  onHireCarta: (tradeSlug: string, serviceIds: string[]) => void
 }
 
 export function ProProfilePage({
@@ -79,6 +83,7 @@ export function ProProfilePage({
   onQuote,
   onMessage,
   onReport,
+  onHireCarta,
 }: ProProfilePageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
@@ -98,6 +103,26 @@ export function ProProfilePage({
    * el número baila, la pantalla revienta entera.
    */
   const [viewing, setViewing] = useState<number | null>(null)
+
+  /**
+   * Qué servicios de la carta tiene marcados, por oficio. Un profesional
+   * puede tener carta en más de uno, y cada oficio contrata por separado
+   * —`onHireCarta` solo admite un `tradeSlug`—, así que cada uno lleva su
+   * propia selección y su propio total.
+   */
+  const [selectedServices, setSelectedServices] = useState<Record<string, string[]>>({})
+
+  const toggleService = (tradeSlug: string, serviceId: string) => {
+    setSelectedServices((current) => {
+      const selected = current[tradeSlug] ?? []
+      return {
+        ...current,
+        [tradeSlug]: selected.includes(serviceId)
+          ? selected.filter((id) => id !== serviceId)
+          : [...selected, serviceId],
+      }
+    })
+  }
 
   const header = (
     <View style={styles.header}>
@@ -172,6 +197,17 @@ export function ProProfilePage({
 
   const isTopRated =
     pro.rating >= TOP_RATED_MIN_RATING && pro.reviewCount >= TOP_RATED_MIN_REVIEWS
+
+  /**
+   * Si el oficio que encabeza la ficha tiene carta, el titular dice "Visita
+   * desde", no "€/h": ahí no se cobra por hora, se cobra por presentarse más
+   * lo que se elija, y eso se ve —y se elige— más abajo, en su propio bloque.
+   */
+  const headlineTrade = pro.trades.find((trade) => trade.slug === pro.trade)
+  const headlinePrice =
+    headlineTrade?.visitFee != null
+      ? `Visita ${formatAmount(headlineTrade.visitFee)} €`
+      : `${formatAmount(pro.hourlyRate)} €/h`
 
   /**
    * Las fotos, agrupadas por oficio. El servidor ya las manda en el orden de
@@ -278,7 +314,7 @@ export function ProProfilePage({
           */}
           <View style={styles.headline}>
             <View style={styles.headlineItem}>
-              <Text style={styles.rate}>{pro.hourlyRate} €/h</Text>
+              <Text style={styles.rate}>{headlinePrice}</Text>
               <Text style={styles.headlineLabel}>desde</Text>
             </View>
 
@@ -384,7 +420,7 @@ export function ProProfilePage({
          * escribió en su único oficio no se vería en ninguna parte.
          */}
         {(pro.trades.length > 1 ||
-          pro.trades.some((trade) => trade.description)) && (
+          pro.trades.some((trade) => trade.description || trade.visitFee != null)) && (
           <InfoCard style={styles.section} testID="pro-trades">
             <Text style={styles.sectionTitle}>
               {pro.trades.length > 1 ? 'Lo que hace en cada oficio' : 'Lo que hace'}
@@ -397,28 +433,80 @@ export function ProProfilePage({
               mismo en las dos, y hasta ahora el único párrafo del perfil valía
               igual para las dos, que es no decir nada de ninguna.
             */}
-            {pro.trades.map((trade) => (
-              <View key={trade.slug} style={styles.tradeBlock}>
-                <View style={styles.tradeRow}>
-                  <Text style={styles.tradeLabel}>{trade.label}</Text>
-                  <Text style={styles.tradeRate}>{trade.hourlyRate} €/h</Text>
-                </View>
+            {pro.trades.map((trade) => {
+              const hasCarta = trade.visitFee != null
+              const services = trade.services ?? []
+              const selected = selectedServices[trade.slug] ?? []
+              const total =
+                (trade.visitFee ?? 0) +
+                services
+                  .filter((service) => selected.includes(service.id))
+                  .reduce((sum, service) => sum + service.price, 0)
 
-                {/*
-                  Sin descripción propia se dice, en vez de dejar el hueco:
-                  entre dos oficios y uno con texto, el mudo parece un fallo de
-                  la app en vez de algo que su dueño no ha escrito.
-                */}
-                <Text
-                  style={[
-                    styles.tradeDescription,
-                    !trade.description && styles.tradeNoDescription,
-                  ]}
-                >
-                  {trade.description ?? 'No ha contado nada de este oficio.'}
-                </Text>
-              </View>
-            ))}
+              return (
+                <View key={trade.slug} style={styles.tradeBlock}>
+                  <View style={styles.tradeRow}>
+                    <Text style={styles.tradeLabel}>{trade.label}</Text>
+                    <Text style={styles.tradeRate}>
+                      {hasCarta
+                        ? `Visita ${formatAmount(trade.visitFee!)} €`
+                        : `${formatAmount(trade.hourlyRate)} €/h`}
+                    </Text>
+                  </View>
+
+                  {/*
+                    Sin descripción propia se dice, en vez de dejar el hueco:
+                    entre dos oficios y uno con texto, el mudo parece un fallo de
+                    la app en vez de algo que su dueño no ha escrito.
+                  */}
+                  <Text
+                    style={[
+                      styles.tradeDescription,
+                      !trade.description && styles.tradeNoDescription,
+                    ]}
+                  >
+                    {trade.description ?? 'No ha contado nada de este oficio.'}
+                  </Text>
+
+                  {/*
+                    La carta: la visita se cobra siempre, y encima lo que se
+                    marque. Elegir cero servicios también es válido —solo la
+                    visita, para cuando no se sabe qué hace falta todavía—.
+                  */}
+                  {hasCarta && (
+                    <View style={styles.cartaBlock} testID={`pro-carta-${trade.slug}`}>
+                      {services.length > 0 && (
+                        <View style={styles.cartaServices}>
+                          {services.map((service) => (
+                            <Checkbox
+                              key={service.id}
+                              checked={selected.includes(service.id)}
+                              onChange={() => toggleService(trade.slug, service.id)}
+                              testID={`pro-carta-service-${service.id}`}
+                            >
+                              {`${service.name} · ${formatAmount(service.price)} €`}
+                            </Checkbox>
+                          ))}
+                        </View>
+                      )}
+
+                      <View style={styles.cartaTotalRow}>
+                        <Text style={styles.cartaTotalLabel}>Total</Text>
+                        <Money amount={total} style={styles.cartaTotal} />
+                      </View>
+
+                      <Button
+                        onPress={() => onHireCarta(trade.slug, selected)}
+                        style={styles.cartaHire}
+                        testID={`pro-carta-hire-${trade.slug}`}
+                      >
+                        Contratar por {formatAmount(total)} €
+                      </Button>
+                    </View>
+                  )}
+                </View>
+              )
+            })}
           </InfoCard>
         )}
 

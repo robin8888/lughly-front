@@ -39,6 +39,12 @@ export default function ProProfileRoute() {
           params: { proId: id ?? '', type: 'QUOTE' },
         })
       }
+      onHireCarta={(tradeSlug, serviceIds) =>
+        router.navigate({
+          pathname: '/contratar-carta',
+          params: { proId: id ?? '', tradeSlug, serviceIds: serviceIds.join(',') },
+        })
+      }
       onMessage={() => comingSoon('Enviar mensaje', 'la Fase 11 (chat)')}
       onReport={() => comingSoon('Denunciar perfil', 'una fase posterior')}
     />

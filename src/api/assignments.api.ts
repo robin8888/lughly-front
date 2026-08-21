@@ -26,6 +26,24 @@ export interface RequestProPayload {
   maxBudget?: number
 }
 
+/** Cuerpo de POST /v1/pros/:id/book-services */
+export interface BookServicesPayload {
+  tradeSlug: string
+  /** Puede ir vacío: contratar solo la visita es un contrato válido */
+  serviceIds: string[]
+  city: string
+  addressLine: string
+  preferredDate?: string
+  /** La tarjeta guardada con la que se cobra (`paymentsApi.methods()`) */
+  paymentMethodId: string
+}
+
+/** Lo que devuelve contratar la carta: ya cobrado, encargo enviado */
+export interface ApiBookedServices {
+  jobId: string
+  amount: number
+}
+
 export interface ApiDirectRequest {
   id: string
   status: string
@@ -151,6 +169,14 @@ export const assignmentsApi = {
   /** El cliente encarga a alguien concreto del directorio */
   request: (proId: string, payload: RequestProPayload) =>
     apiRequest<ApiDirectRequest>(`/v1/pros/${proId}/requests`, {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
+  /** Contratar la carta: se cobra en el momento con la tarjeta guardada */
+  bookServices: (proId: string, payload: BookServicesPayload) =>
+    apiRequest<ApiBookedServices>(`/v1/pros/${proId}/book-services`, {
       method: 'POST',
       auth: true,
       body: payload,

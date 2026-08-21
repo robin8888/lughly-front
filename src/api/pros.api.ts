@@ -5,6 +5,13 @@
 
 import { apiRequest } from './http'
 
+/** Un servicio de la carta, a precio fijo. */
+export interface ApiServiceItem {
+  id: string
+  name: string
+  price: number
+}
+
 /** Un oficio del profesional, con lo que cobra por él. */
 export interface ApiProTrade {
   slug: string
@@ -28,6 +35,15 @@ export interface ApiProTrade {
    * hay, y la general si no.
    */
   description?: string | null
+  /**
+   * Lo que cobra por presentarse en este oficio, con o sin servicio de la
+   * carta detrás. `null` significa que no tiene carta montada aquí — no
+   * todos los oficios la usan, limpieza, clases o cuidado siguen siendo por
+   * horas. Es el dato que decide si la ficha enseña el selector de la carta.
+   */
+  visitFee?: number | null
+  /** Solo viene relleno en la ficha completa, no en el listado del directorio */
+  services?: ApiServiceItem[]
 }
 
 export interface ApiPro {
@@ -230,6 +246,19 @@ export interface SetTradesPayload {
   trades: { slug: string; hourlyRate: number; urgencyHourlyRate?: number | null }[]
 }
 
+/** Respuesta de GET/PUT /v1/pro/trades/:tradeSlug/carta */
+export interface ApiCarta {
+  tradeSlug: string
+  visitFee: number | null
+  services: ApiServiceItem[]
+}
+
+/** Cuerpo de PUT /v1/pro/trades/:tradeSlug/carta. Se manda entera, como los oficios. */
+export interface SetCartaPayload {
+  visitFee: number
+  services: { name: string; price: number }[]
+}
+
 /**
  * Una franja del horario ordinario de trabajo.
  *
@@ -394,6 +423,18 @@ export const prosApi = {
    */
   setMyTrades: (payload: SetTradesPayload) =>
     apiRequest<ApiProTrade[]>('/v1/pro/trades', {
+      method: 'PUT',
+      auth: true,
+      body: payload,
+    }),
+
+  /** La carta de un oficio: tarifa de visita y servicios. Vacía (visitFee null) si no la ha montado */
+  myCarta: (tradeSlug: string) =>
+    apiRequest<ApiCarta>(`/v1/pro/trades/${tradeSlug}/carta`, { auth: true }),
+
+  /** Se manda entera: la tarifa de visita y la lista de servicios, juntas */
+  setMyCarta: (tradeSlug: string, payload: SetCartaPayload) =>
+    apiRequest<ApiCarta>(`/v1/pro/trades/${tradeSlug}/carta`, {
       method: 'PUT',
       auth: true,
       body: payload,
