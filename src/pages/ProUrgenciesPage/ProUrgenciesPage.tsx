@@ -89,7 +89,8 @@ export function ProUrgenciesPage({
 
   const { data, isPending, isError, refetch } = useMyUrgencies()
   const { data: profile } = useProProfile(userId)
-  const { accept, finish, isAccepting, isFinishing } = useUrgencyActions(userId)
+  const { accept, start, finish, isAccepting, isStarting, isFinishing } =
+    useUrgencyActions(userId)
   const { decline, isDeclining } = useDeclineRequest()
 
   /** Cuál se está mirando de cerca, si alguna */
@@ -113,6 +114,10 @@ export function ProUrgenciesPage({
       'Urgencia aceptada',
       `${title}\n\n${accepted.addressLine ?? accepted.city}\n\nMientras la atiendas no recibirás otras. Ciérrala al terminar para volver a estar disponible.`,
     )
+  }
+
+  const handleStart = (jobId: string) => {
+    void start(jobId)
   }
 
   const handleFinish = (jobId: string) => {
@@ -188,15 +193,27 @@ export function ProUrgenciesPage({
               cerrarla vuelves a estar disponible sin tocar nada.
             </Text>
 
-            <Button
-              fullWidth
-              loading={isFinishing}
-              onPress={() => handleFinish(busy.id)}
-              style={styles.finish}
-              testID="urgencies-finish"
-            >
-              He terminado
-            </Button>
+            {busy.status === 'STARTED' ? (
+              <Button
+                fullWidth
+                loading={isFinishing}
+                onPress={() => handleFinish(busy.id)}
+                style={styles.finish}
+                testID="urgencies-finish"
+              >
+                He terminado
+              </Button>
+            ) : (
+              <Button
+                fullWidth
+                loading={isStarting}
+                onPress={() => handleStart(busy.id)}
+                style={styles.finish}
+                testID="urgencies-start"
+              >
+                Empezar
+              </Button>
+            )}
           </InfoCard>
         ) : profile && !profile.availableNow ? (
           /**

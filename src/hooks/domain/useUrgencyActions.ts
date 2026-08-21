@@ -1,11 +1,13 @@
 /**
  * useUrgencyActions
- * Aceptar y cerrar una urgencia.
+ * Aceptar, empezar y cerrar una urgencia.
  *
- * Las dos invalidan a la vez la lista de urgencias **y la ficha del propio
- * profesional**: aceptar le marca como ocupado y eso cambia su "disponible
- * ahora", que se ve en su home. Si solo se refrescase una, la pantalla
- * diría que está libre mientras atiende una fuga.
+ * Las tres invalidan a la vez la lista de urgencias, **la ficha del propio
+ * profesional** y **su agenda**: aceptar le marca como ocupado y eso cambia
+ * su "disponible ahora", que se ve en su home; empezar y terminar mueven el
+ * trabajo entre "En curso" y "Terminada", que es lo que pinta `AgendaPage`.
+ * Si solo se refrescase una, alguna pantalla se quedaría enseñando el estado
+ * de antes.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -19,6 +21,8 @@ export function useUrgencyActions(proId: string | undefined) {
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: myUrgenciesQueryKey() })
+    // La agenda (`AgendaPage`), que pinta el mismo trabajo por su `Job.status`
+    void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
     if (proId) void queryClient.invalidateQueries({ queryKey: ['pro', proId] })
   }
 
@@ -35,6 +39,17 @@ export function useUrgencyActions(proId: string | undefined) {
         error instanceof ApiError
           ? error.message
           : 'Revisa tu conexión e inténtalo de nuevo.',
+      )
+    },
+  })
+
+  const start = useMutation({
+    mutationFn: (jobId: string) => urgenciesApi.start(jobId),
+    onSuccess: invalidate,
+    onError: () => {
+      Alert.alert(
+        'No hemos podido marcarla como empezada',
+        'Revisa tu conexión e inténtalo de nuevo.',
       )
     },
   })
@@ -58,6 +73,14 @@ export function useUrgencyActions(proId: string | undefined) {
         return null
       }
     },
+    start: async (jobId: string): Promise<boolean> => {
+      try {
+        await start.mutateAsync(jobId)
+        return true
+      } catch {
+        return false
+      }
+    },
     finish: async (jobId: string): Promise<boolean> => {
       try {
         await finish.mutateAsync(jobId)
@@ -67,6 +90,7 @@ export function useUrgencyActions(proId: string | undefined) {
       }
     },
     isAccepting: accept.isPending,
+    isStarting: start.isPending,
     isFinishing: finish.isPending,
   }
 }

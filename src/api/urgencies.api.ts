@@ -4,6 +4,7 @@
  */
 
 import { apiRequest } from './http'
+import type { ApiAppointmentStatus } from './jobs.api'
 
 export interface ApiUrgency {
   id: string
@@ -49,6 +50,8 @@ export interface ApiBusyWith {
   title: string
   /** La dirección exacta, que solo se entrega al aceptar */
   addressLine: string | null
+  /** `CONFIRMED` si aún no ha pulsado Empezar, `STARTED` si ya está dentro */
+  status: ApiAppointmentStatus
 }
 
 export interface UrgenciesResult {
@@ -74,11 +77,23 @@ export interface FinishedUrgency {
   availableAgain: boolean
 }
 
+export interface StartedUrgency {
+  jobId: string
+  status: string
+}
+
 export const urgenciesApi = {
   mine: () => apiRequest<UrgenciesResult>('/v1/urgencies', { auth: true }),
 
   accept: (jobId: string) =>
     apiRequest<AcceptedUrgency>(`/v1/urgencies/${jobId}/accept`, {
+      method: 'POST',
+      auth: true,
+    }),
+
+  /** Marca que ha llegado y está trabajando en ella. No libera: eso es `finish` */
+  start: (jobId: string) =>
+    apiRequest<StartedUrgency>(`/v1/urgencies/${jobId}/start`, {
       method: 'POST',
       auth: true,
     }),
