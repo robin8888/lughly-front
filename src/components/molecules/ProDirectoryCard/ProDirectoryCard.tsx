@@ -32,6 +32,7 @@
 
 import { useState } from 'react'
 import { View, Text, Pressable, Image } from 'react-native'
+import { Button } from '@/components/atoms/Button'
 import { Checkbox } from '@/components/atoms/Checkbox'
 import { Icon } from '@/components/atoms/Icon'
 import { Money, formatAmount } from '@/components/atoms/Money'
@@ -39,6 +40,12 @@ import { API_BASE_URL } from '@/api'
 import type { ApiPro } from '@/api/pros.api'
 import { theme } from '@/theme'
 import { styles } from './ProDirectoryCard.styles'
+
+/** Lo marcado en la carta al entrar a la ficha, si venía de la tarjeta */
+export interface CartaSelection {
+  tradeSlug: string
+  serviceIds: string[]
+}
 
 /**
  * Cuántas fotos caben en la tira sin que la tarjeta crezca de más. Cuatro
@@ -48,7 +55,14 @@ const MAX_STRIP = 4
 
 export interface ProDirectoryCardProps {
   pro: ApiPro
-  onPress: () => void
+  /**
+   * Lleva al perfil. Si se había marcado algo de la carta en la propia
+   * tarjeta, viaja aquí: la selección no se pierde por entrar a mirar el
+   * resto de la ficha antes de decidirse.
+   */
+  onPress: (selection?: CartaSelection) => void
+  /** Contratar la carta directamente desde la tarjeta, sin pasar por la ficha */
+  onHireCarta: (proId: string, tradeSlug: string, serviceIds: string[]) => void
   /**
    * Apagada y sin tocar. Se usa al buscar otro profesional para un trabajo que
    * este ya ha rechazado: **se apaga en vez de esconderse** porque quien no lo
@@ -64,6 +78,7 @@ export interface ProDirectoryCardProps {
 export function ProDirectoryCard({
   pro,
   onPress,
+  onHireCarta,
   disabled = false,
   disabledNote,
   testID,
@@ -109,7 +124,13 @@ export function ProDirectoryCard({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() =>
+        onPress(
+          hasCarta && selectedServices.length > 0
+            ? { tradeSlug: featuredTrade!.slug, serviceIds: selectedServices }
+            : undefined,
+        )
+      }
       disabled={disabled}
       testID={testID}
       accessibilityRole="button"
@@ -279,18 +300,17 @@ export function ProDirectoryCard({
       */}
       {hasCarta && (
         <View style={styles.carta} testID="pro-card-carta">
-          <Pressable
+          <Button
+            variant="secondary"
+            size="small"
+            fullWidth
             onPress={() => setShowCarta((open) => !open)}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showCarta }}
             testID="pro-card-carta-toggle"
           >
-            <Text style={styles.cartaToggle}>
-              {showCarta
-                ? 'Ocultar trabajos a precio fijo'
-                : `Trabajos a precio fijo (${cartaServices.length})`}
-            </Text>
-          </Pressable>
+            {showCarta
+              ? 'Ocultar trabajos a precio fijo'
+              : `Trabajos a precio fijo (${cartaServices.length})`}
+          </Button>
 
           {showCarta && (
             <View style={styles.cartaBody} testID="pro-card-carta-body">
@@ -311,6 +331,21 @@ export function ProDirectoryCard({
                 <Text style={styles.cartaTotalLabel}>Total</Text>
                 <Money amount={cartaTotal} style={styles.cartaTotal} />
               </View>
+
+              {/*
+                Con cero marcados o con varios: se contrata igual, solo la
+                visita si no hace falta nada más. Así el cliente no tiene que
+                entrar a la ficha solo para pulsar este mismo botón.
+              */}
+              <Button
+                onPress={() =>
+                  onHireCarta(pro.id, featuredTrade!.slug, selectedServices)
+                }
+                style={styles.cartaHire}
+                testID="pro-card-carta-hire"
+              >
+                Contratar por {formatAmount(cartaTotal)} €
+              </Button>
             </View>
           )}
         </View>

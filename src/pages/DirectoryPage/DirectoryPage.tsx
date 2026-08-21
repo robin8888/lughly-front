@@ -19,7 +19,7 @@ import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
 import { EmptyState } from '@/components/molecules/EmptyState'
-import { ProDirectoryCard } from '@/components/molecules/ProDirectoryCard'
+import { ProDirectoryCard, type CartaSelection } from '@/components/molecules/ProDirectoryCard'
 import { usePros } from '@/hooks/domain/usePros'
 import { searchTrades } from '@/utils/tradeSearch'
 import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
@@ -31,7 +31,14 @@ const ALL_TRADES = { value: '', label: 'Todos los oficios' }
 export interface DirectoryPageProps {
   /** Oficio con el que se llega desde la home */
   initialTrade?: string
-  onSelectPro: (id: string) => void
+  /**
+   * Abre la ficha. Si se marcó algo de la carta en la propia tarjeta antes
+   * de tocarla, viaja aquí para que la ficha arranque con esa selección
+   * puesta.
+   */
+  onSelectPro: (id: string, selection?: CartaSelection) => void
+  /** Contratar la carta directamente desde la tarjeta, sin pasar por la ficha */
+  onHireCarta: (proId: string, tradeSlug: string, serviceIds: string[]) => void
   /** Volver a la home; se ofrece cuando no hay resultados */
   onBack: () => void
   /**
@@ -51,6 +58,7 @@ export interface DirectoryPageProps {
 export function DirectoryPage({
   initialTrade,
   onSelectPro,
+  onHireCarta,
   onBack,
   reassign,
 }: DirectoryPageProps) {
@@ -261,11 +269,12 @@ export function DirectoryPage({
                     Reasignando, tocar una ficha le encarga el trabajo en vez
                     de abrirla: se ha entrado a elegir, no a mirar.
                   */
-                  onPress={() =>
+                  onPress={(selection) =>
                     reassign
                       ? reassign.onChoose(pro.id, pro.name)
-                      : onSelectPro(pro.id)
+                      : onSelectPro(pro.id, selection)
                   }
+                  onHireCarta={onHireCarta}
                   disabled={reassign?.declinedProId === pro.id}
                   disabledNote="Ya te ha dicho que no puede con este trabajo"
                   testID={`pro-${pro.id}`}

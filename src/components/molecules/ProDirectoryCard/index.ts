@@ -1,2 +1,2 @@
 export { ProDirectoryCard } from './ProDirectoryCard'
-export type { ProDirectoryCardProps } from './ProDirectoryCard'
+export type { ProDirectoryCardProps, CartaSelection } from './ProDirectoryCard'

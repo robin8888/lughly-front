@@ -62,7 +62,24 @@ export default function ProsRoute() {
   return (
     <DirectoryPage
       initialTrade={trade}
-      onSelectPro={(id) => router.navigate({ pathname: '/pro/[id]', params: { id } })}
+      onSelectPro={(id, selection) =>
+        router.navigate({
+          pathname: '/pro/[id]',
+          params: {
+            id,
+            ...(selection && {
+              tradeSlug: selection.tradeSlug,
+              serviceIds: selection.serviceIds.join(','),
+            }),
+          },
+        })
+      }
+      onHireCarta={(proId, tradeSlug, serviceIds) =>
+        router.navigate({
+          pathname: '/contratar-carta',
+          params: { proId, tradeSlug, serviceIds: serviceIds.join(',') },
+        })
+      }
       onBack={() => router.navigate('/inicio')}
       {...(reassign && {
         reassign: {

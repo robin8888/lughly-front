@@ -208,21 +208,15 @@ export const styles = StyleSheet.create({
     color: theme.colors.accent700,
   },
 
-  /** El desplegable de la carta, mismo patrón de enlace subrayado que ReviewCard */
+  /** El desplegable de la carta */
   carta: {
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: theme.colors.cardDivider,
   },
-  cartaToggle: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: 12.5,
-    color: theme.colors.accent700,
-    textDecorationLine: 'underline',
-  },
   cartaBody: {
-    marginTop: 8,
+    marginTop: 10,
   },
   cartaServices: {
     gap: 6,
@@ -245,5 +239,8 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.h6,
     color: theme.colors.accent700,
+  },
+  cartaHire: {
+    marginTop: 10,
   },
 })

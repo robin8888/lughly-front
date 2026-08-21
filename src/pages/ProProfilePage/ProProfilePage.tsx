@@ -74,6 +74,12 @@ export interface ProProfilePageProps {
   onReport: () => void
   /** Contratar la carta de un oficio: la visita, más lo que haya marcado */
   onHireCarta: (tradeSlug: string, serviceIds: string[]) => void
+  /**
+   * Lo que ya había marcado en la tarjeta del directorio, si venía de ahí:
+   * la selección de la carta no se pierde al entrar a mirar el resto de la
+   * ficha antes de decidirse a contratar.
+   */
+  initialSelection?: { tradeSlug: string; serviceIds: string[] }
 }
 
 export function ProProfilePage({
@@ -84,6 +90,7 @@ export function ProProfilePage({
   onMessage,
   onReport,
   onHireCarta,
+  initialSelection,
 }: ProProfilePageProps) {
   /**
    * La barra inferior se encoge al bajar y vuelve al subir. Va en todas
@@ -110,7 +117,9 @@ export function ProProfilePage({
    * —`onHireCarta` solo admite un `tradeSlug`—, así que cada uno lleva su
    * propia selección y su propio total.
    */
-  const [selectedServices, setSelectedServices] = useState<Record<string, string[]>>({})
+  const [selectedServices, setSelectedServices] = useState<Record<string, string[]>>(
+    initialSelection ? { [initialSelection.tradeSlug]: initialSelection.serviceIds } : {},
+  )
 
   const toggleService = (tradeSlug: string, serviceId: string) => {
     setSelectedServices((current) => {

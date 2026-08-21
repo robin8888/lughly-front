@@ -59,10 +59,12 @@ function makeProConCarta(): ApiPro {
 
 const url = (n: number) => `/v1/media/pro-photos/foto-${n}.webp`
 
+const noopHireCarta = () => {}
+
 describe('ProDirectoryCard', () => {
   it('sin fotos no dibuja la tira: la tarjeta queda como antes', () => {
     const { queryByTestId, getByText } = render(
-      <ProDirectoryCard pro={makePro([])} onPress={() => {}} />,
+      <ProDirectoryCard pro={makePro([])} onPress={() => {}} onHireCarta={noopHireCarta} />,
     )
 
     expect(queryByTestId('pro-card-photos')).toBeNull()
@@ -72,7 +74,11 @@ describe('ProDirectoryCard', () => {
 
   it('con fotos las enseña', () => {
     const { getByTestId } = render(
-      <ProDirectoryCard pro={makePro([url(1), url(2)])} onPress={() => {}} />,
+      <ProDirectoryCard
+        pro={makePro([url(1), url(2)])}
+        onPress={() => {}}
+        onHireCarta={noopHireCarta}
+      />,
     )
 
     expect(getByTestId('pro-card-photos')).toBeTruthy()
@@ -81,7 +87,7 @@ describe('ProDirectoryCard', () => {
   it('con más de las que caben, resume el resto en un "+N"', () => {
     const photos = [url(1), url(2), url(3), url(4), url(5)]
     const { getByText } = render(
-      <ProDirectoryCard pro={makePro(photos)} onPress={() => {}} />,
+      <ProDirectoryCard pro={makePro(photos)} onPress={() => {}} onHireCarta={noopHireCarta} />,
     )
 
     // Cuatro caben en la tira; la quinta se anuncia para que se sepa que en la
@@ -91,15 +97,15 @@ describe('ProDirectoryCard', () => {
 
   it('sin carta en el oficio de la tarjeta, no dibuja el desplegable', () => {
     const { queryByTestId } = render(
-      <ProDirectoryCard pro={makePro([])} onPress={() => {}} />,
+      <ProDirectoryCard pro={makePro([])} onPress={() => {}} onHireCarta={noopHireCarta} />,
     )
 
     expect(queryByTestId('pro-card-carta')).toBeNull()
   })
 
-  it('con carta, empieza cerrada y al abrirla se ve la lista y el total', () => {
+  it('con carta, empieza cerrada y al abrirla se ve la lista, el total y el botón de contratar', () => {
     const { getByTestId, queryByTestId, getByText } = render(
-      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} />,
+      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} onHireCarta={noopHireCarta} />,
     )
 
     expect(queryByTestId('pro-card-carta-body')).toBeNull()
@@ -110,16 +116,56 @@ describe('ProDirectoryCard', () => {
     expect(getByText('Cambio de grifo · 40,00 €')).toBeTruthy()
     // Solo la visita, sin nada marcado todavía
     expect(getByText('35,00€')).toBeTruthy()
+    // Contratar está siempre, aunque no se haya marcado ningún servicio
+    expect(getByTestId('pro-card-carta-hire')).toBeTruthy()
   })
 
   it('marcar un servicio suma su precio a la visita', () => {
     const { getByTestId, getByText } = render(
-      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} />,
+      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} onHireCarta={noopHireCarta} />,
     )
 
     fireEvent.press(getByTestId('pro-card-carta-toggle'))
     fireEvent.press(getByTestId('pro-card-carta-service-svc-1'))
 
     expect(getByText('75,00€')).toBeTruthy()
+  })
+
+  it('contratar desde la tarjeta manda el profesional, el oficio y lo marcado', () => {
+    const onHireCarta = jest.fn()
+    const { getByTestId } = render(
+      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} onHireCarta={onHireCarta} />,
+    )
+
+    fireEvent.press(getByTestId('pro-card-carta-toggle'))
+    fireEvent.press(getByTestId('pro-card-carta-service-svc-1'))
+    fireEvent.press(getByTestId('pro-card-carta-hire'))
+
+    expect(onHireCarta).toHaveBeenCalledWith('pro-1', 'fontaneria', ['svc-1'])
+  })
+
+  it('tocar el resto de la tarjeta con algo marcado lleva la selección al perfil', () => {
+    const onPress = jest.fn()
+    const { getByTestId, getByText } = render(
+      <ProDirectoryCard pro={makeProConCarta()} onPress={onPress} onHireCarta={noopHireCarta} />,
+    )
+
+    fireEvent.press(getByTestId('pro-card-carta-toggle'))
+    fireEvent.press(getByTestId('pro-card-carta-service-svc-1'))
+    // Cualquier otro punto de la tarjeta, como el nombre
+    fireEvent.press(getByText('Ana Gil'))
+
+    expect(onPress).toHaveBeenCalledWith({ tradeSlug: 'fontaneria', serviceIds: ['svc-1'] })
+  })
+
+  it('tocar la tarjeta sin marcar nada no manda selección', () => {
+    const onPress = jest.fn()
+    const { getByText } = render(
+      <ProDirectoryCard pro={makeProConCarta()} onPress={onPress} onHireCarta={noopHireCarta} />,
+    )
+
+    fireEvent.press(getByText('Ana Gil'))
+
+    expect(onPress).toHaveBeenCalledWith(undefined)
   })
 })

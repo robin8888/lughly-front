@@ -21,12 +21,23 @@ function comingSoon(what: string, when: string) {
 
 export default function ProProfileRoute() {
   const router = useRouter()
-  const { id } = useLocalSearchParams<{ id?: string }>()
+  const { id, tradeSlug, serviceIds } = useLocalSearchParams<{
+    id?: string
+    /** Lo que ya se había marcado en la tarjeta del directorio, si venía de ahí */
+    tradeSlug?: string
+    serviceIds?: string
+  }>()
 
   return (
     <ProProfilePage
       id={id}
       onBack={() => router.navigate('/pros')}
+      {...(tradeSlug && {
+        initialSelection: {
+          tradeSlug,
+          serviceIds: serviceIds ? serviceIds.split(',') : [],
+        },
+      })}
       onBook={() =>
         router.navigate({
           pathname: '/encargar',
