@@ -37,7 +37,8 @@ import {
   useUploadChatAttachment,
 } from '@/hooks/domain/useChat'
 import { usePickImage } from '@/hooks/media/usePickImage'
-import { API_BASE_URL } from '@/api'
+import { usePickDocument } from '@/hooks/media/usePickDocument'
+import { API_BASE_URL, type UploadFile } from '@/api'
 import type { ApiMessage } from '@/api/chat.api'
 import { useUser } from '@/stores/useAuthStore'
 import { formatMessageTime } from '@/utils/dates'
@@ -92,6 +93,7 @@ export function ThreadDetailPage({
 
   const { upload, isUploading } = useUploadChatAttachment()
   const { pick } = usePickImage()
+  const { pick: pickDocument } = usePickDocument()
 
   const [text, setText] = useState('')
   const [attachment, setAttachment] = useState<PendingAttachment | null>(null)
@@ -101,24 +103,34 @@ export function ThreadDetailPage({
   const canSend = (text.trim().length > 0 || attachment !== null) && !isSending
 
   const chooseAttachment = () => {
-    Alert.alert('Adjuntar foto', undefined, [
-      { text: 'Hacer una foto', onPress: () => void attach('camera') },
-      { text: 'Elegir de la galería', onPress: () => void attach('library') },
+    Alert.alert('Adjuntar', undefined, [
+      { text: 'Hacer una foto', onPress: () => void attachImage('camera') },
+      { text: 'Elegir de la galería', onPress: () => void attachImage('library') },
+      { text: 'Elegir un documento (PDF)', onPress: () => void attachDocument() },
       { text: 'Cancelar', style: 'cancel' },
     ])
   }
 
-  const attach = async (source: 'camera' | 'library') => {
-    const image = await pick(source)
-    if (!image) return
-
-    const { ok, result, error } = await upload(image)
+  const uploadAndAttach = async (file: UploadFile) => {
+    const { ok, result, error } = await upload(file)
     if (!ok || !result) {
       Alert.alert('No se ha podido adjuntar', error ?? 'Inténtalo de nuevo.')
       return
     }
 
-    setAttachment({ key: result.key, kind: result.kind, previewUri: image.uri })
+    setAttachment({ key: result.key, kind: result.kind, previewUri: file.uri })
+  }
+
+  const attachImage = async (source: 'camera' | 'library') => {
+    const image = await pick(source)
+    if (!image) return
+    await uploadAndAttach(image)
+  }
+
+  const attachDocument = async () => {
+    const doc = await pickDocument()
+    if (!doc) return
+    await uploadAndAttach(doc)
   }
 
   const submit = async () => {
@@ -243,7 +255,7 @@ export function ThreadDetailPage({
           disabled={isUploading}
           style={styles.composerButton}
           accessibilityRole="button"
-          accessibilityLabel="Adjuntar foto"
+          accessibilityLabel="Adjuntar"
           testID="thread-detail-attach"
         >
           {isUploading ? (
