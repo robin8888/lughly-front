@@ -7,23 +7,29 @@
  * vídeo). Restringir el selector a ese tipo evita que se elija algo que el
  * servidor va a rechazar de todos modos.
  *
- * ## Por qué el módulo se carga en diferido
+ * ## Por qué el módulo se carga en diferido, y en dos pasos
  *
- * Mismo motivo que `useScanDocument`: un `import` de `expo-document-picker`
- * arriba del fichero tumba la app entera —no solo esta pantalla— en
- * cualquier build que no lleve ya compilado el módulo nativo
- * `ExpoDocumentPicker`. Añadir la dependencia y recargar con Metro no basta;
- * hace falta una compilación nativa nueva, y hasta que exista, cualquier
- * pantalla que importe este fichero (aunque nunca llegue a pulsar el botón)
- * se queda en blanco.
+ * Un `import` de `expo-document-picker` arriba del fichero tumba la app
+ * entera —no solo esta pantalla— en cualquier build que no lleve ya
+ * compilado el módulo nativo `ExpoDocumentPicker`. Añadir la dependencia y
+ * recargar con Metro no basta; hace falta una compilación nativa nueva, y
+ * hasta que exista, cualquier pantalla que importe este fichero se queda en
+ * blanco.
  *
- * Cargándolo dentro de la función, quien no lo tenga se queda sin elegir
- * documento y con el aviso de por qué, que es una degradación y no una
- * caída.
+ * Cargarlo con `require()` dentro de una función, como aquí, evita esa
+ * caída. Pero no basta con envolverlo en un `try/catch`: `expo-document-
+ * picker` resuelve su módulo nativo con `requireNativeModule` de
+ * `expo-modules-core`, que **lanza** si no lo encuentra, y aunque el
+ * `catch` de aquí abajo lo capture, Metro ya enseña el aviso en rojo antes
+ * de que le llegue —comprobado en el móvil, no es solo teoría—. Por eso se
+ * comprueba antes con `requireOptionalNativeModule`, la variante hermana
+ * que **nunca lanza** y solo devuelve `null`: si dice que no está, no se
+ * llega a tocar el paquete entero, y el aviso rojo no llega a aparecer.
  */
 
 import { useCallback, useState } from 'react'
 import { Alert } from 'react-native'
+import { requireOptionalNativeModule } from 'expo-modules-core'
 
 interface DocumentPickerModule {
   getDocumentAsync(options?: { type?: string }): Promise<
@@ -34,18 +40,24 @@ interface DocumentPickerModule {
 
 /**
  * `undefined` = todavía sin intentar, `null` = intentado y no está.
- * Se recuerda para no repetir un `require` que ya falló en cada pulsación.
+ * Se recuerda para no repetir la comprobación en cada pulsación.
  */
 let cached: DocumentPickerModule | null | undefined
 
 function loadDocumentPicker(): DocumentPickerModule | null {
   if (cached !== undefined) return cached
 
+  // Sin esto, `require('expo-document-picker')` de abajo lanzaría igual
+  if (requireOptionalNativeModule('ExpoDocumentPicker') === null) {
+    cached = null
+    return cached
+  }
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     cached = require('expo-document-picker') as DocumentPickerModule
   } catch {
-    // El binario no lo trae. No es un error del que informar aquí.
+    // Por si acaso: no debería llegar aquí tras la comprobación de arriba
     cached = null
   }
 
