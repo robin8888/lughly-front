@@ -70,10 +70,8 @@ interface TabDefinition {
 type TabPath =
   | '/inicio'
   | '/pros'
-  | '/publish'
   | '/urgent'
   | '/jobs'
-  | '/offers'
   | '/schedule'
   | '/wallet'
   | '/account'
@@ -81,25 +79,21 @@ type TabPath =
 export const CLIENT_TABS: TabDefinition[] = [
   { path: '/inicio', label: 'Inicio', icon: 'home' },
   { path: '/pros', label: 'Pros', icon: 'users' },
-  { path: '/publish', label: 'Publicar', icon: 'plus' },
   { path: '/urgent', label: 'Urgente', icon: 'alert', danger: true },
   { path: '/jobs', label: 'Trabajos', icon: 'briefcase' },
   { path: '/account', label: 'Cuenta', icon: 'user-circle' },
 ]
 
 /**
- * El README describe 5 pestañas de profesional. Son 6 desde el 15 Agosto
- * 2026, con Urgencias.
- *
- * El motivo: una urgencia se pierde en minutos. Si el profesional tiene que
- * pasar por Inicio para verla, llega tarde, y llegar tarde a una urgencia es
- * lo único que esta función no puede permitirse. Es además donde más cobra,
- * por el recargo de salir corriendo.
+ * El README describe 5 pestañas de profesional. Urgencias se añadió el 15
+ * Agosto 2026 y Ofertas —la bandeja de subastas— se retiró el 22 Agosto al
+ * quitar la subasta entera (v3 §0), así que se queda en 5 con distinta
+ * composición: Urgencias sigue porque una urgencia se pierde en minutos, y
+ * es además donde más cobra, por el recargo de salir corriendo.
  */
 export const PRO_TABS: TabDefinition[] = [
   { path: '/inicio', label: 'Inicio', icon: 'home' },
   { path: '/urgent', label: 'Urgencias', icon: 'alert', danger: true },
-  { path: '/offers', label: 'Ofertas', icon: 'gavel' },
   { path: '/schedule', label: 'Agenda', icon: 'calendar' },
   { path: '/wallet', label: 'Cartera', icon: 'wallet' },
   { path: '/account', label: 'Cuenta', icon: 'user-circle' },
@@ -107,9 +101,9 @@ export const PRO_TABS: TabDefinition[] = [
 
 /**
  * Lo que solo ve quien contrata y factura. Un trabajador por cuenta ajena
- * ejecuta el trabajo, pero ni puja por él ni cobra por él.
+ * ejecuta el trabajo, pero el dinero no es suyo.
  */
-const EMPLOYER_ONLY_TABS: TabPath[] = ['/offers', '/wallet']
+const EMPLOYER_ONLY_TABS: TabPath[] = ['/wallet']
 
 export function BottomTabBar() {
   const insets = useSafeAreaInsets()
@@ -119,10 +113,8 @@ export function BottomTabBar() {
   const isEmployee = useIsEmployee()
 
   /**
-   * Al empleado se le quitan Ofertas y Cartera: el dinero del trabajo es de
-   * quien lo contrata y factura, que es su empleador. La lista de subastas
-   * además lleva presupuestos e importes de pujas, así que enseñársela y
-   * luego negarle el botón sería peor que no enseñársela.
+   * Al empleado se le quita Cartera: el dinero del trabajo es de quien lo
+   * contrata y factura, que es su empleador, no suyo.
    */
   const tabs =
     role === 'pro'

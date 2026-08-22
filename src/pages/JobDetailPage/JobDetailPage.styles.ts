@@ -183,14 +183,6 @@ export const styles = StyleSheet.create({
   bids: {
     marginTop: 16,
   },
-  noBids: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
-    opacity: 0.7,
-    marginTop: 16,
-    textAlign: 'center',
-  },
 
   /** La salida: en contorno y al final, que no es lo que se viene a hacer */
   cancel: {

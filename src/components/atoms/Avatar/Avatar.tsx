@@ -3,9 +3,9 @@
  * Foto de perfil circular, con reserva cuando no hay foto.
  *
  * Estaba sin usar en toda la app y con un contrato que no era el de nadie:
- * pedía `ImageSourcePropType` e iniciales, cuando los cuatro avatares reales
- * —Mi cuenta, ficha del profesional, pujas y tarjeta del directorio— reciben
- * una ruta del servidor y caen en el icono `user-circle`. Eso lo convertía en
+ * pedía `ImageSourcePropType` e iniciales, cuando los avatares reales —Mi
+ * cuenta, ficha del profesional, chat y tarjeta del directorio— reciben una
+ * ruta del servidor y caen en el icono `user-circle`. Eso lo convertía en
  * una trampa: quien lo adoptara se llevaba otra reserva distinta.
  *
  * Ahora hace lo que ya hacían ellos, y el tamaño es un número en vez de tres

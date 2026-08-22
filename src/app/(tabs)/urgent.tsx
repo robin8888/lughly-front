@@ -50,7 +50,7 @@ export default function UrgentRoute() {
 
         router.navigate({ pathname: '/urgencia/[id]', params: { id: jobId } })
       }}
-      onPublishNormal={() => router.navigate('/publish')}
+      onPublishNormal={() => router.navigate('/pros')}
       onBack={() => router.navigate('/inicio')}
     />
   )

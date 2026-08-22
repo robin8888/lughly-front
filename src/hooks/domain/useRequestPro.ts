@@ -6,10 +6,10 @@
  * uno más, esperando respuesta, y es donde el cliente va a mirar si le han
  * contestado.
  *
- * **Con fotos, como al publicar** (20 Agosto 2026). Antes no las admitía, y
- * eso dejaba al encargo directo peor que la subasta justo en lo que más
- * decide: en oficios se valora mirando, y el profesional que recibe un encargo
- * sin fotos tiene que preguntar por chat lo que se ve en un vistazo.
+ * **Con fotos** (20 Agosto 2026). Antes no las admitía, y eso dejaba al
+ * encargo directo corto justo en lo que más decide: en oficios se valora
+ * mirando, y el profesional que recibe un encargo sin fotos tiene que
+ * preguntar por chat lo que se ve en un vistazo.
  */
 
 import { useState } from 'react'

@@ -63,7 +63,6 @@ export const images = {
    */
   pulgar: require('./robot-hormiga-pulgar.png'),
   senalando: require('./robot-hormiga-senalando.png'),
-  subastador: require('./robot-hormiga-subastador.png'),
   trofeo: require('./robot-hormiga-trofeo.png'),
   salud: require('./robot-hormiga-salud.png'),
 } as const

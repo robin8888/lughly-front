@@ -2,10 +2,9 @@
  * RequestProPage
  * Encargar un trabajo a un profesional concreto del directorio.
  *
- * Es la otra forma de contratar: en vez de publicar al aire y esperar pujas,
- * el cliente ya ha elegido a alguien mirando su ficha. De ahí que el
- * formulario sea más corto —no hay plazo de subasta ni presupuesto
- * obligatorio— y que lo importante sea contar bien qué hace falta.
+ * Es la forma de contratar: el cliente ya ha elegido a alguien mirando su
+ * ficha, así que el formulario es corto y lo importante es contar bien qué
+ * hace falta.
  *
  * Se avisa de quién va a responder. Si esa persona trabaja para una empresa,
  * el encargo lo recibe ella; decirlo antes evita que la respuesta a nombre de
@@ -27,10 +26,8 @@ import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useRequestPro } from '@/hooks/domain/useRequestPro'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import type { PickedImage } from '@/hooks/media/usePickImage'
-import { useDraftJobStore } from '@/stores/useDraftJobStore'
 import {
   formatLongDateTime,
-  parseIsoDateTime,
   startOfToday,
   toIsoDateTime,
 } from '@/utils/dates'
@@ -59,58 +56,14 @@ export function RequestProPage({
   const { data: pro, isPending, isError } = useProProfile(proId)
   const { request, isRequesting, fieldErrors, formError, reset } = useRequestPro(proId)
 
-  /**
-   * Lo que ya escribió en Publicar, si viene de ahí.
-   *
-   * Hay dos formas de llegar a esta pantalla y solo una trae trabajo hecho:
-   *
-   * - Desde **Publicar**, eligiendo reserva instantánea y luego profesional.
-   *   Ahí el formulario ya está relleno, y volver a pedirlo todo es pedirle a
-   *   alguien que escriba dos veces la misma avería.
-   * - Desde el **directorio**, mirando fichas y reservando a quien le gusta.
-   *   Ahí no ha escrito nada todavía y el formulario sale en blanco.
-   *
-   * Se distinguen por el borrador: si tiene contenido y es de tipo reserva, es
-   * que viene del primer camino. Y se le dice, con un botón para vaciarlo, por
-   * si el borrador era de otra cosa.
-   */
-  const draft = useDraftJobStore((state) => state.draft)
-  const hasDraft = useDraftJobStore((state) => state.hasContent)()
-  const clearDraft = useDraftJobStore((state) => state.clear)
-  const [fromDraft, setFromDraft] = useState(
-    hasDraft && draft.type === 'INSTANT',
-  )
-
-  const [trade, setTrade] = useState<string | null>(
-    initialTrade ?? (fromDraft && draft.tradeSlug !== '' ? draft.tradeSlug : null),
-  )
-  const [title, setTitle] = useState(fromDraft ? draft.title : '')
-  const [description, setDescription] = useState(
-    fromDraft ? draft.description : '',
-  )
-  const [city, setCity] = useState(fromDraft ? draft.city : '')
-  const [addressLine, setAddressLine] = useState(
-    fromDraft ? draft.addressLine : '',
-  )
-  const [preferredDate, setPreferredDate] = useState<Date | null>(
-    fromDraft && draft.preferredDate !== ''
-      ? parseIsoDateTime(draft.preferredDate)
-      : null,
-  )
-  const [maxBudget, setMaxBudget] = useState(fromDraft ? draft.maxBudget : '')
-  /** Las fotos no se guardan en el borrador: se eligen aquí */
+  const [trade, setTrade] = useState<string | null>(initialTrade ?? null)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [city, setCity] = useState('')
+  const [addressLine, setAddressLine] = useState('')
+  const [preferredDate, setPreferredDate] = useState<Date | null>(null)
+  const [maxBudget, setMaxBudget] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
-
-  const startOver = () => {
-    setFromDraft(false)
-    setTitle('')
-    setDescription('')
-    setCity('')
-    setAddressLine('')
-    setPreferredDate(null)
-    setMaxBudget('')
-    clearDraft()
-  }
 
   const isInstant = type === 'INSTANT'
 
@@ -156,9 +109,6 @@ export function RequestProPage({
     }, photos)
 
     if (!sent) return
-
-    // El encargo ya existe: si el borrador venía de Publicar, ya no hace falta
-    if (fromDraft) clearDraft()
 
     const { request: encargo, photosFailed } = sent
 
@@ -240,28 +190,6 @@ export function RequestProPage({
               : `${pro.name} tiene 24 horas para responderte.`}
           </Text>
         </InfoCard>
-
-        {/*
-          Viene de Publicar con todo escrito, así que aquí solo hay que
-          repasarlo. Se dice, porque encontrarse un formulario relleno sin
-          saber de dónde sale desconcierta; y se ofrece vaciarlo, por si el
-          borrador era de otra cosa.
-        */}
-        {fromDraft && (
-          <View style={styles.fromDraft}>
-            <Text style={styles.fromDraftText}>
-              Hemos traído lo que escribiste al publicar. Repásalo y añade las
-              fotos si quieres.
-            </Text>
-            <Pressable
-              onPress={startOver}
-              accessibilityRole="button"
-              testID="request-start-over"
-            >
-              <Text style={styles.fromDraftAction}>Empezar de cero</Text>
-            </Pressable>
-          </View>
-        )}
 
         {formError && <Text style={styles.formError}>{formError}</Text>}
 
@@ -385,10 +313,8 @@ export function RequestProPage({
         )}
 
         {/*
-          Las fotos, como en Publicar: en oficios se valora mirando, y un
-          encargo directo sin ellas obliga al profesional a preguntar por chat
-          lo que se ve en un vistazo. No viajan en el borrador —son ficheros
-          temporales que el sistema borra—, así que se eligen aquí.
+          En oficios se valora mirando, y un encargo directo sin fotos obliga
+          al profesional a preguntar por chat lo que se ve en un vistazo.
         */}
         <InfoCard style={styles.photosCard}>
           <View style={styles.photosHead}>
@@ -415,8 +341,8 @@ export function RequestProPage({
 
         {/**
          * La dirección no se pide aquí. Se entrega cuando hay alguien
-         * asignado, igual que en una subasta al adjudicar: mientras el
-         * encargo pueda no salir adelante, no hay motivo para darla.
+         * asignado: mientras el encargo pueda no salir adelante, no hay
+         * motivo para darla.
          */}
         {/**
          * Se explica el recorrido de la dirección, que es la duda razonable

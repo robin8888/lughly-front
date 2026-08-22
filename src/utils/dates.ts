@@ -234,8 +234,8 @@ export function atTime(date: Date, hours: number, minutes = 0): Date {
 /**
  * Cuánto falta, en palabras: "en 3 días", "en 2 h", "menos de un minuto".
  *
- * Para plazos que el usuario mira de reojo —lo que queda de una subasta, las
- * 24 h que tiene la empresa para responder—. Devuelve null si ya pasó, que
+ * Para plazos que el usuario mira de reojo —las 24 h que tiene la empresa
+ * para responder, el plazo de una urgencia—. Devuelve null si ya pasó, que
  * es un estado distinto y se dice con otras palabras.
  */
 export function timeLeft(target: Date, from: Date = new Date()): string | null {

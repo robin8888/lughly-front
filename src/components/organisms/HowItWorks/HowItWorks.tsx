@@ -2,11 +2,13 @@
  * HowItWorks Organism
  * Los tres pasos del modelo, en tres tarjetas claras.
  *
- * Los textos explican el modelo de negocio y vienen literales del diseño.
- *
  * Era la sección "02 · Cómo funciona" de la home (HOME_MOBILE.md §3). Ahora
  * vive dentro de la pantalla "Cómo funciona", así que perdió el número de
  * sección: fuera de la home no ordenaba nada.
+ *
+ * Reescritos el 22 Ago 2026 al retirar la subasta (v3 §0): los tres pasos
+ * describían "publica y recibe pujas", que ya no existe. Ahora describen el
+ * directorio y los tres modos de cobro (COMO_SE_CONTRATA.md v3 §2).
  */
 
 import { View, Text } from 'react-native'
@@ -15,16 +17,16 @@ import { styles } from './HowItWorks.styles'
 
 const STEPS = [
   {
-    title: 'Publica tu trabajo',
-    body: 'Describe qué necesitas, tu presupuesto orientativo y el plazo. Es gratis.',
+    title: 'Busca en el directorio',
+    body: 'Encuentra profesionales valorados por oficio, zona y disponibilidad.',
   },
   {
-    title: 'Recibe pujas',
-    body: 'Los profesionales compiten con su oferta: precio, plazo y condiciones.',
+    title: 'Encárgale el trabajo',
+    body: 'Por hora, a tarifa cerrada o pidiendo presupuesto: eliges cómo, según lo que ofrezca.',
   },
   {
-    title: 'Adjudica tú mismo',
-    body: 'Eliges al profesional valorando reputación, no solo el precio más bajo.',
+    title: 'Págalo por la app',
+    body: 'El cobro pasa siempre por Lughly, con el dinero retenido hasta que el trabajo esté hecho.',
   },
 ] as const
 

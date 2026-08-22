@@ -28,13 +28,11 @@ import type { ApiJob } from '@/api/jobs.api'
 
 /** Las respuestas que merecen un aviso, y en qué tono */
 export function isAnswer(job: ApiJob): boolean {
-  /*
-    Una subasta adjudicada no es una respuesta: la adjudica el propio cliente,
-    así que contárselo como novedad sería devolverle lo que acaba de hacer.
-  */
-  if (job.status === 'CONTRACTED') return job.type !== 'AUCTION'
-
-  return job.status === 'DECLINED' || job.status === 'EXPIRED'
+  return (
+    job.status === 'CONTRACTED' ||
+    job.status === 'DECLINED' ||
+    job.status === 'EXPIRED'
+  )
 }
 
 export interface JobAnswerProps {

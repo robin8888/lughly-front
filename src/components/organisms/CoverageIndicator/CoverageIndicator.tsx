@@ -8,9 +8,9 @@
  * final que no hay nadie que cubra su calle.
  *
  * Por eso el estado de "no hay nadie" no es un error ni un vacío: es una
- * respuesta honesta con una salida —publicar como trabajo normal—, que es lo
- * que pide el README §7 ("si nadie cubre, mensaje honesto, no reutilizar
- * otros oficios").
+ * respuesta honesta con una salida —probar con otro oficio—, que es lo que
+ * pide el README §7 ("si nadie cubre, mensaje honesto, no reutilizar otros
+ * oficios").
  */
 
 import { View, Text, ActivityIndicator } from 'react-native'
@@ -82,8 +82,8 @@ export function CoverageIndicator({ state, testID }: CoverageIndicatorProps) {
               : 'Ningún profesional de este oficio llega hasta esa dirección.'}
           </Text>
           <Text style={styles.note}>
-            Puedes publicarlo como trabajo normal y recibir pujas, o probar
-            con otro oficio si encaja.
+            Prueba con otro oficio si encaja, o vuelve más tarde: la
+            disponibilidad cambia.
           </Text>
         </>
       )}

@@ -1,6 +1,6 @@
 /**
  * Countdown Atom
- * Cuenta atrás hasta el cierre de una subasta (diseño `isSubastas`: "2d 05h").
+ * Cuenta atrás hasta que vence un plazo de respuesta (diseño `isSubastas`: "2d 05h").
  *
  * Enseña **dos unidades**, no cinco. "2d 05h" se lee de un vistazo;
  * "2d 05h 12m 34s" hay que descifrarlo, y los segundos no cambian ninguna

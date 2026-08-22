@@ -102,32 +102,6 @@ export const styles = StyleSheet.create({
     marginTop: 16,
   },
 
-  /** El aviso de que el formulario viene relleno desde Publicar */
-  fromDraft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.field,
-    backgroundColor: theme.colors.accent100,
-  },
-  fromDraftText: {
-    flex: 1,
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    lineHeight: theme.typography.sizes.tiny * 1.45,
-    color: theme.colors.accent900,
-  },
-  fromDraftAction: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.accent700,
-    textDecorationLine: 'underline',
-  },
-
   /** Las fotos, con presencia: son lo que más afina el precio */
   photosCard: {
     marginTop: 4,

@@ -25,10 +25,8 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="inicio" />
       <Tabs.Screen name="pros" />
-      <Tabs.Screen name="publish" />
       <Tabs.Screen name="urgent" />
       <Tabs.Screen name="jobs" />
-      <Tabs.Screen name="offers" />
       <Tabs.Screen name="schedule" />
       <Tabs.Screen name="wallet" />
       <Tabs.Screen name="account" />

@@ -22,7 +22,7 @@ jest.mock('@/hooks/domain/useInbox', () => ({
       items: [
         {
           id: 'job-1',
-          type: 'AUCTION',
+          type: 'QUOTE',
           status: 'PENDING_PRO',
           appointmentStatus: null,
           title: 'Cambiar un grifo',
@@ -38,7 +38,7 @@ jest.mock('@/hooks/domain/useInbox', () => ({
           substituteProName: null,
           photoCount: 0,
           createdAt: '2026-08-19T10:00:00.000Z',
-          // La empresa ganó la subasta pero no ejerce fontanería
+          // A la empresa le piden fontanería pero no la ejerce
           canAssignToSelf: false,
         },
       ],

@@ -147,7 +147,6 @@ export default function RootLayout() {
               <Stack.Screen name="horario-urgencias" />
               <Stack.Screen name="encargos" />
               <Stack.Screen name="encargar" />
-              <Stack.Screen name="pujas" />
               <Stack.Screen name="como-funciona" />
               <Stack.Screen name="mis-documentos" />
               {/*

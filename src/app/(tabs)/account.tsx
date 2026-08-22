@@ -217,7 +217,7 @@ export default function AccountRoute() {
                 onPress: () => router.push('/mis-documentos'),
                 icon: 'document',
                 /*
-                 * Sin ellos no puede pujar ni aceptar un encargo, así que es de
+                 * Sin ellos no puede contratar ni que le contraten, así que es de
                  * los que bloquean. Cuando están subidos y esperando revisión se
                  * dice también: si no, quien acaba de subirlos no sabe si
                  * llegaron.

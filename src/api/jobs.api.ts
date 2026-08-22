@@ -6,7 +6,7 @@
 import { apiRequest } from './http'
 import type { ApiUrgencyPro } from './urgencies.api'
 
-export type ApiJobType = 'AUCTION' | 'QUOTE' | 'INSTANT' | 'URGENT'
+export type ApiJobType = 'QUOTE' | 'INSTANT' | 'URGENT'
 
 export type ApiJobStatus =
   | 'DRAFT'
@@ -75,7 +75,6 @@ export interface ApiJob {
   city: string
   maxBudget: number | null
   preferredDate: string | null
-  biddingEndsAt: string | null
   photoCount: number
   /**
    * A quién eligió el cliente en el directorio, si el encargo fue directo.
@@ -95,19 +94,18 @@ export interface ApiJob {
   substituteProName: string | null
   /** Hasta cuándo tiene para responder quien recibió el encargo */
   respondByAt: string | null
-  /** Pujas vivas recibidas */
-  bidCount: number
-  /** La más baja de las vivas; null si aún no hay ninguna */
-  lowestBid: number | null
   createdAt: string
 }
 
 export interface CreateJobPayload {
   /**
    * `QUOTE` no está: un presupuesto directo se pide a un profesional
-   * concreto desde su ficha, no se publica al aire.
+   * concreto desde su ficha, no se publica al aire. Hoy solo `URGENT` llega
+   * por aquí (`UrgencyPage`); `INSTANT` sigue en el contrato porque el
+   * servidor lo admite, aunque la app no lo use desde que se retiró
+   * `PublishPage` (22 Ago 2026).
    */
-  type: 'AUCTION' | 'INSTANT' | 'URGENT'
+  type: 'INSTANT' | 'URGENT'
   tradeSlug: string
   title: string
   description: string
@@ -115,20 +113,17 @@ export interface CreateJobPayload {
   /**
    * Obligatorios en una urgencia y opcionales en el resto: solo se avisa a
    * quien cubre la dirección con su radio, así que sin punto no hay a quién
-   * avisar. En una subasta no hace falta hasta adjudicar.
+   * avisar.
    */
   /**
-   * Obligatoria. No se enseña a nadie que no esté adjudicado: no viaja en el
-   * listado de subastas ni en la bandeja de encargos, solo en la agenda de
-   * quien va a hacer el trabajo.
+   * Obligatoria. No se enseña a nadie que no esté adjudicado: solo en la
+   * agenda de quien va a hacer el trabajo.
    */
   addressLine: string
   latitude?: number
   longitude?: number
   maxBudget?: number
   preferredDate?: string
-  /** Obligatorio en subasta; el servidor lo exige */
-  biddingEndsAt?: string
 }
 
 export interface MyJobsPage {
@@ -157,10 +152,9 @@ export interface ApiAssignedPro {
  * Contrato: lughly-backend/src/modules/jobs/jobs.controller.ts (GET /v1/jobs/:id)
  *
  * Lo que llega depende de quién mira, y eso lo decide el servidor: el cliente
- * ve su dirección, su tope y las pujas; quien va a hacerlo ve la dirección y
- * el teléfono del cliente pero no el dinero de los demás. `viewer` dice desde
- * qué lado se está mirando, para no tener que deducirlo comparando
- * identificadores.
+ * ve su dirección y su tope; quien va a hacerlo ve la dirección y el teléfono
+ * del cliente pero no su tope. `viewer` dice desde qué lado se está mirando,
+ * para no tener que deducirlo comparando identificadores.
  */
 export interface ApiJobDetail {
   id: string
@@ -178,7 +172,6 @@ export interface ApiJobDetail {
   latitude: number | null
   longitude: number | null
   preferredDate: string | null
-  biddingEndsAt: string | null
   /** Hasta cuándo hay para responder, si se espera a alguien */
   respondByAt: string | null
   maxBudget: number | null
@@ -197,8 +190,6 @@ export interface ApiJobDetail {
   chatWith: { id: string; name: string; avatarUrl: string | null } | null
   clientName: string | null
   clientPhone: string | null
-  bidCount: number | null
-  lowestBid: number | null
   photoCount: number
   createdAt: string
   /**

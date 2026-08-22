@@ -2,7 +2,7 @@
  * useIdentityGate
  * Convierte el 403 de "te falta el documento" en una salida.
  *
- * El servidor cierra cuatro puertas —pujar, adjudicar, encargar y pedir una
+ * El servidor cierra tres puertas —adjudicar, encargar y pedir una
  * urgencia— con el código `IDENTITY_DOCUMENTS_MISSING`. Sin esto, ese 403
  * aterriza como cualquier otro fallo: una línea roja en un formulario o un
  * aviso de "no se ha podido", que deja al usuario adivinando qué ha hecho mal.

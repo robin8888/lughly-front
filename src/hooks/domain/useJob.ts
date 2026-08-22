@@ -33,8 +33,8 @@ export function useJob(jobId: string | undefined) {
 /**
  * Cancelar un trabajo propio.
  *
- * Al cancelar cambian su ficha y la lista, y si era una subasta también las
- * pujas: se refresca todo lo de trabajos en vez de ir campo a campo.
+ * Al cancelar cambian su ficha y la lista: se refresca todo lo de trabajos en
+ * vez de ir campo a campo.
  */
 export function useCancelJob() {
   const queryClient = useQueryClient()

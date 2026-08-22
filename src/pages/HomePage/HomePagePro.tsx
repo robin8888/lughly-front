@@ -9,9 +9,7 @@
  * Todo lo que se muestra sale de la base de datos. Del panel del diseño
  * quedan fuera, por no tener tablas todavía:
  *
- * - Trabajos cerca de ti y contador de pujas del plan → necesitan `Job` y
- *   `Bid` (Fases 4 y 5).
- * - Reserva instantánea con tarifa, mínimo y solicitudes → Fase 7.
+ * - Trabajos cerca de ti → sin construir todavía.
  * - Ingresos de los últimos 6 meses → `Payment` (Fase 9).
  *
  * El interruptor de "disponible ahora" sí es real y escribe en el perfil.
@@ -44,10 +42,7 @@ import { styles } from './HomePagePro.styles'
 export interface HomePageProProps {
   /** Id del usuario en sesión: su ficha es la de este profesional */
   userId: string | undefined
-  /**
-   * No hay `onPrimary`: el hero se quedó sin botón principal. Llevaba a las
-   * pujas, que están a un toque en la barra de abajo.
-   */
+  /** A la agenda, que está a un toque en la barra de abajo */
   onSecondary: () => void
   onManageEmployees: () => void
   onInbox: () => void
@@ -599,9 +594,8 @@ export function HomePagePro({
             <InfoCard style={styles.pendingCard}>
               <Text style={styles.stateTitle}>Todavía no disponible</Text>
               <Text style={styles.stateBody}>
-                Los trabajos cerca de ti, el contador de pujas de tu plan, la
-                reserva instantánea y tus ingresos llegan con las siguientes
-                fases del roadmap.
+                Los trabajos cerca de ti y tus ingresos llegan con las
+                siguientes fases del roadmap.
               </Text>
             </InfoCard>
           </>

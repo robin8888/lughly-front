@@ -2,12 +2,9 @@
  * JobCard Molecule
  * Un trabajo publicado, según MobileApp.dc.html (`isMisTrabajos`).
  *
- * Las pujas solo se enseñan en subastas: una reserva instantánea es a tarifa
- * fija y una urgencia se acepta, no se puja.
- *
- * El plazo va con cuenta atrás viva (`Countdown`) y no con un texto fijo: es
- * lo que le dice al cliente si aún puede esperar más ofertas o si conviene
- * decidirse ya.
+ * El plazo de un encargo directo va con cuenta atrás viva (`Countdown`) y no
+ * con un texto fijo: es lo que le dice al cliente cuánto falta para que
+ * quede libre de encargárselo a otro.
  */
 
 import { View, Text, Pressable, Image } from 'react-native'
@@ -153,20 +150,6 @@ export function JobCard({
             </Text>
           )}
 
-          {job.status === 'OPEN' && (
-            <Countdown
-              target={job.biddingEndsAt}
-              prefix="Cierra en"
-              expiredLabel="Plazo cumplido"
-              style={styles.deadline}
-            />
-          )}
-
-          {/**
-           * Lo que corre en un encargo directo no es una subasta sino el
-           * plazo de quien tiene que contestar. Es el mismo dato para el
-           * cliente: cuándo deja de esperar.
-           */}
           {job.status === 'PENDING_PRO' && !isSubstituteProposed && (
             <Countdown
               target={job.respondByAt}
@@ -239,30 +222,6 @@ export function JobCard({
               </Pressable>
             </View>
           </View>
-        )}
-
-        {/**
-         * Las pujas solo tienen sentido en una subasta: una reserva
-         * instantánea es a tarifa fija y una urgencia se acepta, no se puja.
-         */}
-        {/*
-          Y solo mientras la subasta siga abierta: una vez adjudicada, "sin
-          pujas todavía" habla de algo que ya terminó, y el trabajo ya tiene
-          quien lo haga.
-        */}
-        {job.type === 'AUCTION' && job.status === 'OPEN' && (
-          <Text style={styles.bids}>
-            {job.bidCount === 0 ? (
-              'Sin pujas todavía'
-            ) : (
-              <>
-                {job.bidCount} {job.bidCount === 1 ? 'puja' : 'pujas'} · la más baja{' '}
-                {job.lowestBid !== null && (
-                  <Money amount={job.lowestBid} size="small" style={styles.lowest} />
-                )}
-              </>
-            )}
-          </Text>
         )}
       </InfoCard>
     </Pressable>

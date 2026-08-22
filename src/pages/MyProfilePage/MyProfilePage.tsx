@@ -5,8 +5,8 @@
  *
  * Faltaba entera. De todo lo que se pide al registrarse solo se podían cambiar
  * después la contraseña, la foto y los oficios: quien tecleaba mal su nombre en
- * el alta se quedaba así, y ese nombre sale en su ficha, en sus pujas y en los
- * avisos que le llegan al cliente.
+ * el alta se quedaba así, y ese nombre sale en su ficha y en los avisos que le
+ * llegan al cliente.
  *
  * **La descripción no la escribía nadie.** El único sitio del proyecto que
  * tocaba ese campo era el script de datos de ejemplo, y por eso solo la tenían

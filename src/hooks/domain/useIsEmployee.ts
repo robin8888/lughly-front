@@ -4,8 +4,8 @@
  *
  * No es un rol ni un permiso: es un dato de su ficha. Un empleado es un
  * profesional normal salvo en lo económico, que pertenece a su empleador —
- * él no puja, no ve por cuánto se adjudicó un trabajo ni cuál es su tarifa,
- * y las facturas no van a su nombre.
+ * él no ve por cuánto se cerró un trabajo ni cuál es su tarifa, y las
+ * facturas no van a su nombre.
  *
  * Sale de la ficha del profesional, que ya se pide en su inicio: aquí solo
  * se lee la caché de esa consulta, no hay una petición nueva.

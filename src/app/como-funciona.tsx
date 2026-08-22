@@ -17,7 +17,7 @@ export default function HowItWorksRoute() {
   return (
     <HowItWorksPage
       onBack={() => router.navigate('/inicio')}
-      onPublish={() => router.navigate('/publish')}
+      onBrowse={() => router.navigate('/pros')}
     />
   )
 }

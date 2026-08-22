@@ -18,10 +18,6 @@ export default function JobDetailRoute() {
     <JobDetailPage
       jobId={id}
       onBack={() => router.navigate('/jobs')}
-      /* Las pujas siguen en su pantalla: ahí es donde se comparan y se adjudica */
-      onSeeBids={(jobId, title) =>
-        router.navigate({ pathname: '/pujas', params: { jobId, title } })
-      }
       /*
        * Buscar a otro, igual que desde la tarjeta de Mis trabajos: al
        * directorio con el oficio puesto, salvo una urgencia, que va a los que

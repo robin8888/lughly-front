@@ -49,7 +49,8 @@ import { styles } from './AccountPage.styles'
  * lleva por delante:
  *
  * - `blocking`: sin esto no se puede trabajar —sin oficios no sale en el
- *   directorio, sin documentos no puede pujar—. Va en el color de urgencia.
+ *   directorio, sin documentos no puede contratar ni que le contraten—. Va
+ *   en el color de urgencia.
  * - `optional`: se puede trabajar, pero con esto le iría mejor. En un tono
  *   neutro, porque no es un error suyo.
  * - `pending`: hecho y esperando a otro. Ni le falta ni tiene que hacer nada.
@@ -253,8 +254,8 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
           {isPro && !hasIdentity && !isLoadingDocuments && (
             <View style={styles.notice}>
               <Text style={styles.missing}>
-                Te falta el documento de identidad. Sin él no puedes contratar ni
-                pujar.
+                Te falta el documento de identidad. Sin él no puedes contratar
+                ni que te contraten.
               </Text>
 
               {/*

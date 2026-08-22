@@ -304,9 +304,9 @@ export function InboxPage({ onBack }: InboxPageProps) {
                         misma persona.
 
                         `canAssignToSelf` lo dice el servidor. Antes no venía y
-                        el botón se ofrecía siempre: una empresa que gana una
-                        subasta de fontanería pero está dada de alta como
-                        electricista lo pulsaba y se comía el error. Deducirlo
+                        el botón se ofrecía siempre: una empresa a la que
+                        piden un encargo de fontanería pero está dada de alta
+                        como electricista lo pulsaba y se comía el error. Deducirlo
                         aquí exigiría pedir los oficios propios en otra llamada
                         y copiar una regla que ya vive en el servidor.
                       */}

@@ -32,9 +32,10 @@ import { theme } from '@/theme'
 import { styles } from './MyJobsPage.styles'
 
 export interface MyJobsPageProps {
-  onPublish: () => void
+  /** Ir a encargar un trabajo nuevo: el directorio, donde se elige a alguien */
+  onBrowse: () => void
   onBack: () => void
-  /** Solo tiene sentido en una subasta: lleva a sus pujas */
+  /** Cualquier trabajo lleva a su ficha: qué pasa con él, a quién se espera y quién lo hace */
   onSelectJob?: (jobId: string, title: string) => void
   /**
    * Buscar otro profesional para un trabajo que se quedó sin nadie. Lleva el
@@ -55,7 +56,7 @@ export interface MyJobsPageProps {
 }
 
 export function MyJobsPage({
-  onPublish,
+  onBrowse,
   onBack,
   onSelectJob,
   onReassign,
@@ -75,11 +76,15 @@ export function MyJobsPage({
   /**
    * Los trabajos, agrupados por cómo se contrata.
    *
-   * Son formas distintas de esperar y se siguen distinto: una subasta espera
-   * pujas que hay que comparar, una reserva espera la confirmación de alguien
-   * concreto y una urgencia espera a que alguien la coja en minutos. Mezcladas
-   * en una sola lista, la subasta que aún no ha cerrado y el encargo que no
-   * contestan se leían igual.
+   * Son formas distintas de esperar y se siguen distinto: una reserva espera
+   * la confirmación de alguien concreto y una urgencia espera a que alguien
+   * la coja en minutos. Mezcladas en una sola lista se leían igual.
+   *
+   * **Sin subasta** (v3 §0: "sin subasta en esta versión de la app"): ya no
+   * se ofrece esa forma de contratar, así que no tiene pestaña propia aquí.
+   * Retirarla del todo —el `JobType` del servidor, las pantallas de pujas—
+   * es la Fase 7 del roadmap y no es este cambio; esto solo quita la pestaña
+   * de esta lista, que es lo que se pidió.
    *
    * El orden es fijo y no el de llegada: es el mismo en el que se ofrecen al
    * publicar, y así la lista no cambia de forma cada vez que entra algo nuevo.
@@ -87,7 +92,7 @@ export function MyJobsPage({
    * Las etiquetas salen de `jobTypeLabel`, que es donde ya vive el nombre de
    * cada tipo: dos sitios con los mismos nombres acabarían discrepando.
    */
-  const groups = (['AUCTION', 'QUOTE', 'INSTANT', 'URGENT'] as const)
+  const groups = (['QUOTE', 'INSTANT', 'URGENT'] as const)
     .map((type) => ({
       type,
       label: jobTypeLabel(type),
@@ -189,12 +194,12 @@ export function MyJobsPage({
           />
         ) : jobs.length === 0 ? (
           <EmptyState
-            title="Todavía no has publicado nada"
-            message="Publica un trabajo y recibirás pujas de profesionales valorados. Es gratis y no te compromete a nada: eliges tú."
+            title="Todavía no has encargado nada"
+            message="Busca en el directorio y encárgale el trabajo a un profesional valorado: por hora, a tarifa cerrada o pidiendo presupuesto."
             actions={[
               {
-                label: 'Publicar un trabajo',
-                onPress: onPublish,
+                label: 'Buscar un profesional',
+                onPress: onBrowse,
                 testID: 'my-jobs-publish-empty',
               },
             ]}
@@ -227,6 +232,9 @@ export function MyJobsPage({
               >
                 {groups.map((group) => {
                   const isOpen = group.type === current?.type
+                  // La urgencia va en su propio rojo, cerrada o abierta: es
+                  // lo que la distingue de un vistazo entre las pestañas.
+                  const isUrgent = group.type === 'URGENT'
 
                   return (
                     <Pressable
@@ -234,11 +242,19 @@ export function MyJobsPage({
                       onPress={() => setOpenTab(group.type)}
                       accessibilityRole="tab"
                       accessibilityState={{ selected: isOpen }}
-                      style={[styles.tab, isOpen && styles.tabOpen]}
+                      style={[
+                        styles.tab,
+                        isUrgent && !isOpen && styles.tabUrgent,
+                        isOpen && (isUrgent ? styles.tabUrgentOpen : styles.tabOpen),
+                      ]}
                       testID={`my-jobs-tab-${group.type}`}
                     >
                       <Text
-                        style={[styles.tabText, isOpen && styles.tabTextOpen]}
+                        style={[
+                          styles.tabText,
+                          isUrgent && !isOpen && styles.tabTextUrgent,
+                          isOpen && styles.tabTextOpen,
+                        ]}
                       >
                         {group.label} · {group.jobs.length}
                       </Text>
@@ -279,11 +295,11 @@ export function MyJobsPage({
 
             <Button
               fullWidth
-              onPress={onPublish}
+              onPress={onBrowse}
               style={styles.publish}
               testID="my-jobs-publish"
             >
-              Publicar nuevo trabajo
+              Encargar un trabajo nuevo
             </Button>
 
             <Text style={styles.pending}>

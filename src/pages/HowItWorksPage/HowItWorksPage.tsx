@@ -2,35 +2,32 @@
  * HowItWorksPage
  * "Cómo funciona", explicado para el cliente.
  *
- * Recoge lo que antes iba suelto por la home: los tres pasos y la regla de la
- * subasta inversa ocupaban dos secciones de la pantalla principal, y el
- * titular y el párrafo de arriba salen del hero. Eran textos para explicarse
- * a quien no conoce la app, repartidos por la pantalla de alguien que ya ha
- * entrado; aquí se cuentan seguidos y en su sitio, y la home se queda para
- * hacer cosas.
- *
- * No hay contenido nuevo: es el mismo que ya estaba, mudado.
+ * Recoge lo que antes iba suelto por la home: los tres pasos ocupaban una
+ * sección de la pantalla principal, y el titular y el párrafo de arriba
+ * salen del hero. Eran textos para explicarse a quien no conoce la app,
+ * repartidos por la pantalla de alguien que ya ha entrado; aquí se cuentan
+ * seguidos y en su sitio, y la home se queda para hacer cosas.
  */
 
 import { View, Text, Pressable } from 'react-native'
 import Animated from 'react-native-reanimated'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Button } from '@/components/atoms/Button'
 import { HowItWorks } from '@/components/organisms/HowItWorks'
-import { ReverseAuctionCard } from '@/components/organisms/ReverseAuctionCard'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { styles } from './HowItWorksPage.styles'
 
 export interface HowItWorksPageProps {
   onBack: () => void
-  /** Publicar un trabajo: el final natural de haber leído esto */
-  onPublish: () => void
+  /** Ir al directorio: el final natural de haber leído esto */
+  onBrowse: () => void
   testID?: string
 }
 
 export function HowItWorksPage({
   onBack,
-  onPublish,
+  onBrowse,
   testID,
 }: HowItWorksPageProps) {
   const onScroll = useNavScrollHandler()
@@ -61,17 +58,21 @@ export function HowItWorksPage({
             Encuentra al profesional de confianza.
           </Text>
           <Text style={styles.introBody}>
-            Publica tu trabajo, recibe pujas de profesionales valorados y
-            adjudica tú mismo comparando precio, plazo y reputación.
+            Busca en el directorio, compara valoraciones y encárgale el
+            trabajo por hora, a tarifa cerrada o pidiendo presupuesto.
           </Text>
         </View>
 
         <HowItWorks testID="how-it-works-steps" />
 
-        <ReverseAuctionCard
-          onPublish={onPublish}
-          testID="how-it-works-auction"
-        />
+        <Button
+          fullWidth
+          onPress={onBrowse}
+          style={styles.browse}
+          testID="how-it-works-browse"
+        >
+          Buscar un profesional
+        </Button>
       </Animated.ScrollView>
     </SafeAreaView>
   )

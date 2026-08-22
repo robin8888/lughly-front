@@ -27,17 +27,10 @@ export default function JobsRoute() {
       testID="jobs-denied"
     >
       <MyJobsPage
-        onPublish={() => router.navigate('/publish')}
+        onBrowse={() => router.navigate('/pros')}
         onBack={() => router.navigate('/inicio')}
-        /**
-         * Tocar cualquier trabajo lleva a su ficha: qué pasa con él, a quién
-         * se espera y quién lo hace. Desde ahí se llega a las pujas si es una
-         * subasta, que es donde se comparan y se adjudica.
-         *
-         * Antes solo las subastas llevaban a alguna parte, y era justo al
-         * revés de lo que hacía falta: en una subasta abierta no hay nada que
-         * preguntarse, y en un encargo sin respuesta sí.
-         */
+        // Tocar cualquier trabajo lleva a su ficha: qué pasa con él, a quién
+        // se espera y quién lo hace.
         onSelectJob={(jobId) =>
           router.navigate({ pathname: '/trabajo/[id]', params: { id: jobId } })
         }

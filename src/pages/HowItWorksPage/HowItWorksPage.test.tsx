@@ -12,39 +12,31 @@ import { HowItWorksPage } from './HowItWorksPage'
 const noop = () => {}
 
 describe('HowItWorksPage', () => {
-  it('trae los tres pasos que estaban en la home', () => {
+  it('trae los tres pasos del modelo sin subasta', () => {
     const { getByText } = render(
-      <HowItWorksPage onBack={noop} onPublish={noop} />
+      <HowItWorksPage onBack={noop} onBrowse={noop} />
     )
 
-    expect(getByText('Publica tu trabajo')).toBeTruthy()
-    expect(getByText('Recibe pujas')).toBeTruthy()
-    expect(getByText('Adjudica tú mismo')).toBeTruthy()
-  })
-
-  it('trae la regla que diferencia a Lughly', () => {
-    const { getByText } = render(
-      <HowItWorksPage onBack={noop} onPublish={noop} />
-    )
-
-    expect(getByText('La puja más baja no gana automáticamente')).toBeTruthy()
+    expect(getByText('Busca en el directorio')).toBeTruthy()
+    expect(getByText('Encárgale el trabajo')).toBeTruthy()
+    expect(getByText('Págalo por la app')).toBeTruthy()
   })
 
   it('ya no arrastra la numeración de secciones de la home', () => {
     // "02 ·" y "03 ·" ordenaban la home; fuera de ella no ordenan nada
     const { queryByText } = render(
-      <HowItWorksPage onBack={noop} onPublish={noop} />
+      <HowItWorksPage onBack={noop} onBrowse={noop} />
     )
 
     expect(queryByText(/^0\d · /)).toBeNull()
   })
 
-  it('deja volver y deja publicar', () => {
+  it('deja volver y deja ir al directorio', () => {
     const { getByTestId } = render(
-      <HowItWorksPage onBack={noop} onPublish={noop} />
+      <HowItWorksPage onBack={noop} onBrowse={noop} />
     )
 
     expect(getByTestId('how-it-works-back')).toBeTruthy()
-    expect(getByTestId('auction-publish')).toBeTruthy()
+    expect(getByTestId('how-it-works-browse')).toBeTruthy()
   })
 })

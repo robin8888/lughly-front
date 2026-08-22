@@ -77,7 +77,6 @@ export function jobStatusLook(
 }
 
 const TYPE_LABEL: Record<ApiJobType, string> = {
-  AUCTION: 'Subasta inversa',
   QUOTE: 'Presupuesto directo',
   INSTANT: 'Reserva instantánea',
   URGENT: 'Urgencia',

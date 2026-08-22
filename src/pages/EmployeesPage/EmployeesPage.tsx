@@ -445,7 +445,7 @@ export function EmployeesPage({
             {employees.length === 0 ? (
               <EmptyState
                 title="Todavía no has dado de alta a nadie"
-                message="Cada trabajador tendrá su propia cuenta y aparecerá en el directorio con tu nombre encima. Tú pujas y facturas; ellos ejecutan."
+                message="Cada trabajador tendrá su propia cuenta y aparecerá en el directorio con tu nombre encima. Tú gestionas y facturas; ellos ejecutan."
                 testID="employees-empty"
               />
             ) : (

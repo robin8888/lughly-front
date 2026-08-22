@@ -8,8 +8,8 @@
  * inerte. Quien se quedaba sin documentos —el alta está hecha para no tumbarse
  * si la subida falla— no tenía ninguna salida.
  *
- * Ahora hace falta de verdad: sin documento no se puede pujar. Un bloqueo sin
- * salida no es una regla, es una app rota.
+ * Ahora hace falta de verdad: sin documento no se puede contratar ni que te
+ * contraten. Un bloqueo sin salida no es una regla, es una app rota.
  *
  * Las fotos se toman con el escáner de documentos del sistema, que encuadra,
  * recorta y endereza. **No impide fotografiar otra cosa**: lleva disparador
@@ -161,8 +161,8 @@ export function MyDocumentsPage({ onBack, testID }: MyDocumentsPageProps) {
             </Text>
             <Text style={styles.cardBody}>
               {hasIdentity
-                ? 'Con esto puedes pujar por los trabajos publicados.'
-                : 'Sin él no se puede pujar. Escanéalo aquí abajo y podrás seguir al momento.'}
+                ? 'Con esto puedes contratar y que te contraten.'
+                : 'Sin él no puedes contratar ni que te contraten. Escanéalo aquí abajo y podrás seguir al momento.'}
             </Text>
 
             {pending.length > 0 && (

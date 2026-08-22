@@ -5,10 +5,10 @@
  *
  * El diseño no usa un "no tienes permiso" genérico, y con razón: cada
  * pantalla bloqueada dice qué le toca a esa persona *en su lugar*. Al
- * profesional que abre Publicar no se le dice "prohibido", se le dice que su
- * sitio es pujar y se le enseña dónde. Por eso el título, el texto y las
- * alternativas llegan por props: un mensaje genérico sería más fácil de
- * escribir y mucho peor de leer.
+ * profesional que abre una pantalla de cliente no se le dice "prohibido", se
+ * le dice cuál es su sitio y se le enseña dónde. Por eso el título, el texto
+ * y las alternativas llegan por props: un mensaje genérico sería más fácil
+ * de escribir y mucho peor de leer.
  *
  * El botón de cambiar de modo lo pone el propio componente, porque es la
  * salida que siempre aplica; las demás acciones las decide cada pantalla.

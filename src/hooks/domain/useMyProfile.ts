@@ -5,8 +5,7 @@
  *
  * No había forma de cambiarlos. Se podían cambiar la contraseña, la foto y los
  * oficios, y nada más: quien tecleaba mal su nombre en el alta se quedaba así,
- * y ese nombre sale en su ficha, en sus pujas y en los avisos que le llegan al
- * cliente.
+ * y ese nombre sale en su ficha y en los avisos que le llegan al cliente.
  *
  * Al guardar se actualiza también la sesión guardada en el móvil. Si no, la app
  * seguiría saludando con el nombre viejo hasta la siguiente vez que se entrara,

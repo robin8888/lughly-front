@@ -105,10 +105,26 @@ export const styles = StyleSheet.create({
     /* El azul oscuro, que es el que sostiene texto blanco encima */
     backgroundColor: theme.colors.accent700,
   },
+  /**
+   * La urgencia, en su propio rojo —mismo `urgency` que la pestaña de
+   * Urgencias de la barra inferior (`NavItem`, `danger`)—, cerrada o
+   * abierta: es lo que la distingue de un vistazo entre pestañas.
+   */
+  tabUrgent: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.urgency,
+  },
+  tabUrgentOpen: {
+    backgroundColor: theme.colors.urgency,
+    borderColor: theme.colors.urgency,
+  },
   tabText: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.textSoft,
+  },
+  tabTextUrgent: {
+    color: theme.colors.urgency,
   },
   tabTextOpen: {
     color: '#ffffff',

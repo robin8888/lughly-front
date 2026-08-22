@@ -292,7 +292,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
                 Tengo trabajadores a mi cargo.{' '}
                 <Text style={styles.consentSecondary}>
                   Los darás de alta después, desde tu inicio. Ellos ejecutan
-                  los trabajos; tú pujas, facturas y cobras.
+                  los trabajos; tú los gestionas, facturas y cobras.
                 </Text>
               </Text>
             </Checkbox>
@@ -464,7 +464,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
             label="Habilitación profesional (si tu oficio es regulado)"
             helper={
               trades.some((entry) => isRegulatedTrade(entry.slug))
-                ? 'Tu oficio está regulado: sin el certificado aprobado no podrás pujar. Puedes subirlo ahora o más tarde.'
+                ? 'Tu oficio está regulado: sin el certificado aprobado no podrás recibir encargos. Puedes subirlo ahora o más tarde.'
                 : 'Opcional. Súbela si tu oficio la requiere.'
             }
             testID="register-license-field"

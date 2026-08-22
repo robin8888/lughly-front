@@ -2,19 +2,19 @@
  * JobDetailPage
  * La ficha de un trabajo: qué pasa con él y quién lo tiene.
  *
- * Faltaba, y se notaba: tocar la tarjeta de un trabajo no hacía nada salvo en
- * las subastas, así que quien encargaba algo a alguien no tenía dónde ver a
- * quién estaba esperando ni en qué punto estaba. La información existía toda
- * en el servidor, repartida entre la tarjeta, las pujas y la agenda del
- * profesional; lo que no había era una pantalla que contara la historia.
+ * Faltaba, y se notaba: tocar la tarjeta de un trabajo no hacía nada, así que
+ * quien encargaba algo a alguien no tenía dónde ver a quién estaba esperando
+ * ni en qué punto estaba. La información existía toda en el servidor,
+ * repartida entre la tarjeta y la agenda del profesional; lo que no había
+ * era una pantalla que contara la historia.
  *
  * **Lo primero es el estado, y en una frase.** No un rótulo con el nombre
  * interno del estado, sino qué está pasando y a quién se espera, que es la
  * única pregunta que trae aquí a alguien.
  *
  * Sirve a los dos lados: el servidor decide qué campos manda según quién
- * pregunte —al cliente su dirección y sus pujas, a quien va a ir el teléfono
- * del cliente—, así que aquí solo hay que no enseñar lo que llegue vacío.
+ * pregunte —al cliente su dirección, a quien va a ir el teléfono del
+ * cliente—, así que aquí solo hay que no enseñar lo que llegue vacío.
  */
 
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
@@ -76,9 +76,7 @@ function whatIsHappening(job: ApiJobDetail): string {
         return 'Falta que elijas a quién llamar. Hasta entonces no lo sabe nadie.'
       }
 
-      return job.type === 'AUCTION'
-        ? 'Abierta a pujas. Cuando cierre, eliges tú comparando precio, plazo y valoración.'
-        : 'Publicado y esperando.'
+      return 'Publicado y esperando.'
     case 'PENDING_PRO':
       if (job.appointmentStatus === 'PENDING_WORKER') {
         return `${quien} lo ha asignado y falta que quien va a ir lo confirme. Te avisaremos en cuanto esté cerrado.`
@@ -115,8 +113,6 @@ function whatIsHappening(job: ApiJobDetail): string {
 export interface JobDetailPageProps {
   jobId: string | undefined
   onBack: () => void
-  /** Ver las pujas de una subasta, que es donde se adjudica */
-  onSeeBids: (jobId: string, title: string) => void
   /**
    * Buscar a otro, cuando el elegido no puede o se le pasó el plazo.
    *
@@ -149,7 +145,6 @@ export interface JobDetailPageProps {
 export function JobDetailPage({
   jobId,
   onBack,
-  onSeeBids,
   onReassign,
   onOpenChat,
 }: JobDetailPageProps) {
@@ -157,16 +152,11 @@ export function JobDetailPage({
   const { data: job, isPending, isError, refetch } = useJob(jobId)
   const { cancel, isCancelling } = useCancelJob()
 
-  /**
-   * Se pregunta antes, y con lo que pasa dicho: cancelar no se deshace, y si
-   * había pujas se caen con el trabajo.
-   */
-  const confirmCancel = (id: string, hasBids: boolean) => {
+  /** Se pregunta antes, y con lo que pasa dicho: cancelar no se deshace. */
+  const confirmCancel = (id: string) => {
     Alert.alert(
       '¿Cancelar este trabajo?',
-      hasBids
-        ? 'Se cerrarán las pujas que has recibido y se avisará a quien estuviera esperando. No se puede deshacer.'
-        : 'Se avisará a quien estuviera esperando respuesta. No se puede deshacer.',
+      'Se avisará a quien estuviera esperando respuesta. No se puede deshacer.',
       [
         { text: 'Volver', style: 'cancel' },
         {
@@ -423,31 +413,6 @@ export function JobDetailPage({
           </Button>
         )}
 
-        {/*
-          Las pujas siguen viviendo en su pantalla: ahí es donde se comparan y
-          se adjudica. Desde aquí solo se llega.
-        */}
-        {job.viewer === 'client' && job.type === 'AUCTION' && (
-          <>
-            {job.bidCount !== null && job.bidCount > 0 ? (
-              <Button
-                fullWidth
-                onPress={() => onSeeBids(job.id, job.title)}
-                style={styles.bids}
-                testID="job-detail-bids"
-              >
-                {job.bidCount === 1
-                  ? 'Ver la puja recibida'
-                  : `Ver las ${job.bidCount} pujas`}
-              </Button>
-            ) : (
-              <Text style={styles.noBids}>
-                Todavía no has recibido ninguna puja.
-              </Text>
-            )}
-          </>
-        )}
-
         {canReassign && onReassign && (
           <Button
             fullWidth
@@ -472,7 +437,7 @@ export function JobDetailPage({
         */}
         {canCancel && (
           <Pressable
-            onPress={() => confirmCancel(job.id, (job.bidCount ?? 0) > 0)}
+            onPress={() => confirmCancel(job.id)}
             disabled={isCancelling}
             accessibilityRole="button"
             style={styles.cancel}

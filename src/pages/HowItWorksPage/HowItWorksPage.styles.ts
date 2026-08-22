@@ -64,4 +64,8 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
     opacity: 0.8,
   },
+  browse: {
+    marginTop: 8,
+    marginHorizontal: 16,
+  },
 })

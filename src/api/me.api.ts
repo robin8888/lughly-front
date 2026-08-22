@@ -54,8 +54,8 @@ export const meApi = {
    *
    * El endpoint existía desde agosto y no lo llamaba nadie: los documentos se
    * subían en el alta y ahí se perdía su rastro. Sin esto no hay forma de
-   * saber si falta alguno, que es de lo que dependen las puertas de pujar y
-   * contratar.
+   * saber si falta alguno, que es de lo que depende poder contratar y que te
+   * contraten.
    */
   documents: () => apiRequest<{ items: ApiDocument[] }>('/v1/me/documents', { auth: true }),
 

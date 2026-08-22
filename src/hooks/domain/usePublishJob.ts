@@ -1,6 +1,6 @@
 /**
  * usePublishJob
- * Publica el trabajo, sube sus fotos y limpia el borrador.
+ * Publica el trabajo (hoy, solo urgencias: `UrgencyPage`) y sube sus fotos.
  *
  * Son dos pasos contra el servidor porque no hay otra: las fotos se asocian
  * al trabajo por su id, y hasta que no se crea no hay id al que asociarlas.
@@ -10,10 +10,6 @@
  * peor —el usuario ya ha escrito todo y quiere que se vea—, así que se
  * publica, se informa de cuántas no subieron y se le deja seguir. Añadirlas
  * después es un toque; volver a escribirlo todo, no.
- *
- * El borrador se borra solo cuando el servidor confirma la creación. Si se
- * limpiara al pulsar publicar, un fallo de red dejaría al usuario sin lo
- * escrito y sin trabajo, que es la peor combinación posible.
  */
 
 import { useState } from 'react'
@@ -22,7 +18,6 @@ import { ApiError, NetworkError, uploadApi } from '@/api'
 import { jobsApi, type ApiJob, type CreateJobPayload } from '@/api/jobs.api'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useAuthStore } from '@/stores/useAuthStore'
-import { useDraftJobStore } from '@/stores/useDraftJobStore'
 import { useIdentityGate } from './useIdentityGate'
 
 export function myJobsQueryKey() {
@@ -50,7 +45,6 @@ export interface PublishJobResult {
 
 export function usePublishJob(): PublishJobResult {
   const queryClient = useQueryClient()
-  const clearDraft = useDraftJobStore((s) => s.clear)
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false)
 
   const identityGate = useIdentityGate()
@@ -84,8 +78,6 @@ export function usePublishJob(): PublishJobResult {
 
     // A partir de aquí el trabajo EXISTE. Nada de lo que siga puede
     // devolver null: sería mentirle al usuario sobre lo que ha pasado.
-    clearDraft()
-
     let photosFailed = 0
 
     if (photos.length > 0) {
