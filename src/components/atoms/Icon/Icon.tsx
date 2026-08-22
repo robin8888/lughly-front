@@ -20,6 +20,27 @@ export type IconName =
   | 'calendar'
   | 'wallet'
   | 'search'
+  // De aquí para abajo, los accesos de "Mi cuenta" (src/images/icons/*.svg)
+  | 'profile'
+  | 'trades'
+  | 'photos'
+  | 'clock'
+  | 'map-pin'
+  | 'vacation'
+  | 'surcharge'
+  | 'holidays'
+  | 'clipboard-check'
+  | 'team'
+  | 'card-wallet'
+  | 'message'
+  | 'bar-chart'
+  | 'document'
+  | 'lock'
+  | 'bell'
+  | 'settings'
+  | 'card'
+  | 'logout'
+  | 'publish'
 
 export interface IconProps {
   name: IconName
@@ -126,6 +147,171 @@ export function Icon({
         <>
           <Circle cx="11" cy="11" r="7" {...stroke} />
           <Path d="m20 20-3.6-3.6" {...stroke} />
+        </>
+      )}
+
+      {name === 'profile' && (
+        <>
+          <Circle cx="12" cy="8" r="4" {...stroke} />
+          <Path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" {...stroke} />
+        </>
+      )}
+
+      {name === 'trades' && (
+        <>
+          <Path d="M15.5 4.5l4 4" {...stroke} />
+          <Path d="M14 6l4 4" {...stroke} />
+          <Path d="M5 19l6-6" {...stroke} />
+          <Path d="M9 15l5-5" {...stroke} />
+          <Circle cx="6" cy="18" r="1" {...stroke} />
+        </>
+      )}
+
+      {name === 'photos' && (
+        <>
+          <Rect x="3" y="5" width="18" height="14" rx="2" {...stroke} />
+          <Circle cx="8" cy="10" r="1.5" {...stroke} />
+          <Path d="M4 17l5-5 4 4 3-3 4 4" {...stroke} />
+        </>
+      )}
+
+      {name === 'clock' && (
+        <>
+          <Circle cx="12" cy="12" r="9" {...stroke} />
+          <Path d="M12 7v5l3 2" {...stroke} />
+        </>
+      )}
+
+      {name === 'map-pin' && (
+        <>
+          <Path d="M12 21s-6-5-6-11a6 6 0 1112 0c0 6-6 11-6 11z" {...stroke} />
+          <Circle cx="12" cy="10" r="2" {...stroke} />
+        </>
+      )}
+
+      {name === 'vacation' && (
+        <>
+          <Rect x="3" y="5" width="18" height="16" rx="2" {...stroke} />
+          <Path d="M8 3v4M16 3v4M3 10h18" {...stroke} />
+          <Path d="M17 18v-5" {...stroke} />
+          <Path d="M15.5 16h3" {...stroke} />
+        </>
+      )}
+
+      {name === 'surcharge' && (
+        <>
+          <Path d="M12 3l9 9-9 9-9-9 9-9z" {...stroke} />
+          <Path d="M12 8v8" {...stroke} />
+          <Path d="M9 11h6" {...stroke} />
+        </>
+      )}
+
+      {name === 'holidays' && (
+        <>
+          <Rect x="3" y="4" width="18" height="17" rx="2" {...stroke} />
+          <Path d="M8 2v4M16 2v4M3 9h18" {...stroke} />
+          <Circle cx="12" cy="15" r="2" {...stroke} />
+        </>
+      )}
+
+      {name === 'clipboard-check' && (
+        <>
+          <Rect x="5" y="3" width="14" height="18" rx="2" {...stroke} />
+          <Path d="M9 8h6M9 12h6M9 16h3" {...stroke} />
+          <Path d="M15.5 16.5l1.5 1.5 3-3" {...stroke} />
+        </>
+      )}
+
+      {name === 'team' && (
+        <>
+          <Circle cx="12" cy="8" r="3" {...stroke} />
+          <Circle cx="6" cy="10" r="2" {...stroke} />
+          <Circle cx="18" cy="10" r="2" {...stroke} />
+          <Path d="M4 20c0-2.5 2-4 5-4" {...stroke} />
+          <Path d="M15 16c3 0 5 1.5 5 4" {...stroke} />
+          <Path d="M8 20c0-3 2-5 4-5s4 2 4 5" {...stroke} />
+        </>
+      )}
+
+      {name === 'card-wallet' && (
+        <>
+          <Rect x="3" y="6" width="18" height="12" rx="2" {...stroke} />
+          <Path d="M16 12h5" {...stroke} />
+          <Circle cx="16" cy="12" r="0.8" fill={color} stroke="none" />
+        </>
+      )}
+
+      {name === 'message' && (
+        <Path
+          d="M4 5h16a2 2 0 012 2v8a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V7a2 2 0 012-2z"
+          {...stroke}
+        />
+      )}
+
+      {name === 'bar-chart' && (
+        <>
+          <Path d="M5 19V9" {...stroke} />
+          <Path d="M10 19V5" {...stroke} />
+          <Path d="M15 19v-7" {...stroke} />
+          <Path d="M20 19V3" {...stroke} />
+        </>
+      )}
+
+      {name === 'document' && (
+        <>
+          <Path d="M7 3h7l5 5v13H7z" {...stroke} />
+          <Path d="M14 3v5h5" {...stroke} />
+          <Path d="M10 13h6M10 17h6" {...stroke} />
+        </>
+      )}
+
+      {name === 'lock' && (
+        <>
+          <Rect x="5" y="11" width="14" height="10" rx="2" {...stroke} />
+          <Path d="M8 11V8a4 4 0 118 0v3" {...stroke} />
+          <Circle cx="12" cy="16" r="1" {...stroke} />
+          <Path d="M12 17v2" {...stroke} />
+        </>
+      )}
+
+      {name === 'bell' && (
+        <>
+          <Path d="M18 16V11a6 6 0 10-12 0v5L4 18h16z" {...stroke} />
+          <Path d="M10 20a2 2 0 004 0" {...stroke} />
+        </>
+      )}
+
+      {name === 'settings' && (
+        <>
+          <Circle cx="12" cy="12" r="3" {...stroke} />
+          <Path
+            d="M19 12l2-1-1-3-2 .2-.9-1.5 1-1.8-2-2-1.8 1-.7-.3L12 2 10.4 3.6l-.7.3-1.8-1-2 2 1 1.8L6 8.2 4 8l-1 3 2 1v2l-2 1 1 3 2-.2.9 1.5-1 1.8 2 2 1.8-1 .7.3L12 22l1.6-1.6.7-.3 1.8 1 2-2-1-1.8.9-1.5 2 .2 1-3-2-1z"
+            {...stroke}
+          />
+        </>
+      )}
+
+      {name === 'card' && (
+        <>
+          <Rect x="3" y="6" width="18" height="12" rx="2" {...stroke} />
+          <Path d="M3 10h18" {...stroke} />
+          <Path d="M7 15h3" {...stroke} />
+        </>
+      )}
+
+      {name === 'logout' && (
+        <>
+          <Path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" {...stroke} />
+          <Path d="M16 17l5-5-5-5" {...stroke} />
+          <Path d="M21 12H9" {...stroke} />
+        </>
+      )}
+
+      {name === 'publish' && (
+        <>
+          <Rect x="4" y="4" width="16" height="16" rx="2" {...stroke} />
+          <Path d="M12 8v8" {...stroke} />
+          <Path d="M8 12h8" {...stroke} />
         </>
       )}
     </Svg>

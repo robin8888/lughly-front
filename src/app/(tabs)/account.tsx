@@ -10,6 +10,7 @@
 import { useRouter } from 'expo-router'
 import {
   AccountPage,
+  type AccountLink,
   type AccountLinkGroup,
   type AccountLinkNote,
 } from '@/pages/AccountPage'
@@ -50,6 +51,7 @@ export default function AccountRoute() {
               {
                 label: 'Revisar documentos',
                 onPress: () => router.push('/revisar-documentos'),
+                icon: 'document',
               },
             ],
           },
@@ -96,7 +98,7 @@ export default function AccountRoute() {
                */
               ...(isEmployee
                 ? []
-                : [
+                : ([
                     /*
                      * Va el primero del grupo: el nombre y la descripción son
                      * lo primero que lee el cliente en la tarjeta, antes que el
@@ -105,11 +107,13 @@ export default function AccountRoute() {
                     {
                       label: 'Mis datos y mi descripción',
                       onPress: () => router.push('/mis-datos'),
+                      icon: 'profile',
                       ...(checklist?.bio === 'MISSING' && { note: optional }),
                     },
                     {
                       label: 'Mis oficios y tarifas',
                       onPress: () => router.navigate('/oficios'),
+                      icon: 'trades',
                       /*
                        * Este sí bloquea: sin ningún oficio no aparece en el
                        * directorio, así que no es que le vaya peor, es que no
@@ -120,16 +124,19 @@ export default function AccountRoute() {
                     {
                       label: 'Mis fotos de trabajo',
                       onPress: () => router.navigate('/mis-fotos'),
+                      icon: 'photos',
                       ...(checklist?.photos === 'MISSING' && { note: optional }),
                     },
                     {
                       label: 'Mi horario de trabajo',
                       onPress: () => router.push('/mi-horario'),
+                      icon: 'clock',
                       ...(checklist?.schedule === 'MISSING' && { note: optional }),
                     },
                     {
                       label: 'Mi zona de trabajo',
                       onPress: () => router.push('/mi-zona'),
+                      icon: 'map-pin',
                       ...(checklist?.coverage === 'MISSING' && { note: optional }),
                     },
                     /*
@@ -141,6 +148,7 @@ export default function AccountRoute() {
                     {
                       label: 'Mis ausencias y vacaciones',
                       onPress: () => router.push('/mis-ausencias'),
+                      icon: 'vacation',
                     },
                     /*
                      * Los recargos van detrás del horario y las ausencias
@@ -151,6 +159,7 @@ export default function AccountRoute() {
                     {
                       label: 'Mis recargos',
                       onPress: () => router.push('/mis-recargos'),
+                      icon: 'surcharge',
                     },
                     /*
                      * Y los festivos justo detrás, que es donde se ve para qué
@@ -159,8 +168,9 @@ export default function AccountRoute() {
                     {
                       label: 'Mis festivos',
                       onPress: () => router.push('/mis-festivos'),
+                      icon: 'holidays',
                     },
-                  ]),
+                  ] satisfies AccountLink[])),
             ],
           },
           {
@@ -171,15 +181,23 @@ export default function AccountRoute() {
                * sin esto no había forma de entrar a mirar si no había nada. Y una
                * vez respondido tampoco se podía volver.
                */
-              { label: 'Encargos', onPress: () => router.navigate('/encargos') },
+              {
+                label: 'Encargos',
+                onPress: () => router.navigate('/encargos'),
+                icon: 'clipboard-check',
+              },
               ...(isEmployee
                 ? []
                 : [
-                    { label: 'Mis trabajadores', onPress: () => router.navigate('/empleados') },
+                    {
+                      label: 'Mis trabajadores',
+                      onPress: () => router.navigate('/empleados'),
+                      icon: 'team' as const,
+                    },
                   ]),
-              { label: 'Cartera', onPress: () => router.navigate('/wallet') },
-              { label: 'Mensajes', comingSoon: true },
-              { label: 'Panel profesional', comingSoon: true },
+              { label: 'Cartera', onPress: () => router.navigate('/wallet'), icon: 'card-wallet' },
+              { label: 'Mensajes', comingSoon: true, icon: 'message' },
+              { label: 'Panel profesional', comingSoon: true, icon: 'bar-chart' },
             ],
           },
           {
@@ -197,6 +215,7 @@ export default function AccountRoute() {
               {
                 label: 'Mis documentos',
                 onPress: () => router.push('/mis-documentos'),
+                icon: 'document',
                 /*
                  * Sin ellos no puede pujar ni aceptar un encargo, así que es de
                  * los que bloquean. Cuando están subidos y esperando revisión se
@@ -211,9 +230,10 @@ export default function AccountRoute() {
               {
                 label: 'Cambiar contraseña',
                 onPress: () => router.push('/contrasena'),
+                icon: 'lock',
               },
-              { label: 'Notificaciones', comingSoon: true },
-              { label: 'Configuración', comingSoon: true },
+              { label: 'Notificaciones', comingSoon: true, icon: 'bell' },
+              { label: 'Configuración', comingSoon: true, icon: 'settings' },
             ],
           },
         ]
@@ -222,9 +242,13 @@ export default function AccountRoute() {
             title: 'Mi actividad',
             links: [
               /* El nombre y el teléfono también son suyos, aunque no tenga ficha */
-              { label: 'Mis datos', onPress: () => router.push('/mis-datos') },
-              { label: 'Mis trabajos publicados', onPress: () => router.navigate('/jobs') },
-              { label: 'Mensajes', comingSoon: true },
+              { label: 'Mis datos', onPress: () => router.push('/mis-datos'), icon: 'profile' },
+              {
+                label: 'Mis trabajos publicados',
+                onPress: () => router.navigate('/jobs'),
+                icon: 'publish',
+              },
+              { label: 'Mensajes', comingSoon: true, icon: 'message' },
             ],
           },
           {
@@ -233,10 +257,15 @@ export default function AccountRoute() {
               {
                 label: 'Cambiar contraseña',
                 onPress: () => router.push('/contrasena'),
+                icon: 'lock',
               },
-              { label: 'Métodos de pago', onPress: () => router.push('/mis-pagos') },
-              { label: 'Notificaciones', comingSoon: true },
-              { label: 'Configuración', comingSoon: true },
+              {
+                label: 'Métodos de pago',
+                onPress: () => router.push('/mis-pagos'),
+                icon: 'card',
+              },
+              { label: 'Notificaciones', comingSoon: true, icon: 'bell' },
+              { label: 'Configuración', comingSoon: true, icon: 'settings' },
             ],
           },
         ]

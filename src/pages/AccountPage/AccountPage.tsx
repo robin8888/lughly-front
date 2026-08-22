@@ -21,7 +21,7 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
-import { Icon } from '@/components/atoms/Icon'
+import { Icon, type IconName } from '@/components/atoms/Icon'
 import { Button } from '@/components/atoms/Button'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { VerifyEmailNotice } from '@/components/molecules/VerifyEmailNotice'
@@ -65,6 +65,8 @@ export interface AccountLink {
   /** Pantallas aún no construidas: se muestran, pero no navegan */
   comingSoon?: boolean
   note?: AccountLinkNote
+  /** El icono del acceso, si tiene uno preparado. Sin él, la fila queda sin hueco a la izquierda */
+  icon?: IconName
 }
 
 /**
@@ -336,11 +338,22 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
                 accessibilityRole="button"
                 testID={`account-link-${link.label}`}
               >
-                <Text
-                  style={[styles.linkLabel, link.comingSoon && styles.linkDisabled]}
-                >
-                  {link.label}
-                </Text>
+                <View style={styles.linkLeft}>
+                  {link.icon && (
+                    <Icon
+                      name={link.icon}
+                      size={20}
+                      color={
+                        link.comingSoon ? theme.colors.textSoft : theme.colors.accent700
+                      }
+                    />
+                  )}
+                  <Text
+                    style={[styles.linkLabel, link.comingSoon && styles.linkDisabled]}
+                  >
+                    {link.label}
+                  </Text>
+                </View>
 
                 {link.comingSoon ? (
                   <Text style={styles.soon}>Pronto</Text>
@@ -370,9 +383,12 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
             accessibilityRole="button"
             testID="account-logout"
           >
-            <Text style={styles.logout}>
-              {isLoggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
-            </Text>
+            <View style={styles.linkLeft}>
+              <Icon name="logout" size={20} color={theme.colors.urgency} />
+              <Text style={styles.logout}>
+                {isLoggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+              </Text>
+            </View>
           </Pressable>
         </View>
       </Animated.ScrollView>

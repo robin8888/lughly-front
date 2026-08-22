@@ -218,7 +218,16 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
   },
+  /** El icono y la etiqueta, a la izquierda; `flex: 1` para que el hueco de la derecha no se lo coma */
+  linkLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    minWidth: 0,
+  },
   linkLabel: {
+    flexShrink: 1,
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.small,
     color: theme.colors.text,
