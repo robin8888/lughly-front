@@ -38,6 +38,7 @@ import {
 } from '@/hooks/domain/useChat'
 import { usePickImage } from '@/hooks/media/usePickImage'
 import { usePickDocument } from '@/hooks/media/usePickDocument'
+import { useOpenAttachment } from '@/hooks/media/useOpenAttachment'
 import { API_BASE_URL, type UploadFile } from '@/api'
 import type { ApiMessage } from '@/api/chat.api'
 import { useUser } from '@/stores/useAuthStore'
@@ -94,6 +95,7 @@ export function ThreadDetailPage({
   const { upload, isUploading } = useUploadChatAttachment()
   const { pick } = usePickImage()
   const { pick: pickDocument, isAvailable: canPickDocument } = usePickDocument()
+  const { open: openAttachment, isOpening } = useOpenAttachment()
 
   const [text, setText] = useState('')
   const [attachment, setAttachment] = useState<PendingAttachment | null>(null)
@@ -226,6 +228,8 @@ export function ThreadDetailPage({
                 message={message}
                 isOwn={message.senderId === user?.id}
                 onOpenImage={(url) => setViewerUri(url)}
+                onOpenFile={(url, name) => void openAttachment(url, name)}
+                isOpeningFile={isOpening}
               />
             ))
           )}
@@ -309,12 +313,19 @@ function Bubble({
   message,
   isOwn,
   onOpenImage,
+  onOpenFile,
+  isOpeningFile,
 }: {
   message: ApiMessage
   isOwn: boolean
   onOpenImage: (url: string) => void
+  onOpenFile: (url: string, fileName: string) => void
+  isOpeningFile: boolean
 }) {
   const attachmentUrl = message.attachment ? `${API_BASE_URL}${message.attachment.url}` : null
+  // El nombre que llega del servidor, no el original: basta para que la
+  // hoja de compartir reconozca la extensión y ofrezca la app correcta.
+  const fileName = attachmentUrl?.split('/').pop() ?? 'archivo'
 
   return (
     <View style={[styles.bubbleRow, isOwn && styles.bubbleRowOwn]}>
@@ -331,16 +342,32 @@ function Bubble({
         )}
 
         {attachmentUrl && message.attachment?.kind !== 'IMAGE' && (
-          <View style={styles.attachmentChip}>
-            <Icon
-              name="paperclip"
-              size={16}
-              color={isOwn ? '#ffffff' : theme.colors.accent700}
-            />
+          <Pressable
+            onPress={() => onOpenFile(attachmentUrl, fileName)}
+            disabled={isOpeningFile}
+            style={styles.attachmentChip}
+            accessibilityRole="button"
+            accessibilityLabel={
+              message.attachment?.kind === 'VIDEO' ? 'Abrir vídeo' : 'Abrir documento'
+            }
+            testID={`thread-detail-attachment-${message.id}`}
+          >
+            {isOpeningFile ? (
+              <ActivityIndicator
+                size="small"
+                color={isOwn ? '#ffffff' : theme.colors.accent700}
+              />
+            ) : (
+              <Icon
+                name="paperclip"
+                size={16}
+                color={isOwn ? '#ffffff' : theme.colors.accent700}
+              />
+            )}
             <Text style={[styles.attachmentChipText, isOwn && styles.attachmentChipTextOwn]}>
               {message.attachment?.kind === 'VIDEO' ? 'Vídeo' : 'Documento'}
             </Text>
-          </View>
+          </Pressable>
         )}
 
         {message.body && (
