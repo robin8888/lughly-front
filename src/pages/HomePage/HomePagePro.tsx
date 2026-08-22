@@ -36,6 +36,10 @@ import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
 import { useEmployer } from '@/hooks/domain/useEmployees'
 import { useInbox } from '@/hooks/domain/useInbox'
 import { useMyUrgencies } from '@/hooks/domain/useMyUrgencies'
+import {
+  useDismissedReminders,
+  useMarkReminderDismissed,
+} from '@/stores/useDismissedRemindersStore'
 import { theme } from '@/theme'
 import { useUser } from '@/stores/useAuthStore'
 import { styles } from './HomePagePro.styles'
@@ -125,7 +129,21 @@ export function HomePagePro({
    * esperando al cliente, no a él, y contarlo aquí sería meterle prisa por
    * algo que no depende de él.
    */
-  const pendingCount = items.filter((item) => item.appointmentStatus === null).length
+  const pending = items.filter((item) => item.appointmentStatus === null)
+  const pendingCount = pending.length
+
+  /**
+   * Qué diálogos ya se han cerrado con "Ahora no", recordado en el
+   * dispositivo (`useDismissedReminders`). Sin esto, cerrar y volver a abrir
+   * la app enseñaba otra vez cada aviso aunque nada hubiera cambiado desde
+   * que se cerró —mismo fallo que ya se corrigió del lado del cliente con
+   * `useSeenAnswersStore`—.
+   *
+   * Por id suelto: si entre medias llega un encargo o una urgencia nueva,
+   * esa sí tiene que avisar aunque las demás ya estén vistas.
+   */
+  const dismissed = useDismissedReminders()
+  const markDismissed = useMarkReminderDismissed()
 
   /**
    * El diálogo sale una vez y con el más urgente —la bandeja viene ordenada
@@ -133,17 +151,16 @@ export function HomePagePro({
    * una encerrona; el resto espera en Encargos, que es donde también se
    * responden.
    */
-  const [askedToConfirm, setAskedToConfirm] = useState(false)
-  const confirming = askedToConfirm ? null : (toConfirm[0] ?? null)
+  const confirming = toConfirm.find((item) => !dismissed[`confirm:${item.id}`]) ?? null
 
   /**
-   * Y el aviso de los encargos sin responder, con cuántos son.
+   * Y el aviso de los encargos sin responder, con cuántos quedan por ver.
    *
    * Va **detrás** del de confirmar y nunca a la vez: dos diálogos al abrir la
    * app se cierran los dos de un manotazo sin leer ninguno. Este solo sale
    * cuando no hay nada que confirmar o ya se ha respondido a eso.
    */
-  const [askedAboutInbox, setAskedAboutInbox] = useState(false)
+  const undismissedPending = pending.filter((item) => !dismissed[`inbox:${item.id}`])
 
   /**
    * Y delante de todo, las urgencias que le han pedido a él.
@@ -154,16 +171,19 @@ export function HomePagePro({
    * el respaldo del aviso al móvil, para quien lo tenga silenciado.
    */
   const { data: urgencyData } = useMyUrgencies()
-  const urgencyCount = urgencyData?.items.length ?? 0
+  const urgencyItems = urgencyData?.items ?? []
+  const undismissedUrgencies = urgencyItems.filter(
+    (item) => !dismissed[`urgency:${item.id}`],
+  )
 
-  const [askedAboutUrgency, setAskedAboutUrgency] = useState(false)
-  const showUrgencyDialog = !askedAboutUrgency && urgencyCount > 0
+  const showUrgencyDialog = undismissedUrgencies.length > 0
+  const dismissUrgencies = () =>
+    undismissedUrgencies.forEach((item) => markDismissed(`urgency:${item.id}`))
 
   const showInboxDialog =
-    !askedAboutInbox &&
-    !showUrgencyDialog &&
-    confirming === null &&
-    pendingCount > 0
+    !showUrgencyDialog && confirming === null && undismissedPending.length > 0
+  const dismissPending = () =>
+    undismissedPending.forEach((item) => markDismissed(`inbox:${item.id}`))
 
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page-pro">
@@ -224,18 +244,18 @@ export function HomePagePro({
         <Dialog
           visible={showUrgencyDialog}
           title={
-            urgencyCount === 1
+            undismissedUrgencies.length === 1
               ? 'Te han elegido para una urgencia'
-              : `Te han elegido para ${urgencyCount} urgencias`
+              : `Te han elegido para ${undismissedUrgencies.length} urgencias`
           }
           message="Un cliente te está esperando ahora mismo. Tienes cinco minutos para contestar; pasado el plazo podrá llamar a otro."
-          onDismiss={() => setAskedAboutUrgency(true)}
+          onDismiss={dismissUrgencies}
           testID="home-pro-urgency-dialog"
           actions={[
             {
               label: 'Ver la urgencia',
               onPress: () => {
-                setAskedAboutUrgency(true)
+                dismissUrgencies()
                 onUrgencies()
               },
               testID: 'home-pro-urgency-dialog-go',
@@ -243,7 +263,7 @@ export function HomePagePro({
             {
               label: 'Ahora no',
               variant: 'secondary',
-              onPress: () => setAskedAboutUrgency(true),
+              onPress: dismissUrgencies,
               testID: 'home-pro-urgency-dialog-later',
             },
           ]}
@@ -251,25 +271,27 @@ export function HomePagePro({
 
         <AssignmentConfirm
           job={showUrgencyDialog ? null : confirming}
-          onDismiss={() => setAskedToConfirm(true)}
+          onDismiss={() => {
+            if (confirming) markDismissed(`confirm:${confirming.id}`)
+          }}
           testID="home-pro-confirm"
         />
 
         <Dialog
           visible={showInboxDialog}
           title={
-            pendingCount === 1
+            undismissedPending.length === 1
               ? 'Tienes un encargo sin responder'
-              : `Tienes ${pendingCount} encargos sin responder`
+              : `Tienes ${undismissedPending.length} encargos sin responder`
           }
           message="Un cliente os ha elegido. Hay 24 horas para contestar; pasado el plazo queda libre para contratar a otro."
-          onDismiss={() => setAskedAboutInbox(true)}
+          onDismiss={dismissPending}
           testID="home-pro-inbox-dialog"
           actions={[
             {
-              label: pendingCount === 1 ? 'Ver el encargo' : 'Ver los encargos',
+              label: undismissedPending.length === 1 ? 'Ver el encargo' : 'Ver los encargos',
               onPress: () => {
-                setAskedAboutInbox(true)
+                dismissPending()
                 onInbox()
               },
               testID: 'home-pro-inbox-dialog-go',
@@ -277,7 +299,7 @@ export function HomePagePro({
             {
               label: 'Ahora no',
               variant: 'secondary',
-              onPress: () => setAskedAboutInbox(true),
+              onPress: dismissPending,
               testID: 'home-pro-inbox-dialog-later',
             },
           ]}

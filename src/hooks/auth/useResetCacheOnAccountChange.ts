@@ -35,6 +35,7 @@ import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@/stores/useAuthStore'
 import { useSeenAnswersStore } from '@/stores/useSeenAnswersStore'
+import { useDismissedRemindersStore } from '@/stores/useDismissedRemindersStore'
 
 export function useResetCacheOnAccountChange(): void {
   const queryClient = useQueryClient()
@@ -63,6 +64,7 @@ export function useResetCacheOnAccountChange(): void {
         suyo si dos ids coincidieran.
       */
       useSeenAnswersStore.getState().clear()
+      useDismissedRemindersStore.getState().clear()
     }
 
     previous.current = userId
