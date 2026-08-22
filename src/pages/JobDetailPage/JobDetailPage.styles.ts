@@ -166,6 +166,20 @@ export const styles = StyleSheet.create({
     color: theme.colors.cardText,
   },
 
+  /** Lo contratado de la carta, copiado al pedirlo */
+  serviceLines: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+    gap: 4,
+  },
+  serviceLine: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+  },
+
   bids: {
     marginTop: 16,
   },

@@ -58,7 +58,7 @@ function whatIsHappening(job: ApiJobDetail): string {
           return 'Habéis propuesto mandar a otra persona y falta que el cliente lo acepte.'
         }
         return 'Te lo han encargado y esperan tu respuesta.'
-      case 'AWARDED':
+      case 'CONTRACTED':
         return 'Es tuyo. Tienes la dirección y el teléfono del cliente.'
       default:
         return ''
@@ -87,7 +87,7 @@ function whatIsHappening(job: ApiJobDetail): string {
         return `${quien} propone mandar a ${job.substituteProName ?? 'otra persona'}. Decides tú: puedes aceptarlo o cancelar sin coste, desde Mis trabajos.`
       }
       return `Esperando la respuesta de ${quien}. Si no contesta en el plazo, quedarás libre para encargárselo a otro.`
-    case 'AWARDED':
+    case 'CONTRACTED':
       /*
         El teléfono solo se promete si está. No todo el mundo lo tiene en la
         app —un trabajador dado de alta por su empresa puede no haberlo dejado—
@@ -378,6 +378,21 @@ export function JobDetailPage({
               />
             )}
           </View>
+
+          {/*
+            Lo contratado de la carta, si nació de ahí: copiado al pedirlo,
+            así que sigue enseñando lo que se vio y se pagó aunque el
+            profesional haya cambiado su carta después.
+          */}
+          {job.serviceLines.length > 0 && (
+            <View style={styles.serviceLines} testID="job-detail-service-lines">
+              {job.serviceLines.map((line, index) => (
+                <Text key={`${line.name}-${index}`} style={styles.serviceLine}>
+                  {line.name} · {line.price} €
+                </Text>
+              ))}
+            </View>
+          )}
         </InfoCard>
 
         {/*

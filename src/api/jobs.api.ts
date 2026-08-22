@@ -17,9 +17,26 @@ export type ApiJobStatus =
    * trabajador si es `PENDING_WORKER`, al cliente si es `SUBSTITUTE_PROPOSED`.
    */
   | 'PENDING_PRO'
-  | 'AWARDED'
+  /**
+   * Adjudicado: hay alguien confirmado para ir. Se llamó `AWARDED` hasta el
+   * 22 de Agosto de 2026.
+   */
+  | 'CONTRACTED'
+  /**
+   * Se contrató una visita y el profesional ya emitió presupuesto; falta que
+   * el cliente lo acepte o lo rechace. Todavía no sale en ningún trabajo real
+   * —hace falta `Quote`, que es de una fase posterior—, pero el tipo ya
+   * contempla el valor para no tener que tocarlo dos veces.
+   */
+  | 'QUOTED'
+  /** El cliente rechazó el presupuesto. Igual que `QUOTED`, inalcanzable hoy */
+  | 'QUOTE_REJECTED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
+  /** Cerrado sin arreglo: el presupuesto venció sin aceptarse. Inalcanzable hoy */
+  | 'CLOSED'
+  /** El cliente abrió una disputa sobre un cobro. Inalcanzable hoy */
+  | 'DISPUTED'
   | 'EXPIRED'
   /** El profesional ha dicho que no puede. No es lo mismo que expirar */
   | 'DECLINED'
@@ -176,6 +193,12 @@ export interface ApiJobDetail {
   lowestBid: number | null
   photoCount: number
   createdAt: string
+  /**
+   * Los servicios de la carta que se contrataron, copiados al pedirlo: si el
+   * profesional cambia su carta después, esto sigue enseñando lo que se vio
+   * y se pagó. Vacío en cualquier trabajo que no nació de la carta.
+   */
+  serviceLines: { name: string; price: number }[]
 }
 
 export const jobsApi = {

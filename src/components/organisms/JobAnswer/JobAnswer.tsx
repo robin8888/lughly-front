@@ -32,7 +32,7 @@ export function isAnswer(job: ApiJob): boolean {
     Una subasta adjudicada no es una respuesta: la adjudica el propio cliente,
     así que contárselo como novedad sería devolverle lo que acaba de hacer.
   */
-  if (job.status === 'AWARDED') return job.type !== 'AUCTION'
+  if (job.status === 'CONTRACTED') return job.type !== 'AUCTION'
 
   return job.status === 'DECLINED' || job.status === 'EXPIRED'
 }
@@ -52,7 +52,7 @@ export function JobAnswer({ job, onSee, onDismiss, testID }: JobAnswerProps) {
 
   const quien = job.proName ?? 'El profesional'
   const isUrgency = job.type === 'URGENT'
-  const accepted = job.status === 'AWARDED'
+  const accepted = job.status === 'CONTRACTED'
 
   const title = accepted
     ? isUrgency

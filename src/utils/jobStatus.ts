@@ -23,9 +23,22 @@ const STATUS: Record<ApiJobStatus, StatusLook> = {
    * una empresa, quien responde es ella.
    */
   PENDING_PRO: { label: 'Esperando respuesta', variant: 'accent' },
-  AWARDED: { label: 'Adjudicada', variant: 'accent2' },
+  /** Se llamaba `AWARDED` hasta el 22 Ago 2026; el rótulo no cambia, solo la clave */
+  CONTRACTED: { label: 'Adjudicada', variant: 'accent2' },
+  /**
+   * Se contrató la visita y ya hay presupuesto: falta que el cliente lo
+   * acepte o lo rechace. Mismo color que "te proponen un cambio": necesita
+   * que el cliente haga algo.
+   */
+  QUOTED: { label: 'Con presupuesto', variant: 'accent2' },
+  /** Rechazado, pero no cerrado del todo: vence a los 15 días sin uno nuevo */
+  QUOTE_REJECTED: { label: 'Presupuesto rechazado', variant: 'outline' },
   IN_PROGRESS: { label: 'En curso', variant: 'available' },
   COMPLETED: { label: 'Terminada', variant: 'neutral' },
+  /** Cerrado sin arreglo: el presupuesto venció, o no llegó tras la visita */
+  CLOSED: { label: 'Cerrada sin trato', variant: 'outline' },
+  /** El cliente ha abierto una disputa sobre un cobro. Lo resuelve administración */
+  DISPUTED: { label: 'En revisión', variant: 'urgency' },
   EXPIRED: { label: 'Expirada', variant: 'outline' },
   /** Dijeron que no. Se distingue de expirada: una es respuesta y otra silencio */
   DECLINED: { label: 'No pueden', variant: 'outline' },

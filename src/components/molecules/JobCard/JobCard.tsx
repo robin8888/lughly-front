@@ -59,7 +59,7 @@ export function JobCard({
    * has encargado" mientras se espera, y "lo hace" cuando ya está cerrado.
    */
   const isDecided =
-    job.status === 'AWARDED' ||
+    job.status === 'CONTRACTED' ||
     job.status === 'IN_PROGRESS' ||
     job.status === 'COMPLETED'
 
