@@ -392,7 +392,7 @@ export function RequestProPage({
         */}
         <InfoCard style={styles.photosCard}>
           <View style={styles.photosHead}>
-            <Text style={styles.photosTitle}>Fotos del trabajo</Text>
+            <Text style={styles.photosTitle}>Cargar imágenes del trabajo</Text>
             <View style={styles.photosTag}>
               <Text style={styles.photosTagText}>
                 {photos.length > 0 ? `${photos.length} elegidas` : 'Opcional'}
