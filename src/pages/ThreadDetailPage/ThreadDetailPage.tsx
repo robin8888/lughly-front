@@ -93,7 +93,7 @@ export function ThreadDetailPage({
 
   const { upload, isUploading } = useUploadChatAttachment()
   const { pick } = usePickImage()
-  const { pick: pickDocument } = usePickDocument()
+  const { pick: pickDocument, isAvailable: canPickDocument } = usePickDocument()
 
   const [text, setText] = useState('')
   const [attachment, setAttachment] = useState<PendingAttachment | null>(null)
@@ -106,8 +106,15 @@ export function ThreadDetailPage({
     Alert.alert('Adjuntar', undefined, [
       { text: 'Hacer una foto', onPress: () => void attachImage('camera') },
       { text: 'Elegir de la galería', onPress: () => void attachImage('library') },
-      { text: 'Elegir un documento (PDF)', onPress: () => void attachDocument() },
-      { text: 'Cancelar', style: 'cancel' },
+      /**
+       * Solo si el binario trae el módulo nativo. Ofrecerla igual y fallar al
+       * tocarla sería peor que no ofrecerla: parece un botón roto en vez de
+       * una opción que todavía no está.
+       */
+      ...(canPickDocument
+        ? [{ text: 'Elegir un documento (PDF)', onPress: () => void attachDocument() }]
+        : []),
+      { text: 'Cancelar', style: 'cancel' as const },
     ])
   }
 
