@@ -174,6 +174,16 @@ export default function RootLayout() {
               <Stack.Screen name="pro/[id]" />
               <Stack.Screen name="mis-pagos" />
               <Stack.Screen name="contratar-carta" />
+              {/*
+                El chat, igual que `urgencia/[id]`: sin declarar aquí, el
+                navegador no sabe que tiene que retirarla al cerrar sesión.
+                Quien cerraba sesión desde dentro de una conversación se
+                quedaba con la pantalla montada y sin sesión con la que
+                seguir pidiendo mensajes: la app se bloqueaba.
+              */}
+              <Stack.Screen name="mensajes" />
+              <Stack.Screen name="mensajes/soporte" />
+              <Stack.Screen name="mensajes/trabajo/[id]" />
             </Stack.Protected>
 
             <Stack.Protected guard={!isAuthenticated}>
