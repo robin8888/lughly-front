@@ -60,6 +60,16 @@ export interface DocumentResponse {
   createdAt: string
 }
 
+/** Los mismos valores del enum MessageAttachmentKind del backend. */
+export type MessageAttachmentKind = 'IMAGE' | 'VIDEO' | 'DOCUMENT'
+
+/** Respuesta de POST /v1/chat/attachments — su clave se manda luego en el mensaje */
+export interface ChatAttachmentResponse {
+  key: string
+  kind: MessageAttachmentKind
+  sizeBytes: number
+}
+
 interface RawResponse {
   status: number
   body: string
@@ -156,4 +166,8 @@ export const uploadApi = {
       type,
       ...(identityKind ? { identityKind } : {}),
     }),
+
+  /** Imagen, vídeo o documento adjunto a un mensaje de chat, hasta 30 MB */
+  chatAttachment: (file: UploadFile, accessToken: string) =>
+    uploadMultipart<ChatAttachmentResponse>('/v1/chat/attachments', file, accessToken),
 }
