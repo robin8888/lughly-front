@@ -6,9 +6,16 @@
  *
  * Reservar y pedir presupuesto llevan al mismo formulario con distinto tipo:
  * lo único que cambia es si se pide precio o se contrata a la tarifa que ya
- * está publicada. Mensajes y denuncia todavía no tienen pantalla, así que
- * avisan de cuándo llegan en vez de no hacer nada: un botón que no responde
- * parece una app rota.
+ * está publicada. La denuncia todavía no tiene pantalla, así que avisa de
+ * cuándo llega en vez de no hacer nada: un botón que no responde parece una
+ * app rota.
+ *
+ * **Sin botón de mensaje.** Lo hubo, apuntando a un aviso de "esto llega en
+ * la Fase 11" — y se quitó al construir el chat de verdad (22 Ago 2026)
+ * porque nunca iba a poder cumplirlo: el chat vive dentro de un encargo
+ * (`resolveJobThreadSides` exige un `Job`), y desde esta ficha no hay ningún
+ * encargo todavía. Escribir se hace desde la ficha del propio trabajo, una
+ * vez pedido — ver `onOpenChat` en `JobDetailPage`.
  */
 
 import { Alert } from 'react-native'
@@ -56,7 +63,6 @@ export default function ProProfileRoute() {
           params: { proId: id ?? '', tradeSlug, serviceIds: serviceIds.join(',') },
         })
       }
-      onMessage={() => comingSoon('Enviar mensaje', 'la Fase 11 (chat)')}
       onReport={() => comingSoon('Denunciar perfil', 'una fase posterior')}
     />
   )

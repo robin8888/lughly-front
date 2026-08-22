@@ -382,9 +382,6 @@ export const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
-  messageButton: {
-    marginTop: 8,
-  },
   report: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,

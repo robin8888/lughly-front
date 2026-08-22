@@ -70,7 +70,6 @@ export interface ProProfilePageProps {
   onBack: () => void
   onBook: () => void
   onQuote: () => void
-  onMessage: () => void
   onReport: () => void
   /** Contratar la carta de un oficio: la visita, más lo que haya marcado */
   onHireCarta: (tradeSlug: string, serviceIds: string[]) => void
@@ -87,7 +86,6 @@ export function ProProfilePage({
   onBack,
   onBook,
   onQuote,
-  onMessage,
   onReport,
   onHireCarta,
   initialSelection,
@@ -629,16 +627,6 @@ export function ProProfilePage({
             Presupuesto
           </Button>
         </View>
-
-        <Button
-          variant="secondary"
-          fullWidth
-          onPress={onMessage}
-          style={styles.messageButton}
-          testID="pro-message"
-        >
-          Enviar mensaje
-        </Button>
 
         <Pressable
           onPress={onReport}
