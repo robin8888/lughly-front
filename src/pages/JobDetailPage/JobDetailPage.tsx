@@ -412,7 +412,6 @@ export function JobDetailPage({
         {job.chatWith && onOpenChat && (
           <Button
             fullWidth
-            variant="secondary"
             onPress={() => {
               const chatWith = job.chatWith
               if (chatWith) onOpenChat(job.id, job.title, chatWith.name, chatWith.avatarUrl)
