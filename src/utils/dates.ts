@@ -78,6 +78,21 @@ export function formatLongDateTime(date: Date): string {
 }
 
 /**
+ * La hora si es de hoy, la fecha corta si no — para el chat: "22:05" en la
+ * propia conversación de hoy, "16/08" en la lista de hilos si el último
+ * mensaje es de otro día. El año no hace falta: nadie deja una conversación
+ * sin abrir un año entero.
+ */
+export function formatMessageTime(date: Date, now: Date = new Date()): string {
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+
+  return sameDay ? formatTime(date) : `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`
+}
+
+/**
  * Fecha suelta para la API, sin hora: "2026-08-16".
  *
  * Se construye con las partes locales y NO con `toISOString()`, que convierte

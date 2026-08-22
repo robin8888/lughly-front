@@ -131,6 +131,19 @@ export interface JobDetailPageProps {
     declinedProId: string | null,
     type: ApiJobType,
   ) => void
+  /**
+   * Escribirle a quien está al otro lado. Solo se ofrece cuando hay alguien
+   * concreto con quien hablar —el mismo criterio que usa el chat en el
+   * servidor (`resolveJobThreadSides`): con la asignación ya cerrada, no
+   * antes. Sin esto, la pantalla no sabría el nombre ni la foto de quien
+   * abre la conversación.
+   */
+  onOpenChat?: (
+    jobId: string,
+    title: string,
+    otherName: string,
+    otherAvatarUrl: string | null,
+  ) => void
 }
 
 export function JobDetailPage({
@@ -138,6 +151,7 @@ export function JobDetailPage({
   onBack,
   onSeeBids,
   onReassign,
+  onOpenChat,
 }: JobDetailPageProps) {
   const onScroll = useNavScrollHandler()
   const { data: job, isPending, isError, refetch } = useJob(jobId)
@@ -245,6 +259,21 @@ export function JobDetailPage({
 
   const canCancel =
     job.viewer === 'client' && ['DRAFT', 'OPEN', 'PENDING_PRO'].includes(job.status)
+
+  /**
+   * Con quién se hablaría. `job.assignedPro` solo llega cuando ya hay
+   * adjudicación (`awardedPro`), que es justo cuando el servidor deja
+   * escribir en el hilo del encargo — antes no hay a quién mandarle el
+   * mensaje.
+   */
+  const chatWith =
+    job.assignedPro === null
+      ? null
+      : job.viewer === 'client'
+        ? { name: job.assignedPro.name, avatarUrl: job.assignedPro.avatarUrl }
+        : job.clientName
+          ? { name: job.clientName, avatarUrl: null }
+          : null
 
   return (
     <View style={styles.screen} testID="job-detail-page">
@@ -394,6 +423,18 @@ export function JobDetailPage({
             </View>
           )}
         </InfoCard>
+
+        {chatWith && onOpenChat && (
+          <Button
+            fullWidth
+            variant="secondary"
+            onPress={() => onOpenChat(job.id, job.title, chatWith.name, chatWith.avatarUrl)}
+            style={styles.bids}
+            testID="job-detail-chat"
+          >
+            Enviar mensaje
+          </Button>
+        )}
 
         {/*
           Las pujas siguen viviendo en su pantalla: ahí es donde se comparan y

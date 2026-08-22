@@ -196,7 +196,7 @@ export default function AccountRoute() {
                     },
                   ]),
               { label: 'Cartera', onPress: () => router.navigate('/wallet'), icon: 'card-wallet' },
-              { label: 'Mensajes', comingSoon: true, icon: 'message' },
+              { label: 'Mensajes', onPress: () => router.push('/mensajes'), icon: 'message' },
               { label: 'Panel profesional', comingSoon: true, icon: 'bar-chart' },
             ],
           },
@@ -248,7 +248,7 @@ export default function AccountRoute() {
                 onPress: () => router.navigate('/jobs'),
                 icon: 'publish',
               },
-              { label: 'Mensajes', comingSoon: true, icon: 'message' },
+              { label: 'Mensajes', onPress: () => router.push('/mensajes'), icon: 'message' },
             ],
           },
           {

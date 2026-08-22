@@ -41,6 +41,9 @@ export type IconName =
   | 'card'
   | 'logout'
   | 'publish'
+  // Del chat (ROADMAP.md Fase 11)
+  | 'send'
+  | 'paperclip'
 
 export interface IconProps {
   name: IconName
@@ -313,6 +316,17 @@ export function Icon({
           <Path d="M12 8v8" {...stroke} />
           <Path d="M8 12h8" {...stroke} />
         </>
+      )}
+
+      {name === 'send' && (
+        <Path d="m22 2-7 20-4-9-9-4Z" {...stroke} />
+      )}
+
+      {name === 'paperclip' && (
+        <Path
+          d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 014.95 4.95l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+          {...stroke}
+        />
       )}
     </Svg>
   )

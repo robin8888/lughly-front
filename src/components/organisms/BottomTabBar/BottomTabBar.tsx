@@ -42,6 +42,18 @@ import { styles } from './BottomTabBar.styles'
  */
 export const HIDDEN_PATHS = ['/', '/login', '/registro', '/recuperar']
 
+/**
+ * Y una conversación (`/mensajes/trabajo/[id]`, `/mensajes/soporte`): lleva
+ * su propia caja de escribir pegada abajo, con el teclado encima. No hay
+ * ningún otro sitio en la app con un control fijo ahí, y la píldora flotando
+ * sobre el teclado o encima de la caja de escribir no tiene hueco limpio
+ * donde ir. La lista de hilos (`/mensajes`, sin nada detrás) sí la conserva,
+ * como cualquier otra lista.
+ */
+function isThreadPath(pathname: string): boolean {
+  return pathname.startsWith('/mensajes/')
+}
+
 interface TabDefinition {
   /**
    * Ruta completa, no el nombre del fichero: la barra ya no vive dentro del
@@ -138,7 +150,7 @@ export function BottomTabBar() {
     opacity: interpolate(compactNav.value, [0, 1], [1, 0.95]),
   }))
 
-  if (HIDDEN_PATHS.includes(pathname)) return null
+  if (HIDDEN_PATHS.includes(pathname) || isThreadPath(pathname)) return null
 
   return (
     <Animated.View

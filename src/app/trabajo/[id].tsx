@@ -39,6 +39,12 @@ export default function JobDetailRoute() {
               },
             })
       }
+      onOpenChat={(jobId, title, otherName, otherAvatarUrl) =>
+        router.push({
+          pathname: '/mensajes/trabajo/[id]',
+          params: { id: jobId, title, otherName, otherAvatarUrl: otherAvatarUrl ?? '' },
+        })
+      }
     />
   )
 }

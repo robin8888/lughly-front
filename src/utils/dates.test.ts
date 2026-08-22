@@ -6,6 +6,7 @@ import {
   formatLongDate,
   formatJobWhen,
   formatLongDateTime,
+  formatMessageTime,
   formatTime,
   parseIsoDate,
   parseIsoDateTime,
@@ -52,6 +53,22 @@ describe('formatTime', () => {
 
   it('el mediodía es 12:00', () => {
     expect(formatTime(new Date(2026, 7, 16, 12, 0))).toBe('12:00')
+  })
+})
+
+describe('formatMessageTime', () => {
+  const now = new Date(2026, 7, 16, 18, 30)
+
+  it('la hora si es de hoy', () => {
+    expect(formatMessageTime(new Date(2026, 7, 16, 9, 5), now)).toBe('09:05')
+  })
+
+  it('la fecha corta, sin año, si es de otro día', () => {
+    expect(formatMessageTime(new Date(2026, 7, 15, 23, 59), now)).toBe('15/08')
+  })
+
+  it('un día antes a medianoche ya no es hoy', () => {
+    expect(formatMessageTime(new Date(2026, 6, 31, 23, 59), now)).toBe('31/07')
   })
 })
 
