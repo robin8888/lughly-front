@@ -26,6 +26,7 @@ import { Switch } from '@/components/atoms/Switch'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { StatCard } from '@/components/molecules/StatCard'
 import { HeroCard } from '@/components/organisms/HeroCard'
+import { MessagesFab } from '@/components/molecules/MessagesFab'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
 import { Dialog } from '@/components/organisms/Dialog'
@@ -48,6 +49,8 @@ export interface HomePageProProps {
   onInbox: () => void
   /** A la pantalla de urgencias, donde se contestan */
   onUrgencies: () => void
+  /** Al botón flotante de Mensajes. Vivía como fila de Mi cuenta hasta el 22 Ago 2026 */
+  onMessages: () => void
 }
 
 export function HomePagePro({
@@ -56,6 +59,7 @@ export function HomePagePro({
   onManageEmployees,
   onInbox,
   onUrgencies,
+  onMessages,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
   const user = useUser()
@@ -601,6 +605,8 @@ export function HomePagePro({
           </>
         )}
       </Animated.ScrollView>
+
+      <MessagesFab onPress={onMessages} testID="home-pro-messages-fab" />
     </SafeAreaView>
   )
 }

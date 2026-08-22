@@ -30,6 +30,7 @@ import { API_BASE_URL } from '@/api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { HeroCard } from '@/components/organisms/HeroCard'
 import { JobAnswer, isAnswer } from '@/components/organisms/JobAnswer'
+import { MessagesFab } from '@/components/molecules/MessagesFab'
 import { TradesCarousel } from '@/components/organisms/TradesCarousel'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
 import { useSeenAnswers, useMarkAnswerSeen } from '@/stores/useSeenAnswersStore'
@@ -52,6 +53,8 @@ export interface HomePageProps {
    * el modal da la noticia y la ficha dice qué hacer con ella.
    */
   onSeeJob?: (jobId: string) => void
+  /** Al botón flotante de Mensajes. Vivía como fila de Mi cuenta hasta el 22 Ago 2026 */
+  onMessages: () => void
 }
 
 export function HomePage({
@@ -60,6 +63,7 @@ export function HomePage({
   onSelectTrade,
   onHowItWorks,
   onSeeJob,
+  onMessages,
 }: HomePageProps) {
   const isClient = role === 'client'
   // Al bajar el scroll, la barra inferior se encoge
@@ -126,6 +130,8 @@ export function HomePage({
 
         <TradesCarousel onSelect={onSelectTrade} testID="home-carousel" />
       </Animated.ScrollView>
+
+      <MessagesFab onPress={onMessages} testID="home-messages-fab" />
     </SafeAreaView>
   )
 }

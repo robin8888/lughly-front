@@ -24,6 +24,7 @@ export default function InicioRoute() {
         onManageEmployees={() => router.navigate('/empleados')}
         onInbox={() => router.navigate('/encargos')}
         onUrgencies={() => router.navigate('/urgent')}
+        onMessages={() => router.push('/mensajes')}
       />
     )
   }
@@ -54,6 +55,7 @@ export default function InicioRoute() {
       onSeeJob={(jobId) =>
         router.navigate({ pathname: '/trabajo/[id]', params: { id: jobId } })
       }
+      onMessages={() => router.push('/mensajes')}
     />
   )
 }
