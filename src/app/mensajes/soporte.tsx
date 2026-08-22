@@ -18,7 +18,10 @@ export default function SupportThreadRoute() {
       title="Soporte"
       otherName="Administración"
       otherAvatarUrl={null}
-      onBack={() => router.back()}
+      // Con destino de reserva: `back()` a secas no hace nada si no hay
+      // nada detrás en la pila, y deja un aviso de desarrollo sin avisar
+      // al usuario de que el botón no ha hecho nada.
+      onBack={() => (router.canGoBack() ? router.back() : router.navigate('/mensajes'))}
     />
   )
 }

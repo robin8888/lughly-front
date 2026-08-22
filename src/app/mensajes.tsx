@@ -28,7 +28,14 @@ export default function MessagesRoute() {
 
   return (
     <MessagesPage
-      onBack={() => router.back()}
+      /**
+       * `back()` a secas asume que siempre hay algo detrás en la pila, y no
+       * siempre lo hay —tras recargar la app, o si se llega aquí de un modo
+       * que no deja historial—: entonces `router.back()` no hace nada y deja
+       * un aviso de desarrollo ("GO_BACK no manejado"). Con destino conocido
+       * de reserva no hace falta que haya nada detrás.
+       */
+      onBack={() => (router.canGoBack() ? router.back() : router.navigate('/account'))}
       onOpenJobThread={openJobThread}
       onOpenSupport={() => router.push('/mensajes/soporte')}
     />
