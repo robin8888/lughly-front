@@ -187,6 +187,14 @@ export interface ApiJobDetail {
   assignedPro: ApiAssignedPro | null
   /** A quién propone la empresa, si se espera al cliente */
   substituteProName: string | null
+  /**
+   * Con quién se abriría el chat, si con alguien. `null` exactamente cuando
+   * tampoco lo dejaría el servidor: sin nadie pedido ni adjudicado, no hay
+   * hilo que abrir. A diferencia de `assignedPro`, existe desde que hay a
+   * quien se le pidió, no solo tras confirmar — así se puede escribir antes
+   * de que acepte.
+   */
+  chatWith: { id: string; name: string; avatarUrl: string | null } | null
   clientName: string | null
   clientPhone: string | null
   bidCount: number | null

@@ -260,21 +260,6 @@ export function JobDetailPage({
   const canCancel =
     job.viewer === 'client' && ['DRAFT', 'OPEN', 'PENDING_PRO'].includes(job.status)
 
-  /**
-   * Con quién se hablaría. `job.assignedPro` solo llega cuando ya hay
-   * adjudicación (`awardedPro`), que es justo cuando el servidor deja
-   * escribir en el hilo del encargo — antes no hay a quién mandarle el
-   * mensaje.
-   */
-  const chatWith =
-    job.assignedPro === null
-      ? null
-      : job.viewer === 'client'
-        ? { name: job.assignedPro.name, avatarUrl: job.assignedPro.avatarUrl }
-        : job.clientName
-          ? { name: job.clientName, avatarUrl: null }
-          : null
-
   return (
     <View style={styles.screen} testID="job-detail-page">
       {header}
@@ -424,11 +409,14 @@ export function JobDetailPage({
           )}
         </InfoCard>
 
-        {chatWith && onOpenChat && (
+        {job.chatWith && onOpenChat && (
           <Button
             fullWidth
             variant="secondary"
-            onPress={() => onOpenChat(job.id, job.title, chatWith.name, chatWith.avatarUrl)}
+            onPress={() => {
+              const chatWith = job.chatWith
+              if (chatWith) onOpenChat(job.id, job.title, chatWith.name, chatWith.avatarUrl)
+            }}
             style={styles.bids}
             testID="job-detail-chat"
           >
