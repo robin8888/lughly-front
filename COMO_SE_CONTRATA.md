@@ -283,6 +283,30 @@ y `WorkLog` cuelga de la `Appointment`, no del `Job`.
 profesional en los últimos 12 meses. «Guardia fuera» apaga `availableNow` y
 exige volver a encenderlo.
 
+**Precisión pedida por Robin, 23 Ago 2026: «Profesional cancela» también es
+el trabajador, después de haber confirmado.** El recorrido de confirmación
+de ROADMAP.md («El trabajador confirma el trabajo») ya cubre que pueda
+decir que no **antes** de aceptar; lo que faltaba decir es que la misma
+puerta sigue abierta **después**, si le surge un imprevisto de fuerza
+mayor una vez que ya había dicho que sí. No es un mecanismo nuevo: es
+`cancel-by-pro` sobre un trabajo ya confirmado, y tiene que enrutarse
+igual que el rechazo inicial —con empresa, vuelve al empleador para que
+mande a otro por la vía de sustitución que ya existe; sin empresa, un
+autónomo, vuelve al cliente y el trabajo queda libre—. El motivo tampoco
+se le enseña al cliente aquí, por el mismo criterio que en la confirmación:
+una baja médica es asunto de quien la tiene.
+
+Y del lado del cliente: **puede rechazar lo contratado mientras no haya
+empezado**, que es justo la fila «Cliente cancela con antelación / tarde»
+de la tabla de arriba —antes de que haya nada que deshacer, no a mitad de
+trabajo—.
+
+**El plazo, en los dos sentidos, no se fija aquí.** Los números de esta
+tabla —24 h, 4 h, 48 h— son la propuesta que ya recogía §10, no una
+decisión cerrada: cuánto margen cuenta como «a tiempo» para rechazar,
+tanto para el cliente como para el trabajador, se valora al escribir los
+términos y condiciones, con asesoría, no en este documento.
+
 ---
 
 ## §7. Las empresas
@@ -377,3 +401,19 @@ servidor).
 - **Fase 10 (hitos)**: un presupuesto grande debería partirse en `Charge`s por
   hito. El modelo lo admite (`Charge.appointmentId` opcional, varios por
   `Job`); el diseño de hitos no se hace aquí.
+
+---
+
+## §11. Favoritos del cliente (pedido por Robin, 23 Ago 2026 — sin diseñar)
+
+Cuando un profesional hace bien un trabajo, el cliente debería poder
+guardarlo para la próxima vez sin tener que volver a buscarlo entre todos
+los del oficio: marcarlo como favorito y tener una lista propia desde la
+que contratar directamente, en vez de repasar el directorio entero cada
+vez que hace falta el mismo oficio.
+
+No se ha diseñado todavía —ni la tabla, ni el endpoint, ni dónde vive el
+botón en la tarjeta del directorio, en la ficha y en la lista de
+favoritos—. Es cliente-profesional, uno a uno, y no depende de que exista
+`Job`/`Appointment` en curso ni de en qué punto esté el resto de §9: se
+puede construir en paralelo, no bloquea ni le bloquea nada a lo demás.
