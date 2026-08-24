@@ -3,6 +3,7 @@ import {
   atTime,
   formatDate,
   formatDateTime,
+  formatDaySeparator,
   formatLongDate,
   formatJobWhen,
   formatLongDateTime,
@@ -69,6 +70,30 @@ describe('formatMessageTime', () => {
 
   it('un día antes a medianoche ya no es hoy', () => {
     expect(formatMessageTime(new Date(2026, 6, 31, 23, 59), now)).toBe('31/07')
+  })
+})
+
+describe('formatDaySeparator', () => {
+  const now = new Date(2026, 7, 16, 18, 30)
+
+  it('"Hoy" para el mismo día', () => {
+    expect(formatDaySeparator(new Date(2026, 7, 16, 9, 5), now)).toBe('Hoy')
+  })
+
+  it('"Ayer" para el día anterior', () => {
+    expect(formatDaySeparator(new Date(2026, 7, 15, 23, 59), now)).toBe('Ayer')
+  })
+
+  it('un día antes a medianoche ya no es hoy', () => {
+    expect(formatDaySeparator(new Date(2026, 6, 31, 23, 59), now)).toBe('31 de julio')
+  })
+
+  it('sin año si es el actual', () => {
+    expect(formatDaySeparator(new Date(2026, 6, 20), now)).toBe('20 de julio')
+  })
+
+  it('con año si no es el actual', () => {
+    expect(formatDaySeparator(new Date(2025, 7, 16), now)).toBe('16 de agosto de 2025')
   })
 })
 

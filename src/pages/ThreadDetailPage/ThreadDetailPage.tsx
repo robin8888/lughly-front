@@ -25,6 +25,7 @@ import {
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Svg, { Path } from 'react-native-svg'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Icon } from '@/components/atoms/Icon'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
@@ -42,7 +43,7 @@ import { useOpenAttachment } from '@/hooks/media/useOpenAttachment'
 import { API_BASE_URL, type UploadFile } from '@/api'
 import type { ApiMessage } from '@/api/chat.api'
 import { useUser } from '@/stores/useAuthStore'
-import { formatMessageTime } from '@/utils/dates'
+import { formatDaySeparator, formatTime, toIsoDate } from '@/utils/dates'
 import { theme } from '@/theme'
 import { styles } from './ThreadDetailPage.styles'
 
@@ -63,6 +64,8 @@ interface PendingAttachment {
   kind: 'IMAGE' | 'VIDEO' | 'DOCUMENT'
   /** El fichero local, para enseñarlo antes de que exista en el servidor */
   previewUri: string
+  /** Con el que se eligió en el aparato ("contrato.pdf"), para enseñarlo */
+  name: string
 }
 
 const ATTACHMENT_LABEL: Record<PendingAttachment['kind'], string> = {
@@ -127,7 +130,7 @@ export function ThreadDetailPage({
       return
     }
 
-    setAttachment({ key: result.key, kind: result.kind, previewUri: file.uri })
+    setAttachment({ key: result.key, kind: result.kind, previewUri: file.uri, name: file.name })
   }
 
   const attachImage = async (source: 'camera' | 'library') => {
@@ -150,6 +153,7 @@ export function ThreadDetailPage({
       body: body.length > 0 ? body : undefined,
       attachmentKey: attachment?.key,
       attachmentKind: attachment?.kind,
+      attachmentName: attachment?.name,
     })
 
     if (!ok) {
@@ -222,16 +226,20 @@ export function ThreadDetailPage({
                 : 'Escríbenos y te contestaremos lo antes posible.'}
             </Text>
           ) : (
-            messages.map((message) => (
-              <Bubble
-                key={message.id}
-                message={message}
-                isOwn={message.senderId === user?.id}
-                onOpenImage={(url) => setViewerUri(url)}
-                onOpenFile={(url, name) => void openAttachment(url, name)}
-                isOpeningFile={isOpening}
-              />
-            ))
+            withDaySeparators(messages).map((item) =>
+              item.type === 'separator' ? (
+                <DaySeparator key={item.key} label={item.label} />
+              ) : (
+                <Bubble
+                  key={item.key}
+                  message={item.message}
+                  isOwn={item.message.senderId === user?.id}
+                  onOpenImage={(url) => setViewerUri(url)}
+                  onOpenFile={(url, name) => void openAttachment(url, name)}
+                  isOpeningFile={isOpening}
+                />
+              ),
+            )
           )}
         </ScrollView>
       )}
@@ -242,12 +250,30 @@ export function ThreadDetailPage({
             <Avatar uri={attachment.previewUri} size={40} />
           ) : (
             <View style={styles.pendingAttachmentIcon}>
-              <Icon name="paperclip" size={18} color={theme.colors.accent700} />
+              {/*
+                El clip es el botón de adjuntar, no lo que se ha adjuntado:
+                usarlo también aquí no distinguía un documento de un vídeo
+                ni de nada. El de documento sí lo dice de un vistazo.
+              */}
+              <Icon
+                name={attachment.kind === 'DOCUMENT' ? 'document' : 'paperclip'}
+                size={18}
+                color={theme.colors.accent700}
+              />
             </View>
           )}
-          <Text style={styles.pendingAttachmentLabel}>
-            {ATTACHMENT_LABEL[attachment.kind]}
-          </Text>
+          <View style={styles.pendingAttachmentLabels}>
+            <Text style={styles.pendingAttachmentLabel} numberOfLines={1}>
+              {ATTACHMENT_LABEL[attachment.kind]}
+            </Text>
+
+            {/* El nombre de verdad, para documentos y vídeos — una foto ya se ve a sí misma */}
+            {attachment.kind !== 'IMAGE' && (
+              <Text style={styles.pendingAttachmentName} numberOfLines={1}>
+                {attachment.name}
+              </Text>
+            )}
+          </View>
           <Pressable
             onPress={() => setAttachment(null)}
             accessibilityRole="button"
@@ -309,6 +335,69 @@ export function ThreadDetailPage({
   )
 }
 
+type ChatItem =
+  | { type: 'separator'; key: string; label: string }
+  | { type: 'message'; key: string; message: ApiMessage }
+
+/**
+ * Intercala una píldora de día ("Hoy", "Ayer"…) antes del primer mensaje de
+ * cada día distinto — como en cualquier chat. Los mensajes llegan del más
+ * antiguo al más nuevo, así que basta comparar cada uno con el día del
+ * anterior.
+ */
+function withDaySeparators(messages: ApiMessage[]): ChatItem[] {
+  const now = new Date()
+  const items: ChatItem[] = []
+  let lastDay: string | null = null
+
+  for (const message of messages) {
+    const date = new Date(message.createdAt)
+    const day = toIsoDate(date)
+
+    if (day !== lastDay) {
+      items.push({ type: 'separator', key: `day-${day}`, label: formatDaySeparator(date, now) })
+      lastDay = day
+    }
+
+    items.push({ type: 'message', key: message.id, message })
+  }
+
+  return items
+}
+
+function DaySeparator({ label }: { label: string }) {
+  return (
+    <View style={styles.daySeparator}>
+      <View style={styles.daySeparatorPill}>
+        <Text style={styles.daySeparatorText}>{label}</Text>
+      </View>
+    </View>
+  )
+}
+
+/**
+ * La coletilla de la burbuja, curva como en WhatsApp.
+ *
+ * El borde recto de la izquierda/derecha (según el lado) queda pegado al
+ * borde de la burbuja y del mismo color, así que se leen como una sola
+ * pieza; el borde curvo es el que se ve por fuera.
+ */
+function BubbleTail({ isOwn }: { isOwn: boolean }) {
+  const color = isOwn ? theme.colors.accent : theme.colors.surfaceSoft
+  const path = isOwn ? 'M0 0 C3 1.5 8 3 8 8 L0 8 Z' : 'M8 0 C5 1.5 0 3 0 8 L8 8 Z'
+
+  return (
+    <Svg
+      width={8}
+      height={8}
+      viewBox="0 0 8 8"
+      style={[styles.bubbleTail, isOwn ? styles.bubbleTailOwn : styles.bubbleTailOther]}
+    >
+      <Path d={path} fill={color} />
+    </Svg>
+  )
+}
+
 function Bubble({
   message,
   isOwn,
@@ -323,13 +412,19 @@ function Bubble({
   isOpeningFile: boolean
 }) {
   const attachmentUrl = message.attachment ? `${API_BASE_URL}${message.attachment.url}` : null
-  // El nombre que llega del servidor, no el original: basta para que la
-  // hoja de compartir reconozca la extensión y ofrezca la app correcta.
-  const fileName = attachmentUrl?.split('/').pop() ?? 'archivo'
+  /**
+   * El nombre con el que se eligió en el aparato, si se guardó. En un
+   * adjunto mandado antes de que existiera este campo, se cae al nombre
+   * que pone el servidor —un UUID sin sentido, pero con la extensión
+   * correcta, que es lo mínimo que necesita la hoja de compartir—.
+   */
+  const fileName = message.attachment?.name ?? attachmentUrl?.split('/').pop() ?? 'archivo'
 
   return (
     <View style={[styles.bubbleRow, isOwn && styles.bubbleRowOwn]}>
       <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
+        <BubbleTail isOwn={isOwn} />
+
         {attachmentUrl && message.attachment?.kind === 'IMAGE' && (
           <Pressable
             onPress={() => onOpenImage(attachmentUrl)}
@@ -341,32 +436,61 @@ function Bubble({
           </Pressable>
         )}
 
+        {/*
+          Documento o vídeo: una tarjeta con su icono, no una fila de texto
+          suelta. La fila de antes —un icono de 16px y una palabra— no se
+          leía como una miniatura, y era lo que Robin pedía: algo que se
+          note de un vistazo que es un fichero adjunto, igual que la foto
+          se ve a sí misma.
+        */}
         {attachmentUrl && message.attachment?.kind !== 'IMAGE' && (
           <Pressable
             onPress={() => onOpenFile(attachmentUrl, fileName)}
             disabled={isOpeningFile}
-            style={styles.attachmentChip}
+            style={[styles.attachmentDoc, isOwn ? styles.attachmentDocOwn : styles.attachmentDocOther]}
             accessibilityRole="button"
             accessibilityLabel={
               message.attachment?.kind === 'VIDEO' ? 'Abrir vídeo' : 'Abrir documento'
             }
             testID={`thread-detail-attachment-${message.id}`}
           >
-            {isOpeningFile ? (
-              <ActivityIndicator
-                size="small"
-                color={isOwn ? '#ffffff' : theme.colors.accent700}
-              />
-            ) : (
-              <Icon
-                name="paperclip"
-                size={16}
-                color={isOwn ? '#ffffff' : theme.colors.accent700}
-              />
-            )}
-            <Text style={[styles.attachmentChipText, isOwn && styles.attachmentChipTextOwn]}>
-              {message.attachment?.kind === 'VIDEO' ? 'Vídeo' : 'Documento'}
-            </Text>
+            <View
+              style={[
+                styles.attachmentDocIcon,
+                isOwn ? styles.attachmentDocIconOwn : styles.attachmentDocIconOther,
+              ]}
+            >
+              {isOpeningFile ? (
+                <ActivityIndicator
+                  size="small"
+                  color={isOwn ? '#ffffff' : theme.colors.accent700}
+                />
+              ) : (
+                <Icon
+                  name={message.attachment?.kind === 'DOCUMENT' ? 'document' : 'paperclip'}
+                  size={20}
+                  color={isOwn ? '#ffffff' : theme.colors.accent700}
+                />
+              )}
+            </View>
+            <View style={styles.attachmentDocLabels}>
+              <Text
+                style={[styles.attachmentDocText, isOwn && styles.attachmentDocTextOwn]}
+                numberOfLines={1}
+              >
+                {message.attachment?.kind === 'VIDEO' ? 'Vídeo' : 'Documento'}
+              </Text>
+
+              {/* El nombre de verdad, si se guardó — no todo adjunto viejo lo tiene */}
+              {message.attachment?.name && (
+                <Text
+                  style={[styles.attachmentDocName, isOwn && styles.attachmentDocNameOwn]}
+                  numberOfLines={1}
+                >
+                  {message.attachment.name}
+                </Text>
+              )}
+            </View>
           </Pressable>
         )}
 
@@ -377,7 +501,7 @@ function Bubble({
         )}
 
         <Text style={[styles.bubbleTime, isOwn && styles.bubbleTimeOwn]}>
-          {formatMessageTime(new Date(message.createdAt))}
+          {formatTime(new Date(message.createdAt))}
         </Text>
       </View>
     </View>

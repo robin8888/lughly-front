@@ -77,6 +77,14 @@ export function formatLongDateTime(date: Date): string {
   return `${formatLongDate(date)} de ${date.getFullYear()} a las ${formatTime(date)}`
 }
 
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
 /**
  * La hora si es de hoy, la fecha corta si no — para el chat: "22:05" en la
  * propia conversación de hoy, "16/08" en la lista de hilos si el último
@@ -84,12 +92,23 @@ export function formatLongDateTime(date: Date): string {
  * sin abrir un año entero.
  */
 export function formatMessageTime(date: Date, now: Date = new Date()): string {
-  const sameDay =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
+  return isSameDay(date, now)
+    ? formatTime(date)
+    : `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`
+}
 
-  return sameDay ? formatTime(date) : `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`
+/**
+ * "Hoy", "Ayer", o "16 de agosto" — la píldora que separa los mensajes de un
+ * chat por día, como en cualquier chat. Con año solo si no es el actual:
+ * dentro del mismo año no hace falta y solo alarga la píldora sin decir nada
+ * nuevo.
+ */
+export function formatDaySeparator(date: Date, now: Date = new Date()): string {
+  if (isSameDay(date, now)) return 'Hoy'
+  if (isSameDay(date, addDays(now, -1))) return 'Ayer'
+
+  const day = `${date.getDate()} de ${MONTHS[date.getMonth()]}`
+  return date.getFullYear() === now.getFullYear() ? day : `${day} de ${date.getFullYear()}`
 }
 
 /**

@@ -17,6 +17,8 @@ export interface ApiMessageAttachment {
   url: string
   kind: MessageAttachmentKind
   sizeBytes: number | null
+  /** El nombre con el que se eligió en el aparato. `null` en lo mandado antes de que se guardara. */
+  name: string | null
 }
 
 /** Un mensaje, tal y como lo devuelven todos los endpoints de chat */
@@ -57,6 +59,8 @@ export interface SendMessagePayload {
   attachmentKey?: string
   attachmentKind?: MessageAttachmentKind
   attachmentSizeBytes?: number
+  /** El nombre con el que se eligió en el aparato, solo para enseñarlo */
+  attachmentName?: string
 }
 
 export const chatApi = {

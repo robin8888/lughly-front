@@ -81,6 +81,22 @@ export const styles = StyleSheet.create({
     paddingTop: 40,
   },
 
+  daySeparator: {
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  daySeparatorPill: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  daySeparatorText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+  },
+
   bubbleRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -102,6 +118,23 @@ export const styles = StyleSheet.create({
   bubbleOwn: {
     backgroundColor: theme.colors.accent,
     borderBottomRightRadius: theme.radius.sm,
+  },
+  /*
+   * La coletilla: un SVG con una curva, no el truco de bordes CSS de antes
+   * —ese dependía de cómo cada motor recorta las esquinas de un borde a
+   * medias, y salió mal—. Con un `Path` las coordenadas son las que se
+   * escriben, sin ambigüedad, y de paso sale la curva de WhatsApp en vez
+   * de un triángulo recto.
+   */
+  bubbleTail: {
+    position: 'absolute',
+    bottom: 0,
+  },
+  bubbleTailOther: {
+    left: -8,
+  },
+  bubbleTailOwn: {
+    right: -8,
   },
   bubbleText: {
     fontFamily: theme.typography.fonts.body,
@@ -128,18 +161,62 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.photo,
     backgroundColor: theme.colors.surface,
   },
-  attachmentChip: {
+  /*
+   * La tarjeta de documento/vídeo: mismo peso visual que la miniatura de una
+   * foto, no una fila de texto suelta que pasaba desapercibida.
+   */
+  attachmentDoc: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
+    minWidth: 168,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: theme.radius.md,
   },
-  attachmentChipText: {
+  attachmentDocOther: {
+    backgroundColor: theme.colors.surface,
+  },
+  /* Sobre el azul de la burbuja propia, un blanco translúcido en vez del gris de siempre */
+  attachmentDocOwn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+  },
+  attachmentDocIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachmentDocIconOther: {
+    backgroundColor: theme.colors.accent100,
+  },
+  attachmentDocIconOwn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+  },
+  attachmentDocLabels: {
+    flex: 1,
+    minWidth: 0,
+  },
+  attachmentDocText: {
     fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
+    fontSize: theme.typography.sizes.small,
     color: theme.colors.accent700,
   },
-  attachmentChipTextOwn: {
+  attachmentDocTextOwn: {
     color: '#ffffff',
+  },
+  /** El nombre de verdad, debajo del tipo — más pequeño, es el detalle */
+  attachmentDocName: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+    opacity: 0.75,
+    marginTop: 1,
+  },
+  attachmentDocNameOwn: {
+    color: '#ffffff',
+    opacity: 0.8,
   },
 
   pendingAttachment: {
@@ -160,12 +237,22 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pendingAttachmentLabel: {
+  pendingAttachmentLabels: {
     flex: 1,
+    minWidth: 0,
+  },
+  pendingAttachmentLabel: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.text,
     opacity: 0.7,
+  },
+  /** El nombre de verdad, debajo del tipo */
+  pendingAttachmentName: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.text,
+    marginTop: 1,
   },
   pendingAttachmentRemove: {
     padding: 6,
