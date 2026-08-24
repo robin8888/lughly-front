@@ -21,6 +21,7 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Icon, type IconName } from '@/components/atoms/Icon'
 import { Button } from '@/components/atoms/Button'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -103,6 +104,7 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
    * y en la siguiente no, parecería que la barra falla.
    */
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const user = useUser()
   const role = useEffectiveRole()
@@ -155,13 +157,15 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
         >
           <Text style={styles.backIcon}>←</Text>
         </Pressable>
-        <Text style={styles.title}>Mi cuenta</Text>
+        <Text style={styles.title}>
+          Mi cuenta · {role === 'pro' ? 'Profesional' : 'Cliente'}
+        </Text>
       </View>
 
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -206,8 +210,27 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
                     style={styles.avatarImage}
                   />
                 ) : (
-                  <Icon name="user-circle" size={30} color={theme.colors.accent700} />
+                  <Icon name="user-circle" size={46} color={theme.colors.accent700} />
                 )}
+              </Pressable>
+
+              {/*
+                El lápiz, abajo a la derecha de la foto —como en la mayoría de
+                redes sociales—, en vez del enlace de texto que había antes.
+                Mismo `onPress` que la propia foto: son dos formas de llegar a
+                lo mismo, no dos acciones distintas.
+              */}
+              <Pressable
+                onPress={() => chooseAndUpload(Boolean(user?.avatarUrl))}
+                disabled={isUploading}
+                style={styles.avatarEditBadge}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  user?.avatarUrl ? 'Cambiar foto de perfil' : 'Añadir foto de perfil'
+                }
+                testID="account-change-photo"
+              >
+                <Icon name="pencil" size={14} color="#ffffff" />
               </Pressable>
             </View>
 
@@ -215,29 +238,9 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
               <Text style={styles.name} numberOfLines={1}>
                 {user?.name ?? 'Sin sesión'}
               </Text>
+
               <Text style={styles.email} numberOfLines={1}>
                 {user?.email}
-              </Text>
-
-              <Pressable
-                onPress={() => chooseAndUpload(Boolean(user?.avatarUrl))}
-                disabled={isUploading}
-                testID="account-change-photo"
-                accessibilityRole="button"
-              >
-                <Text style={styles.photoAction}>
-                  {isUploading
-                    ? 'Subiendo…'
-                    : user?.avatarUrl
-                      ? 'Cambiar foto'
-                      : 'Añadir foto de perfil'}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.roleTag}>
-              <Text style={styles.roleTagText}>
-                {role === 'pro' ? 'Profesional' : 'Cliente'}
               </Text>
             </View>
           </View>
@@ -343,7 +346,7 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
                   {link.icon && (
                     <Icon
                       name={link.icon}
-                      size={20}
+                      size={23}
                       color={
                         link.comingSoon ? theme.colors.textSoft : theme.colors.accent700
                       }
@@ -385,7 +388,7 @@ export function AccountPage({ groups, onBack, onDocuments }: AccountPageProps) {
             testID="account-logout"
           >
             <View style={styles.linkLeft}>
-              <Icon name="logout" size={20} color={theme.colors.urgency} />
+              <Icon name="logout" size={23} color={theme.colors.urgency} />
               <Text style={styles.logout}>
                 {isLoggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
               </Text>

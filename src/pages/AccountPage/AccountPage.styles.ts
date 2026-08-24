@@ -34,17 +34,19 @@ export const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    // La barra inferior flota por encima
-    paddingBottom: 96,
   },
   identityCard: {
     padding: 14,
     marginBottom: 16,
   },
+  /*
+   * A red social: la foto centrada arriba y los datos debajo, en columna —no
+   * en fila con la foto pequeña a un lado, que es como estaba antes—.
+   */
   identityRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    paddingVertical: 6,
   },
   /**
    * El anillo de disponibilidad. Sin saberlo va transparente y no invisible:
@@ -54,6 +56,8 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     borderWidth: 2,
     padding: 3,
+    // Para que el lápiz se ancle a su esquina, no a la de toda la fila
+    position: 'relative',
   },
   avatarRingUnknown: {
     borderColor: 'transparent',
@@ -64,9 +68,10 @@ export const styles = StyleSheet.create({
   avatarRingUnavailable: {
     borderColor: theme.colors.unavailable,
   },
+  /** Tamaño mediano, algo mayor que la foto que saluda en la home (`HeroCard`, 88) */
   avatar: {
-    width: 44,
-    height: 44,
+    width: 104,
+    height: 104,
     borderRadius: theme.radius.pill,
     overflow: 'hidden',
     alignItems: 'center',
@@ -79,40 +84,39 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  /*
+   * El borde del color de la tarjeta hace de hueco alrededor del lápiz, para
+   * que se lea como una insignia sobre la foto y no como si se solapasen.
+   */
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 30,
+    height: 30,
+    borderRadius: theme.radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.accent,
+    borderWidth: 2,
+    borderColor: theme.colors.cardBg,
+  },
   identityText: {
-    flex: 1,
-    minWidth: 0,
+    alignItems: 'center',
   },
   name: {
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.small,
+    fontSize: theme.typography.sizes.h5,
     color: theme.colors.cardText,
+    textAlign: 'center',
   },
   email: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.cardText,
     opacity: 0.6,
-    marginTop: 2,
-  },
-  photoAction: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.accent600,
-    marginTop: 4,
-  },
-  roleTag: {
-    paddingVertical: 3,
-    paddingHorizontal: 9,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.accent100,
-    borderWidth: 1,
-    borderColor: theme.colors.accent300,
-  },
-  roleTagText: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.accent700,
+    marginTop: 6,
+    textAlign: 'center',
   },
   /** Falta el documento: no es un pendiente, es algo que le bloquea */
   /** El aviso y su botón, como un bloque: el botón es parte del aviso */
@@ -201,13 +205,12 @@ export const styles = StyleSheet.create({
    * de la app: tiene que separar sin competir con los accesos, que son lo que
    * se va a pulsar.
    */
+  // Mismo estilo que el título de la página ("Mi cuenta · Profesional")
   groupTitle: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.tiny,
-    letterSpacing: 0.5,
+    fontFamily: theme.typography.fonts.heading,
+    fontSize: theme.typography.sizes.h4,
     color: theme.colors.text,
-    opacity: 0.55,
-    marginBottom: 2,
+    marginBottom: 8,
   },
   link: {
     flexDirection: 'row',
@@ -229,7 +232,7 @@ export const styles = StyleSheet.create({
   linkLabel: {
     flexShrink: 1,
     fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.small,
+    fontSize: theme.typography.sizes.body,
     color: theme.colors.text,
   },
   linkDisabled: {
@@ -270,7 +273,7 @@ export const styles = StyleSheet.create({
   },
   logout: {
     fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.small,
+    fontSize: theme.typography.sizes.body,
     color: theme.colors.urgency,
   },
 })

@@ -44,12 +44,16 @@ export type IconName =
   // Del chat (ROADMAP.md Fase 11)
   | 'send'
   | 'paperclip'
+  | 'pencil'
+  | 'heart'
 
 export interface IconProps {
   name: IconName
   size?: number
   color?: string
   strokeWidth?: number
+  /** Solo lo usa 'heart': relleno sólido en vez de trazo, para el favorito ya marcado */
+  filled?: boolean
   testID?: string
 }
 
@@ -58,6 +62,7 @@ export function Icon({
   size = 21,
   color = '#ffffff',
   strokeWidth = 1.8,
+  filled = false,
   testID,
 }: IconProps) {
   const stroke = {
@@ -326,6 +331,23 @@ export function Icon({
         <Path
           d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 014.95 4.95l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
           {...stroke}
+        />
+      )}
+
+      {name === 'pencil' && (
+        <>
+          <Path
+            d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .622.622l4.353-1.321a2 2 0 0 0 .83-.497z"
+            {...stroke}
+          />
+          <Path d="m15 5 4 4" {...stroke} />
+        </>
+      )}
+
+      {name === 'heart' && (
+        <Path
+          d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+          {...(filled ? { fill: color, stroke: 'none' } : stroke)}
         />
       )}
     </Svg>
