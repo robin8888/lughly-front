@@ -25,6 +25,7 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { useMySurcharges, useSetMySurcharges } from '@/hooks/domain/useMySurcharges'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { theme } from '@/theme'
 import { styles } from './SurchargesPage.styles'
 
@@ -50,6 +51,7 @@ export function SurchargesPage({
   employeeName,
 }: SurchargesPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const isEmployee = useIsEmployee()
 
   const isForEmployee = employeeId !== undefined
@@ -186,7 +188,7 @@ export function SurchargesPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

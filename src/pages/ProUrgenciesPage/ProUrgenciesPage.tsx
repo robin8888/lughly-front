@@ -30,6 +30,7 @@ import { useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
@@ -86,6 +87,7 @@ export function ProUrgenciesPage({
    * y en la siguiente no, parecería que la barra falla.
    */
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const { data, isPending, isError, refetch } = useMyUrgencies()
   const { data: profile } = useProProfile(userId)
@@ -159,7 +161,7 @@ export function ProUrgenciesPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         {isPending ? (

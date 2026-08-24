@@ -43,7 +43,6 @@ export const styles = StyleSheet.create({
      */
     flexGrow: 1,
     padding: 16,
-    paddingBottom: 96,
   },
   /** La tarjeta azul del texto que explica */
   introCard: {

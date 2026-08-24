@@ -35,6 +35,7 @@ import {
 import { useMyHolidays } from '@/hooks/domain/useMyHolidays'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import type { ApiAvailabilityWindow } from '@/api/pros.api'
 import {
   WEEKDAY_NAMES,
@@ -101,6 +102,7 @@ export function AvailabilityPage({
   employeeName,
 }: AvailabilityPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const isEmployee = useIsEmployee()
 
   /* Editando el de otro, lo que sea quien mira no viene al caso */
@@ -255,7 +257,7 @@ export function AvailabilityPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

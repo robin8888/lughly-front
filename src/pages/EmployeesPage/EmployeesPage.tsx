@@ -16,6 +16,7 @@ import { useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Tag } from '@/components/atoms/Tag'
@@ -214,6 +215,7 @@ export function EmployeesPage({
    * y en la siguiente no, parecería que la barra falla.
    */
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const { data: employerData, isPending: loadingEmployer } = useEmployer()
   const employer = employerData?.employer ?? null
@@ -361,7 +363,7 @@ export function EmployeesPage({
         <Animated.ScrollView
           onScroll={onScroll}
           scrollEventThrottle={16}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -378,7 +380,7 @@ export function EmployeesPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

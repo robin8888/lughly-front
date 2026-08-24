@@ -28,6 +28,7 @@ import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { useMyBio, useSaveMyProfile } from '@/hooks/domain/useMyProfile'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { useUser } from '@/stores/useAuthStore'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
 import { theme } from '@/theme'
@@ -50,6 +51,7 @@ export interface MyProfilePageProps {
 
 export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const user = useUser()
   const isPro = useEffectiveRole() === 'pro'
 
@@ -123,7 +125,7 @@ export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

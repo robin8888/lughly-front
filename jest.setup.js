@@ -72,3 +72,14 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 )
+
+/**
+ * Y el inset de la zona segura: sin `SafeAreaProvider` montado, `useSafeAreaInsets`
+ * revienta con "No safe area value available" en vez de devolver algo. Antes
+ * ninguna pantalla de test lo llamaba; ahora lo hace cualquiera con
+ * `useTabBarClearance`, que son casi todas. El doble oficial de la propia
+ * librería devuelve insets a cero sin necesitar el Provider de por medio.
+ */
+jest.mock('react-native-safe-area-context', () =>
+  require('react-native-safe-area-context/jest/mock').default,
+)

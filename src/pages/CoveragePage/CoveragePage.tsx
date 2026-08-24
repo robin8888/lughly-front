@@ -31,6 +31,7 @@ import { useMyCoverage, useSetMyCoverage } from '@/hooks/domain/useMyCoverage'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useShareLocation } from '@/hooks/domain/useShareLocation'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { geocodeApi, type ApiGeocodeMatch } from '@/api/geocode.api'
 import { theme } from '@/theme'
 import { styles } from './CoveragePage.styles'
@@ -62,6 +63,7 @@ export function CoveragePage({
   employeeName,
 }: CoveragePageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const isEmployee = useIsEmployee()
 
   const isForEmployee = employeeId !== undefined
@@ -275,7 +277,7 @@ export function CoveragePage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

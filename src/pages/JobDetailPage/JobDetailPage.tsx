@@ -28,6 +28,7 @@ import { useJob, useCancelJob } from '@/hooks/domain/useJob'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
 import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
 import { theme } from '@/theme'
@@ -149,6 +150,7 @@ export function JobDetailPage({
   onOpenChat,
 }: JobDetailPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const { data: job, isPending, isError, refetch } = useJob(jobId)
   const { cancel, isCancelling } = useCancelJob()
 
@@ -257,7 +259,7 @@ export function JobDetailPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         {/*

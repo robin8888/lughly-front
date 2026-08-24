@@ -21,6 +21,7 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Button } from '@/components/atoms/Button'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { jobTypeLabel } from '@/utils/jobStatus'
@@ -67,6 +68,7 @@ export function MyJobsPage({
    * y en la siguiente no, parecería que la barra falla.
    */
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const { data, isPending, isError, refetch, isFetching } = useMyJobs()
   const { respond, isResponding } = useRespondSubstitute()
@@ -172,7 +174,7 @@ export function MyJobsPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         {isPending ? (

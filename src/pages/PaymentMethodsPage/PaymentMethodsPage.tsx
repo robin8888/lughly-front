@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { Text, View, Pressable, ActivityIndicator } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Button } from '@/components/atoms/Button'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -41,6 +42,7 @@ export interface PaymentMethodsPageProps {
 
 export function PaymentMethodsPage({ onBack }: PaymentMethodsPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const { data, isPending, isError, refetch } = usePaymentMethods()
   const { save, isSaving } = useSaveCard()
@@ -96,7 +98,7 @@ export function PaymentMethodsPage({ onBack }: PaymentMethodsPageProps) {
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         <InfoCard variant="accent">

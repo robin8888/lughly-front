@@ -24,6 +24,7 @@ import { useInbox, useAssignJob } from '@/hooks/domain/useInbox'
 import { useEmployees, useEmployer } from '@/hooks/domain/useEmployees'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { useUser } from '@/stores/useAuthStore'
 import type { ApiInboxItem } from '@/api/assignments.api'
 import { formatJobWhen, timeLeft } from '@/utils/dates'
@@ -38,6 +39,7 @@ export interface InboxPageProps {
 
 export function InboxPage({ onBack }: InboxPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const user = useUser()
   const isEmployee = useIsEmployee()
 
@@ -138,7 +140,7 @@ export function InboxPage({ onBack }: InboxPageProps) {
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         {isPending ? (

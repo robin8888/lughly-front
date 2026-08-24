@@ -26,6 +26,7 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { API_BASE_URL } from '@/api'
 import { useUrgencyPros, useAskUrgency } from '@/hooks/domain/useUrgencyPros'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { theme } from '@/theme'
 import { styles } from './UrgencyProsPage.styles'
 
@@ -60,6 +61,7 @@ export function UrgencyProsPage({
   onBack,
 }: UrgencyProsPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch } = useUrgencyPros(tradeSlug, point)
   const { ask, isAsking } = useAskUrgency()
 
@@ -173,7 +175,7 @@ export function UrgencyProsPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         <InfoCard variant="accent">

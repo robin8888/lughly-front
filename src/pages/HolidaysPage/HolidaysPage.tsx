@@ -33,6 +33,7 @@ import {
   useLocalHolidays,
 } from '@/hooks/domain/useMyHolidays'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatDate, parseIsoDate, toIsoDate } from '@/utils/dates'
 import { theme } from '@/theme'
 import { styles } from './HolidaysPage.styles'
@@ -65,6 +66,7 @@ export function HolidaysPage({
   employeeName,
 }: HolidaysPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const isForEmployee = employeeId !== undefined
   const year = new Date().getFullYear()
@@ -208,7 +210,7 @@ export function HolidaysPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         <InfoCard variant="accent">

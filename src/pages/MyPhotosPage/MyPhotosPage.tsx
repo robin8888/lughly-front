@@ -40,6 +40,7 @@ import {
   useMyPhotos,
 } from '@/hooks/domain/useMyPhotos'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { PlusIcon } from '@/components/atoms/PlusIcon'
 import { theme } from '@/theme'
 import { cellSize, styles } from './MyPhotosPage.styles'
@@ -50,6 +51,7 @@ export interface MyPhotosPageProps {
 
 export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const isEmployee = useIsEmployee()
 
   /*
@@ -154,7 +156,7 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
     return (
       <View style={styles.screen} testID="my-photos-page">
         {header}
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}>
           <EmptyState
             title="Las lleva tu empresa"
             message="Las fotos que se ven en el listado son las de quien te dio de alta. Si tienes trabajos que merece la pena enseñar, mándaselas a ellos."
@@ -177,7 +179,7 @@ export function MyPhotosPage({ onBack }: MyPhotosPageProps) {
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (

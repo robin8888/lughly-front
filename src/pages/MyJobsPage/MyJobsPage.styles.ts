@@ -41,8 +41,6 @@ export const styles = StyleSheet.create({
      */
     flexGrow: 1,
     padding: 16,
-    // La barra inferior flota por encima
-    paddingBottom: 96,
   },
   state: {
     paddingVertical: 40,

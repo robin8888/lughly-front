@@ -27,6 +27,7 @@ import {
   useSetUrgencyWindows,
 } from '@/hooks/domain/useUrgencyWindows'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import type { ApiUrgencyWindow } from '@/api/employees.api'
 import { WEEKDAY_NAMES, atTime, formatTime } from '@/utils/dates'
 import { theme } from '@/theme'
@@ -63,6 +64,7 @@ export function UrgencySchedulePage({
   onBack,
 }: UrgencySchedulePageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch } = useUrgencyWindows(employeeId)
   const { save, isSaving } = useSetUrgencyWindows(employeeId)
 
@@ -167,7 +169,7 @@ export function UrgencySchedulePage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

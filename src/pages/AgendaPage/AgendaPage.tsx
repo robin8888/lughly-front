@@ -28,6 +28,7 @@ import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
 import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
 import { theme } from '@/theme'
@@ -39,6 +40,7 @@ export interface AgendaPageProps {
 
 export function AgendaPage({ onBack }: AgendaPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch, isFetching } = useAssignedJobs()
 
   const jobs = data?.items ?? []
@@ -79,7 +81,7 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         {isPending ? (

@@ -24,6 +24,7 @@ import { useProProfile } from '@/hooks/domain/useProProfile'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { useBookServices } from '@/hooks/domain/useBookServices'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatLongDateTime, startOfToday, toIsoDateTime } from '@/utils/dates'
 import { theme } from '@/theme'
 import { styles } from './HireCartaPage.styles'
@@ -46,6 +47,7 @@ export function HireCartaPage({
   onAddPaymentMethod,
 }: HireCartaPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const { data: pro, isPending, isError, refetch } = useProProfile(proId)
   const {
@@ -143,7 +145,7 @@ export function HireCartaPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

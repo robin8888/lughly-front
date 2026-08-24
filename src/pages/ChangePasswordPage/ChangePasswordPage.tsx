@@ -21,6 +21,7 @@ import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { useChangePassword } from '@/hooks/auth/useChangePassword'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { MIN_PASSWORD_LENGTH } from '@/hooks/auth/useRegister'
 import { styles } from './ChangePasswordPage.styles'
 
@@ -30,6 +31,7 @@ export interface ChangePasswordPageProps {
 
 export function ChangePasswordPage({ onBack }: ChangePasswordPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const { change, isLoading, fieldErrors, formError, clearErrors } =
     useChangePassword()
 
@@ -69,7 +71,7 @@ export function ChangePasswordPage({ onBack }: ChangePasswordPageProps) {
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

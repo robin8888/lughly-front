@@ -21,6 +21,7 @@ import { Icon } from '@/components/atoms/Icon'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { useMyThreads } from '@/hooks/domain/useChat'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { API_BASE_URL } from '@/api'
 import type { ApiThreadSummary } from '@/api/chat.api'
 import { formatMessageTime } from '@/utils/dates'
@@ -35,6 +36,7 @@ export interface MessagesPageProps {
 
 export function MessagesPage({ onBack, onOpenJobThread, onOpenSupport }: MessagesPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch } = useMyThreads()
 
   const threads = data ?? []
@@ -55,7 +57,7 @@ export function MessagesPage({ onBack, onOpenJobThread, onOpenSupport }: Message
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         <Pressable

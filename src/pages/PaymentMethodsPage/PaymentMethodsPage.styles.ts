@@ -36,7 +36,6 @@ export const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     padding: 16,
-    paddingBottom: 96,
     gap: 14,
   },
   state: {

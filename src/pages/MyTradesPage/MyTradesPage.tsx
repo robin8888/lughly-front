@@ -22,6 +22,7 @@ import { useMyPhotos } from '@/hooks/domain/useMyPhotos'
 import { useMyTrades, useSetMyTrades } from '@/hooks/domain/useMyTrades'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { getTradeLabel } from '@/utils/trades'
 import { theme } from '@/theme'
 import { CartaTradeSection } from './CartaTradeSection'
@@ -33,6 +34,7 @@ export interface MyTradesPageProps {
 
 export function MyTradesPage({ onBack }: MyTradesPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const isEmployee = useIsEmployee()
 
   // A un empleado el backend le responde 403: no se le pide la lista
@@ -149,7 +151,7 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
     return (
       <View style={styles.screen} testID="my-trades-page">
         {header}
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}>
           <EmptyState
             title="Los lleva tu empresa"
             message="Tus oficios y lo que se cobra por tu hora los gestiona quien te dio de alta. Si haces algo que no aparece en tu ficha, díselo a ellos."
@@ -170,7 +172,7 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
