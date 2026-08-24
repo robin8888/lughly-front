@@ -25,6 +25,7 @@ import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useRequestPro } from '@/hooks/domain/useRequestPro'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import {
   formatLongDateTime,
@@ -53,6 +54,7 @@ export function RequestProPage({
   onSent,
 }: RequestProPageProps) {
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
   const { data: pro, isPending, isError } = useProProfile(proId)
   const { request, isRequesting, fieldErrors, formError, reset } = useRequestPro(proId)
 
@@ -75,11 +77,19 @@ export function RequestProPage({
   const tradeOptions =
     pro?.trades.map((entry) => ({
       value: entry.slug,
-      label: `${entry.label} · ${entry.hourlyRate} €/h`,
+      label: `${entry.label} · ${
+        entry.visitFee != null ? `Visita ${entry.visitFee} €` : `${entry.hourlyRate} €/h`
+      }`,
     })) ?? []
 
   const chosenTrade = trade ?? pro?.trades[0]?.slug ?? null
-  const chosenRate = pro?.trades.find((entry) => entry.slug === chosenTrade)?.hourlyRate
+  const chosenTradeEntry = pro?.trades.find((entry) => entry.slug === chosenTrade)
+  /** "Visita X €" en modo visita, "X €/h" por hora — nunca `null €/h` */
+  const chosenRateLabel =
+    chosenTradeEntry &&
+    (chosenTradeEntry.visitFee != null
+      ? `Visita ${chosenTradeEntry.visitFee} €`
+      : `${chosenTradeEntry.hourlyRate} €/h`)
 
   const canSend =
     chosenTrade !== null &&
@@ -169,7 +179,7 @@ export function RequestProPage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -354,9 +364,9 @@ export function RequestProPage({
           recibe quien quede asignado al trabajo.
         </Text>
 
-        {isInstant && chosenRate !== undefined && (
+        {isInstant && chosenRateLabel && (
           <Text style={styles.rate}>
-            Tarifa: {chosenRate} €/h. Los recargos de fin de semana, festivo y
+            Tarifa: {chosenRateLabel}. Los recargos de fin de semana, festivo y
             horario nocturno se aplican encima y los verás antes de confirmar.
           </Text>
         )}
