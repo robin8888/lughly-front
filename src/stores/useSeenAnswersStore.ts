@@ -23,7 +23,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 interface SeenAnswersState {
   /** Id del trabajo → estado con el que se le enseñó la última vez */
   seen: Record<string, string>
-  markSeen: (jobId: string, status: string) => void
+  /**
+   * Devuelve la promesa de la escritura en AsyncStorage (así lo entrega el
+   * `persist` de zustand). Quien navega justo después de marcar visto debe
+   * esperarla: si la app se cierra antes de que la escritura llegue a disco,
+   * el aviso vuelve a salir en la siguiente apertura.
+   */
+  markSeen: (jobId: string, status: string) => Promise<void>
   /** Al cambiar de cuenta: lo de uno no es asunto del siguiente */
   clear: () => void
 }
@@ -34,7 +40,11 @@ export const useSeenAnswersStore = create<SeenAnswersState>()(
       seen: {},
 
       markSeen: (jobId, status) =>
-        set((state) => ({ seen: { ...state.seen, [jobId]: status } })),
+        // El tipo público de `set` no lo expone, pero `persist` lo envuelve
+        // en runtime para devolver la promesa de `storage.setItem(...)`.
+        set((state) => ({
+          seen: { ...state.seen, [jobId]: status },
+        })) as unknown as Promise<void>,
 
       clear: () => set({ seen: {} }),
     }),

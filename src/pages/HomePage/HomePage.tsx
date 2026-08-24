@@ -96,8 +96,14 @@ export function HomePage({
     <SafeAreaView style={styles.safeArea} testID="home-page">
       <JobAnswer
         job={answered}
-        onSee={(jobId) => {
-          if (answered) markSeen(answered.id, answered.status)
+        onSee={async (jobId) => {
+          /*
+           * Se espera a que la escritura llegue a AsyncStorage antes de
+           * navegar: si no, cerrar la app justo después de tocar "Ver el
+           * trabajo" —lo primero que se hace tras verlo— puede perder el
+           * "visto" y el aviso vuelve a salir la próxima vez.
+           */
+          if (answered) await markSeen(answered.id, answered.status)
           onSeeJob?.(jobId)
         }}
         onDismiss={() => {
