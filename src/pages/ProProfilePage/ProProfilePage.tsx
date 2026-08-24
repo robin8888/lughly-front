@@ -19,6 +19,9 @@ import { useState } from 'react'
 import { View, Text, Image, Pressable, ScrollView, ActivityIndicator } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
+import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
+import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
+import { useFavoriteIds, useToggleFavorite } from '@/hooks/domain/useFavorites'
 import { Button } from '@/components/atoms/Button'
 import { Checkbox } from '@/components/atoms/Checkbox'
 import { Icon } from '@/components/atoms/Icon'
@@ -32,6 +35,7 @@ import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
+import type { ApiPro } from '@/api/pros.api'
 import { surchargesSummary } from '@/utils/surcharges'
 import { ApiError, API_BASE_URL } from '@/api'
 import { formatDate, parseIsoDate } from '@/utils/dates'
@@ -96,8 +100,27 @@ export function ProProfilePage({
    * y en la siguiente no, parecería que la barra falla.
    */
   const onScroll = useNavScrollHandler()
+  const tabBarClearance = useTabBarClearance()
 
   const { data: pro, isPending, isError, error, refetch } = useProProfile(id)
+
+  /** Favoritos (COMO_SE_CONTRATA.md §11): es cosa del cliente */
+  const isClient = useEffectiveRole() === 'client'
+  const favoriteIds = useFavoriteIds()
+  const { toggle: toggleFavorite } = useToggleFavorite()
+  const isFavorite = pro ? favoriteIds.has(pro.id) : false
+
+  /**
+   * La lista de favoritos guarda tarjetas de directorio (`ApiPro`), no
+   * fichas completas: mismos campos salvo `photos` —aquí llegan agrupadas
+   * por oficio con más detalle— y `distanceKm`, que la ficha no tiene
+   * porque no compara con nadie más.
+   */
+  const asDirectoryCard = (detail: NonNullable<typeof pro>): ApiPro => ({
+    ...detail,
+    photos: detail.photos.map((photo) => photo.url),
+    distanceKm: null,
+  })
 
   /**
    * Qué foto se está mirando a pantalla completa. `null` es ninguna.
@@ -143,6 +166,26 @@ export function ProProfilePage({
         <Text style={styles.backIcon}>←</Text>
       </Pressable>
       <Text style={styles.headerTitle}>Perfil</Text>
+
+      {pro && isClient && (
+        <Pressable
+          onPress={() => toggleFavorite(asDirectoryCard(pro), isFavorite)}
+          hitSlop={8}
+          style={styles.favorite}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+          accessibilityState={{ selected: isFavorite }}
+          testID="pro-favorite"
+        >
+          <Icon
+            name="heart"
+            size={22}
+            filled={isFavorite}
+            color={isFavorite ? theme.colors.urgency : theme.colors.textSoft}
+            strokeWidth={2}
+          />
+        </Pressable>
+      )}
     </View>
   )
 
@@ -169,7 +212,7 @@ export function ProProfilePage({
         <Animated.ScrollView
           onScroll={onScroll}
           scrollEventThrottle={16}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         >
           <EmptyState
             title={isGone ? 'Este perfil ya no está' : 'No hemos podido cargar el perfil'}
@@ -260,7 +303,7 @@ export function ProProfilePage({
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
         {/**

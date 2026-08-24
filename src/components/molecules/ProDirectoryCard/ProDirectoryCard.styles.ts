@@ -34,6 +34,23 @@ export const styles = StyleSheet.create({
     marginBottom: 14,
     ...theme.shadows.card,
   },
+  /**
+   * Todo lo de antes de la carta: el corazón se ancla a su esquina. Sin
+   * `gap` — cada sección de dentro ya trae su propio `marginTop`.
+   */
+  body: {},
+  /**
+   * Abajo a la derecha de `body`, no de toda la tarjeta: así no acaba
+   * flotando sobre "Trabajos a precio fijo" cuando la carta está abierta.
+   * Antes también estuvo arriba, pero ahí interfería con la tarifa.
+   */
+  favorite: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    zIndex: 1,
+    padding: 2,
+  },
   /** Se sombrea al tocarla: es lo que hace que se sienta pulsable entera */
   /**
    * Apagada: se ve pero no se toca. Medio velo y no invisible, para que se

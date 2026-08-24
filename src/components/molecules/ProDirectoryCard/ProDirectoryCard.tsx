@@ -64,6 +64,13 @@ export interface ProDirectoryCardProps {
   /** Contratar la carta directamente desde la tarjeta, sin pasar por la ficha */
   onHireCarta: (proId: string, tradeSlug: string, serviceIds: string[]) => void
   /**
+   * El corazón de favorito, arriba a la derecha. Sin `onToggleFavorite` no
+   * sale: es cosa del cliente (COMO_SE_CONTRATA.md §11), y quien llama a
+   * esta tarjeta decide si toca enseñarlo, no la tarjeta misma.
+   */
+  isFavorite?: boolean
+  onToggleFavorite?: () => void
+  /**
    * Apagada y sin tocar. Se usa al buscar otro profesional para un trabajo que
    * este ya ha rechazado: **se apaga en vez de esconderse** porque quien no lo
    * encuentra en la lista cree que la app lo ha perdido, y porque saber que
@@ -79,6 +86,8 @@ export function ProDirectoryCard({
   pro,
   onPress,
   onHireCarta,
+  isFavorite = false,
+  onToggleFavorite,
   disabled = false,
   disabledNote,
   testID,
@@ -147,151 +156,188 @@ export function ProDirectoryCard({
         <Text style={styles.disabledNote}>{disabledNote}</Text>
       )}
 
-      <View style={styles.row}>
-        {/*
-          El estado va en un anillo alrededor de la cara: verde si atiende
-          urgencias ahora mismo, rojo si no. Ocupa el sitio de la píldora que
-          había debajo del nombre y se lee antes, porque la mirada ya está en
-          la foto.
+      {/*
+        Todo lo de antes de la carta, en un envoltorio propio: el corazón se
+        ancla a SU esquina, no a la de toda la tarjeta. Si se ancla a la
+        tarjeta entera, con la carta desplegada el corazón acaba flotando
+        sobre "Trabajos a precio fijo" en vez de quedarse donde estaba.
+      */}
+      <View style={styles.body}>
+        <View style={styles.row}>
+          {/*
+            El estado va en un anillo alrededor de la cara: verde si atiende
+            urgencias ahora mismo, rojo si no. Ocupa el sitio de la píldora
+            que había debajo del nombre y se lee antes, porque la mirada ya
+            está en la foto.
 
-          El texto no desaparece del todo: viaja en la etiqueta de
-          accesibilidad, porque un color por sí solo no dice nada a quien no lo
-          distingue ni a quien escucha la pantalla.
-        */}
-        <View
-          style={[
-            styles.avatarRing,
-            pro.availableNow ? styles.ringAvailable : styles.ringUnavailable,
-          ]}
-          accessible
-          accessibilityLabel={
-            pro.availableNow ? 'Disponible ahora' : 'Consultar disponibilidad'
-          }
-          testID={
-            pro.availableNow ? 'pro-card-available' : 'pro-card-unavailable'
-          }
-        >
-          <View style={styles.avatar}>
-            {pro.avatarUrl ? (
-              <Image
-                source={{ uri: `${API_BASE_URL}${pro.avatarUrl}` }}
-                style={styles.avatarImage}
-              />
+            El texto no desaparece del todo: viaja en la etiqueta de
+            accesibilidad, porque un color por sí solo no dice nada a quien
+            no lo distingue ni a quien escucha la pantalla.
+          */}
+          <View
+            style={[
+              styles.avatarRing,
+              pro.availableNow ? styles.ringAvailable : styles.ringUnavailable,
+            ]}
+            accessible
+            accessibilityLabel={
+              pro.availableNow ? 'Disponible ahora' : 'Consultar disponibilidad'
+            }
+            testID={
+              pro.availableNow ? 'pro-card-available' : 'pro-card-unavailable'
+            }
+          >
+            <View style={styles.avatar}>
+              {pro.avatarUrl ? (
+                <Image
+                  source={{ uri: `${API_BASE_URL}${pro.avatarUrl}` }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <Icon name="user-circle" size={22} color={theme.colors.textSoft} />
+              )}
+            </View>
+          </View>
+
+          <View style={styles.identity}>
+            {pro.employerName ? (
+              <>
+                <Text style={styles.name} numberOfLines={1}>
+                  {pro.employerName}
+                </Text>
+                <Text style={styles.worker} numberOfLines={1}>
+                  Trabajo de {pro.name}
+                </Text>
+              </>
             ) : (
-              <Icon name="user-circle" size={22} color={theme.colors.textSoft} />
+              <Text style={styles.name} numberOfLines={1}>
+                {pro.name}
+              </Text>
+            )}
+
+            <Text style={styles.meta} numberOfLines={1}>
+              {pro.tradeLabel} · {pro.city}
+            </Text>
+
+            {pro.distanceKm !== null && (
+              <Text style={styles.distance}>A {pro.distanceKm} km de ti</Text>
             )}
           </View>
-        </View>
 
-        <View style={styles.identity}>
-          {pro.employerName ? (
-            <>
-              <Text style={styles.name} numberOfLines={1}>
-                {pro.employerName}
-              </Text>
-              <Text style={styles.worker} numberOfLines={1}>
-                Trabajo de {pro.name}
-              </Text>
-            </>
-          ) : (
-            <Text style={styles.name} numberOfLines={1}>
-              {pro.name}
-            </Text>
-          )}
-
-          <Text style={styles.meta} numberOfLines={1}>
-            {pro.tradeLabel} · {pro.city}
-          </Text>
-
-          {pro.distanceKm !== null && (
-            <Text style={styles.distance}>A {pro.distanceKm} km de ti</Text>
-          )}
-        </View>
-
-        <View style={styles.numbers}>
-          <Text style={styles.rate}>{priceLabel}</Text>
-          <View style={styles.ratingRow}>
-            <Text style={styles.star}>★</Text>
-            <Text style={styles.rating}>{pro.rating.toFixed(1)}</Text>
-          </View>
-          <Text style={styles.reviews}>{pro.reviewCount} reseñas</Text>
-        </View>
-      </View>
-
-      {/*
-        Las fotos de sus trabajos, en tira. Van antes de la descripción a
-        propósito: en oficios se decide mirando, y un baño terminado convence
-        más que dos líneas de texto.
-
-        Sin ninguna, el bloque entero no se dibuja —ni tira ni hueco esperando—.
-        Un placeholder haría parecer la ficha incompleta, y quien se registra
-        sin las fotos a mano no lo está.
-      */}
-      {pro.photos.length > 0 && (
-        <View style={styles.photos} testID="pro-card-photos">
-          {pro.photos.slice(0, MAX_STRIP).map((photo) => (
-            <Image
-              key={photo}
-              source={{ uri: `${API_BASE_URL}${photo}` }}
-              style={styles.photo}
-              resizeMode="cover"
-            />
-          ))}
-
-          {/*
-            Si tiene más de las que caben, se dice cuántas en vez de cortarlas
-            sin avisar: así se sabe que en la ficha hay más.
-          */}
-          {pro.photos.length > MAX_STRIP && (
-            <View style={[styles.photo, styles.photoMore]}>
-              <Text style={styles.photoMoreText}>
-                +{pro.photos.length - MAX_STRIP}
-              </Text>
+          <View style={styles.numbers}>
+            <Text style={styles.rate}>{priceLabel}</Text>
+            <View style={styles.ratingRow}>
+              <Text style={styles.star}>★</Text>
+              <Text style={styles.rating}>{pro.rating.toFixed(1)}</Text>
             </View>
-          )}
+            <Text style={styles.reviews}>{pro.reviewCount} reseñas</Text>
+          </View>
         </View>
-      )}
 
-      {pro.bio && (
-        <Text style={styles.bio} numberOfLines={2}>
-          {pro.bio}
-        </Text>
-      )}
-
-      {/*
-        Los demás oficios que ejerce, con su precio. Van con "También" por
-        delante y no como etiquetas sueltas: mezclado con el distintivo de
-        identidad verificada, un "Carpintería" a secas se lee como una insignia
-        más y no como "esta persona además hace carpintería".
-      */}
-      {otherTrades.length > 0 && (
-        <Text style={styles.alsoDoes} numberOfLines={2}>
-          También:{' '}
-          {otherTrades
-            .map((trade) =>
-              trade.visitFee != null
-                ? `${trade.label} visita ${trade.visitFee} €`
-                : `${trade.label} ${trade.hourlyRate} €/h`,
-            )
-            .join(' · ')}
-        </Text>
-      )}
-
-      <View style={styles.tags}>
         {/*
-          Solo si se sabe: `featuredTrade` puede faltar en una respuesta
-          antigua de la caché, y ahí no se afirma nada en vez de adivinar.
+          Las fotos de sus trabajos, en tira. Van antes de la descripción a
+          propósito: en oficios se decide mirando, y un baño terminado
+          convence más que dos líneas de texto.
+
+          Sin ninguna, el bloque entero no se dibuja —ni tira ni hueco
+          esperando—. Un placeholder haría parecer la ficha incompleta, y
+          quien se registra sin las fotos a mano no lo está.
         */}
-        {featuredTrade && (
-          <View style={styles.tag} testID="pro-card-pricing-mode">
-            <Text style={styles.tagText}>{pricingMode}</Text>
+        {pro.photos.length > 0 && (
+          <View style={styles.photos} testID="pro-card-photos">
+            {pro.photos.slice(0, MAX_STRIP).map((photo) => (
+              <Image
+                key={photo}
+                source={{ uri: `${API_BASE_URL}${photo}` }}
+                style={styles.photo}
+                resizeMode="cover"
+              />
+            ))}
+
+            {/*
+              Si tiene más de las que caben, se dice cuántas en vez de
+              cortarlas sin avisar: así se sabe que en la ficha hay más.
+            */}
+            {pro.photos.length > MAX_STRIP && (
+              <View style={[styles.photo, styles.photoMore]}>
+                <Text style={styles.photoMoreText}>
+                  +{pro.photos.length - MAX_STRIP}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
-        {pro.verified && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Identidad verificada</Text>
-          </View>
+        {pro.bio && (
+          <Text style={styles.bio} numberOfLines={2}>
+            {pro.bio}
+          </Text>
+        )}
+
+        {/*
+          Los demás oficios que ejerce, con su precio. Van con "También" por
+          delante y no como etiquetas sueltas: mezclado con el distintivo de
+          identidad verificada, un "Carpintería" a secas se lee como una
+          insignia más y no como "esta persona además hace carpintería".
+        */}
+        {otherTrades.length > 0 && (
+          <Text style={styles.alsoDoes} numberOfLines={2}>
+            También:{' '}
+            {otherTrades
+              .map((trade) =>
+                trade.visitFee != null
+                  ? `${trade.label} visita ${trade.visitFee} €`
+                  : `${trade.label} ${trade.hourlyRate} €/h`,
+              )
+              .join(' · ')}
+          </Text>
+        )}
+
+        <View style={styles.tags}>
+          {/*
+            Solo si se sabe: `featuredTrade` puede faltar en una respuesta
+            antigua de la caché, y ahí no se afirma nada en vez de adivinar.
+          */}
+          {featuredTrade && (
+            <View style={styles.tag} testID="pro-card-pricing-mode">
+              <Text style={styles.tagText}>{pricingMode}</Text>
+            </View>
+          )}
+
+          {pro.verified && (
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>Identidad verificada</Text>
+            </View>
+          )}
+        </View>
+
+        {/*
+          Un `Pressable` dentro de otro: el sistema de toques de RN entrega
+          el toque al más interno, así que marcar el corazón no abre la
+          ficha por detrás.
+
+          Va dentro de `body` y no de la tarjeta entera: así se ancla a la
+          esquina de lo de arriba de la carta, y con la carta desplegada no
+          acaba flotando sobre "Trabajos a precio fijo".
+        */}
+        {onToggleFavorite && (
+          <Pressable
+            onPress={onToggleFavorite}
+            hitSlop={8}
+            style={styles.favorite}
+            accessibilityRole="button"
+            accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+            accessibilityState={{ selected: isFavorite }}
+            testID={testID ? `${testID}-favorite` : undefined}
+          >
+            <Icon
+              name="heart"
+              size={26}
+              filled={isFavorite}
+              color={isFavorite ? theme.colors.urgency : theme.colors.textSoft}
+              strokeWidth={2}
+            />
+          </Pressable>
         )}
       </View>
 

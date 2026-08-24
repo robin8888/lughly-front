@@ -170,6 +170,7 @@ export default function RootLayout() {
               */}
               <Stack.Screen name="urgencia/[id]" />
               <Stack.Screen name="mis-datos" />
+              <Stack.Screen name="mis-favoritos" />
               <Stack.Screen name="revisar-documentos" />
               <Stack.Screen name="pro/[id]" />
               <Stack.Screen name="mis-pagos" />

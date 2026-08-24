@@ -37,9 +37,13 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   headerTitle: {
+    flex: 1,
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.h6,
     color: theme.colors.text,
+  },
+  favorite: {
+    padding: 4,
   },
   content: {
     /*
@@ -49,8 +53,6 @@ export const styles = StyleSheet.create({
      */
     flexGrow: 1,
     padding: 16,
-    // La barra inferior flota por encima
-    paddingBottom: 96,
   },
 
   state: {

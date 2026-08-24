@@ -1,5 +1,6 @@
 /**
- * La cuenta propia: dispositivos para avisos y lectura de documentos.
+ * La cuenta propia: dispositivos para avisos, lectura de documentos y
+ * favoritos.
  * Contrato: lughly-backend/src/modules/me/me.controller.ts
  *
  * Subir avatar y documentos vive en `upload.api.ts` y la contraseña en
@@ -18,6 +19,7 @@
 
 import { apiRequest } from './http'
 import type { DocumentType } from './upload.api'
+import type { ProsPage } from './pros.api'
 
 export type DevicePlatform = 'IOS' | 'ANDROID'
 
@@ -78,4 +80,18 @@ export const meApi = {
       auth: true,
       body: { token, platform },
     }),
+
+  /**
+   * Los profesionales marcados como favoritos (COMO_SE_CONTRATA.md §11), en
+   * la misma forma que `prosApi.list`: la tarjeta de directorio de siempre.
+   */
+  favorites: () => apiRequest<ProsPage>('/v1/me/favorites', { auth: true }),
+
+  /** Marca a un profesional como favorito. Marcar dos veces no da error. */
+  addFavorite: (proId: string) =>
+    apiRequest<null>(`/v1/me/favorites/${proId}`, { method: 'POST', auth: true }),
+
+  /** Lo quita de favoritos. Quitar a quien no estaba tampoco da error. */
+  removeFavorite: (proId: string) =>
+    apiRequest<null>(`/v1/me/favorites/${proId}`, { method: 'DELETE', auth: true }),
 }

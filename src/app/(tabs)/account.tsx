@@ -247,6 +247,11 @@ export default function AccountRoute() {
                 onPress: () => router.navigate('/jobs'),
                 icon: 'publish',
               },
+              {
+                label: 'Mis favoritos',
+                onPress: () => router.push('/mis-favoritos'),
+                icon: 'heart',
+              },
             ],
           },
           {
