@@ -15,7 +15,7 @@
  */
 
 import { useEffect } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -157,9 +157,28 @@ export function BottomTabBar() {
            * dibuja nada, que es mejor que un velo mal puesto.
            */
           blurMethod="dimezisBlurViewSdk31Plus"
-          intensity={45} tint="dark" style={StyleSheet.absoluteFill}
+          /*
+           * `systemUltraThinMaterialLight` (25 Agosto 2026). Dos descartes
+           * por el camino: `dark` no esmerila —oscurece lo que hay detrás, y
+           * sobre las pantallas blancas daba una barra gris— y
+           * `systemChromeMaterial` es el más OPACO de la familia, pensado
+           * para tapar. El ultrafino es el más transparente de los
+           * materiales de Apple: deja ver el contenido difuminado por
+           * detrás, que es lo que se busca.
+           *
+           * La variante `...Light` en vez de `systemChromeMaterial` a secas
+           * porque esa se adapta al modo del sistema y en oscuro volvería la
+           * barra negra, dejando ilegibles unos iconos que aquí son oscuros.
+           * El tema de la app es claro y único; la barra también.
+           *
+           * En Android los materiales de Apple no existen: el desenfoque real
+           * lo pone `blurMethod`, y el matiz cae en el que haya por defecto.
+           *
+           * Antes de esto la barra llevaba encima un velo de acento
+           * `rgba(89, 128, 166, 0.72)`, que era de donde salía su azul.
+           */
+          intensity={40} tint="systemUltraThinMaterialLight" style={StyleSheet.absoluteFill}
         />
-      <View style={styles.tint} pointerEvents="none" />
 
       {tabs.map((tab) => (
         <NavItem

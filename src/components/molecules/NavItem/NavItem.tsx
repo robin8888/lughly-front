@@ -29,7 +29,11 @@ export function NavItem({
   danger = false,
   testID,
 }: NavItemProps) {
-  const color = danger ? theme.colors.urgency : '#ffffff'
+  /*
+   * Oscuro, no blanco: la barra dejó de llevar velo de acento y pasó a un
+   * material claro del sistema, sobre el que un icono blanco no se ve.
+   */
+  const color = danger ? theme.colors.urgency : theme.colors.accent900
   const opacity = active ? ACTIVE_OPACITY : INACTIVE_OPACITY
 
   return (
@@ -41,7 +45,7 @@ export function NavItem({
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
     >
-      <Icon name={icon} size={21} color={color} strokeWidth={1.8} />
+      <Icon name={icon} size={24} color={color} strokeWidth={1.8} />
       <Text
         style={[styles.label, { color }]}
         numberOfLines={1}

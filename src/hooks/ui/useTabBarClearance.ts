@@ -19,7 +19,7 @@
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export const TAB_BAR_CLEARANCE = 80
+export const TAB_BAR_CLEARANCE = 90
 
 export function useTabBarClearance(): number {
   const insets = useSafeAreaInsets()

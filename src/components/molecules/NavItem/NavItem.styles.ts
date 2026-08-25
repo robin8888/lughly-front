@@ -15,12 +15,12 @@ export const styles = StyleSheet.create({
     minWidth: 0,
     alignItems: 'center',
     gap: 2,
-    paddingTop: 6,
-    paddingBottom: 2,
+    paddingTop: 8,
+    paddingBottom: 4,
     paddingHorizontal: 1,
   },
   label: {
     fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: 10.5,
+    fontSize: 11.5,
   },
 })

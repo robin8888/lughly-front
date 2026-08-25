@@ -41,7 +41,7 @@ export const styles = StyleSheet.create({
     padding: theme.spacing[4],
     // La barra inferior flota por encima del contenido: sin este aire
     // taparía el último elemento de la pantalla.
-    paddingBottom: 78,
+    paddingBottom: 88,
   },
   stateContainer: {
     flex: 1,
