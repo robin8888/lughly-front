@@ -11,6 +11,7 @@
  */
 
 import { useState } from 'react'
+import { StatusBar } from 'expo-status-bar'
 import {
   View,
   Text,
@@ -165,6 +166,8 @@ export function MyJobsPage({
   return (
     <View style={styles.screen} testID="my-jobs-page">
       <View style={styles.header}>
+        {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+        <StatusBar style="light" />
         <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
           <Text style={styles.backIcon}>←</Text>
         </Pressable>

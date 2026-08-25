@@ -11,6 +11,7 @@
  */
 
 import { useState } from 'react'
+import { StatusBar } from 'expo-status-bar'
 import {
   View,
   Text,
@@ -114,8 +115,21 @@ export function AdminDocumentsPage({ onBack, testID }: AdminDocumentsPageProps) 
   }
 
   return (
-    <SafeAreaView style={styles.screen} testID={testID ?? 'admin-documents-page'}>
+    <SafeAreaView
+      style={styles.screen}
+      /*
+        Sin el borde de arriba: la cabecera azul marino tiene que llegar hasta
+        el filo, como en las otras veintisiete pantallas, y el hueco del
+        sistema se lo reserva ella con su propio `paddingTop`. Con el borde
+        puesto quedaba una franja blanca encima del azul y la hora, en claro,
+        desaparecía dentro de ella.
+      */
+      edges={['bottom', 'left', 'right']}
+      testID={testID ?? 'admin-documents-page'}
+    >
       <View style={styles.header}>
+        {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+        <StatusBar style="light" />
         <Pressable
           onPress={onBack}
           style={styles.back}
@@ -132,6 +146,7 @@ export function AdminDocumentsPage({ onBack, testID }: AdminDocumentsPageProps) 
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         onScroll={onScroll}
         scrollEventThrottle={16}
       >

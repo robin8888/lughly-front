@@ -14,6 +14,7 @@
 
 import { useState } from 'react'
 import { View, Text, Pressable, Alert } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
@@ -60,6 +61,8 @@ export function ChangePasswordPage({ onBack }: ChangePasswordPageProps) {
   return (
     <View style={styles.screen} testID="change-password-page">
       <View style={styles.header}>
+        {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+        <StatusBar style="light" />
         <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
           <Text style={styles.backIcon}>←</Text>
         </Pressable>
@@ -73,6 +76,7 @@ export function ChangePasswordPage({ onBack }: ChangePasswordPageProps) {
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         <InfoCard variant="accent">

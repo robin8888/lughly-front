@@ -18,6 +18,7 @@
  */
 
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
 import { Avatar } from '@/components/atoms/Avatar'
@@ -182,6 +183,8 @@ export function JobDetailPage({
 
   const header = (
     <View style={styles.header}>
+      {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+      <StatusBar style="light" />
       <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
         <Text style={styles.backIcon}>←</Text>
       </Pressable>

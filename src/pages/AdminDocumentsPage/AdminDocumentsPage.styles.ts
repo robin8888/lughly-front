@@ -13,24 +13,32 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.bg,
   },
+  /*
+    Cabecera en el azul oscuro de los formularios (`AuthShell`), con el título
+    en blanco (25 Agosto 2026). Se hizo en las treinta pantallas a la vez: una
+    cabecera clara aquí y otra oscura allá no es una variante, es un descuido.
+  */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing[2],
     paddingHorizontal: 12,
-    paddingVertical: theme.spacing[3],
+    /* El hueco del sistema, que ya no lo reserva el `SafeAreaView` */
+    paddingTop: 56,
+    paddingBottom: theme.spacing[3],
+    backgroundColor: theme.colors.accent900,
   },
   back: {
     padding: theme.spacing[2],
   },
   backIcon: {
     fontSize: 27,
-    color: theme.colors.text,
+    color: '#ffffff',
   },
   title: {
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.h4,
-    color: theme.colors.text,
+    color: '#ffffff',
   },
   content: {
     /*
@@ -43,7 +51,7 @@ export const styles = StyleSheet.create({
     // La barra inferior flota por encima del contenido. `SafeAreaView` ya
     // se come el inset de abajo (sin `edges` restringido), así que aquí NO
     // hace falta sumarle `insets.bottom` a mano —eso lo haría dos veces—.
-    paddingBottom: 96,
+    paddingBottom: 106,
     gap: 12,
   },
   state: {

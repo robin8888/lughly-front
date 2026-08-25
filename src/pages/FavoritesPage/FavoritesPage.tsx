@@ -9,6 +9,7 @@
  */
 
 import { View, Text, Pressable, ActivityIndicator } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
@@ -46,6 +47,8 @@ export function FavoritesPage({ onSelectPro, onHireCarta, onBack }: FavoritesPag
   return (
     <View style={styles.screen} testID="favorites-page">
       <View style={styles.header}>
+        {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+        <StatusBar style="light" />
         <Pressable
           onPress={onBack}
           style={styles.back}

@@ -18,6 +18,7 @@
 
 import { useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable, Linking, Alert } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { Money } from '@/components/atoms/Money'
 import { Tag } from '@/components/atoms/Tag'
@@ -72,6 +73,8 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
   return (
     <View style={styles.screen} testID="agenda-page">
       <View style={styles.header}>
+        {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+        <StatusBar style="light" />
         <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
           <Text style={styles.backIcon}>←</Text>
         </Pressable>

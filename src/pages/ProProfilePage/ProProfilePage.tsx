@@ -17,6 +17,7 @@
 
 import { useState } from 'react'
 import { View, Text, Image, Pressable, ScrollView, ActivityIndicator } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
@@ -156,6 +157,8 @@ export function ProProfilePage({
 
   const header = (
     <View style={styles.header}>
+      {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+      <StatusBar style="light" />
       <Pressable
         onPress={onBack}
         style={styles.back}
@@ -181,7 +184,14 @@ export function ProProfilePage({
             name="heart"
             size={22}
             filled={isFavorite}
-            color={isFavorite ? theme.colors.urgency : theme.colors.textSoft}
+            /*
+              Sobre la cabecera azul marino, el rojo de `urgency` se queda en
+              2,32:1 y un icono necesita 3:1; `unavailable` es ese mismo rojo
+              un punto más claro y llega a 3,4:1. Y el corazón vacío en
+              `darkText`, que es el color de letra para fondo oscuro, porque
+              `textSoft` ahí se apagaba.
+            */
+            color={isFavorite ? theme.colors.unavailable : theme.colors.darkText}
             strokeWidth={2}
           />
         </Pressable>

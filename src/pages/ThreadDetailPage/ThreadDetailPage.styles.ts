@@ -13,6 +13,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.bg,
   },
+  /*
+    Cabecera en el azul oscuro de los formularios (`AuthShell`), con el título
+    en blanco (25 Agosto 2026). Se hizo en las treinta pantallas a la vez: una
+    cabecera clara aquí y otra oscura allá no es una variante, es un descuido.
+  */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -21,7 +26,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
+    borderBottomColor: theme.colors.darkDivider,
+    backgroundColor: theme.colors.accent900,
   },
   back: {
     paddingVertical: 4,
@@ -29,7 +35,7 @@ export const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: theme.typography.sizes.h5,
-    color: theme.colors.text,
+    color: '#ffffff',
   },
   headerText: {
     flex: 1,
@@ -38,12 +44,12 @@ export const styles = StyleSheet.create({
   otherName: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
+    color: '#ffffff',
   },
   jobTitle: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.textSoft,
+    color: theme.colors.accent300,
     marginTop: 1,
   },
 

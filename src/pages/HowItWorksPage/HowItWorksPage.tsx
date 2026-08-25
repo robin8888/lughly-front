@@ -10,6 +10,7 @@
  */
 
 import { View, Text, Pressable } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -33,8 +34,21 @@ export function HowItWorksPage({
   const onScroll = useNavScrollHandler()
 
   return (
-    <SafeAreaView style={styles.screen} testID={testID ?? 'how-it-works-page'}>
+    <SafeAreaView
+      style={styles.screen}
+      /*
+        Sin el borde de arriba: la cabecera azul marino tiene que llegar hasta
+        el filo, como en las otras veintisiete pantallas, y el hueco del
+        sistema se lo reserva ella con su propio `paddingTop`. Con el borde
+        puesto quedaba una franja blanca encima del azul y la hora, en claro,
+        desaparecía dentro de ella.
+      */
+      edges={['bottom', 'left', 'right']}
+      testID={testID ?? 'how-it-works-page'}
+    >
       <View style={styles.header}>
+        {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+        <StatusBar style="light" />
         <Pressable
           onPress={onBack}
           style={styles.back}

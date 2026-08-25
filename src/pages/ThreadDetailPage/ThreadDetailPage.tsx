@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { StatusBar } from 'expo-status-bar'
 import {
   ActivityIndicator,
   Alert,
@@ -172,6 +173,8 @@ export function ThreadDetailPage({
 
   const header = (
     <View style={styles.header}>
+      {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+      <StatusBar style="light" />
       <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
         <Text style={styles.backIcon}>←</Text>
       </Pressable>

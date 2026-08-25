@@ -15,6 +15,7 @@
  */
 
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Icon } from '@/components/atoms/Icon'
@@ -43,6 +44,8 @@ export function MessagesPage({ onBack, onOpenJobThread, onOpenSupport }: Message
 
   const header = (
     <View style={styles.header}>
+      {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+      <StatusBar style="light" />
       <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
         <Text style={styles.backIcon}>←</Text>
       </Pressable>
