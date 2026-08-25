@@ -15,12 +15,22 @@ export function prosQueryKey(filters: ProsFilters) {
   return ['pros', filters] as const
 }
 
-export function usePros(filters: ProsFilters = {}) {
+export interface UseProsOptions {
+  /**
+   * A falso no se pregunta nada. Lo usa la home del cliente, que solo tiene
+   * oficio que consultar después de una búsqueda; sin esto pediría el
+   * directorio entero nada más abrir la app.
+   */
+  enabled?: boolean
+}
+
+export function usePros(filters: ProsFilters = {}, { enabled = true }: UseProsOptions = {}) {
   return useQuery<ProsPage>({
     queryKey: prosQueryKey(filters),
     queryFn: () => prosApi.list(filters),
     // El directorio cambia poco en una sesión: medio minuto de margen evita
     // repetir la misma petición al ir y volver entre pantallas.
     staleTime: 30_000,
+    enabled,
   })
 }

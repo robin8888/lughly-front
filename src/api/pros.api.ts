@@ -231,6 +231,17 @@ export interface ProsFilters {
   minRating?: number
   lat?: number
   lng?: number
+  /**
+   * Con `lat`/`lng`, deja solo a quien **llega hasta ese punto**: cada
+   * profesional declara su radio de cobertura y se compara contra él, así que
+   * no es "los que están a menos de X km".
+   *
+   * Sin el punto no hace nada. Va aparte de mandarlo porque son dos preguntas
+   * distintas: el directorio manda el punto para poner delante a los de al
+   * lado sin esconder a nadie, y la home lo manda para poder decir cuántos
+   * hay cerca sin mentir.
+   */
+  nearby?: boolean
   city?: string
   limit?: number
   offset?: number

@@ -36,11 +36,21 @@ export default function InicioRoute() {
    */
   return (
     <HomePage
-      role="client"
       onUrgent={() => router.navigate('/urgent')}
-      // El oficio viaja como parámetro: el directorio abre ya filtrado
-      onSelectTrade={(slug) =>
-        router.navigate({ pathname: '/pros', params: { trade: slug } })
+      /*
+        El oficio viaja como parámetro y el punto con él: el directorio abre
+        ya filtrado, y con la misma lista que se acaba de contar en la home.
+        Las coordenadas van como texto porque un parámetro de ruta no es otra
+        cosa; la pantalla de destino las devuelve a número.
+      */
+      onSelectTrade={(slug, point) =>
+        router.navigate({
+          pathname: '/pros',
+          params: {
+            trade: slug,
+            ...(point && { lat: String(point.lat), lng: String(point.lng) }),
+          },
+        })
       }
       /*
        * `push` y no `navigate`: "Cómo funciona" no es una pestaña, es una

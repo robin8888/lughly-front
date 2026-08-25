@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
     // La barra inferior flota por encima. `SafeAreaView` ya se come el
     // inset de abajo (sin `edges` restringido), así que aquí NO hace falta
     // sumarle `insets.bottom` a mano —eso lo haría dos veces—.
-    paddingBottom: 96,
+    paddingBottom: 106,
   },
 
   state: {

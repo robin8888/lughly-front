@@ -6,7 +6,7 @@
  * que el desplegable siga colgando del campo con su mismo aspecto.
  */
 
-import { StyleSheet, type ViewStyle } from 'react-native'
+import { StyleSheet, Keyboard, type ViewStyle } from 'react-native'
 import { render, fireEvent } from '@testing-library/react-native'
 import { theme } from '@/theme'
 import { QuickSearch } from './QuickSearch'
@@ -72,7 +72,8 @@ describe('QuickSearch', () => {
     expect(lista.backgroundColor).toBe('#ffffff')
   })
 
-  it('al elegir un oficio lo devuelve y vacía el campo', () => {
+  it('al elegir un oficio lo devuelve, vacía el campo y quita el teclado', () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss')
     const elegido: string[] = []
     const { getByTestId } = render(
       <QuickSearch onSelect={(s) => elegido.push(s)} testID="buscador" />
@@ -83,5 +84,45 @@ describe('QuickSearch', () => {
 
     expect(elegido).toEqual(['fontaneria'])
     expect(getByTestId('buscador').props.value).toBe('')
+    expect(dismiss).toHaveBeenCalled()
+
+    dismiss.mockRestore()
+  })
+
+  /**
+   * El intro del teclado. Lo que hay justo debajo del buscador es la
+   * respuesta a la búsqueda, y el teclado ocupa media pantalla: si se queda
+   * abierto, se busca a ciegas.
+   */
+  it('el intro se queda con la primera sugerencia y cierra el teclado', () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss')
+    const elegido: string[] = []
+    const { getByTestId } = render(
+      <QuickSearch onSelect={(s) => elegido.push(s)} testID="buscador" />
+    )
+
+    fireEvent.changeText(getByTestId('buscador'), 'fuga')
+    fireEvent(getByTestId('buscador'), 'submitEditing')
+
+    expect(elegido).toEqual(['fontaneria'])
+    expect(dismiss).toHaveBeenCalled()
+
+    dismiss.mockRestore()
+  })
+
+  it('sin sugerencias el intro no elige nada, pero el teclado se va igual', () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss')
+    const onSelect = jest.fn()
+    const { getByTestId } = render(
+      <QuickSearch onSelect={onSelect} testID="buscador" />
+    )
+
+    fireEvent.changeText(getByTestId('buscador'), 'qwerty')
+    fireEvent(getByTestId('buscador'), 'submitEditing')
+
+    expect(onSelect).not.toHaveBeenCalled()
+    expect(dismiss).toHaveBeenCalled()
+
+    dismiss.mockRestore()
   })
 })

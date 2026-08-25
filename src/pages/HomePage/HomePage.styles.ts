@@ -19,6 +19,6 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.bg,
   },
   content: {
-    paddingBottom: 78,
+    paddingBottom: 88,
   },
 })

@@ -92,6 +92,18 @@ export const colors = {
   // Semánticos (según README)
   available: '#3f8f5a',
   /**
+   * El mismo verde, oscurecido, para **escribir** con él sobre blanco.
+   *
+   * `available` es un color de contorno y de punto: al lado de una foto dice
+   * "puede ir ahora" sin que nadie lo lea como texto. En letra se queda en
+   * 3,97:1 contra el blanco, por debajo del 4,5:1 que pide la WCAG para un
+   * cuerpo de 16 px; este llega a 6,35:1.
+   *
+   * Lo usa el recuento del bocadillo de la home —cuántos profesionales hay
+   * cerca—, que es la cifra por la que el cliente decide si sigue.
+   */
+  availableText: '#2f6b43',
+  /**
    * El anillo de quien no atiende ahora. Rojo apagado y **no** `urgency`: no
    * ha fallado nada ni hay ninguna urgencia, solo dice que hoy no sale
    * corriendo.

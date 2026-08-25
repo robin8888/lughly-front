@@ -2,6 +2,27 @@
  * HomePage
  * Home del cliente (HOME_MOBILE.md).
  *
+ * **Rehecha el 25 Agosto 2026.** El carrusel de oficios se fue: era un
+ * coverflow que gastaba 410 px —casi media pantalla— en enseñar UN oficio
+ * de dieciocho, y obligaba a diecisiete arrastres para verlos todos. Pasó a
+ * cuadrícula, y de ahí a `ReceptionStage`: un solo dibujo del tamaño que
+ * tenían cuatro casillas.
+ *
+ * Con eso, **el buscador del hero es el único camino a un oficio**, y esta
+ * pantalla guarda cuál se buscó. Antes elegir un oficio saltaba derecho al
+ * directorio; ahora la respuesta se da aquí —Uhiro dice cuántos hay— y solo
+ * se sale al directorio si el cliente pulsa "Ver". Buscar deja de ser un
+ * salto a ciegas: se ve si hay alguien antes de cambiar de pantalla.
+ *
+ * La cabecera también: `HeroCard` centraba logotipo, foto y nombre en otros
+ * 260 px de presentación para alguien que ya ha entrado. `ClientHero` deja
+ * eso en una franja y pone delante lo que se viene a hacer, que es buscar.
+ * `HeroCard` sigue en pie porque la home del profesional sí necesita esa
+ * ficha suya, y entra a verla a diario.
+ *
+ * Los mensajes pasan de botón flotante a la cabecera: el flotante tapaba la
+ * esquina de la última fila de oficios.
+ *
  * Solo compone organismos: cero estilos de contenido aquí.
  *
  * **Adelgazada el 18 Agosto 2026.** Tenía cinco secciones numeradas y cuatro
@@ -19,29 +40,40 @@
  * destino —publicar— que es una pestaña fija de la barra de abajo, siempre
  * visible: gastaba el final de la pantalla en un atajo que nadie necesita.
  *
- * Queda lo que se usa: quién eres, el buscador, los oficios, y dos salidas
- * que no repiten a la barra de abajo —cómo funciona y la urgencia—.
+ * Queda lo que se usa: quién eres, el buscador, lo que el buscador conteste,
+ * y dos salidas que no repiten a la barra de abajo —cómo funciona y la
+ * urgencia—.
  */
 
+import { useState } from 'react'
 import Animated from 'react-native-reanimated'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_BASE_URL } from '@/api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
-import { HeroCard } from '@/components/organisms/HeroCard'
+import { ClientHero } from '@/components/organisms/ClientHero'
 import { JobAnswer, isAnswer } from '@/components/organisms/JobAnswer'
-import { MessagesFab } from '@/components/molecules/MessagesFab'
-import { TradesCarousel } from '@/components/organisms/TradesCarousel'
+import { ReceptionStage } from '@/components/organisms/ReceptionStage'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
+import { usePros } from '@/hooks/domain/usePros'
+import { useUserLocation } from '@/hooks/ui/useUserLocation'
 import { useSeenAnswers, useMarkAnswerSeen } from '@/stores/useSeenAnswersStore'
 import type { TradeSlug } from '@/utils/trades'
+import type { LatLng } from '@/utils/geo'
 import { useUser } from '@/stores/useAuthStore'
 import { styles } from './HomePage.styles'
 
 export interface HomePageProps {
-  role: 'client' | 'pro'
   onUrgent: () => void
-  onSelectTrade: (slug: TradeSlug) => void
+  /**
+   * Al directorio, ya filtrado por el oficio. Lo dispara el "Ver" del
+   * bocadillo, no la búsqueda: la búsqueda se contesta sin salir de aquí.
+   *
+   * El punto viaja con él para que la lista sea exactamente la que se acaba
+   * de contar. Sin llevarlo, el bocadillo prometería siete y el directorio
+   * enseñaría a todos los del oficio en España.
+   */
+  onSelectTrade: (slug: TradeSlug, point?: LatLng) => void
   /**
    * Abre la pantalla que explica el modelo. Es el botón secundario del hero:
    * ocupó el sitio de "Ver profesionales", que era el tercer camino al
@@ -58,17 +90,59 @@ export interface HomePageProps {
 }
 
 export function HomePage({
-  role,
   onUrgent,
   onSelectTrade,
   onHowItWorks,
   onSeeJob,
   onMessages,
 }: HomePageProps) {
-  const isClient = role === 'client'
   // Al bajar el scroll, la barra inferior se encoge
   const onScroll = useNavScrollHandler()
   const user = useUser()
+
+  /** El último oficio buscado en el hero. `null` mientras no se ha buscado */
+  const [buscado, setBuscado] = useState<TradeSlug | null>(null)
+
+  /**
+   * Desde dónde busca.
+   *
+   * El permiso se pide **en la primera búsqueda** y no al abrir la app: un
+   * diálogo del sistema nada más entrar se deniega por reflejo, y luego el
+   * sistema ya no deja volver a preguntar. Buscar un oficio es justo el
+   * momento en que la ubicación sirve para algo que se ve.
+   */
+  const { position, status, request } = useUserLocation()
+
+  const buscar = (slug: TradeSlug) => {
+    setBuscado(slug)
+    if (status === 'idle') void request()
+  }
+
+  /*
+    Cuántos hay de ese oficio, para decirlo en el bocadillo. Con punto son
+    los que **llegan hasta aquí**; sin él, todos los del oficio, y entonces
+    el bocadillo no dice "cerca de ti".
+
+    Son los MISMOS filtros que usa el directorio, así que comparten clave de
+    caché: al pulsar "Ver" la lista ya está puesta y la pantalla abre con
+    ella en vez de con el esqueleto de carga.
+  */
+  const filtros =
+    buscado === null
+      ? {}
+      : {
+          trade: buscado,
+          ...(position && { lat: position.lat, lng: position.lng, nearby: true }),
+        }
+
+  /*
+    Nada que preguntar hasta saber si hay ubicación o no. Preguntar mientras
+    el diálogo del permiso está abierto traería el recuento nacional, y al
+    conceder el permiso el número cambiaría solo delante del cliente.
+  */
+  const pros = usePros(filtros, {
+    enabled: buscado !== null && status !== 'idle' && status !== 'requesting',
+  })
 
   /**
    * Si alguien le ha contestado desde la última vez que abrió la app.
@@ -78,7 +152,7 @@ export function HomePage({
    * camino. Aquí se lo decimos otra vez, igual que al profesional se le dice
    * lo que tiene sin responder.
    */
-  const { data: jobsData } = useMyJobs(isClient)
+  const { data: jobsData } = useMyJobs(true)
   const seen = useSeenAnswers()
   const markSeen = useMarkAnswerSeen()
 
@@ -119,25 +193,36 @@ export function HomePage({
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
-        <HeroCard
-          role={role}
-          variant="light"
+        <ClientHero
           userName={user?.name}
           /*
            * `avatarUrl` llega como ruta relativa a la API, así que el prefijo
            * se pone aquí, igual que en Mi cuenta y en la home del profesional.
            */
           avatarUri={user?.avatarUrl ? `${API_BASE_URL}${user.avatarUrl}` : null}
-          onSecondary={onHowItWorks}
-          onUrgent={isClient ? onUrgent : undefined}
-          onSelectTrade={isClient ? onSelectTrade : undefined}
+          onSelectTrade={buscar}
+          onUrgent={onUrgent}
+          onHowItWorks={onHowItWorks}
+          onMessages={onMessages}
           testID="home-hero"
         />
 
-        <TradesCarousel onSelect={onSelectTrade} testID="home-carousel" />
+        <ReceptionStage
+          trade={buscado}
+          total={pros.data?.total}
+          nearby={position !== null}
+          /*
+            `isLoading` y no `isPending`: una consulta apagada se queda en
+            "pendiente" para siempre, y el bocadillo diría "un momento, que
+            miro" sin estar mirando nada.
+          */
+          isLoading={pros.isLoading}
+          isError={pros.isError}
+          onSee={() => buscado && onSelectTrade(buscado, position ?? undefined)}
+          testID="home-stage"
+        />
       </Animated.ScrollView>
 
-      <MessagesFab onPress={onMessages} testID="home-messages-fab" />
     </SafeAreaView>
   )
 }
