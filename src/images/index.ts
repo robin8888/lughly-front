@@ -48,6 +48,26 @@ export const images = {
    * pueden perder sin que se note.
    */
   carruselFondo: require('./carrusel-fondo.jpg'),
+  /**
+   * Uhiro en el mostrador de Lughly, con el cartel que señala el buscador.
+   * 1024x1024, JPG.
+   *
+   * Ocupa el hueco grande de la home del cliente mientras no se ha buscado
+   * nada; en cuanto una búsqueda encuentra a alguien, ese hueco pasa a la
+   * ilustración del oficio buscado (`tradeImages`).
+   *
+   * 1024 y no 640 como las de oficio: esta se dibuja a todo el ancho —hasta
+   * 430 puntos— y lleva texto dentro del propio dibujo, que es lo primero que
+   * se deshace al ampliar.
+   *
+   * Cuadrada porque el hueco lo es. El original es apaisado (1402x1122) y
+   * vive en `_fuentes/recepcion`. El recorte va **pegado al borde
+   * izquierdo**, y no centrado como las de oficio: el rótulo empieza a 78 px
+   * de ese borde, así que quitar 140 por cada lado le cortaba la "L". Lo que
+   * se pierde es el lado derecho —un monitor y el cartel de "recepción"—, que
+   * no dice nada.
+   */
+  recepcion: require('./recepcion.jpg'),
   asistente: require('./asistente-icono.png'),
   loader: require('./robot-hormiga-loader.png'),
   /**
@@ -72,37 +92,49 @@ export type ImageKey = keyof typeof images
 /**
  * Ilustración por oficio. Las claves son los slugs de `@/utils/trades`.
  *
- * **Ojo con `pintura` e `informatica`**: los dos ficheros están mal
- * nombrados. `robot-hormiga-pintura.png` es la hormiga con el portátil y
- * `robot-hormiga-informatica.png` la del bote y la brocha. Viene del diseño,
- * que ya los tenía cruzados, y por eso el mapa los cambia aquí en vez de
- * seguir el nombre del fichero.
- *
- * No se renombran los ficheros porque `Home.dc.html` y `MobileApp.dc.html`
- * los referencian con estos nombres y dejarían de verse. Se arregla el día
- * que los diseños dejen de hacer falta.
+ * Aquí vivía un aviso sobre `pintura` e `informatica`, cuyos ficheros
+ * antiguos estaban cruzados —el llamado "pintura" tenía el portátil— y el
+ * mapa los recolocaba. Con las ilustraciones nuevas cada fichero se llama
+ * como su oficio y el cruce desaparece.
  */
 export const tradeImages = {
-  carpinteria: require('./robot-hormiga-carpinteria.png'),
-  electricidad: require('./robot-hormiga-electricidad.png'),
-  fontaneria: require('./robot-hormiga-fontaneria.png'),
-  // El fichero se llama informatica, pero dentro está la brocha
-  pintura: require('./robot-hormiga-informatica.png'),
-  jardineria: require('./robot-hormiga-jardineria.png'),
-  // Y este se llama pintura, pero dentro está el portátil
-  informatica: require('./robot-hormiga-pintura.png'),
-  limpieza: require('./robot-hormiga-limpieza.png'),
-  transporte: require('./robot-hormiga-transporte.png'),
-  cuidados: require('./robot-hormiga-cuidado-ninos.png'),
-  dependiente: require('./robot-hormiga-dependiente.png'),
-  domiciliario: require('./robot-hormiga-domiciliario.png'),
-  cerrajeria: require('./robot-hormiga-cerrajeria.png'),
-  climatizacion: require('./robot-hormiga-climatizacion.png'),
-  mecanica: require('./robot-hormiga-mecanica.png'),
-  belleza: require('./robot-hormiga-belleza.png'),
-  clases: require('./robot-hormiga-clases.png'),
-  mascotas: require('./robot-hormiga-mascotas.png'),
-  otros: require('./robot-hormiga-otros.png'),
+  /**
+   * Ilustraciones de oficio, tanda del 25 Agosto 2026: medio cuerpo, cuadradas
+   * y con el fondo dentro del propio fichero, para pintarlas a sangre en la
+   * cuadrícula de la home. Sustituyen a los `robot-hormiga-*`, que eran cuerpo
+   * entero recortado y de proporciones dispares —de 0.42 a 1.66—, así que en
+   * una misma caja unas salían anchas y otras como una raja de 23 px.
+   *
+   * JPEG y no PNG porque llevan fondo opaco y no necesitan alfa: las
+   * dieciocho ocupan 1,8 MB en vez de los 42 MB que pesan los originales.
+   * Esos originales viven en `_fuentes/oficios-2026-08`, fuera del
+   * repositorio, con el comando exacto para rehacerlas en su `LEEME.md`.
+   *
+   * Once se rehicieron esa misma tarde con otra ilustración —carpintería,
+   * cerrajería, climatización, electricidad, fontanería, informática,
+   * jardinería, limpieza, mecánica, pintura y transporte—, mismo formato y
+   * mismo recorte. Las de antes quedaron en
+   * `_fuentes/oficios-2026-08/anteriores`.
+   * No queda ninguna del lote `robot-hormiga-*`.
+   */
+  carpinteria: require('./oficio-carpinteria.jpg'),
+  electricidad: require('./oficio-electricidad.jpg'),
+  fontaneria: require('./oficio-fontaneria.jpg'),
+  pintura: require('./oficio-pintura.jpg'),
+  jardineria: require('./oficio-jardineria.jpg'),
+  informatica: require('./oficio-informatica.jpg'),
+  limpieza: require('./oficio-limpieza.jpg'),
+  transporte: require('./oficio-transporte.jpg'),
+  cuidados: require('./oficio-cuidados.jpg'),
+  dependiente: require('./oficio-dependiente.jpg'),
+  domiciliario: require('./oficio-domiciliario.jpg'),
+  cerrajeria: require('./oficio-cerrajeria.jpg'),
+  climatizacion: require('./oficio-climatizacion.jpg'),
+  mecanica: require('./oficio-mecanica.jpg'),
+  belleza: require('./oficio-belleza.jpg'),
+  clases: require('./oficio-clases.jpg'),
+  mascotas: require('./oficio-mascotas.jpg'),
+  otros: require('./oficio-otros.jpg'),
 } as const
 
 export type TradeImageKey = keyof typeof tradeImages
