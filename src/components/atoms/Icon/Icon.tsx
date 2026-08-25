@@ -289,13 +289,25 @@ export function Icon({
         </>
       )}
 
+      {/*
+        Sol y no rueda dentada (25 Agosto 2026). Origen:
+        src/images/icons/configuracion.svg. El SVG trae `stroke="#416180"` y
+        `stroke-width="2"` escritos; aquí no se copian, porque el color y el
+        grosor llegan por propiedad y así el icono sigue al tema y al estado
+        de la fila en vez de quedarse fijo.
+      */}
       {name === 'settings' && (
         <>
           <Circle cx="12" cy="12" r="3" {...stroke} />
-          <Path
-            d="M19 12l2-1-1-3-2 .2-.9-1.5 1-1.8-2-2-1.8 1-.7-.3L12 2 10.4 3.6l-.7.3-1.8-1-2 2 1 1.8L6 8.2 4 8l-1 3 2 1v2l-2 1 1 3 2-.2.9 1.5-1 1.8 2 2 1.8-1 .7.3L12 22l1.6-1.6.7-.3 1.8 1 2-2-1-1.8.9-1.5 2 .2 1-3-2-1z"
-            {...stroke}
-          />
+          <Circle cx="12" cy="12" r="7" {...stroke} />
+          <Path d="M12 2.5v2" {...stroke} />
+          <Path d="M12 19.5v2" {...stroke} />
+          <Path d="M2.5 12h2" {...stroke} />
+          <Path d="M19.5 12h2" {...stroke} />
+          <Path d="M5.2 5.2l1.4 1.4" {...stroke} />
+          <Path d="M17.4 17.4l1.4 1.4" {...stroke} />
+          <Path d="M18.8 5.2l-1.4 1.4" {...stroke} />
+          <Path d="M6.6 17.4l-1.4 1.4" {...stroke} />
         </>
       )}
 
