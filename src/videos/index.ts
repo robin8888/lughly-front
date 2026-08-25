@@ -12,34 +12,36 @@
  */
 
 /**
- * Animación de entrada: la marca sobre el césped de una casa. 1080x1920,
- * 13 s, 30 fps, H.264 sin audio, 2,1 MB.
+ * Animación de entrada: las hormigas robot montando el logotipo (25 Agosto
+ * 2026). 720x1280, 10 s, H.264, 2,5 MB.
  *
- * **Es una escena opaca a sangre**, no un logotipo recortado. Trae su propio
- * cielo y su propio suelo, así que llena el hueco entero y el fondo de
- * `SplashPage` solo asoma detrás de los botones y en el degradado inferior.
+ * Sustituye a `splash-lughly.mp4`, que era la marca sobre el césped de una
+ * casa —1080x1920, 13 s— y que salía de una secuencia de 392 PNG. Aquel se
+ * cocinaba aquí con ffmpeg; este llega ya codificado y entra **tal cual, sin
+ * recodificar**: pasarlo otra vez por H.264 solo restaría calidad. Su
+ * original, que es este mismo fichero, está en `_fuentes`.
  *
- * Eso deja el color de la pantalla libre: **se puede cambiar sin recodificar
- * nada**. No siempre fue así — la primera versión venía con alfa, y como H.264
- * no la admite había que componerla sobre el fondo exacto de la pantalla y
- * rehacer el vídeo cada vez que ese color cambiara.
+ * **Es una escena opaca a sangre**, no un logotipo recortado, igual que el
+ * anterior: llena el hueco entero y el fondo de `SplashPage` solo asoma
+ * detrás de los botones. Eso deja el color de la pantalla libre, y se puede
+ * cambiar sin tocar el vídeo.
  *
- * Para regenerarlo desde la secuencia de PNG (en `_fuentes`, fuera del repo):
+ * Dos cosas cambian respecto al anterior y las dos están contempladas en
+ * `SplashPage`:
  *
- *     ffmpeg -framerate 30 -i frame_%04d.png -vf "format=yuv420p" \
- *       -c:v libx264 -profile:v main -level:v 4.0 -crf 21 -preset slow \
- *       -movflags +faststart -an splash-lughly.mp4
+ * - **Trae pista de audio** (AAC). La pantalla pone `muted` de todas formas,
+ *   así que no suena ni le baja la música a nadie. No se le quita la pista
+ *   porque quitarla obliga a reescribir el contenedor y este equipo no tiene
+ *   ffmpeg; pesa poco y no se reproduce.
+ * - **720 y no 1080 de ancho.** En un móvil de 390 puntos a 3x se amplía 1,6
+ *   veces. Es lo que mide el original; si hiciera falta más nitidez, hay que
+ *   pedir la pieza en 1080, no reescalar esta.
  *
- * El `crf 21` está elegido mirando el resultado: el cielo y el césped son
- * degradados amplios y planos, que es justo donde el H.264 bandea. A 21 no se
- * ve y pesa 1,2 MB; subiéndolo empieza a notarse en el cielo.
- *
- * Si algún día vuelve una pieza con alfa, hay que componerla sobre el fondo de
- * la pantalla antes de codificar, y compensar a mano: el paso por yuv420p
- * desplaza el color un punto en tonos claros y dos o tres en oscuros.
+ * Sigue siendo 9:16, así que el `contentFit="cover"` de la pantalla recorta
+ * por los lados exactamente igual que antes.
  */
 export const videos = {
-  splash: require('./splash-lughly.mp4'),
+  splash: require('./splash-hormigas.mp4'),
 } as const
 
 export type VideoKey = keyof typeof videos
