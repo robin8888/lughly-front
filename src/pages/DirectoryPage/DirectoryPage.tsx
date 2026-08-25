@@ -13,7 +13,8 @@
  */
 
 import { useEffect, useState } from 'react'
-import { View, Text, Pressable, ActivityIndicator } from 'react-native'
+import { View, Text, Pressable, ActivityIndicator, Keyboard } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
@@ -21,11 +22,13 @@ import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { ProDirectoryCard, type CartaSelection } from '@/components/molecules/ProDirectoryCard'
+import { TradeBanner } from '@/components/molecules/TradeBanner'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
 import { useFavoriteIds, useToggleFavorite } from '@/hooks/domain/useFavorites'
 import { usePros } from '@/hooks/domain/usePros'
 import { searchTrades } from '@/utils/tradeSearch'
 import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
+import type { LatLng } from '@/utils/geo'
 import { theme } from '@/theme'
 import { styles } from './DirectoryPage.styles'
 
@@ -34,6 +37,17 @@ const ALL_TRADES = { value: '', label: 'Todos los oficios' }
 export interface DirectoryPageProps {
   /** Oficio con el que se llega desde la home */
   initialTrade?: string
+  /**
+   * Desde dónde busca el cliente, si lo ha compartido.
+   *
+   * Con punto, la lista se recorta a **quien llega hasta él**, no a quien
+   * está a menos de tantos kilómetros: cada profesional declara su radio.
+   *
+   * Viene de la home y no se pide aquí: allí ya se preguntó para poder decir
+   * cuántos había cerca, y el recuento del bocadillo y esta lista tienen que
+   * salir de la misma pregunta. Si no, se anuncian siete y aparecen cuarenta.
+   */
+  point?: LatLng | null
   /**
    * Abre la ficha. Si se marcó algo de la carta en la propia tarjeta antes
    * de tocarla, viaja aquí para que la ficha arranque con esa selección
@@ -60,6 +74,7 @@ export interface DirectoryPageProps {
 
 export function DirectoryPage({
   initialTrade,
+  point,
   onSelectPro,
   onHireCarta,
   onBack,
@@ -100,9 +115,24 @@ export function DirectoryPage({
 
   const suggestions = searchTrades(query)
 
+  /**
+   * Elegir oficio desde el buscador de esta pantalla.
+   *
+   * Se retira el teclado, igual que en el de la home: ocupa media pantalla y
+   * lo que hay debajo es el resultado —la franja del oficio y las fichas—.
+   * No se va solo porque el desplegable recoge el toque con
+   * `keyboardShouldPersistTaps`, y para React Native eso no es tocar fuera.
+   */
+  const elegirOficio = (slug: string) => {
+    setTrade(slug)
+    setQuery('')
+    Keyboard.dismiss()
+  }
+
   const { data, isPending, isError, refetch, isFetching } = usePros({
     trade: trade || undefined,
     availableNow: availableNow || undefined,
+    ...(point && { lat: point.lat, lng: point.lng, nearby: true }),
   })
 
   const pros = data?.items ?? []
@@ -110,9 +140,19 @@ export function DirectoryPage({
   return (
     <View style={styles.screen} testID="directory-page">
       <View style={styles.header}>
+        {/* La cabecera ocupa también la franja del sistema: la hora, en claro */}
+        <StatusBar style="light" />
         <Text style={styles.title}>Profesionales</Text>
         {trade !== '' && (
-          <Text style={styles.subtitle}>{getTradeLabel(trade)}</Text>
+          <Text style={styles.subtitle}>
+            {getTradeLabel(trade)}
+            {/*
+              Y decir que está recortada. Sin esto, quien llega desde la home
+              ve menos gente aquí que en la pestaña Profesionales y no hay
+              nada que lo explique.
+            */}
+            {point ? ' · cerca de ti' : ''}
+          </Text>
         )}
       </View>
 
@@ -121,8 +161,20 @@ export function DirectoryPage({
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
+        {/*
+          El oficio que se está mirando, con su ilustración. Solo con alguien
+          detrás: encabezar una lista vacía con el dibujo del oficio promete
+          justo lo que la pantalla va a decir que no hay. Es la misma regla
+          que en la home, donde el mostrador no se convierte en oficio hasta
+          que hay a quien enseñar.
+        */}
+        {trade !== '' && pros.length > 0 && (
+          <TradeBanner trade={trade} testID="directory-banner" />
+        )}
+
         <View style={styles.searchWrapper}>
           <Input
             value={query}
@@ -130,6 +182,13 @@ export function DirectoryPage({
             placeholder="¿Qué necesitas? Ej. cerrajero…"
             autoCorrect={false}
             returnKeyType="search"
+            /* El intro se queda con la primera sugerencia, la que se está mirando */
+            onSubmitEditing={() => {
+              const primera = suggestions[0]
+
+              if (primera) elegirOficio(primera.trade.slug)
+              else Keyboard.dismiss()
+            }}
             testID="directory-search"
           />
 
@@ -138,10 +197,7 @@ export function DirectoryPage({
               {suggestions.map(({ trade: suggestion, hint }) => (
                 <Pressable
                   key={suggestion.slug}
-                  onPress={() => {
-                    setTrade(suggestion.slug)
-                    setQuery('')
-                  }}
+                  onPress={() => elegirOficio(suggestion.slug)}
                   testID={`directory-suggestion-${suggestion.slug}`}
                   accessibilityRole="button"
                   style={({ pressed }) => [

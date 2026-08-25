@@ -13,8 +13,11 @@ import { useReassignJob } from '@/hooks/domain/useJob'
 
 export default function ProsRoute() {
   const router = useRouter()
-  const { trade, reassign, declined } = useLocalSearchParams<{
+  const { trade, lat, lng, reassign, declined } = useLocalSearchParams<{
     trade?: string
+    /** Desde dónde busca el cliente; llega de la home, ya con su permiso dado */
+    lat?: string
+    lng?: string
     /** El trabajo al que se le busca otro profesional */
     reassign?: string
     /** Quién dijo que no: su ficha sale apagada */
@@ -59,9 +62,20 @@ export default function ProsRoute() {
     )
   }
 
+  /*
+    Los parámetros de ruta viajan como texto. `Number('')` es 0 —una
+    coordenada válida en mitad del Atlántico—, así que se comprueba que
+    vengan los dos y que sean números de verdad antes de darlos por buenos.
+  */
+  const punto =
+    lat && lng && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))
+      ? { lat: Number(lat), lng: Number(lng) }
+      : null
+
   return (
     <DirectoryPage
       initialTrade={trade}
+      point={punto}
       onSelectPro={(id, selection) =>
         router.navigate({
           pathname: '/pro/[id]',
