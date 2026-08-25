@@ -89,7 +89,8 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   const [identityFront, setIdentityFront] = useState<PickedImage | null>(null)
   const [identityBack, setIdentityBack] = useState<PickedImage | null>(null)
 
-  const { register, isLoading, fieldErrors, formError } = useRegister()
+  const { register, isLoading, fieldErrors, formError, errorNonce } =
+    useRegister()
   const { uploadAll, isUploading } = useRegistrationUploads()
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
@@ -181,6 +182,7 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
       subtitle="Contrata profesionales o trabaja como profesional. Necesitamos verificar tu identidad para proteger a toda la comunidad."
       align="left"
       error={formError}
+      errorKey={errorNonce}
       testID="register-page"
     >
       <FormField label="Nombre" error={fieldErrors.name} testID="register-name-field">
@@ -400,10 +402,20 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
             error={tradesError}
             testID="register-trades-field"
           >
+            {/*
+              Se deja elegir por hora o por visita ya en el alta (25 Agosto
+              2026). Antes el modo quedaba fijo en "por hora" porque en el
+              registro no hay carta de servicios que montar todavía; pero la
+              carta es opcional y se añade después desde "Mis oficios y
+              tarifas", mientras que la forma de cobrar es de las primeras
+              cosas que uno tiene decididas. Obligar a entrar por horas y
+              corregirlo luego escondía esa elección en otra pantalla.
+            */}
             <TradeRatesField
               value={trades}
               onChange={setTrades}
               disabled={isLoading}
+              allowVisitMode
               testID="register-trades"
             />
           </FormField>

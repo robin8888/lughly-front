@@ -42,7 +42,15 @@ export interface RegisterPayload {
   /** Los oficios que ejerce, con la tarifa de cada uno. Solo profesionales. */
   trades?: {
     slug: string
-    hourlyRate: string
+    /**
+     * Por hora o por visita, nunca los dos: exactamente uno de `hourlyRate` y
+     * `visitFee` va puesto, y el otro viaja a `null`. Es el mismo contrato que
+     * PUT /v1/pro/trades — el backend comparte `proTradesSchema` entre el alta
+     * y "Mis oficios y tarifas".
+     */
+    hourlyRate?: number | string | null
+    /** Lo que cobra por presentarse a evaluar y presupuestar */
+    visitFee?: number | null
     /** Vacío o ausente = no atiende urgencias de ese oficio */
     urgencyHourlyRate?: number | null
     /** Qué hace en ese oficio. Vacío = se enseña la general del perfil */

@@ -25,6 +25,13 @@ export function VerifyEmailNotice() {
     'idle',
   )
   const [isChecking, setIsChecking] = useState(false)
+  /**
+   * En qué quedó la última comprobación manual. Sin esto, pulsar "Ya lo he
+   * confirmado" y que el aviso siga ahí no distingue entre "no se pudo
+   * preguntar al servidor" y "se le preguntó y el email aún no consta": la
+   * pantalla queda igual en los dos casos y el botón parece muerto.
+   */
+  const [check, setCheck] = useState<'idle' | 'error' | 'pendiente'>('idle')
 
   // Al volver de confirmar en el navegador, el aviso se retira solo
   useRefreshUserOnForeground()
@@ -43,8 +50,19 @@ export function VerifyEmailNotice() {
 
   const handleCheck = async () => {
     setIsChecking(true)
-    await refreshUser()
+    setCheck('idle')
+
+    const refreshed = await refreshUser()
+
     setIsChecking(false)
+
+    if (!refreshed) {
+      setCheck('error')
+      return
+    }
+
+    // Si ya consta, este componente deja de pintarse y no hay nada que decir
+    if (!refreshed.emailVerified) setCheck('pendiente')
   }
 
   return (
@@ -75,6 +93,17 @@ export function VerifyEmailNotice() {
       >
         Reenviar correo
       </Button>
+
+      {check === 'error' && (
+        <Text style={styles.error} testID="verify-email-check-error">
+          No hemos podido comprobarlo. Revísalo cuando tengas conexión.
+        </Text>
+      )}
+      {check === 'pendiente' && (
+        <Text style={styles.error} testID="verify-email-check-pending">
+          Todavía no nos consta. Abre el enlace del correo y vuelve a probar.
+        </Text>
+      )}
 
       <Pressable
         onPress={() => void handleCheck()}

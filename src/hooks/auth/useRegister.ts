@@ -21,6 +21,9 @@ import { toAuthErrorState } from './useAuthError'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
+/** La coma decimal es lo que teclea la gente en los campos de tarifa */
+const tarifa = (valor: string) => Number(valor.replace(',', '.'))
+
 export const MIN_PASSWORD_LENGTH = 10
 export const MAX_PASSWORD_LENGTH = 128
 
@@ -47,7 +50,16 @@ export const registerSchema = z
       .array(
         z.object({
           slug: z.string(),
-          hourlyRate: z.string(),
+          /**
+           * Por hora, o por visita para evaluar y presupuestar. Se declara
+           * aquí y no solo en el componente porque `safeParse` descarta lo que
+           * el esquema no nombra: sin esta línea, elegir "por visita" en el
+           * alta se perdía por el camino y el oficio llegaba al servidor sin
+           * ninguna tarifa puesta.
+           */
+          pricingMode: z.enum(['HOURLY', 'VISIT']).default('HOURLY'),
+          hourlyRate: z.string().default(''),
+          visitFee: z.string().default(''),
           /*
             Los dos opcionales y como texto, que es lo que hay en el campo. El
             alta usa el mismo formulario que "Mis oficios", así que si no
@@ -103,14 +115,25 @@ export const registerSchema = z
         })
       }
 
-      // La coma decimal es lo que teclea la gente aquí
-      const rate = Number(trade.hourlyRate.replace(',', '.'))
+      /*
+        Se exige la tarifa del modo elegido, y solo esa: quien cobra por visita
+        deja el campo de la hora vacío a propósito, y al revés. Mismo criterio
+        que "Mis oficios y tarifas" (MyTradesPage: `canSave`).
+      */
+      const esVisita = trade.pricingMode === 'VISIT'
+      const campo = esVisita ? 'visitFee' : 'hourlyRate'
+      const escrito = esVisita ? trade.visitFee : trade.hourlyRate
 
-      if (!trade.hourlyRate || Number.isNaN(rate) || rate <= 0) {
+      // La coma decimal es lo que teclea la gente aquí
+      const rate = Number(escrito.replace(',', '.'))
+
+      if (!escrito || Number.isNaN(rate) || rate <= 0) {
         ctx.addIssue({
           code: 'custom',
-          path: ['trades', index, 'hourlyRate'],
-          message: `Indica lo que cobras por hora en ${getTradeLabel(trade.slug).toLowerCase()}`,
+          path: ['trades', index, campo],
+          message: esVisita
+            ? `Indica lo que cobras por la visita en ${getTradeLabel(trade.slug).toLowerCase()}`
+            : `Indica lo que cobras por hora en ${getTradeLabel(trade.slug).toLowerCase()}`,
         })
       }
     }
@@ -194,6 +217,14 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
 
+  /**
+   * Cambia en cada intento fallido. El mensaje de cabecera se pinta arriba de
+   * la tarjeta y el botón de enviar queda al final de un formulario largo:
+   * sin algo que cambie en cada pulsación, dos fallos con el mismo mensaje
+   * no moverían el scroll y el botón seguiría pareciendo muerto.
+   */
+  const [errorNonce, setErrorNonce] = useState(0)
+
   const clearErrors = useCallback(() => {
     setFieldErrors({})
     setFormError(null)
@@ -206,6 +237,17 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
       const parsed = registerSchema.safeParse(input)
       if (!parsed.success) {
         setFieldErrors(toFieldErrors<RegisterInput>(parsed.error))
+
+        /**
+         * Y un mensaje de cabecera. Los errores de campo se pintan junto a su
+         * campo, que desde el botón —al final del formulario— queda fuera de
+         * pantalla; y como este camino sale antes de `setIsLoading(true)`,
+         * tampoco hay spinner. Sin esto, pulsar "Crear cuenta" no produce
+         * ninguna señal visible.
+         */
+        setFormError('Revisa los campos marcados.')
+        setErrorNonce((n) => n + 1)
+
         return { ok: false }
       }
 
@@ -213,22 +255,45 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
       setIsLoading(true)
 
       try {
+        const esPro = parsed.data.role === 'pro'
+        const ciudad = parsed.data.city?.trim()
+
         const session = await authApi.register({
           name: parsed.data.name,
           email: parsed.data.email,
           password: parsed.data.password,
           phone: parsed.data.phone,
           role: parsed.data.role,
-          trades: parsed.data.trades.map((trade) => ({
-            slug: trade.slug,
-            hourlyRate: trade.hourlyRate,
-            urgencyHourlyRate:
-              trade.urgencyRate.trim() === ''
-                ? null
-                : Number(trade.urgencyRate.replace(',', '.')),
-            description: trade.description.trim(),
-          })),
-          city: parsed.data.city,
+          /**
+           * Los campos de profesional se **omiten** para un cliente, no se
+           * mandan vacíos. En el backend son `optional()`, que permite que
+           * falten pero no que lleguen en blanco: `trades` exige al menos un
+           * oficio y `city` dos caracteres. Un `[]` y un `''` hacían que el
+           * alta de un cliente se rechazara con un 400 pidiéndole oficio y
+           * ciudad, campos que su formulario ni siquiera le enseña.
+           */
+          trades: esPro
+            ? parsed.data.trades.map((trade) => {
+                const esVisita = trade.pricingMode === 'VISIT'
+
+                /*
+                  Exactamente uno de los dos va puesto y el otro a `null`: es lo
+                  que exige `proTradeSchema` en el servidor, que rechaza tanto
+                  los dos a la vez como ninguno.
+                */
+                return {
+                  slug: trade.slug,
+                  hourlyRate: esVisita ? null : tarifa(trade.hourlyRate),
+                  visitFee: esVisita ? tarifa(trade.visitFee) : null,
+                  urgencyHourlyRate:
+                    trade.urgencyRate.trim() === ''
+                      ? null
+                      : tarifa(trade.urgencyRate),
+                  description: trade.description.trim(),
+                }
+              })
+            : undefined,
+          city: ciudad ? ciudad : undefined,
           acceptTerms: parsed.data.acceptTerms,
           acceptComms: parsed.data.acceptComms,
         })
@@ -270,6 +335,7 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
 
         setFieldErrors(state.fieldErrors)
         setFormError(state.formError)
+        setErrorNonce((n) => n + 1)
 
         return { ok: false }
       } finally {
@@ -279,5 +345,5 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
     [setAuth, setActiveRole, onSuccess],
   )
 
-  return { register, isLoading, fieldErrors, formError, clearErrors }
+  return { register, isLoading, fieldErrors, formError, errorNonce, clearErrors }
 }

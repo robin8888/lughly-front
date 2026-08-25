@@ -8,7 +8,7 @@
  * No contiene lógica: solo composición y scroll con teclado.
  */
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -29,6 +29,12 @@ export interface AuthShellProps {
   children: ReactNode
   /** Error global del formulario (credenciales, servidor…) */
   error?: string | null
+  /**
+   * Valor que cambia en cada intento fallido, para subir el scroll también
+   * cuando el mensaje repetido es idéntico al anterior. Sin él solo se sube
+   * al cambiar el texto del error, que basta en un formulario corto.
+   */
+  errorKey?: number
   align?: 'center' | 'left'
   testID?: string
 }
@@ -38,10 +44,23 @@ export function AuthShell({
   subtitle,
   children,
   error,
+  errorKey,
   align = 'center',
   testID,
 }: AuthShellProps) {
   const alignStyle = align === 'center' ? styles.centered : undefined
+  const scrollRef = useRef<ScrollView>(null)
+
+  /**
+   * El error se pinta arriba de la tarjeta. En el registro el botón de enviar
+   * está al final de un formulario largo, así que el aviso nace fuera de
+   * pantalla y pulsar parece no hacer nada: hay que llevar al usuario hasta él.
+   */
+  useEffect(() => {
+    if (!error) return
+
+    scrollRef.current?.scrollTo({ y: 0, animated: true })
+  }, [error, errorKey])
 
   return (
     <SafeAreaView style={styles.safeArea} testID={testID}>
@@ -59,6 +78,7 @@ export function AuthShell({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}

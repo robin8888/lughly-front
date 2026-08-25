@@ -20,7 +20,20 @@ export function toAuthErrorState<T>(
 ): AuthErrorState<T> {
   if (error instanceof ApiError) {
     if (error.code === 'VALIDATION_ERROR' && error.details.length > 0) {
-      return { fieldErrors: error.toFieldErrors<T>(), formError: null }
+      /**
+       * Además de marcar los campos, un aviso de cabecera. Los mensajes de
+       * campo se pintan junto a su campo, y en un formulario largo —el alta—
+       * el botón de enviar queda lejos de todos ellos: sin esto, un rechazo
+       * del servidor no produce ninguna señal donde el usuario está mirando
+       * y el botón parece muerto. Con un solo fallo se repite su mensaje, que
+       * dice qué corregir; con varios no cabe ninguno y se remite a las marcas.
+       */
+      const formError =
+        error.details.length === 1
+          ? error.details[0]!.message
+          : 'Revisa los campos marcados.';
+
+      return { fieldErrors: error.toFieldErrors<T>(), formError }
     }
 
     return { fieldErrors: {}, formError: error.message }
