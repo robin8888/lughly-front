@@ -11,10 +11,22 @@ import { theme } from '@/theme'
 export const ICON_SIZE = 20
 const ICON_LEFT = 14
 
+/**
+ * La cruz de borrar, en la otra punta. Más pequeña que la lupa a propósito:
+ * la lupa dice para qué es el campo y se mira antes de escribir; la cruz es
+ * una salida, y a igual tamaño competiría con el texto que va a borrar.
+ */
+export const CLEAR_SIZE = 18
+const CLEAR_RIGHT = 14
+
 export const styles = StyleSheet.create({
+  /*
+    Sin margen abajo: lo que va debajo es lo que decide cuánto aire quiere. Los
+    diez puntos que llevaba se sumaban al margen de los botones del hero y los
+    dejaban lejos del campo al que acompañan.
+  */
   wrapper: {
     position: 'relative',
-    marginBottom: 10,
     zIndex: 20,
   },
   /** Caja relativa para poder clavar la lupa dentro del campo */
@@ -54,11 +66,24 @@ export const styles = StyleSheet.create({
   input: {
     fontSize: theme.typography.sizes.small,
     paddingVertical: 13,
-    paddingRight: 14,
     paddingLeft: ICON_LEFT + ICON_SIZE + 10,
     backgroundColor: '#ffffff',
     borderColor: theme.colors.accent,
     borderRadius: theme.radius.card,
+    /*
+      Hueco a la derecha para la cruz. Se reserva siempre, haya cruz o no: si
+      solo se reservara cuando el campo tiene texto, la primera letra que se
+      escribiera daría un salto.
+    */
+    paddingRight: CLEAR_RIGHT + CLEAR_SIZE + 8,
+  },
+  /** Centrada en vertical con `top/bottom: 0`, igual que la lupa */
+  clear: {
+    position: 'absolute',
+    right: CLEAR_RIGHT,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
   },
   /**
    * El desplegable cuelga del campo y se lee como su continuación: mismo
@@ -66,8 +91,16 @@ export const styles = StyleSheet.create({
    * que sobre la tarjeta clara del hero lo dejaba a medio camino entre el
    * campo y el fondo.
    *
-   * `marginTop: 6` para que se despegue del campo y se vean dos piezas, no una
-   * caja partida. La sombra hace el resto: esto flota sobre el contenido.
+   * Cuelga **del campo** y no del bloque entero: en el componente vive dentro
+   * de `field`, que es la caja relativa contra la que mide su `top: '100%'`.
+   * Estuvo fuera, hermano de la nota de abajo, y ahí ese 100% se medía sobre
+   * el bloque completo —campo más nota— y el desplegable salía por debajo de
+   * la nota, a un buen trecho de lo que se estaba escribiendo.
+   *
+   * `marginTop: 4` para que se despegue del campo y se vean dos piezas, no
+   * una caja partida. Eran 6 y se acortó al arreglar lo de arriba: con el
+   * desplegable ya pegado al campo, esos dos píxeles de más se notan. La
+   * sombra hace el resto: esto flota sobre el contenido.
    */
   suggestions: {
     position: 'absolute',
@@ -75,7 +108,7 @@ export const styles = StyleSheet.create({
     right: 0,
     top: '100%',
     zIndex: 20,
-    marginTop: 6,
+    marginTop: 4,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: theme.colors.accent,

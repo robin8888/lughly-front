@@ -10,9 +10,10 @@
  * sirve: en la versión 4 importa el módulo real por dentro y vuelve a caer en
  * el mismo sitio. De ahí que este esté escrito a mano.
  *
- * Cubre lo que la app usa de verdad —`Animated.ScrollView` y las cuatro
- * funciones de `useCompactNav`— más las habituales, para que el siguiente que
- * escriba un test de pantalla no tenga que volver aquí. Las animaciones no se
+ * Cubre lo que la app usa de verdad —`Animated.ScrollView`, las cuatro
+ * funciones de `useCompactNav` y el bucle de las chispitas del botón de
+ * mensajes— más las habituales, para que el siguiente que escriba un test de
+ * pantalla no tenga que volver aquí. Las animaciones no se
  * simulan: `withTiming` devuelve su destino, que es el estado final, y es lo
  * único que se puede comprobar sin reloj.
  *
@@ -51,6 +52,15 @@ jest.mock('react-native-reanimated', () => {
     withTiming: identity,
     withSpring: identity,
     withDelay: (_delay, value) => value,
+    /*
+      Una secuencia que se repite no tiene "estado final": da vueltas. Se
+      devuelve el primer paso, que es al que la animación va nada más
+      arrancar, y no el último —que en un bucle de encender y apagar es
+      justo el apagado—. Con el último, un test que comprueba que algo se ve
+      fallaría por dónde ha quedado congelado el doble, no por la app.
+    */
+    withSequence: (...steps) => steps[0],
+    withRepeat: (value) => value,
     interpolate: identity,
     Easing: easing,
     Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },

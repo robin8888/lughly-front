@@ -15,7 +15,7 @@
  */
 
 import { useEffect } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -174,11 +174,19 @@ export function BottomTabBar() {
            * En Android los materiales de Apple no existen: el desenfoque real
            * lo pone `blurMethod`, y el matiz cae en el que haya por defecto.
            *
-           * Antes de esto la barra llevaba encima un velo de acento
-           * `rgba(89, 128, 166, 0.72)`, que era de donde salía su azul.
+           * El azul **vuelve** (26 Agosto 2026), pero en el navy de
+           * `navyGlass` y no en el acento de entonces: aquel dejaba el blanco
+           * encima en 2,6:1, y ahora los iconos son blancos.
            */
           intensity={40} tint="systemUltraThinMaterialLight" style={StyleSheet.absoluteFill}
         />
+
+      {/*
+        Y encima el velo. Va aparte del `BlurView` y no como fondo de la barra:
+        con el color en la barra, el desenfoque quedaría por delante y acabaría
+        difuminando su propio velo en vez de la pantalla de detrás.
+      */}
+      <View style={styles.veil} pointerEvents="none" />
 
       {tabs.map((tab) => (
         <NavItem

@@ -60,12 +60,22 @@ export const images = {
    * 430 puntos— y lleva texto dentro del propio dibujo, que es lo primero que
    * se deshace al ampliar.
    *
-   * Cuadrada porque el hueco lo es. El original es apaisado (1402x1122) y
-   * vive en `_fuentes/recepcion`. El recorte va **pegado al borde
-   * izquierdo**, y no centrado como las de oficio: el rótulo empieza a 78 px
-   * de ese borde, así que quitar 140 por cada lado le cortaba la "L". Lo que
-   * se pierde es el lado derecho —un monitor y el cartel de "recepción"—, que
-   * no dice nada.
+   * Cuadrada porque el hueco lo es, y el original no: viene apaisado y vive en
+   * `_fuentes/recepcion`. El recorte va **pegado al borde izquierdo**, y no
+   * centrado como las de oficio: en ese borde están el rótulo de la marca y el
+   * cartel que dice qué hacer —"arriba en el buscador puedes encontrar a los
+   * profesionales que buscas"—, que es lo único que la escena tiene que
+   * comunicar.
+   *
+   * Escena del 26 Agosto 2026, la segunda de ese día. **El original es 16:9
+   * (1672x941), así que el recorte se lleva el 44 % del ancho**: la oficina
+   * con las hormigas trabajando, el hombre señalando y el cuadro de
+   * "conectamos talento, creamos oportunidades" quedan fuera enteros. Es
+   * mucho, y es lo que cuesta meter una panorámica en un cuadrado; si esa
+   * mitad tiene que verse, lo que hay que cambiar es la proporción del hueco
+   * (`ReceptionStage.styles`, `stage`) y no el recorte —pero entonces las
+   * dieciocho ilustraciones de oficio, que sí son cuadradas, se recortarían
+   * por arriba y por abajo—.
    */
   recepcion: require('./recepcion.jpg'),
   asistente: require('./asistente-icono.png'),

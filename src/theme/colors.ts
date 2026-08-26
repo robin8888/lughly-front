@@ -50,6 +50,24 @@ export const colors = {
    */
   accentGlass: 'rgba(89, 128, 166, 0.72)',
   /**
+   * El cristal navy: el velo que llevan encima del desenfoque la barra de
+   * abajo y el bocadillo de la home.
+   *
+   * **Uno y compartido**, porque son la misma pieza de lenguaje: algo que
+   * flota sobre el contenido dejándolo ver difuminado. Con dos valores
+   * parecidos se verían como dos materiales distintos en la misma pantalla.
+   *
+   * Ese 0,78 no es de gusto: es el punto donde la letra blanca encima aguanta
+   * en el peor caso —fondo blanco por detrás— con 6,93:1, y el estado apagado
+   * de la barra, que va al 75 % de opacidad, todavía llega a 4,75:1. Bajarlo
+   * enseña más de lo que hay detrás y se lleva por delante los rótulos
+   * apagados, que son los primeros en caer.
+   *
+   * Navy y no `accentGlass`: ese azul es más claro y su propia ficha lo dice
+   * —blanco encima se queda en 2,6:1—.
+   */
+  navyGlass: 'rgba(29, 45, 61, 0.78)',
+  /**
    * El mismo cristal, en el rojo de "ahora no" (`unavailable`) y no en el de
    * error: rechazar un trabajo que no se puede hacer no es un fallo de nadie,
    * y con el rojo de error el trabajador leería que ha hecho algo mal.
@@ -104,6 +122,26 @@ export const colors = {
    */
   availableText: '#2f6b43',
   /**
+   * Y el mismo verde otra vez, esta vez **aclarado**, para escribir con él
+   * sobre cristal oscuro.
+   *
+   * Son tres tonos del mismo color y cada uno tiene su fondo: `available` es
+   * de contorno y de punto, `availableText` es para leer sobre blanco, y este
+   * es para leer sobre el navy del bocadillo de la home. Los dos primeros son
+   * verdes oscuros: sobre ese cristal dan 2,3:1 y 1,7:1, o sea que no se leen.
+   * Este llega a 4,73:1, por encima del 4,5:1 que pide la WCAG.
+   *
+   * Se aclaró una segunda vez al subir la transparencia del bocadillo. Es la
+   * cuenta que ata las dos cosas: cuanto más cristal, más claro tiene que ser
+   * lo que se escribe encima. Bajar el velo sin tocar este verde lo deja por
+   * debajo del umbral, y la cifra es justo el dato que no se puede perder.
+   *
+   * Aclarar hacía falta porque el fondo cambió de bando: el bocadillo era
+   * blanco y pasó a ser el mismo cristal de la barra de abajo, con la letra
+   * en blanco. Un color que funcionaba sobre papel no funciona sobre tinta.
+   */
+  availableOnGlass: '#8fe8ae',
+  /**
    * El anillo de quien no atiende ahora. Rojo apagado y **no** `urgency`: no
    * ha fallado nada ni hay ninguna urgencia, solo dice que hoy no sale
    * corriendo.
@@ -126,6 +164,33 @@ export const colors = {
   pending: '#c9741f',
   pendingSoft: '#fceedd',
   pendingText: '#8a4d0a',
+  /**
+   * El mismo naranja de la familia de arriba, aclarado para escribir con él
+   * sobre el cristal navy del bocadillo de la home. Ahí nombra **el oficio**
+   * —"Hay 7 profesionales de *carpintería*"—, así que aquí no significa "hay
+   * algo pendiente": es el mismo color de la casa haciendo otro trabajo.
+   *
+   * Aclarado por lo mismo que `availableOnGlass`: `pending` sobre ese cristal
+   * da 1,98:1 y no se lee. Este llega a 4,71:1.
+   *
+   * Con esto son tres colores en una frase de diez palabras —blanco, verde y
+   * naranja—, y es el techo: cada uno señala una cosa que se busca por
+   * separado (cuántos hay, de qué oficio, y el resto de la frase). Un cuarto
+   * ya no señalaría nada.
+   */
+  pendingOnGlass: '#ffcd7d',
+  /**
+   * Y el rojo, aclarado por lo mismo. Lo usa el icono de "Urgente" en la barra
+   * de abajo desde que la barra es navy: el `urgency` de siempre sobre ese
+   * cristal da 1,13:1, o sea que la pestaña roja desaparecía.
+   *
+   * Aun aclarado se queda en 3,09:1, que **basta para un icono y no para una
+   * letra** —la WCAG pide 3:1 para un objeto gráfico y 4,5:1 para un texto—.
+   * Por eso en la barra se pinta con él el dibujo y no el rótulo: el rótulo va
+   * en blanco como los demás, y la pestaña se sigue leyendo como la roja.
+   * Para llegar a 4,5 sobre ese fondo haría falta un rosa que ya no es rojo.
+   */
+  urgencyOnGlass: '#f0958a',
   urgency: '#a3453a',
   error: '#a3453a',
   rating: '#d4a13a',

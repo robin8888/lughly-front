@@ -52,6 +52,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_BASE_URL } from '@/api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { ClientHero } from '@/components/organisms/ClientHero'
+import { useUnreadCount } from '@/hooks/domain/useChat'
 import { JobAnswer, isAnswer } from '@/components/organisms/JobAnswer'
 import { ReceptionStage } from '@/components/organisms/ReceptionStage'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
@@ -99,6 +100,15 @@ export function HomePage({
   // Al bajar el scroll, la barra inferior se encoge
   const onScroll = useNavScrollHandler()
   const user = useUser()
+
+  /**
+   * Los mensajes que hay esperando, para la chapa del icono de mensajes.
+   *
+   * Se pregunta al montar la home, que es la primera pantalla que ve alguien
+   * con sesión: es lo que hace que el aviso esté ahí desde que se abre la app
+   * y no haya que entrar a la bandeja para enterarse.
+   */
+  const unread = useUnreadCount()
 
   /** El último oficio buscado en el hero. `null` mientras no se ha buscado */
   const [buscado, setBuscado] = useState<TradeSlug | null>(null)
@@ -153,7 +163,8 @@ export function HomePage({
    * lo que tiene sin responder.
    */
   const { data: jobsData } = useMyJobs(true)
-  const seen = useSeenAnswers()
+  // Por cuenta: lo visto es de quien lo vio (`useSeenAnswersStore`)
+  const seen = useSeenAnswers(user?.id)
   const markSeen = useMarkAnswerSeen()
 
   /*
@@ -177,11 +188,11 @@ export function HomePage({
            * trabajo" —lo primero que se hace tras verlo— puede perder el
            * "visto" y el aviso vuelve a salir la próxima vez.
            */
-          if (answered) await markSeen(answered.id, answered.status)
+          if (answered && user) await markSeen(user.id, answered.id, answered.status)
           onSeeJob?.(jobId)
         }}
         onDismiss={() => {
-          if (answered) markSeen(answered.id, answered.status)
+          if (answered && user) markSeen(user.id, answered.id, answered.status)
         }}
         testID="home-job-answer"
       />
@@ -204,6 +215,12 @@ export function HomePage({
           onUrgent={onUrgent}
           onHowItWorks={onHowItWorks}
           onMessages={onMessages}
+          /*
+            Lo que hay esperando, para la chapa del icono de mensajes. Se pide
+            al abrir la app: quien entra tiene que ver ahí mismo que le han
+            escrito, sin tener que abrir la bandeja para descubrirlo.
+          */
+          unreadMessages={unread.data?.total ?? 0}
           testID="home-hero"
         />
 

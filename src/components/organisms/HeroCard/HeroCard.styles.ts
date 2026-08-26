@@ -28,9 +28,29 @@ export type HeroVariant = 'dark' | 'light'
 export const PROFILE_STAR_SIZE = 16
 
 export const styles = StyleSheet.create({
+  /**
+   * A sangre y pegada arriba: de canto a canto de la pantalla y sin hueco
+   * sobre ella.
+   *
+   * Estuvo con doce puntos de margen por los lados y por arriba, o sea
+   * flotando como una tarjeta más de la lista. No lo es: es **la cabecera de
+   * la pantalla**, y ese margen la dejaba leyéndose como un recuadro pegado
+   * encima del contenido en vez de como su principio. Es el mismo movimiento
+   * que ya hizo la home del cliente con su hero y su escena.
+   *
+   * El margen negativo **cancela el `paddingHorizontal: 12` del contenedor**
+   * de `HomePagePro`, que es quien la pinta. Es acoplamiento, y a propósito:
+   * la alternativa era quitarle ese relleno al contenedor y devolvérselo a los
+   * ocho bloques de debajo, que es mucho más sitio donde equivocarse. Si algún
+   * día cambia ese doce, este tiene que cambiar con él.
+   *
+   * Y sin redondear, por lo mismo que el hero del cliente: a sangre, una curva
+   * deja medias lunas del fondo contra el borde del móvil.
+   */
   card: {
-    marginHorizontal: 12,
-    marginTop: 12,
+    marginHorizontal: -12,
+    marginTop: 0,
+    borderRadius: 0,
     paddingTop: 18,
     paddingHorizontal: 16,
     paddingBottom: 26,

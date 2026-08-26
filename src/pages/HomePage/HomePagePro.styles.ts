@@ -20,6 +20,11 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.bg,
   },
   content: {
+    /*
+      Ojo: el hero se lo quita con un margen negativo del mismo valor, para
+      salir a sangre (`HeroCard.styles.card`). Cambiar este doce sin cambiar
+      aquel deja la cabecera descuadrada respecto a la pantalla.
+    */
     paddingHorizontal: 12,
     // La barra inferior flota por encima. `SafeAreaView` ya se come el
     // inset de abajo (sin `edges` restringido), así que aquí NO hace falta

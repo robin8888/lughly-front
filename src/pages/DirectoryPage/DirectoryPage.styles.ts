@@ -46,8 +46,34 @@ export const styles = StyleSheet.create({
      * `flex: 1` del `EmptyState` se queda en cero.
      */
     flexGrow: 1,
+    /*
+      Ojo: la franja del oficio se lo quita con márgenes negativos del mismo
+      valor, para salir a sangre y pegada a la cabecera (`banner`). Cambiar
+      este 16 sin cambiar aquellos la deja descuadrada respecto a la pantalla.
+    */
     padding: 16,
     gap: 10,
+  },
+  /**
+   * La franja del oficio, a sangre y pegada a la cabecera.
+   *
+   * Los márgenes negativos **cancelan el `padding: 16` de `content`**, que es
+   * el contenedor que la pinta: la ilustración llega así de canto a canto de
+   * la pantalla y arranca justo donde acaba la franja navy del título, sin la
+   * raya de fondo que la dejaba flotando como una tarjeta más de la lista.
+   *
+   * Es acoplamiento a ese 16 y va a propósito: la alternativa era quitarle el
+   * relleno al contenedor y devolvérselo a todo lo que va debajo —buscador,
+   * filtros, fichas, estados vacíos—, que es mucho más sitio donde
+   * equivocarse. Si cambia ese 16, estos tres cambian con él.
+   *
+   * `borderRadius: 0` por lo mismo que en los dos heros: a sangre, una curva
+   * deja medias lunas del fondo contra el borde del móvil.
+   */
+  banner: {
+    marginTop: -16,
+    marginHorizontal: -16,
+    borderRadius: 0,
   },
   searchWrapper: {
     position: 'relative',

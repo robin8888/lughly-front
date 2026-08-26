@@ -165,14 +165,29 @@ export function DirectoryPage({
         showsVerticalScrollIndicator={false}
       >
         {/*
-          El oficio que se está mirando, con su ilustración. Solo con alguien
-          detrás: encabezar una lista vacía con el dibujo del oficio promete
-          justo lo que la pantalla va a decir que no hay. Es la misma regla
-          que en la home, donde el mostrador no se convierte en oficio hasta
-          que hay a quien enseñar.
+          El oficio que se está mirando, con su ilustración —y sin filtro, la
+          de "otros oficios", que dibuja el oficio como idea en vez de uno
+          concreto—. La franja encabeza la lista siempre que haya lista: antes
+          solo salía con un oficio elegido, y entrar por la pestaña dejaba la
+          pantalla empezando en un buscador suelto.
+
+          Solo con alguien detrás, eso sí: encabezar una lista vacía con el
+          dibujo del oficio promete justo lo que la pantalla va a decir que no
+          hay. Es la misma regla que en la home, donde el mostrador no se
+          convierte en oficio hasta que hay a quien enseñar.
         */}
-        {trade !== '' && pros.length > 0 && (
-          <TradeBanner trade={trade} testID="directory-banner" />
+        {pros.length > 0 && (
+          <TradeBanner
+            trade={trade === '' ? 'otros' : trade}
+            /*
+              Sin filtro, la lista los tiene todos, así que decir "Otros
+              oficios" —el nombre del slug que presta la ilustración— sería
+              nombrar mal lo que se está viendo.
+            */
+            label={trade === '' ? 'Todos los oficios' : undefined}
+            style={styles.banner}
+            testID="directory-banner"
+          />
         )}
 
         <View style={styles.searchWrapper}>

@@ -17,7 +17,21 @@ export const styles = StyleSheet.create({
     antes de la primera ficha.
   */
   banner: {
-    width: '100%',
+    /*
+      `alignSelf: 'stretch'` y **no** `width: '100%'`, que es lo que llevaba.
+
+      No son lo mismo cuando quien la usa la saca a sangre con márgenes
+      negativos, que es lo que hace el directorio: el 100 % se mide sobre la
+      caja de contenido del padre —ya descontado su relleno— y el margen
+      negativo la desplaza después, así que la franja sobresalía 16 puntos por
+      la izquierda y se quedaba 16 corta por la derecha. `stretch` la deja
+      llegar a los dos bordes de la caja y los márgenes la estiran por igual
+      hacia fuera.
+
+      Sin márgenes negativos las dos se comportan igual, así que esto no
+      cambia nada para quien la use dentro de su relleno.
+    */
+    alignSelf: 'stretch',
     aspectRatio: 1,
     borderRadius: theme.radius.card,
     overflow: 'hidden',

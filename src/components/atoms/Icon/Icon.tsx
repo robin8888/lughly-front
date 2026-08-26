@@ -20,6 +20,7 @@ export type IconName =
   | 'calendar'
   | 'wallet'
   | 'search'
+  | 'close'
   // De aquí para abajo, los accesos de "Mi cuenta" (src/images/icons/*.svg)
   | 'profile'
   | 'trades'
@@ -147,6 +148,18 @@ export function Icon({
         <>
           <Path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5" {...stroke} />
           <Path d="M17 13h.01" {...stroke} />
+        </>
+      )}
+
+      {/*
+        La cruz de borrar. Va con el mismo trazo que la lupa porque viven en
+        el mismo campo, uno en cada punta: si una fuera más gruesa que la otra
+        parecerían de dos juegos distintos.
+      */}
+      {name === 'close' && (
+        <>
+          <Path d="M6 6l12 12" {...stroke} />
+          <Path d="M18 6 6 18" {...stroke} />
         </>
       )}
 

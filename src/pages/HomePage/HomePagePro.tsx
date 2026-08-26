@@ -27,6 +27,7 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { StatCard } from '@/components/molecules/StatCard'
 import { HeroCard } from '@/components/organisms/HeroCard'
 import { MessagesFab } from '@/components/molecules/MessagesFab'
+import { useUnreadCount } from '@/hooks/domain/useChat'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
 import { Dialog } from '@/components/organisms/Dialog'
@@ -66,6 +67,13 @@ export function HomePagePro({
   onMessages,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
+
+  /**
+   * Los mensajes que hay esperando, para la chapa del botón flotante. Se
+   * pregunta al montar: es lo que hace que el aviso esté desde que se abre la
+   * app, y no solo al entrar a la bandeja.
+   */
+  const unread = useUnreadCount()
   const user = useUser()
 
   /**
@@ -142,7 +150,8 @@ export function HomePagePro({
    * Por id suelto: si entre medias llega un encargo o una urgencia nueva,
    * esa sí tiene que avisar aunque las demás ya estén vistas.
    */
-  const dismissed = useDismissedReminders()
+  // Por cuenta: lo cerrado es de quien lo cerró (`useDismissedRemindersStore`)
+  const dismissed = useDismissedReminders(user?.id)
   const markDismissed = useMarkReminderDismissed()
 
   /**
@@ -178,12 +187,12 @@ export function HomePagePro({
 
   const showUrgencyDialog = undismissedUrgencies.length > 0
   const dismissUrgencies = () =>
-    undismissedUrgencies.forEach((item) => markDismissed(`urgency:${item.id}`))
+    user && undismissedUrgencies.forEach((item) => markDismissed(user.id, `urgency:${item.id}`))
 
   const showInboxDialog =
     !showUrgencyDialog && confirming === null && undismissedPending.length > 0
   const dismissPending = () =>
-    undismissedPending.forEach((item) => markDismissed(`inbox:${item.id}`))
+    user && undismissedPending.forEach((item) => markDismissed(user.id, `inbox:${item.id}`))
 
   return (
     <SafeAreaView style={styles.safeArea} testID="home-page-pro">
@@ -272,7 +281,7 @@ export function HomePagePro({
         <AssignmentConfirm
           job={showUrgencyDialog ? null : confirming}
           onDismiss={() => {
-            if (confirming) markDismissed(`confirm:${confirming.id}`)
+            if (confirming && user) markDismissed(user.id, `confirm:${confirming.id}`)
           }}
           testID="home-pro-confirm"
         />
@@ -628,7 +637,16 @@ export function HomePagePro({
         )}
       </Animated.ScrollView>
 
-      <MessagesFab onPress={onMessages} testID="home-pro-messages-fab" />
+      {/*
+        Con lo que hay esperando. Se pide al montar la home: quien abre la app
+        tiene que ver en el propio botón que le han escrito, sin entrar a la
+        bandeja para descubrirlo.
+      */}
+      <MessagesFab
+        onPress={onMessages}
+        unread={unread.data?.total ?? 0}
+        testID="home-pro-messages-fab"
+      />
     </SafeAreaView>
   )
 }
