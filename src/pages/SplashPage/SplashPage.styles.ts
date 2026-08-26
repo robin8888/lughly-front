@@ -14,8 +14,9 @@
  * color de fondo casi no se ve: queda de respaldo mientras el vídeo carga.
  *
  * Los botones se apartan del handoff en las esquinas redondeadas, que el tema
- * industrial quiere cuadradas. El azul de relleno y el contraste los resuelve
- * ya el átomo `Button`.
+ * industrial quiere cuadradas. El relleno tampoco lo pone aquí el átomo
+ * `Button`: sus variantes son opacas y estos dos son velos translúcidos sobre
+ * el cristal, así que el color va en esta hoja.
  */
 
 import { StyleSheet } from 'react-native'
@@ -31,9 +32,10 @@ import { theme } from '@/theme'
  * fondo de los iconos; esta pantalla es la entrada, y lo que hay detrás es
  * justo lo que se quiere enseñar.
  *
- * A cambio, la letra queda apoyada en un fondo que cambia con cada fotograma.
- * Por eso va en `accent900` y `accent700` y en semibold: si alguien baja más
- * este número, lo primero que se pierde es el botón hueco.
+ * De la letra ya no responde este número. Cada botón tiene ahora su propio
+ * velo de color —`REGISTER_GLASS` y `LOGIN_GLASS`— y es ese velo el que la
+ * sostiene; este solo decide cuánto vídeo se ve moverse por debajo de los
+ * dos.
  *
  * Sustituyó antes al degradado del diseño, que desvanecía el vídeo hacia el
  * color de la pantalla —o sea, lo aclaraba hasta el blanco—. Aquí el vídeo
@@ -59,6 +61,29 @@ const BLUR_INTENSITY = 22
  * detrás. Por debajo, empieza a distinguirse que la rebanada se repite.
  */
 const BACKDROP_BLUR = 50
+
+/**
+ * El relleno de cada botón, que vuelve —pero translúcido—.
+ *
+ * Estuvieron huecos: los dos eran cristal a secas y solo el grosor del
+ * contorno decía cuál era el principal. Ahora "Registrarse" lleva el azul de
+ * los botones rellenos de la app y "Iniciar sesión" lleva blanco, los dos
+ * dejando pasar el vídeo desenfocado que corre por debajo.
+ *
+ * Los números no son redondos por gusto. El velo tiene que ser lo bastante
+ * espeso para que su letra se lea **sobre cualquier fotograma**, porque lo que
+ * hay detrás se mueve y cambia de color: están calculados contra el caso peor
+ * de cada uno —blanco puro detrás del azul, negro puro detrás del blanco— y
+ * ahí dan 5,28:1 y 4,57:1, por encima del 4,5:1 que pide la WCAG para un
+ * cuerpo de 16 px. Bajarlos enseña más vídeo y se lleva por delante el texto.
+ *
+ * El azul es `accent800` y no el `accent700` con el que el átomo `Button`
+ * rellena un botón normal: a esta opacidad el 700 se queda en 3,4:1 contra su
+ * letra blanca. Diluir un color sube su luminancia, así que un relleno
+ * translúcido pide arrancar de un tono más oscuro que uno opaco.
+ */
+const REGISTER_GLASS = 'rgba(44, 69, 93, 0.78)'
+const LOGIN_GLASS = 'rgba(255, 255, 255, 0.85)'
 
 export const styles = StyleSheet.create({
   container: {
@@ -168,41 +193,51 @@ export const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[4],
   },
   /**
-   * Los dos van sin relleno: el fondo es el cristal, y pintarles un color
-   * encima lo taparía y devolvería el rectángulo opaco.
+   * Los dos vuelven a tener relleno, y la jerarquía vuelve a llevarla **el
+   * color**: azul el principal, blanco el otro. Lo que no vuelve es el
+   * rectángulo opaco —el relleno es un velo, el desenfoque sigue debajo y el
+   * vídeo se ve moverse a través de los dos—.
    *
-   * La jerarquía la lleva **el contorno**, no el relleno: "Registrarse" con
-   * dos puntos de azul y "Iniciar sesión" con uno. Los dos en `accent700`,
-   * que sobre este cristal claro da 5,79:1 —WCAG 1.4.11 pide 3:1 para el
-   * contorno de un control— mientras que el `divider` por defecto de la
-   * variante se queda en 1,38:1 y desaparece.
+   * El contorno se queda de apoyo, en `accent700`, que sobre este cristal
+   * claro da 5,79:1 —WCAG 1.4.11 pide 3:1 para el contorno de un control—
+   * mientras que el `divider` por defecto de la variante se queda en 1,38:1 y
+   * desaparece.
    */
   registerButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: REGISTER_GLASS,
     borderColor: theme.colors.accent700,
     borderWidth: 2,
   },
   loginButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: LOGIN_GLASS,
     borderColor: theme.colors.accent700,
   },
   /**
-   * Hundido: velo azul claro sobre el cristal. Es opaco a propósito —tapa el
-   * desenfoque el instante que dura la pulsación—, porque sobre un vídeo en
-   * movimiento un cambio translúcido no se ve.
+   * Hundido, y cada uno hacia su lado: el azul se oscurece, el blanco se
+   * aclara. Los dos opacos a propósito —tapan el desenfoque el instante que
+   * dura la pulsación—, porque sobre un vídeo en movimiento un cambio
+   * translúcido no se nota.
+   *
+   * Ya no pueden compartir estado como cuando estaban huecos: aquel velo azul
+   * claro dejaría ahora "Registrarse" en blanco sobre casi blanco, y su letra
+   * desaparecería justo al pulsarlo.
    */
-  buttonPressed: {
+  registerPressed: {
+    backgroundColor: theme.colors.accent900,
+  },
+  loginPressed: {
     backgroundColor: theme.colors.accent100,
   },
   /**
-   * Y la letra, que es lo que tiene que resaltar sobre un fondo que se mueve.
+   * Y la letra, que ahora se apoya en el relleno de su botón y no en el
+   * cristal desnudo: blanca sobre el azul, `accent700` sobre el blanco.
    *
-   * `accent900` en el principal —13,4:1 sobre el cristal— y `accent700` en el
-   * otro —5,79:1—: los dos por encima del 4,5:1 de la WCAG, y la diferencia
-   * entre ambos vuelve a decir cuál es cuál sin recurrir a un relleno.
+   * Los dos siguen en semibold. El fondo de debajo se mueve, y las opacidades
+   * de `REGISTER_GLASS` y `LOGIN_GLASS` están puestas para que estos dos
+   * colores aguanten el peor fotograma posible; ahí están los números.
    */
   registerText: {
-    color: theme.colors.accent900,
+    color: '#ffffff',
     fontFamily: theme.typography.fonts.bodySemiBold,
   },
   loginButtonText: {
@@ -211,4 +246,4 @@ export const styles = StyleSheet.create({
   },
 })
 
-export { BLUR_INTENSITY, BACKDROP_BLUR }
+export { BLUR_INTENSITY, BACKDROP_BLUR, REGISTER_GLASS, LOGIN_GLASS }

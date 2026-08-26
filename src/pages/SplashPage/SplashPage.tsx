@@ -149,9 +149,10 @@ export function SplashPage({ onRegister, onLogin }: SplashPageProps) {
       <View style={styles.actions}>
         {/*
           Cada botón es un cristal esmerilado, la misma pieza que la barra de
-          iconos de abajo: el relleno es el vídeo desenfocado y lo único
-          sólido es el contorno y la letra. Antes eran dos rectángulos opacos
-          —uno azul y otro blanco— sobre una franja de cristal común.
+          iconos de abajo, con un velo de color encima: azul el de registro,
+          blanco el de entrar. El vídeo desenfocado se ve moverse a través de
+          los dos, que es lo que los separa de los rectángulos opacos que
+          fueron al principio.
 
           `blurMethod` no es opcional en Android. Sin él `BlurView` no
           desenfoca: dibuja una vista semitransparente, que es justo el velo
@@ -180,7 +181,7 @@ export function SplashPage({ onRegister, onLogin }: SplashPageProps) {
             fullWidth
             onPress={onRegister}
             style={[styles.buttonBase, styles.registerButton]}
-            pressedStyle={styles.buttonPressed}
+            pressedStyle={styles.registerPressed}
             textStyle={styles.registerText}
             testID="register-button"
           >
@@ -203,7 +204,7 @@ export function SplashPage({ onRegister, onLogin }: SplashPageProps) {
             fullWidth
             onPress={onLogin}
             style={[styles.buttonBase, styles.loginButton]}
-            pressedStyle={styles.buttonPressed}
+            pressedStyle={styles.loginPressed}
             textStyle={styles.loginButtonText}
             testID="login-button"
           >

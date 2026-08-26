@@ -12,7 +12,7 @@
 import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
 import { theme } from '@/theme'
 import { styles as authShellStyles } from '@/components/templates/AuthShell/AuthShell.styles'
-import { styles } from './SplashPage.styles'
+import { styles, REGISTER_GLASS, LOGIN_GLASS } from './SplashPage.styles'
 
 /**
  * `StyleSheet.flatten` devuelve el objeto de estilo ya resuelto. Se tipa como
@@ -59,13 +59,21 @@ describe('SplashPage — fondo', () => {
 
   it('deja que el vídeo pase por detrás de los botones', () => {
     /*
-     * El bloque de botones no se pinta del color de la pantalla: lo que hay
-     * bajo cada botón es el vídeo desenfocado, y un color plano ahí taparía
-     * el cristal.
+     * El bloque de botones no se pinta del color de la pantalla, y el relleno
+     * de cada uno es un velo: lo que hay debajo es el vídeo desenfocado, y un
+     * color opaco ahí taparía el cristal y devolvería el rectángulo plano que
+     * fueron estos botones al principio.
      */
     expect(flatten(styles.actions).backgroundColor).toBeUndefined()
-    expect(flatten(styles.registerButton).backgroundColor).toBe('transparent')
-    expect(flatten(styles.loginButton).backgroundColor).toBe('transparent')
+
+    for (const boton of [styles.registerButton, styles.loginButton]) {
+      const relleno = flatten(boton).backgroundColor as string
+      const alfa = Number(relleno.replace(/^rgba\(|\)$/g, '').split(',')[3])
+
+      expect(relleno).toMatch(/^rgba\(/)
+      expect(alfa).toBeGreaterThan(0)
+      expect(alfa).toBeLessThan(1)
+    }
   })
 
   it('pone cristal esmerilado en cada botón, no un desvanecido a blanco', () => {
@@ -97,11 +105,14 @@ describe('SplashPage — botones', () => {
   })
 
   /**
-   * La jerarquía la lleva el contorno, porque el relleno ya no está: los dos
-   * botones son el mismo cristal. Si alguien iguala los grosores, dejan de
-   * distinguirse el uno del otro.
+   * La jerarquía la lleva el color del relleno: azul lleno el principal,
+   * blanco el otro. El contorno la subraya con el doble de grosor en el
+   * primero, pero ya no es lo único que los separa.
    */
-  it('distingue el principal por el grosor del contorno, no por el relleno', () => {
+  it('rellena el principal de azul y el otro de blanco', () => {
+    expect(flatten(styles.registerButton).backgroundColor).toBe(REGISTER_GLASS)
+    expect(flatten(styles.loginButton).backgroundColor).toBe(LOGIN_GLASS)
+
     expect(flatten(styles.registerButton).borderWidth).toBe(2)
     expect(flatten(styles.loginButton).borderWidth).toBeUndefined()
   })
@@ -118,9 +129,14 @@ describe('SplashPage — botones', () => {
     }
   })
 
-  /** Sobre un vídeo en movimiento, la letra es lo único que ancla la lectura */
-  it('resalta el texto de los dos, y más el del principal', () => {
-    expect(flatten(styles.registerText).color).toBe(theme.colors.accent900)
+  /**
+   * Cada letra va contra su propio relleno, no contra el cristal desnudo. Si
+   * alguien cambia un relleno sin cambiar su letra —o al revés— se pierde el
+   * contraste que sostiene la pantalla entera, porque debajo hay un vídeo que
+   * cambia de color con cada fotograma.
+   */
+  it('resalta el texto de los dos, cada uno contra su relleno', () => {
+    expect(flatten(styles.registerText).color).toBe('#ffffff')
     expect(flatten(styles.loginButtonText).color).toBe(theme.colors.accent700)
 
     for (const texto of [styles.registerText, styles.loginButtonText]) {
@@ -130,8 +146,16 @@ describe('SplashPage — botones', () => {
     }
   })
 
-  it('lo hunde al pulsarlo, que sobre el cristal no hay relleno que oscurecer', () => {
-    expect(flatten(styles.buttonPressed).backgroundColor).toBe(
+  /*
+   * Y cada uno se hunde hacia su lado. Compartir un solo estado pulsado, como
+   * cuando los dos estaban huecos, dejaría "Registrarse" en blanco sobre casi
+   * blanco justo en el instante de la pulsación.
+   */
+  it('hunde el azul oscureciéndolo y el blanco aclarándolo', () => {
+    expect(flatten(styles.registerPressed).backgroundColor).toBe(
+      theme.colors.accent900
+    )
+    expect(flatten(styles.loginPressed).backgroundColor).toBe(
       theme.colors.accent100
     )
   })
