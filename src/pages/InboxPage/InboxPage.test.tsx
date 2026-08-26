@@ -37,6 +37,7 @@ jest.mock('@/hooks/domain/useInbox', () => ({
           requestedProName: 'Mi empresa',
           substituteProName: null,
           photoCount: 0,
+          photos: [],
           createdAt: '2026-08-19T10:00:00.000Z',
           // A la empresa le piden fontanería pero no la ejerce
           canAssignToSelf: false,
@@ -73,7 +74,14 @@ jest.mock('@/hooks/domain/useEmployees', () => ({
 
 jest.mock('@/hooks/domain/useIsEmployee', () => ({ useIsEmployee: () => false }))
 jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefined }))
-jest.mock('@/stores/useAuthStore', () => ({ useUser: () => ({ id: 'jefe' }) }))
+/*
+ * `useAccessToken` lo pide `RemotePhoto`, que entró con la tira de fotos del
+ * cliente: las de una avería exigen sesión y van con la cabecera puesta.
+ */
+jest.mock('@/stores/useAuthStore', () => ({
+  useUser: () => ({ id: 'jefe' }),
+  useAccessToken: () => 'token-de-prueba',
+}))
 
 jest.mock('@/components/molecules/InfoCard', () => {
   const { View } = require('react-native')

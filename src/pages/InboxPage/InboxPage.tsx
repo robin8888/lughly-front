@@ -21,6 +21,8 @@ import { Tag } from '@/components/atoms/Tag'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { RemotePhoto } from '@/components/molecules/RemotePhoto'
+import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { useInbox, useAssignJob } from '@/hooks/domain/useInbox'
 import { useEmployees, useEmployer } from '@/hooks/domain/useEmployees'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
@@ -31,6 +33,7 @@ import type { ApiInboxItem } from '@/api/assignments.api'
 import { formatJobWhen, timeLeft } from '@/utils/dates'
 import { jobTypeLabel } from '@/utils/jobStatus'
 import type { ApiJobType } from '@/api/jobs.api'
+import { API_BASE_URL } from '@/api'
 import { theme } from '@/theme'
 import { styles } from './InboxPage.styles'
 
@@ -53,6 +56,11 @@ export function InboxPage({ onBack }: InboxPageProps) {
 
   /** El que se está respondiendo en el diálogo, si hay alguno */
   const [confirming, setConfirming] = useState<ApiInboxItem | null>(null)
+
+  /** La foto que se está mirando a pantalla completa, si hay alguna */
+  const [viewing, setViewing] = useState<{ jobId: string; index: number } | null>(
+    null,
+  )
   const { assign, isAssigning } = useAssignJob()
 
   /**
@@ -65,6 +73,24 @@ export function InboxPage({ onBack }: InboxPageProps) {
   const employees = employeesData?.items ?? []
 
   const items = data?.items ?? []
+
+  /** El encargo cuya foto se está mirando, para dárselas al visor */
+  const viewingJob = viewing
+    ? (items.find((item) => item.id === viewing.jobId) ?? null)
+    : null
+
+  /**
+   * Trabaja solo: ni tiene empresa ni gente a cargo.
+   *
+   * Para él la pregunta "¿quién va?" no existe —el encargo es suyo y no hay a
+   * quién mandar—, así que en vez de una lista de una sola opción se le dan
+   * los dos botones que de verdad tiene: aceptar o rechazar.
+   *
+   * Se mira `employer` **y** la plantilla: un autónomo puede haberse declarado
+   * empleador y no haber dado de alta a nadie todavía, y hasta que tenga a
+   * alguien su decisión sigue siendo la de uno solo.
+   */
+  const trabajaSolo = employer === null || employees.length === 0
 
   const doAssign = (job: ApiInboxItem, proId: string, proName: string) => {
     void assign(job.id, proId).then(({ ok, result, error }) => {
@@ -218,6 +244,41 @@ export function InboxPage({ onBack }: InboxPageProps) {
                     {job.description}
                   </Text>
 
+                  {/*
+                    Las fotos del cliente, **antes de responder**. Es lo que
+                    separa decidir de adivinar: una fuga, un mueble roto o una
+                    pared con humedad se valoran mirándolos, y hasta ahora aquí
+                    solo viajaba el recuento.
+                  */}
+                  {job.photos.length > 0 && (
+                    <View style={styles.photosBlock}>
+                      <Text style={styles.photosLabel}>
+                        {job.photos.length === 1
+                          ? 'Una foto del cliente'
+                          : `${job.photos.length} fotos del cliente`}
+                      </Text>
+
+                      <View style={styles.photos}>
+                        {job.photos.map((photo, index) => (
+                          <Pressable
+                            key={photo.fullUrl}
+                            onPress={() => setViewing({ jobId: job.id, index })}
+                            accessibilityRole="imagebutton"
+                            accessibilityLabel="Ver la foto más grande"
+                            style={styles.photo}
+                            testID={`inbox-${job.id}-photo-${index}`}
+                          >
+                            <RemotePhoto
+                              uri={`${API_BASE_URL}${photo.url}`}
+                              style={styles.photoImage}
+                              fallback="No carga"
+                            />
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
                   {job.maxBudget !== null && (
                     <Text style={styles.budget}>
                       Presupuesto máximo del cliente: {job.maxBudget} €
@@ -271,6 +332,46 @@ export function InboxPage({ onBack }: InboxPageProps) {
                       <Text style={styles.strong}>{job.substituteProName}</Text>.
                       Esperando a que el cliente acepte el cambio.
                     </Text>
+                  ) : trabajaSolo ? (
+                    /**
+                     * Trabaja solo: el encargo es para él y no hay a quién
+                     * mandar, así que la pregunta "¿quién va?" sobra. Se le
+                     * dan las dos respuestas que de verdad tiene.
+                     *
+                     * Aceptar es asignárselo al profesional que pidió el
+                     * cliente, que es él mismo: por eso no hace falta mirar
+                     * `canAssignToSelf` —el servidor ya comprobó que tiene el
+                     * oficio cuando dejó que le pidieran el encargo—.
+                     */
+                    <View style={styles.actions}>
+                      <Pressable
+                        onPress={() =>
+                          confirmAssign(job, job.requestedProId, job.requestedProName)
+                        }
+                        disabled={isAssigning}
+                        style={styles.primaryChoice}
+                        accessibilityRole="button"
+                        testID={`inbox-${job.id}-accept`}
+                      >
+                        <Text style={styles.primaryChoiceText}>Aceptar</Text>
+                        <Text style={styles.primaryChoiceHint}>
+                          El trabajo pasa a ser tuyo
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => setConfirming(job)}
+                        disabled={isAssigning}
+                        style={styles.choice}
+                        accessibilityRole="button"
+                        testID={`inbox-${job.id}-decline`}
+                      >
+                        <Text style={styles.choiceText}>Rechazar</Text>
+                        <Text style={styles.choiceHint}>
+                          El cliente queda libre para buscar a otro
+                        </Text>
+                      </Pressable>
+                    </View>
                   ) : (
                     <View style={styles.actions}>
                       <Text style={styles.actionsLabel}>¿Quién va?</Text>
@@ -409,6 +510,16 @@ export function InboxPage({ onBack }: InboxPageProps) {
         job={confirming}
         onDismiss={() => setConfirming(null)}
         testID="inbox-confirm"
+      />
+
+      {/* Igual que en la agenda: se toca una miniatura y se abre entera */}
+      <PhotoViewer
+        photos={(viewingJob?.photos ?? []).map(
+          (photo) => `${API_BASE_URL}${photo.fullUrl}`,
+        )}
+        openAt={viewingJob ? (viewing?.index ?? 0) : null}
+        onClose={() => setViewing(null)}
+        testID="inbox-photo-viewer"
       />
     </View>
   )

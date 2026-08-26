@@ -66,6 +66,51 @@ export function useCancelJob() {
 }
 
 /**
+ * Romper un trabajo ya contratado, con su motivo.
+ *
+ * Aparte de `useCancelJob` porque son dos cosas distintas: aquello es retirar
+ * un anuncio que nadie ha tocado, y esto es decirle a alguien que había
+ * apartado la mañana que ya no hace falta que venga. Por eso pide motivo, y
+ * por eso lo pueden usar los dos lados.
+ */
+export function useCancelContract() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ jobId, reason }: { jobId: string; reason: string }) =>
+      jobsApi.cancelContract(jobId, reason),
+    onSuccess: () => {
+      /*
+        Y la agenda con ellos: al profesional se le acaba de caer una visita, y
+        dejarla en su día sería enseñarle algo a lo que ya no tiene que ir.
+      */
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'inbox'] })
+    },
+  })
+
+  return {
+    cancelContract: async (jobId: string, reason: string) => {
+      try {
+        const result = await mutation.mutateAsync({ jobId, reason })
+        return { ok: true as const, result, error: null }
+      } catch (error) {
+        return {
+          ok: false as const,
+          result: null,
+          error:
+            error instanceof NetworkError || error instanceof ApiError
+              ? error.message
+              : null,
+        }
+      }
+    },
+    isCancelling: mutation.isPending,
+  }
+}
+
+/**
  * Volver a encargar un trabajo a otro profesional.
  *
  * Cambia su ficha y su sitio en la lista —vuelve a estar esperando respuesta—,

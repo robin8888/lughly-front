@@ -92,6 +92,15 @@ export interface ApiInboxItem {
   /** A quién se ha propuesto en su lugar, si ya se propuso */
   substituteProName: string | null
   photoCount: number
+  /**
+   * Las fotos que adjuntó el cliente. `url` es la reducida —para la tira— y
+   * `fullUrl` la original, igual que en la agenda.
+   *
+   * Se enseñan **antes de responder**, y ese es el motivo de que estén: quien
+   * tiene que decir sí o no a una avería necesita verla. Hasta ahora solo
+   * viajaba el recuento, que no ayuda a decidir nada.
+   */
+  photos: { url: string; fullUrl: string }[]
   createdAt: string
   /**
    * Si quien mira puede quedarse este trabajo.

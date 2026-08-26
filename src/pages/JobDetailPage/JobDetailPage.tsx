@@ -20,12 +20,15 @@
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
+import { useState } from 'react'
 import { Button } from '@/components/atoms/Button'
+import { Input } from '@/components/atoms/Input'
+import { Dialog } from '@/components/organisms/Dialog'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Countdown } from '@/components/atoms/Countdown'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
-import { useJob, useCancelJob } from '@/hooks/domain/useJob'
+import { useJob, useCancelJob, useCancelContract } from '@/hooks/domain/useJob'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -154,6 +157,18 @@ export function JobDetailPage({
   const tabBarClearance = useTabBarClearance()
   const { data: job, isPending, isError, refetch } = useJob(jobId)
   const { cancel, isCancelling } = useCancelJob()
+  const { cancelContract, isCancelling: isBreaking } = useCancelContract()
+
+  /**
+   * El diálogo de romper un contrato, con su motivo.
+   *
+   * Aparte del `Alert` de cancelar un anuncio: aquí hay que **escribir** algo,
+   * y `Alert.prompt` solo existe en iOS. Además la decisión pesa más —al otro
+   * lado hay alguien que había apartado la mañana—, así que merece una
+   * pantalla que se lea antes de responder.
+   */
+  const [breaking, setBreaking] = useState(false)
+  const [reason, setReason] = useState('')
 
   /** Se pregunta antes, y con lo que pasa dicho: cancelar no se deshace. */
   const confirmCancel = (id: string) => {
@@ -255,6 +270,22 @@ export function JobDetailPage({
   const canCancel =
     job.viewer === 'client' && ['DRAFT', 'OPEN', 'PENDING_PRO'].includes(job.status)
 
+  /**
+   * Y romperlo cuando ya está contratado, **desde los dos lados**.
+   *
+   * Estuvo cerrado a propósito —"hay quien ha reservado sus horas, y eso no se
+   * deshace con un botón"— y el razonamiento sigue valiendo para un
+   * arrepentimiento. Pero las incidencias existen: el profesional se pone
+   * malo, al cliente se le inunda el piso el día antes. Sin salida, lo que se
+   * hacía era no aparecer, que es peor para los dos y no deja rastro.
+   *
+   * Por eso pide motivo y no se resuelve con un toque: ver `breaking`.
+   */
+  const canBreak = job.status === 'CONTRACTED'
+
+  /** Diez caracteres, lo mismo que exige el servidor */
+  const reasonOk = reason.trim().length >= 10
+
   return (
     <View style={styles.screen} testID="job-detail-page">
       {header}
@@ -288,6 +319,31 @@ export function JobDetailPage({
             </View>
           )}
         </InfoCard>
+
+        {/*
+          Por qué se canceló, cuando hay motivo escrito.
+          
+          En su propia tarjeta y justo debajo del estado, porque es lo único
+          que se viene a mirar cuando un trabajo aparece cancelado: el aviso al
+          móvil llega una vez, y quien tenía el teléfono en silencio se
+          encuentra aquí con un "cancelado" y nada más.
+
+          Solo con `reason`: las canceladas antes de que esto se guardara traen
+          fecha pero no motivo, y una tarjeta vacía diciendo "se canceló"
+          repetiría el estado sin añadir nada.
+        */}
+        {job.cancellation?.reason && (
+          <InfoCard style={styles.block} testID="job-detail-cancellation">
+            <Text style={styles.blockTitle}>
+              {job.cancellation.byMe
+                ? 'Lo cancelaste tú'
+                : job.cancellation.side === 'client'
+                  ? 'Lo canceló el cliente'
+                  : 'Lo canceló el profesional'}
+            </Text>
+            <Text style={styles.happening}>{job.cancellation.reason}</Text>
+          </InfoCard>
+        )}
 
         {/*
           Quién lo tiene. Cuando trabaja para alguien se dice también quién va
@@ -453,7 +509,112 @@ export function JobDetailPage({
             </Text>
           </Pressable>
         )}
+
+        {/*
+          Y la salida cuando ya está contratado. El texto no es el mismo para
+          los dos: el cliente cancela un trabajo suyo, y el profesional está
+          diciendo que no puede con algo a lo que se comprometió. Llamar a las
+          dos cosas "cancelar" le quitaría peso a la segunda.
+        */}
+        {canBreak && (
+          <Pressable
+            onPress={() => {
+              setReason('')
+              setBreaking(true)
+            }}
+            disabled={isBreaking}
+            accessibilityRole="button"
+            style={styles.cancel}
+            testID="job-detail-break"
+          >
+            <Text style={styles.cancelText}>
+              {job.viewer === 'client'
+                ? 'Cancelar el trabajo'
+                : 'No puedo hacer este trabajo'}
+            </Text>
+          </Pressable>
+        )}
       </Animated.ScrollView>
+
+      <Dialog
+        visible={breaking}
+        tone="danger"
+        title={
+          job.viewer === 'client'
+            ? '¿Cancelar el trabajo?'
+            : '¿No puedes hacerlo?'
+        }
+        message={
+          job.viewer === 'client'
+            ? 'Hay alguien que ha apartado ese rato para ti. Cuéntale qué ha pasado: lo va a leer.'
+            : 'El cliente contaba contigo. Cuéntale qué ha pasado: lo va a leer, y cancelar sin explicación cuenta como un plantón.'
+        }
+        onDismiss={() => setBreaking(false)}
+        actions={[
+          {
+            label: 'Volver',
+            variant: 'secondary',
+            onPress: () => setBreaking(false),
+            testID: 'job-detail-break-back',
+          },
+          {
+            label: isBreaking ? 'Cancelando…' : 'Cancelar el trabajo',
+            /*
+              Apagado hasta que haya motivo. El servidor lo rechazaría igual,
+              pero enterarse después de pulsar convierte en error lo que aquí
+              es solo un campo a medio rellenar.
+            */
+            disabled: !reasonOk || isBreaking,
+            onPress: () => {
+              void (async () => {
+                const { ok, result, error } = await cancelContract(
+                  job.id,
+                  reason.trim(),
+                )
+
+                if (!ok) {
+                  Alert.alert(
+                    'No se ha podido cancelar',
+                    error ?? 'Inténtalo de nuevo en un momento.',
+                  )
+                  return
+                }
+
+                setBreaking(false)
+
+                /*
+                  Y se dice qué ha pasado con el dinero, que es lo primero que
+                  se pregunta quien cancela algo que ya había pagado. Callarlo
+                  obligaría a ir a buscarlo a Pagos.
+                */
+                const dinero =
+                  result.releasedCharges > 0
+                    ? ' Parte del importe ya se había liberado al profesional: escríbenos y lo revisamos.'
+                    : result.refunded > 0
+                      ? ` Se han devuelto ${result.refunded} € al método de pago.`
+                      : ''
+
+                Alert.alert(
+                  'Trabajo cancelado',
+                  `Hemos avisado a la otra parte.${dinero}`,
+                )
+              })()
+            },
+            testID: 'job-detail-break-confirm',
+          },
+        ]}
+        testID="job-detail-break-dialog"
+      >
+        <Input
+          value={reason}
+          onChangeText={setReason}
+          placeholder="Ej. Me he puesto malo y no puedo ir"
+          multiline
+          numberOfLines={3}
+          editable={!isBreaking}
+          testID="job-detail-break-reason"
+        />
+      </Dialog>
     </View>
   )
 }

@@ -168,6 +168,20 @@ export interface ApiJobDetail {
   tradeLabel: string
   city: string
   viewer: 'client' | 'pro'
+  /**
+   * Por qué se canceló, si se canceló. `null` en todo lo demás, y también en
+   * las que se cancelaron antes de que esto se guardara.
+   *
+   * `byMe` viene resuelto del servidor para no tener que comparar
+   * identificadores aquí solo para decidir entre "lo cancelaste tú" y "lo
+   * canceló el cliente".
+   */
+  cancellation: {
+    reason: string | null
+    at: string
+    byMe: boolean
+    side: 'client' | 'pro' | null
+  } | null
   addressLine: string | null
   latitude: number | null
   longitude: number | null
@@ -191,6 +205,8 @@ export interface ApiJobDetail {
   clientName: string | null
   clientPhone: string | null
   photoCount: number
+  /** Las del cliente: `url` es la reducida y `fullUrl` la original */
+  photos: { url: string; fullUrl: string }[]
   createdAt: string
   /**
    * Los servicios de la carta que se contrataron, copiados al pedirlo: si el
@@ -261,4 +277,26 @@ export const jobsApi = {
       `/v1/jobs/${jobId}/cancel`,
       { method: 'POST', auth: true },
     ),
+
+  /**
+   * Romper un trabajo **ya contratado**, desde cualquiera de los dos lados.
+   *
+   * Endpoint distinto de `cancel` y no un caso suyo: aquel es del cliente y
+   * antes de que nadie mueva nada; este exige motivo, lo puede usar también el
+   * profesional, y devuelve lo que la plataforma tuviera retenido.
+   *
+   * `releasedCharges` son los cobros ya transferidos al profesional, que no se
+   * tocan: si viene con algo, ese dinero se resuelve con administración.
+   */
+  cancelContract: (jobId: string, reason: string) =>
+    apiRequest<{
+      jobId: string
+      status: ApiJobStatus
+      refunded: number
+      releasedCharges: number
+    }>(`/v1/jobs/${jobId}/cancel-contract`, {
+      method: 'POST',
+      auth: true,
+      body: { reason },
+    }),
 }

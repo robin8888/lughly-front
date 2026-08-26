@@ -97,6 +97,36 @@ export const styles = StyleSheet.create({
     opacity: 0.8,
     marginTop: 8,
   },
+  /**
+   * La tira de fotos del cliente, con las mismas medidas que la de la agenda:
+   * es la misma foto del mismo encargo, y dos tamaños en dos pantallas
+   * seguidas se leen como dos cosas.
+   */
+  photosBlock: {
+    marginTop: 10,
+  },
+  photosLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+  },
+  photos: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  photo: {
+    width: 84,
+    height: 84,
+    borderRadius: theme.radius.photo,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+  },
   budget: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
