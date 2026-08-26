@@ -1,7 +1,7 @@
 /**
  * MyProfilePage
- * Los datos propios: nombre, teléfono, correo y —si es profesional— la
- * descripción de su trabajo.
+ * Los datos propios: nombre, teléfono, dirección, correo y —si es
+ * profesional— la descripción de su trabajo.
  *
  * Faltaba entera. De todo lo que se pide al registrarse solo se podían cambiar
  * después la contraseña, la foto y los oficios: quien tecleaba mal su nombre en
@@ -11,6 +11,18 @@
  * **La descripción no la escribía nadie.** El único sitio del proyecto que
  * tocaba ese campo era el script de datos de ejemplo, y por eso solo la tenían
  * los profesionales de prueba.
+ *
+ * La dirección se edita aquí porque es aquí donde se editan los demás datos
+ * de la persona, y desde que se pide en el alta habría quedado como el único
+ * campo obligatorio imposible de cambiar: una trampa para cualquiera que se
+ * mude. Se cambia con el mismo campo de sugerencias del registro, así que
+ * sigue llevando coordenadas y el directorio se reordena solo.
+ *
+ * **A un profesional no le mueve la zona de cobertura.** Dónde vive y desde
+ * dónde sale a trabajar son dos cosas: quien cambia de piso y mantiene el
+ * taller donde estaba vería si no su radio saltar a la otra punta de la ciudad
+ * —y con él, a qué urgencias le avisan— sin haberlo pedido. La zona tiene su
+ * pantalla, su mapa y su endpoint.
  *
  * El correo se enseña pero no se edita, y se dice por qué. No es un descuido:
  * es la identidad con la que se entra y el camino para recuperar la cuenta, así
@@ -26,6 +38,8 @@ import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { FormField } from '@/components/molecules/FormField'
+import { AddressInput } from '@/components/molecules/AddressInput'
+import type { ApiGeocodeMatch } from '@/api/geocode.api'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { useMyBio, useSaveMyProfile } from '@/hooks/domain/useMyProfile'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -61,6 +75,14 @@ export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
 
   const [name, setName] = useState(user?.name ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
+  /**
+   * La suya, la que dio en el alta. `null` en las cuentas anteriores a que se
+   * pidiera: para esas, el campo sale vacío y es la primera vez que se les
+   * puede preguntar.
+   */
+  const [address, setAddress] = useState<ApiGeocodeMatch | null>(
+    user?.address ?? null,
+  )
   const [bio, setBio] = useState('')
   const [loadedBio, setLoadedBio] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -81,10 +103,29 @@ export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
 
   /** Solo lo que ha cambiado: mandar el resto sería reescribirlo sin motivo */
   const changes = () => {
-    const payload: { name?: string; phone?: string; bio?: string } = {}
+    const payload: {
+      name?: string
+      phone?: string
+      address?: ApiGeocodeMatch
+      bio?: string
+    } = {}
 
     if (trimmedName !== (user?.name ?? '')) payload.name = trimmedName
     if (phone.trim() !== (user?.phone ?? '')) payload.phone = phone.trim()
+
+    /*
+      Por coordenadas y no por texto: dos portales distintos de la misma calle
+      traen la misma etiqueta recortada más de una vez, y comparar el texto
+      dejaría pasar por "sin cambios" una mudanza de verdad. Y al revés: el
+      proveedor puede devolver la misma dirección con la etiqueta escrita de
+      otra forma, y eso no es un cambio que merezca una petición.
+    */
+    if (
+      address &&
+      (address.lat !== user?.address?.lat || address.lng !== user?.address?.lng)
+    ) {
+      payload.address = address
+    }
     if (isPro && loadedBio && bio.trim() !== (bioData?.bio ?? '')) {
       payload.bio = bio.trim()
     }
@@ -93,6 +134,17 @@ export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
   }
 
   const handleSave = async () => {
+    /*
+      Se avisa antes de comparar nada. Quien tenía dirección y se pone a
+      escribir otra sin elegirla de la lista deja el campo sin coordenadas, y
+      `changes()` la descarta: sin esto, guardaría y le diría "no has cambiado
+      nada" justo después de haber escrito su nueva calle.
+    */
+    if (address === null && user?.address) {
+      setError('Elige tu dirección de la lista de sugerencias.')
+      return
+    }
+
     const payload = changes()
 
     if (Object.keys(payload).length === 0) {
@@ -174,6 +226,22 @@ export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
               autoComplete="tel"
               editable={!isSaving}
               testID="profile-phone"
+            />
+          </FormField>
+
+          <FormField
+            label="Dirección"
+            hint={
+              isPro
+                ? 'Dónde vives. No se publica, y cambiarla no mueve tu zona de trabajo: eso se hace en Mi zona de trabajo.'
+                : 'La usamos para enseñarte a los profesionales que tienes más cerca. No se publica.'
+            }
+          >
+            <AddressInput
+              value={address}
+              onChange={setAddress}
+              editable={!isSaving}
+              testID="profile-address"
             />
           </FormField>
 

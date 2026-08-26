@@ -78,6 +78,13 @@ export const styles = StyleSheet.create({
     marginTop: 16,
   },
   /** Buscar y ubicación actual, a la par: son dos formas de lo mismo */
+  /**
+   * La fila que tenía "Buscar" y "Usar mi ubicación", y que ahora solo lleva
+   * el segundo: las sugerencias salen mientras se escribe y no hay nada que
+   * pulsar para buscar. Se queda como fila —y no como botón suelto— porque el
+   * de ubicación mantiene `flex: 1` y así ocupa el ancho entero, que es lo que
+   * le corresponde ahora que es la única alternativa a escribir.
+   */
   searchRow: {
     flexDirection: 'row',
     gap: 8,
@@ -87,25 +94,12 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
-  matches: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.fieldBorder,
-    borderRadius: theme.radius.card,
-    backgroundColor: theme.colors.field,
-    overflow: 'hidden',
-  },
-  match: {
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
-  },
-  matchLabel: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.small,
-    color: theme.colors.text,
-  },
+  /*
+   * La lista de coincidencias vivía aquí, con su propio borde y su propio
+   * relleno. Se fue con el buscador a `AddressInput`, que la pinta como el
+   * desplegable del buscador de oficios de la home: flotando sobre el
+   * contenido en vez de empujarlo hacia abajo.
+   */
 
   hint: {
     fontFamily: theme.typography.fonts.body,

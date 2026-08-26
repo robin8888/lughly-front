@@ -4,6 +4,7 @@
  */
 
 import { apiRequest } from './http'
+import type { ApiGeocodeMatch } from './geocode.api'
 import type { UserRole } from '@/stores/useAuthStore'
 
 export interface ApiUser {
@@ -23,6 +24,20 @@ export interface ApiUser {
    */
   mustChangePassword: boolean
   phone: string | null
+  /**
+   * Su dirección, la que dio en el alta. **Puede ser null**: las cuentas
+   * anteriores a que se pidiera no tienen ninguna, y eso no es un error que
+   * el usuario pueda arreglar desde una pantalla de aviso.
+   *
+   * De aquí sale el punto que ordena el directorio por cercanía cuando no hay
+   * GPS —o cuando no se le ha dado permiso—, que es la razón entera de
+   * pedirla.
+   *
+   * Solo llega en la sesión propia y en `GET /v1/auth/me`. No es un dato que
+   * se enseñe de un usuario a otro, y el backend no lo devuelve en ninguna
+   * vista pública.
+   */
+  address: ApiGeocodeMatch | null
 }
 
 export interface ApiSession {
@@ -56,6 +71,24 @@ export interface RegisterPayload {
     /** Qué hace en ese oficio. Vacío = se enseña la general del perfil */
     description?: string | null
   }[]
+  /**
+   * Obligatoria, y para los dos roles.
+   *
+   * Va como objeto y no como texto porque lo que se manda es **la dirección
+   * elegida en el autocompletado**, con sus coordenadas: el backend la
+   * rechaza sin ellas. Al cliente le sirve para ordenar el directorio por
+   * cercanía y al profesional para tener punto de cobertura desde el alta,
+   * que antes no tenía hasta pasar por la pantalla de Cobertura.
+   */
+  address: ApiGeocodeMatch
+  /**
+   * La ciudad base del profesional, que sale en su ficha.
+   *
+   * Sigue existiendo aparte de `address.city` porque hay quien tiene la base
+   * en un pueblo y se anuncia con el nombre de la ciudad grande de al lado.
+   * El formulario la rellena con la del geocodificador y le deja corregirla;
+   * si no manda ninguna, el backend usa la de la dirección.
+   */
   city?: string
   acceptTerms: boolean
   acceptComms: boolean
@@ -101,10 +134,16 @@ export const authApi = {
       body: { code, password },
     }),
 
-  changePassword: (currentPassword: string, newPassword: string) =>
+  /**
+   * @param currentPassword La actual. **Se omite** cuando la cuenta viene con
+   *   contraseña temporal: quien está obligado a cambiarla la acaba de
+   *   escribir para entrar, y el servidor no la vuelve a pedir. En cualquier
+   *   otro caso es obligatoria y omitirla se rechaza.
+   */
+  changePassword: (currentPassword: string | undefined, newPassword: string) =>
     apiRequest<ApiSession>('/v1/me/password', {
       method: 'PATCH',
-      body: { currentPassword, newPassword },
+      body: currentPassword === undefined ? { newPassword } : { currentPassword, newPassword },
       auth: true,
     }),
 

@@ -19,6 +19,31 @@ import { MyProfilePage } from './MyProfilePage'
 let mockEsPro = true
 const mockGuardado: unknown[] = []
 
+/** La que tiene guardada la cuenta de prueba */
+const mockDireccion = {
+  label: 'Calle Virgen del Puig 4, Valencia',
+  lat: 39.4699,
+  lng: -0.3763,
+  city: 'Valencia',
+  postcode: '46013',
+}
+
+/** Y la que devuelve el geocodificador cuando se busca otra */
+const mockMudanza = {
+  label: 'Calle Colón 20, Valencia',
+  lat: 39.4699,
+  lng: -0.3701,
+  city: 'Valencia',
+  postcode: '46004',
+}
+
+jest.mock('@/api/geocode.api', () => ({
+  geocodeApi: {
+    search: () => Promise.resolve({ matches: [mockMudanza] }),
+    reverse: () => Promise.resolve({ match: null }),
+  },
+}))
+
 jest.mock('@/hooks/auth/useEffectiveRole', () => ({
   useEffectiveRole: () => (mockEsPro ? 'pro' : 'client'),
 }))
@@ -29,6 +54,7 @@ jest.mock('@/stores/useAuthStore', () => ({
     name: 'Robin',
     email: 'robin@ejemplo.test',
     phone: '600123456',
+    address: mockDireccion,
   }),
 }))
 
@@ -93,6 +119,49 @@ describe('MyProfilePage', () => {
 
     expect(queryByTestId('profile-bio')).toBeNull()
     expect(queryByTestId('profile-name')).toBeTruthy()
+  })
+
+  /**
+   * La dirección se edita **aquí**, donde se editan los demás datos de la
+   * persona. Se hizo obligatoria en el alta, así que sin esto era el único
+   * campo exigido que nadie podía cambiar después: una trampa para cualquiera
+   * que se mude.
+   */
+  it('trae la dirección guardada y deja cambiarla por otra', async () => {
+    const screen = render(<MyProfilePage onBack={() => {}} />)
+
+    expect(screen.getByTestId('profile-address').props.value).toBe(
+      mockDireccion.label,
+    )
+
+    fireEvent.changeText(screen.getByTestId('profile-address'), 'Calle Colón')
+    fireEvent.press(
+      await screen.findByTestId(
+        `profile-address-match-${mockMudanza.lat},${mockMudanza.lng}`,
+      ),
+    )
+    fireEvent.press(screen.getByTestId('profile-save'))
+
+    await waitFor(() =>
+      expect(mockGuardado).toEqual([{ address: mockMudanza }]),
+    )
+  })
+
+  /**
+   * Escribir sin elegir deja el campo sin coordenadas, y `changes()` lo
+   * descarta. Sin este aviso, guardar respondería "no has cambiado nada" justo
+   * después de haber escrito la calle nueva.
+   */
+  it('avisa si se escribió una dirección sin elegirla de la lista', async () => {
+    const screen = render(<MyProfilePage onBack={() => {}} />)
+
+    fireEvent.changeText(screen.getByTestId('profile-address'), 'Calle Colón 20')
+    fireEvent.press(screen.getByTestId('profile-save'))
+
+    expect(
+      await screen.findByText('Elige tu dirección de la lista de sugerencias.'),
+    ).toBeTruthy()
+    expect(mockGuardado).toEqual([])
   })
 
   it('no deja guardar un nombre de una letra', () => {

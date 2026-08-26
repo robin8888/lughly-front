@@ -17,6 +17,8 @@ import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
+import { AddressInput } from '@/components/molecules/AddressInput'
+import type { ApiGeocodeMatch } from '@/api/geocode.api'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -63,7 +65,11 @@ export function RequestProPage({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [city, setCity] = useState('')
-  const [addressLine, setAddressLine] = useState('')
+  /** Si tocó la ciudad a mano; hasta entonces la pone la dirección elegida */
+  const [cityTouched, setCityTouched] = useState(false)
+  const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
+  /** Piso, puerta, escalera: lo que el geocodificador no sabe */
+  const [detail, setDetail] = useState('')
   const [preferredDate, setPreferredDate] = useState<Date | null>(null)
   const [maxBudget, setMaxBudget] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
@@ -97,7 +103,7 @@ export function RequestProPage({
     title.trim().length >= 8 &&
     description.trim().length >= 20 &&
     city.trim().length >= 2 &&
-    addressLine.trim().length >= 5 &&
+    address !== null &&
     !isRequesting
 
   const handleSend = async () => {
@@ -112,7 +118,19 @@ export function RequestProPage({
       title: title.trim(),
       description: description.trim(),
       city: city.trim(),
-      addressLine: addressLine.trim(),
+      /*
+        La dirección normalizada del geocodificador más el piso. Quien la lee
+        es la persona que va a presentarse allí, así que van juntos: una línea
+        que se puede copiar al navegador del coche y llamar al timbre.
+
+        No viajan las coordenadas, y no es un olvido: en un encargo directo el
+        profesional ya está elegido, así que no hay ninguna distancia que
+        calcular. Las urgencias sí las mandan, porque ahí el punto decide a
+        quién se avisa.
+      */
+      addressLine: detail.trim()
+        ? `${address!.label} (${detail.trim()})`
+        : address!.label,
       ...(preferredDate && { preferredDate: toIsoDateTime(preferredDate) }),
       ...(maxBudget !== '' &&
         Number.isFinite(budget) &&
@@ -264,7 +282,10 @@ export function RequestProPage({
         <FormField label="Ciudad" error={fieldErrors.city}>
           <Input
             value={city}
-            onChangeText={setCity}
+            onChangeText={(texto) => {
+              setCityTouched(true)
+              setCity(texto)
+            }}
             placeholder="Ej. Madrid"
             autoCapitalize="words"
             editable={!isRequesting}
@@ -275,15 +296,20 @@ export function RequestProPage({
 
         <FormField
           label="Dirección"
-          hint="Con el número. Solo la verá quien acabe haciendo el trabajo, no antes."
+          hint="Elígela de las sugerencias. Solo la verá quien acabe haciendo el trabajo, no antes."
           error={fieldErrors.addressLine}
         >
-          <Input
-            value={addressLine}
-            onChangeText={setAddressLine}
-            placeholder="Ej. Calle Mayor 14, 3º B"
+          <AddressInput
+            value={address}
+            onChange={(elegida) => {
+              setAddress(elegida)
+              if (elegida?.city && !cityTouched) setCity(elegida.city)
+            }}
+            placeholder="Ej. Calle Mayor 14"
             editable={!isRequesting}
             error={Boolean(fieldErrors.addressLine)}
+            detail={detail}
+            onDetailChange={setDetail}
             testID="request-address"
           />
         </FormField>

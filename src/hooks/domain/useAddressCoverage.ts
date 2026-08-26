@@ -1,123 +1,96 @@
 /**
  * useAddressCoverage
- * Dirección escrita → coordenadas → a cuántos profesionales llegaría.
+ * Un punto del mapa → a cuántos profesionales llegaría una urgencia ahí.
  *
- * Es el indicador en vivo de la pantalla de urgencias. Encadena dos
- * llamadas: geocodificar la dirección y contar la cobertura en ese punto.
+ * Es el indicador en vivo de la pantalla de urgencias.
  *
- * **No se consulta en cada tecla.** Se espera a que el usuario deje de
- * escribir: geocodificar "C", "Ca", "Cal", "Call"… son cinco peticiones
- * inútiles al proveedor por cada palabra, y ninguna de ellas iba a acertar.
+ * ## Ya no geocodifica
+ *
+ * Encadenaba dos llamadas —traducir la dirección escrita y contar la
+ * cobertura en ese punto— con un rebote de 700 ms para no preguntar en cada
+ * tecla. La primera mitad se ha ido, y con ella el fallo que traía dentro:
+ * **se quedaba con `matches[0]` sin decírselo a nadie**. El cliente escribía
+ * "Virgen del Puig 4", el geocodificador devolvía cinco calles con ese nombre
+ * repartidas por España, esto elegía una y la urgencia salía hacia allí. En
+ * la pantalla no había nada que dijera cuál.
+ *
+ * Ahora la dirección llega ya elegida y con sus coordenadas, porque el campo
+ * (`AddressInput`) obliga a escogerla de la lista. Aquí solo queda contar, y
+ * lo que entra es un punto, venga de esa lista o del GPS.
  */
 
 import { useEffect, useState } from 'react'
-import { geocodeApi, type ApiGeocodeMatch } from '@/api/geocode.api'
 import { prosApi, type ApiCoverage } from '@/api/pros.api'
 
-/** Lo que se espera desde la última tecla antes de preguntar. */
-const DEBOUNCE_MS = 700
-
-/** Por debajo de esto no merece la pena ni intentarlo. */
-const MIN_QUERY = 6
+/** El punto del que se quiere saber la cobertura */
+export interface CoveragePoint {
+  lat: number
+  lng: number
+  label: string
+  city: string | null
+}
 
 export type CoverageState =
   | { status: 'idle' }
   | { status: 'searching' }
-  | { status: 'not-found' }
   | { status: 'failed' }
-  | { status: 'ready'; match: ApiGeocodeMatch; coverage: ApiCoverage }
+  | { status: 'ready'; point: CoveragePoint; coverage: ApiCoverage }
 
 /**
- * @param point Si el cliente compartió su ubicación, sus coordenadas. Con
- *   ellas no se geocodifica nada: son más exactas que traducir un texto, y
- *   el texto pasa a ser la aclaración para el profesional (piso, puerta).
+ * @param point La dirección elegida o la posición compartida. `null` mientras
+ *   no haya ninguna de las dos.
+ * @param trade Sin oficio no hay nada que contar: la cobertura es de un
+ *   oficio concreto, no de la plataforma entera.
  */
 export function useAddressCoverage(
-  address: string,
+  point: CoveragePoint | null,
   trade: string,
-  point?: { lat: number; lng: number; label: string; city: string | null } | null,
 ): CoverageState {
   const [state, setState] = useState<CoverageState>({ status: 'idle' })
 
+  /*
+   * Se desmenuza el punto para las dependencias del efecto. Pasar el objeto
+   * entero volvería a pedir la cobertura en cada renderizado, porque el padre
+   * lo construye nuevo cada vez y para React nunca sería el mismo.
+   */
+  const lat = point?.lat ?? null
+  const lng = point?.lng ?? null
+  const label = point?.label ?? ''
+  const city = point?.city ?? null
+
   useEffect(() => {
-    const query = address.trim()
-
-    if (trade === '') {
-      setState({ status: 'idle' })
-      return
-    }
-
-    // Con posición compartida se salta la geocodificación por completo
-    if (point) {
-      let cancelled = false
-      setState({ status: 'searching' })
-
-      void (async () => {
-        try {
-          const coverage = await prosApi.coverage(trade, point.lat, point.lng)
-          if (cancelled) return
-
-          setState({
-            status: 'ready',
-            match: {
-              label: query || point.label,
-              lat: point.lat,
-              lng: point.lng,
-              city: point.city,
-              postcode: null,
-            },
-            coverage,
-          })
-        } catch {
-          if (!cancelled) setState({ status: 'failed' })
-        }
-      })()
-
-      return () => {
-        cancelled = true
-      }
-    }
-
-    if (query.length < MIN_QUERY) {
+    if (trade === '' || lat === null || lng === null) {
       setState({ status: 'idle' })
       return
     }
 
     /**
-     * `cancelled` evita que una respuesta lenta de una dirección anterior
-     * pise el resultado de la que el usuario está escribiendo ahora.
+     * Evita que una respuesta lenta de un punto anterior pise la del que se
+     * está mirando ahora: cambiar de oficio o de dirección dispara otra
+     * consulta sin esperar a que vuelva la primera.
      */
     let cancelled = false
+    setState({ status: 'searching' })
 
-    const timer = setTimeout(() => {
-      setState({ status: 'searching' })
+    void (async () => {
+      try {
+        const coverage = await prosApi.coverage(trade, lat, lng)
+        if (cancelled) return
 
-      void (async () => {
-        try {
-          const { matches } = await geocodeApi.search(query)
-          if (cancelled) return
-
-          const match = matches[0]
-          if (!match) {
-            setState({ status: 'not-found' })
-            return
-          }
-
-          const coverage = await prosApi.coverage(trade, match.lat, match.lng)
-          if (cancelled) return
-
-          setState({ status: 'ready', match, coverage })
-        } catch {
-          if (!cancelled) setState({ status: 'failed' })
-        }
-      })()
-    }, DEBOUNCE_MS)
+        setState({
+          status: 'ready',
+          point: { lat, lng, label, city },
+          coverage,
+        })
+      } catch {
+        if (!cancelled) setState({ status: 'failed' })
+      }
+    })()
 
     return () => {
       cancelled = true
-      clearTimeout(timer)
     }
-  }, [address, trade, point])
+  }, [lat, lng, label, city, trade])
 
   return state
 }

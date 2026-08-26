@@ -23,6 +23,7 @@ import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
+import { AddressInput } from '@/components/molecules/AddressInput'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -91,9 +92,20 @@ export function CoveragePage({
   const [postcodeAt, setPostcodeAt] = useState<{ lat: number; lng: number } | null>(
     null,
   )
-  const [query, setQuery] = useState('')
-  const [matches, setMatches] = useState<ApiGeocodeMatch[] | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
+  /** La dirección elegida en el buscador, si el punto vino de ahí */
+  const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
+  /**
+   * Fuerza a rehacer el campo de dirección cuando el punto se mueve **desde
+   * el mapa**.
+   *
+   * Es el único sitio de la app donde el punto puede cambiar sin pasar por el
+   * buscador: se arrastra el marcador y las coordenadas son otras. El texto
+   * que quedara escrito describiría entonces un sitio distinto del que se va a
+   * guardar, así que se vacía. Cambiar la `key` es lo que lo consigue sin
+   * tener que sacar el texto del campo a este componente solo para poder
+   * borrarlo desde fuera.
+   */
+  const [addressKey, setAddressKey] = useState(0)
   const [loaded, setLoaded] = useState(false)
 
   /**
@@ -117,31 +129,15 @@ export function CoveragePage({
     setLoaded(true)
   }, [data, loaded])
 
-  const handleSearch = async () => {
-    const term = query.trim()
-    if (term.length < 3) return
+  const choose = (match: ApiGeocodeMatch | null) => {
+    setAddress(match)
+    if (!match) return
 
-    setIsSearching(true)
-
-    try {
-      const { matches: found } = await geocodeApi.search(term)
-      setMatches(found)
-    } catch {
-      // Sin resultados y sin drama: quedan el mapa y la ubicación actual
-      setMatches([])
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
-  const choose = (match: ApiGeocodeMatch) => {
     setPoint({ lat: match.lat, lng: match.lng })
     // La ciudad viaja solo si viene del buscador: es por donde se le busca
     if (match.city) setCity(match.city)
     setPostcode(match.postcode ?? undefined)
     setPostcodeAt({ lat: match.lat, lng: match.lng })
-    setMatches(null)
-    setQuery(match.label)
   }
 
   const handleShare = async () => {
@@ -152,8 +148,20 @@ export function CoveragePage({
     if (position.city) setCity(position.city)
     setPostcode(position.postcode ?? undefined)
     setPostcodeAt({ lat: position.lat, lng: position.lng })
-    if (position.label) setQuery(position.label)
-    setMatches(null)
+
+    /*
+      La posición del GPS entra en el campo como dirección elegida: es un
+      punto real, solo que situado por el móvil en vez de por la lista.
+    */
+    if (position.label) {
+      setAddress({
+        label: position.label,
+        lat: position.lat,
+        lng: position.lng,
+        city: position.city,
+        postcode: position.postcode,
+      })
+    }
   }
 
   /**
@@ -299,32 +307,26 @@ export function CoveragePage({
         </InfoCard>
 
         <View style={styles.field}>
+          {/**
+            * El botón "Buscar" se fue con el campo antiguo: ahora las
+            * sugerencias salen mientras se escribe, así que no hay nada que
+            * pulsar. Era además el único buscador de direcciones de la app que
+            * pedía un gesto extra, y esta pantalla la usa un profesional que
+            * ya está dentro —no tenía por qué ser la más torpe de las cinco—.
+            */}
           <FormField label="Tu base">
-          <Input
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Calle, número y ciudad"
-            autoCapitalize="words"
-            editable={!isSaving}
-            returnKeyType="search"
-            onSubmitEditing={() => void handleSearch()}
+            <AddressInput
+              key={`coverage-address-${addressKey}`}
+              value={address}
+              onChange={choose}
+              placeholder="Calle y número"
+              editable={!isSaving}
               testID="coverage-address"
             />
           </FormField>
         </View>
 
         <View style={styles.searchRow}>
-          <Button
-            variant="secondary"
-            onPress={() => void handleSearch()}
-            loading={isSearching}
-            disabled={query.trim().length < 3 || isSaving}
-            style={styles.searchButton}
-            testID="coverage-search"
-          >
-            Buscar
-          </Button>
-
           <Button
             variant="secondary"
             onPress={() => void handleShare()}
@@ -343,28 +345,6 @@ export function CoveragePage({
             dirección, o mueve el marcador en el mapa.
           </Text>
         )}
-
-        {matches !== null &&
-          (matches.length === 0 ? (
-            <Text style={styles.hint} testID="coverage-no-matches">
-              No hemos encontrado esa dirección. Prueba con la calle y la ciudad,
-              o mueve el marcador en el mapa.
-            </Text>
-          ) : (
-            <View style={styles.matches} testID="coverage-matches">
-              {matches.map((match) => (
-                <Pressable
-                  key={`${match.lat},${match.lng}`}
-                  onPress={() => choose(match)}
-                  style={styles.match}
-                  accessibilityRole="button"
-                  testID={`coverage-match-${match.lat},${match.lng}`}
-                >
-                  <Text style={styles.matchLabel}>{match.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ))}
 
         <View style={styles.field}>
           <FormField label="Hasta dónde te desplazas">
@@ -393,7 +373,17 @@ export function CoveragePage({
           center={point ? [point.lng, point.lat] : FALLBACK_CENTER}
           radiusKm={radiusKm}
           editable
-          onChange={([lng, lat]) => setPoint({ lat, lng })}
+          onChange={([lng, lat]) => {
+            setPoint({ lat, lng })
+            /*
+              Mover el marcador deja de ser lo que dice el campo de arriba, así
+              que el campo se vacía: ver `addressKey`. El código postal se
+              vuelve a pedir solo, porque `postcodeAt` ya no cuadra con el
+              punto nuevo.
+            */
+            setAddress(null)
+            setAddressKey((n) => n + 1)
+          }}
           style={styles.map}
           testID="coverage-map"
         />

@@ -11,6 +11,12 @@
  * respuesta honesta con una salida —probar con otro oficio—, que es lo que
  * pide el README §7 ("si nadie cubre, mensaje honesto, no reutilizar otros
  * oficios").
+ *
+ * Ya no tiene estado de "no encontramos esa dirección". Lo tenía porque este
+ * indicador era también el único sitio donde se veía si la dirección escrita
+ * se había podido situar; ahora la dirección se elige de una lista de
+ * direcciones reales, así que ese caso lo resuelve el propio campo antes de
+ * llegar aquí —y lo resuelve mejor, porque puede ofrecer alternativas—.
  */
 
 import { View, Text, ActivityIndicator } from 'react-native'
@@ -35,13 +41,6 @@ export function CoverageIndicator({ state, testID }: CoverageIndicatorProps) {
           <ActivityIndicator size="small" color={theme.colors.accent} />
           <Text style={styles.body}>Mirando quién cubre esa dirección…</Text>
         </View>
-      ) : state.status === 'not-found' ? (
-        <>
-          <Text style={styles.title}>No encontramos esa dirección</Text>
-          <Text style={styles.body}>
-            Prueba a escribirla con la calle, el número y la ciudad.
-          </Text>
-        </>
       ) : state.status === 'failed' ? (
         <>
           <Text style={styles.title}>No hemos podido comprobarlo</Text>
@@ -61,7 +60,7 @@ export function CoverageIndicator({ state, testID }: CoverageIndicatorProps) {
             </Text>
           </View>
           <Text style={styles.body}>
-            {state.match.label}
+            {state.point.label}
             {state.coverage.nearestKm !== null &&
               ` · el más cercano a ${formatDistance(state.coverage.nearestKm)}`}
           </Text>

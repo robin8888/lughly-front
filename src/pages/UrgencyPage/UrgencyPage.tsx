@@ -33,6 +33,8 @@ import { Picker } from '@/components/molecules/Picker'
 import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { CoverageIndicator } from '@/components/organisms/CoverageIndicator'
 import { useAddressCoverage } from '@/hooks/domain/useAddressCoverage'
+import { AddressInput } from '@/components/molecules/AddressInput'
+import type { ApiGeocodeMatch } from '@/api/geocode.api'
 import { usePublishJob } from '@/hooks/domain/usePublishJob'
 import {
   useShareLocation,
@@ -67,7 +69,13 @@ export function UrgencyPage({
   const tabBarClearance = useTabBarClearance()
 
   const [trade, setTrade] = useState('')
-  const [address, setAddress] = useState('')
+  /**
+   * La dirección elegida de las sugerencias. Llega con coordenadas, que es lo
+   * que el servidor exige para una urgencia; `detail` es el piso y la puerta,
+   * que ningún geocodificador sabe y quien va a llamar al timbre necesita.
+   */
+  const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
+  const [detail, setDetail] = useState('')
   const [description, setDescription] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
 
@@ -79,12 +87,23 @@ export function UrgencyPage({
   const [shared, setShared] = useState<SharedLocation | null>(null)
   const { status: shareStatus, share } = useShareLocation()
 
-  const coverage = useAddressCoverage(address, trade, shared)
+  /**
+   * Las del GPS mandan sobre las de la dirección escrita: son más exactas que
+   * traducir un texto. Cuando se comparte la ubicación, la dirección pasa a
+   * ser lo que lee la persona que va, no lo que sitúa el punto.
+   */
+  const point = shared
+    ? { lat: shared.lat, lng: shared.lng, label: shared.label, city: shared.city }
+    : address
+      ? { lat: address.lat, lng: address.lng, label: address.label, city: address.city }
+      : null
+
+  const coverage = useAddressCoverage(point, trade)
   const { publish, isPublishing, isUploadingPhotos, fieldErrors, formError, reset } =
     usePublishJob()
 
   const isBusy = isPublishing || isUploadingPhotos
-  const located = coverage.status === 'ready' ? coverage.match : null
+  const located = coverage.status === 'ready' ? coverage.point : null
 
   const tradeLabel =
     TRADE_OPTIONS.find((option) => option.value === trade)?.label ?? ''
@@ -117,12 +136,10 @@ export function UrgencyPage({
   if (located === null) {
     missing.push(
       coverage.status === 'searching'
-        ? 'Estamos situando la dirección…'
-        : coverage.status === 'not-found'
-          ? 'No encontramos esa dirección. Prueba con la calle, el número y la ciudad.'
-          : coverage.status === 'failed'
-            ? 'No hemos podido situar la dirección. Inténtalo otra vez.'
-            : 'Escribe la dirección o comparte tu ubicación.',
+        ? 'Estamos mirando quién cubre esa dirección…'
+        : coverage.status === 'failed'
+          ? 'No hemos podido comprobar la cobertura. Inténtalo otra vez.'
+          : 'Elige tu dirección de las sugerencias o comparte tu ubicación.',
     )
   }
 
@@ -132,9 +149,21 @@ export function UrgencyPage({
 
     setShared(position)
 
-    // Se rellena el campo con lo que devuelva el mapa, pero editable: el
-    // cliente añade el piso y la puerta, que es lo que el GPS no sabe.
-    if (position.label !== '') setAddress(position.label)
+    /*
+      Y se rellena el campo con lo que devuelva el mapa. Va como dirección
+      elegida —con las coordenadas del GPS, no las del texto— porque eso es lo
+      que es: un punto real, solo que situado por el móvil en vez de por una
+      lista. El piso y la puerta se siguen añadiendo aparte.
+    */
+    if (position.label !== '') {
+      setAddress({
+        label: position.label,
+        lat: position.lat,
+        lng: position.lng,
+        city: position.city,
+        postcode: position.postcode,
+      })
+    }
   }
 
   const handlePublish = async () => {
@@ -149,7 +178,15 @@ export function UrgencyPage({
         title: titleFor(tradeLabel),
         description: description.trim(),
         city: located.city ?? 'Sin ciudad',
-        addressLine: located.label,
+        /*
+          El piso y la puerta se pegan a la dirección al enviar: el servidor
+          guarda una sola línea, y quien la lee la lee entera. Separarlos en
+          dos campos obligaría a tocar el contrato de encargos para un dato
+          que nunca se consulta por separado.
+        */
+        addressLine: detail.trim()
+          ? `${located.label} (${detail.trim()})`
+          : located.label,
         latitude: located.lat,
         longitude: located.lng,
       },
@@ -202,14 +239,26 @@ export function UrgencyPage({
 
         <FormField
           label="Dirección"
-          hint="Calle, número y ciudad. La verán solo los profesionales a los que avisemos."
+          hint="Elígela de las sugerencias. La verán solo los profesionales a los que avisemos."
           error={fieldErrors.addressLine}
         >
-          <Input
+          <AddressInput
             value={address}
-            onChangeText={setAddress}
-            placeholder="Calle, número, piso"
+            onChange={(elegida) => {
+              setAddress(elegida)
+              /*
+                Cambiar de dirección a mano descarta la ubicación compartida.
+                Sin esto mandaban las coordenadas del GPS mientras el campo
+                enseñaba otra calle, que es exactamente el desajuste que este
+                campo existe para evitar.
+              */
+              setShared(null)
+            }}
+            placeholder="Calle y número"
+            error={Boolean(fieldErrors.addressLine)}
             editable={!isBusy}
+            detail={detail}
+            onDetailChange={setDetail}
             testID="urgency-address"
           />
 
@@ -243,8 +292,8 @@ export function UrgencyPage({
 
           {shared && (
             <Text style={styles.shareNote}>
-              Usando tu ubicación. El GPS acierta la calle, no el piso:
-              añade el piso y la puerta al texto para que sepan dónde llamar.
+              Usando tu ubicación. El GPS acierta la calle, no el piso: añade
+              el piso y la puerta debajo para que sepan dónde llamar.
             </Text>
           )}
         </FormField>

@@ -32,6 +32,21 @@ export interface User {
   mustChangePassword: boolean
   /** Teléfono de contacto; null si no lo ha puesto */
   phone: string | null
+  /**
+   * Su dirección, la que dio en el alta. De aquí sale el punto que ordena el
+   * directorio por cercanía cuando no hay posición del GPS.
+   *
+   * **Puede ser null** y hay que contar con ello: las cuentas anteriores a que
+   * la dirección se pidiera en el alta no tienen ninguna. Para esas, el
+   * directorio sigue saliendo sin ordenar por distancia, igual que antes.
+   */
+  address: {
+    label: string
+    lat: number
+    lng: number
+    city: string | null
+    postcode: string | null
+  } | null
 }
 
 interface AuthState {

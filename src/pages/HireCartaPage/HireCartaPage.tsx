@@ -16,6 +16,8 @@ import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
+import { AddressInput } from '@/components/molecules/AddressInput'
+import type { ApiGeocodeMatch } from '@/api/geocode.api'
 import { Money, formatAmount } from '@/components/atoms/Money'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -59,11 +61,18 @@ export function HireCartaPage({
   const { book, isBooking, formError } = useBookServices(proId)
 
   const [city, setCity] = useState('')
-  const [addressLine, setAddressLine] = useState('')
+  const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
+  /** Piso, puerta, escalera: lo que el geocodificador no sabe */
+  const [detail, setDetail] = useState('')
   const [preferredDate, setPreferredDate] = useState<Date | null>(null)
   const [cityTouched, setCityTouched] = useState(false)
 
-  // La ciudad se rellena una vez con la suya, como punto de partida
+  /*
+   * La ciudad se rellena una vez con la del profesional, como punto de
+   * partida, y a partir de ahí manda la dirección que se elija: el cliente
+   * puede estar contratando para otro sitio, y la del profesional solo era
+   * una suposición razonable mientras no hubiera nada mejor.
+   */
   useEffect(() => {
     if (pro && !cityTouched) setCity(pro.city)
   }, [pro, cityTouched])
@@ -86,7 +95,7 @@ export function HireCartaPage({
   const canSubmit =
     trade?.visitFee != null &&
     city.trim().length >= 2 &&
-    addressLine.trim().length >= 5 &&
+    address !== null &&
     method !== null &&
     !isBooking
 
@@ -97,7 +106,10 @@ export function HireCartaPage({
       tradeSlug,
       serviceIds,
       city: city.trim(),
-      addressLine: addressLine.trim(),
+      // La dirección normalizada más el piso: una línea que se lee entera
+      addressLine: detail.trim()
+        ? `${address!.label} (${detail.trim()})`
+        : address!.label,
       ...(preferredDate && { preferredDate: toIsoDateTime(preferredDate) }),
       paymentMethodId: method.id,
     })
@@ -228,13 +240,18 @@ export function HireCartaPage({
 
         <FormField
           label="Dirección"
-          hint="Con el número. Solo la verá quien acabe haciendo el trabajo."
+          hint="Elígela de las sugerencias. Solo la verá quien acabe haciendo el trabajo."
         >
-          <Input
-            value={addressLine}
-            onChangeText={setAddressLine}
-            placeholder="Ej. Calle Mayor 14, 3º B"
+          <AddressInput
+            value={address}
+            onChange={(elegida) => {
+              setAddress(elegida)
+              if (elegida?.city && !cityTouched) setCity(elegida.city)
+            }}
+            placeholder="Ej. Calle Mayor 14"
             editable={!isBooking}
+            detail={detail}
+            onDetailChange={setDetail}
             testID="hire-carta-address"
           />
         </FormField>

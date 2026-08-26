@@ -18,6 +18,7 @@
  */
 
 import { apiRequest } from './http'
+import type { ApiGeocodeMatch } from './geocode.api'
 import type { DocumentType } from './upload.api'
 import type { ProsPage } from './pros.api'
 
@@ -44,8 +45,25 @@ export const meApi = {
    * El correo **no** se toca aquí: es la identidad con la que se entra, y
    * cambiarlo pide comprobar antes que el nuevo es de quien dice.
    */
-  updateProfile: (payload: { name?: string; phone?: string }) =>
-    apiRequest<{ name: string; phone: string | null }>('/v1/me', {
+  updateProfile: (payload: {
+    name?: string
+    phone?: string
+    /**
+     * Elegida del autocompletado, igual que en el alta: el servidor la rechaza
+     * sin coordenadas. **No se puede vaciar** —a diferencia del teléfono—,
+     * porque es obligatoria para crear la cuenta.
+     *
+     * Cambiarla no mueve la zona de cobertura de un profesional: dónde vive y
+     * desde dónde sale a trabajar son dos cosas, y la segunda tiene su propia
+     * pantalla.
+     */
+    address?: ApiGeocodeMatch
+  }) =>
+    apiRequest<{
+      name: string
+      phone: string | null
+      address: ApiGeocodeMatch | null
+    }>('/v1/me', {
       method: 'PATCH',
       auth: true,
       body: payload,

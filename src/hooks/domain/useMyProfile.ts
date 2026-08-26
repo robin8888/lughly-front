@@ -1,7 +1,7 @@
 /**
  * useMyProfile
- * Los datos propios que se piden al registrarse: nombre, teléfono y —si es
- * profesional— la descripción de su trabajo.
+ * Los datos propios que se piden al registrarse: nombre, teléfono, dirección
+ * y —si es profesional— la descripción de su trabajo.
  *
  * No había forma de cambiarlos. Se podían cambiar la contraseña, la foto y los
  * oficios, y nada más: quien tecleaba mal su nombre en el alta se quedaba así,
@@ -17,6 +17,7 @@ import { ApiError, NetworkError } from '@/api'
 import { meApi } from '@/api/me.api'
 import { prosApi } from '@/api/pros.api'
 import { useAuthStore } from '@/stores/useAuthStore'
+import type { ApiGeocodeMatch } from '@/api/geocode.api'
 
 export const myBioQueryKey = ['pro', 'bio'] as const
 
@@ -38,11 +39,24 @@ export function useSaveMyProfile() {
   const updateUser = useAuthStore((state) => state.updateUser)
 
   const profile = useMutation({
-    mutationFn: (payload: { name?: string; phone?: string }) =>
-      meApi.updateProfile(payload),
+    mutationFn: (payload: {
+      name?: string
+      phone?: string
+      address?: ApiGeocodeMatch
+    }) => meApi.updateProfile(payload),
     onSuccess: (saved) => {
-      // La sesión guardada lleva el nombre: sin esto, la app saluda con el viejo
-      updateUser({ name: saved.name, phone: saved.phone })
+      /*
+        La sesión guardada lleva el nombre: sin esto, la app saluda con el
+        viejo. Y lleva la dirección, de la que sale el punto que ordena el
+        directorio por cercanía: sin actualizarla, alguien que se acaba de
+        mudar seguiría viendo primero a los profesionales de su calle anterior
+        hasta la siguiente vez que entrara.
+      */
+      updateUser({
+        name: saved.name,
+        phone: saved.phone,
+        address: saved.address,
+      })
       void queryClient.invalidateQueries({ queryKey: ['pros'] })
     },
   })
@@ -69,14 +83,20 @@ export function useSaveMyProfile() {
     save: async (changes: {
       name?: string
       phone?: string
+      address?: ApiGeocodeMatch
       bio?: string
     }): Promise<{ ok: boolean; error: string | null }> => {
       try {
-        const person: { name?: string; phone?: string } = {}
+        const person: {
+          name?: string
+          phone?: string
+          address?: ApiGeocodeMatch
+        } = {}
         if (changes.name !== undefined) person.name = changes.name
         if (changes.phone !== undefined) person.phone = changes.phone
+        if (changes.address !== undefined) person.address = changes.address
 
-        if (person.name !== undefined || person.phone !== undefined) {
+        if (Object.keys(person).length > 0) {
           await profile.mutateAsync(person)
         }
 
