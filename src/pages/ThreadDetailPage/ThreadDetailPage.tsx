@@ -33,6 +33,7 @@ import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import {
   useJobMessages,
+  useMarkThreadRead,
   useSendJobMessage,
   useSendSupportMessage,
   useSupportMessages,
@@ -95,6 +96,8 @@ export function ThreadDetailPage({
   const sendJob = useSendJobMessage(jobId)
   const sendSupport = useSendSupportMessage()
   const { send, isSending } = mode === 'job' ? sendJob : sendSupport
+
+  const { markRead } = useMarkThreadRead()
 
   const { upload, isUploading } = useUploadChatAttachment()
   const { pick } = usePickImage()
@@ -170,6 +173,26 @@ export function ThreadDetailPage({
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: false })
   }, [messages.length])
+
+  /**
+   * Y se da por leído lo que hay hasta aquí.
+   *
+   * Depende de cuántos mensajes hay, no solo de abrir la pantalla: la
+   * conversación se sondea cada cinco segundos, así que si llega uno con la
+   * pantalla delante hay que volver a marcar. Sin eso, el contador subiría
+   * delante de quien está leyendo justo ese mensaje.
+   *
+   * Con la lista vacía no se llama: no hay hilo todavía —nace con el primer
+   * mensaje— y no hay nada que marcar.
+   */
+  useEffect(() => {
+    if (messages.length === 0) return
+
+    if (mode === 'support') markRead({ support: true })
+    else if (jobId) markRead({ jobId })
+    // `markRead` es estable; incluirlo aquí volvería a marcar en cada pintado
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, mode, jobId])
 
   const header = (
     <View style={styles.header}>

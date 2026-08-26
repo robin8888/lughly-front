@@ -42,6 +42,16 @@ export interface ApiThreadSummary {
   otherAvatarUrl: string | null
   lastMessage: string | null
   lastMessageAt: string | null
+  /** Cuántos mensajes de ese hilo no he visto todavía. Cero es "al día". */
+  unreadCount: number
+}
+
+/** Lo que pinta el aviso del botón de mensajes */
+export interface ApiUnreadCount {
+  /** Mensajes sin leer, sumando todos los hilos */
+  total: number
+  /** En cuántas conversaciones distintas están */
+  threads: number
 }
 
 /** Una fila de la bandeja de soporte, para administración */
@@ -66,6 +76,33 @@ export interface SendMessagePayload {
 export const chatApi = {
   /** Mis hilos de encargo con mensajes, más mi hilo de soporte si lo tengo */
   myThreads: () => apiRequest<ApiThreadSummary[]>('/v1/threads', { auth: true }),
+
+  /**
+   * Solo la cifra, para el botón flotante.
+   *
+   * Aparte de `myThreads` a propósito: la bandeja trae título, foto y último
+   * mensaje de cada hilo, y pedirla cada medio minuto para pintar un número
+   * encima de un icono sería traerse la lista entera por una cifra.
+   */
+  unreadCount: () =>
+    apiRequest<ApiUnreadCount>('/v1/threads/unread-count', { auth: true }),
+
+  /**
+   * "Ya lo he visto." Va por POST y no dentro del GET de los mensajes: un GET
+   * no debe cambiar nada, y además esos mensajes se sondean —marcar al leerlos
+   * daría por vista una pantalla olvidada abierta en un bolsillo—.
+   */
+  markJobRead: (jobId: string) =>
+    apiRequest<{ ok: true }>(`/v1/jobs/${jobId}/messages/read`, {
+      method: 'POST',
+      auth: true,
+    }),
+
+  markSupportRead: () =>
+    apiRequest<{ ok: true }>('/v1/support/messages/read', {
+      method: 'POST',
+      auth: true,
+    }),
 
   jobMessages: (jobId: string) =>
     apiRequest<ApiMessage[]>(`/v1/jobs/${jobId}/messages`, { auth: true }),

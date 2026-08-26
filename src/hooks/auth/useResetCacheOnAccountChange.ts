@@ -29,16 +29,46 @@
  *
  * Añadir el id a cada clave sería la otra solución, y es peor: hay que acordarse
  * en cada consulta nueva, y olvidarlo no falla de forma visible.
+ *
+ * ## Hay que esperar a que la sesión se haya leído
+ *
+ * Y es lo que faltaba, con una consecuencia que no parecía de aquí. La sesión
+ * vive en SecureStore y **se lee de forma asíncrona**: durante los primeros
+ * renders de cada arranque no hay usuario porque todavía no se sabe, no porque
+ * no lo haya. Sin esperar, la secuencia de cada arranque era `null` → `u1`, o
+ * sea un cambio de cuenta, y esto vaciaba la caché y **borraba lo que el
+ * usuario ya había visto**.
+ *
+ * Lo que se veía: al cliente le salía otra vez el modal de "un profesional ha
+ * aceptado tu trabajo" cada vez que abría la app, aunque ya lo hubiera visto y
+ * hubiera entrado al trabajo. El aviso estaba bien guardado; lo que pasaba es
+ * que esto lo borraba en el arranque siguiente.
+ *
+ * `hasHydrated` es la bandera que dice que la lectura terminó —haya sesión o
+ * no—, así que hasta entonces aquí no se compara nada.
+ *
+ * ## Lo que este hook ya no hace
+ *
+ * Vaciar los avisos ya vistos (`useSeenAnswersStore`) y los diálogos ya
+ * cerrados (`useDismissedRemindersStore`). Lo hacía para que lo de una cuenta
+ * no se le enseñara a la siguiente, y traía un fallo que se veía desde fuera:
+ * **salir y volver a entrar con la misma cuenta contaba como cambio**, se
+ * vaciaba todo, y al cliente le volvía a salir el modal de "te han aceptado el
+ * trabajo" por uno que ya había visto.
+ *
+ * Ahora esos dos guardan un saco por cuenta y no hace falta vaciar ninguno:
+ * cada quien lee el suyo. Aquí queda solo la caché de consultas, que sí se
+ * tira siempre que cambie el id —incluso al cerrar sesión— porque es una caché
+ * y recargarla no cuesta nada.
  */
 
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useUser } from '@/stores/useAuthStore'
-import { useSeenAnswersStore } from '@/stores/useSeenAnswersStore'
-import { useDismissedRemindersStore } from '@/stores/useDismissedRemindersStore'
+import { useHasHydrated, useUser } from '@/stores/useAuthStore'
 
 export function useResetCacheOnAccountChange(): void {
   const queryClient = useQueryClient()
+  const hasHydrated = useHasHydrated()
   const userId = useUser()?.id ?? null
 
   /**
@@ -48,6 +78,12 @@ export function useResetCacheOnAccountChange(): void {
   const previous = useRef<string | null | undefined>(undefined)
 
   useEffect(() => {
+    /*
+      Mientras no se haya leído el almacén, `userId` es null porque no se sabe.
+      Comparar aquí convertiría cada arranque en un cambio de cuenta.
+    */
+    if (!hasHydrated) return
+
     const isFirstRender = previous.current === undefined
 
     if (!isFirstRender && previous.current !== userId) {
@@ -57,16 +93,8 @@ export function useResetCacheOnAccountChange(): void {
        * que tirarlos, aunque eso signifique un momento de "cargando".
        */
       queryClient.clear()
-
-      /*
-        Y lo que se ha enseñado ya. Son ids de trabajos de otra cuenta: al
-        siguiente no le sirven de nada, y en el peor caso le taparían un aviso
-        suyo si dos ids coincidieran.
-      */
-      useSeenAnswersStore.getState().clear()
-      useDismissedRemindersStore.getState().clear()
     }
 
     previous.current = userId
-  }, [queryClient, userId])
+  }, [queryClient, userId, hasHydrated])
 }
