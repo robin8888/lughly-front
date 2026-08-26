@@ -94,6 +94,54 @@ export const styles = StyleSheet.create({
     gap: 0,
   },
   /** Desde y hasta, uno al lado del otro: se leen como un rango */
+  /**
+   * Los siete días, en botones de una letra.
+   *
+   * En una fila y no en un desplegable: con un selector solo se ve el día
+   * elegido y hay que abrirlo para saber cuáles hay; aquí se ve de un vistazo
+   * qué días están puestos y cuáles no, que es lo que se está decidiendo.
+   */
+  days: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  day: {
+    flex: 1,
+    /* 44 de alto es el mínimo de un objetivo táctil; el ancho lo reparte flex */
+    height: 44,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.fieldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayOn: {
+    backgroundColor: theme.colors.accent700,
+    borderColor: theme.colors.accent700,
+  },
+  dayText: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.textSoft,
+  },
+  /* Blanco sobre `accent700`: 6,48:1, el mismo par que los botones rellenos */
+  dayTextOn: {
+    color: '#ffffff',
+  },
+  /**
+   * Los dos repartos de siempre. En enlace y no en botón: son un atajo a lo
+   * que ya se puede hacer tocando días, no una tercera cosa que decidir.
+   */
+  dayShortcuts: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 8,
+  },
+  dayShortcut: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+  },
   hours: {
     flexDirection: 'row',
     gap: 10,
@@ -106,6 +154,28 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.accent700,
     marginBottom: 10,
+  },
+  /**
+   * Lo que falta para poder guardar, encima del botón.
+   *
+   * En una caja con fondo y no como texto suelto: compite con una lista larga
+   * de tarjetas, y un párrafo del mismo color que el resto se pierde entre
+   * ellas justo cuando hace falta que se vea.
+   */
+  missing: {
+    // El rojo de la app al 10 %: se ve la caja sin que grite
+    backgroundColor: 'rgba(163, 69, 58, 0.10)',
+    borderRadius: theme.radius.card,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 4,
+    marginTop: 12,
+  },
+  missingText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.45,
+    color: theme.colors.error,
   },
   invalid: {
     fontFamily: theme.typography.fonts.body,

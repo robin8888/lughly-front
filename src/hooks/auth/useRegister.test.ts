@@ -35,12 +35,22 @@ jest.mock('@/stores/useRoleStore', () => ({
     selector({ setActiveRole: jest.fn() }),
 }))
 
+/** Elegida del autocompletado, o sea con coordenadas: el alta la exige así */
+const direccion = {
+  label: 'Calle Virgen del Puig 4, Valencia',
+  lat: 39.4699,
+  lng: -0.3763,
+  city: 'Valencia',
+  postcode: '46013',
+}
+
 const proBase = {
   name: 'Robinson Rodriguez',
   email: 'robin@yopmail.com',
   password: 'Contrasena10',
   phone: '699189483',
   role: 'pro' as const,
+  address: direccion,
   city: 'Madrid',
   acceptTerms: true,
   acceptComms: false,

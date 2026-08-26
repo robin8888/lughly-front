@@ -41,10 +41,88 @@ import { styles } from './UrgencySchedulePage.styles'
  */
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]
 
-const WEEKDAY_OPTIONS = WEEK_ORDER.map((weekday) => ({
-  value: String(weekday),
-  label: WEEKDAY_NAMES[weekday]!,
-}))
+/** Iniciales para los botones de día: L M X J V S D */
+const WEEKDAY_INITIALS: Record<number, string> = {
+  1: 'L',
+  2: 'M',
+  3: 'X',
+  4: 'J',
+  5: 'V',
+  6: 'S',
+  0: 'D',
+}
+
+const WEEKDAYS_LABORABLES = [1, 2, 3, 4, 5]
+const WEEKDAYS_FIN_DE_SEMANA = [6, 0]
+
+/**
+ * Una franja tal como se edita: **un horario y los días que lo comparten**.
+ *
+ * El servidor guarda una fila por día (`UrgencyWindow.weekday`), que es lo
+ * correcto para consultarlo, pero es un mal formulario: quien hace guardia de
+ * lunes a viernes de 22:00 a 06:00 tenía que rellenar cinco veces la misma
+ * hora y la misma tarifa, y cambiar el precio le obligaba a repasar las cinco.
+ *
+ * Aquí se agrupa al cargar y se despliega al guardar. El contrato con el
+ * servidor no cambia.
+ */
+interface Franja {
+  weekdays: number[]
+  from: string
+  to: string
+  hourlyRate: number
+}
+
+/** Las franjas del servidor, juntadas por horario y tarifa iguales */
+function toFranjas(windows: ApiUrgencyWindow[]): Franja[] {
+  const porHorario = new Map<string, Franja>()
+
+  for (const window of windows) {
+    const clave = `${window.from}|${window.to}|${window.hourlyRate}`
+    const franja = porHorario.get(clave)
+
+    if (franja) {
+      franja.weekdays.push(window.weekday)
+      continue
+    }
+
+    porHorario.set(clave, {
+      weekdays: [window.weekday],
+      from: window.from,
+      to: window.to,
+      hourlyRate: window.hourlyRate,
+    })
+  }
+
+  /* En el orden de la semana, que es como se leen */
+  for (const franja of porHorario.values()) {
+    franja.weekdays.sort((a, b) => WEEK_ORDER.indexOf(a) - WEEK_ORDER.indexOf(b))
+  }
+
+  return [...porHorario.values()]
+}
+
+/** Y de vuelta: una fila por día, que es lo que espera el servidor */
+function toWindows(franjas: Franja[]): ApiUrgencyWindow[] {
+  return franjas.flatMap((franja) =>
+    franja.weekdays.map((weekday) => ({
+      weekday,
+      from: franja.from,
+      to: franja.to,
+      hourlyRate: franja.hourlyRate,
+    })),
+  )
+}
+
+/** "Lunes, martes y miércoles" — para el rótulo de la tarjeta */
+function nombrarDias(weekdays: number[]): string {
+  const nombres = weekdays.map((day) => WEEKDAY_NAMES[day]!.toLowerCase())
+
+  if (nombres.length === 0) return 'ningún día'
+  if (nombres.length === 1) return nombres[0]!
+
+  return `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`
+}
 
 /** Una hora "HH:MM" convertida a fecha, que es lo que come el selector. */
 function toDate(value: string): Date {
@@ -69,14 +147,15 @@ export function UrgencySchedulePage({
   const { data, isPending, isError, refetch } = useUrgencyWindows(employeeId)
   const { save, isSaving } = useSetUrgencyWindows(employeeId)
 
-  const [windows, setWindows] = useState<ApiUrgencyWindow[] | null>(null)
+  const [windows, setWindows] = useState<Franja[] | null>(null)
 
   /**
-   * Se copia lo guardado una sola vez. Si se copiara en cada respuesta, un
-   * refresco de fondo borraría lo que el empleador esté editando.
+   * Se copia lo guardado una sola vez, agrupando los días que comparten
+   * horario. Si se copiara en cada respuesta, un refresco de fondo borraría lo
+   * que el empleador esté editando.
    */
   useEffect(() => {
-    if (data && windows === null) setWindows(data)
+    if (data && windows === null) setWindows(toFranjas(data))
   }, [data, windows])
 
   const current = windows ?? []
@@ -84,25 +163,73 @@ export function UrgencySchedulePage({
   const add = () => {
     setWindows([
       ...current,
-      // Un lunes de mañana: se cambia en dos toques y evita la fila vacía
-      { weekday: 1, from: '09:00', to: '18:00', hourlyRate: 0 },
+      /*
+        De lunes a viernes por defecto, que es la guardia más habitual y la que
+        más se repetía a mano. Quitar días cuesta un toque cada uno; añadirlos
+        de uno en uno costaba cinco.
+      */
+      { weekdays: [...WEEKDAYS_LABORABLES], from: '22:00', to: '06:00', hourlyRate: 0 },
     ])
   }
 
-  const patch = (index: number, changes: Partial<ApiUrgencyWindow>) => {
+  const patch = (index: number, changes: Partial<Franja>) => {
     setWindows(current.map((w, i) => (i === index ? { ...w, ...changes } : w)))
+  }
+
+  /** Enciende o apaga un día de esa franja */
+  const toggleDay = (index: number, weekday: number) => {
+    const franja = current[index]
+    if (!franja) return
+
+    const puestos = franja.weekdays.includes(weekday)
+      ? franja.weekdays.filter((day) => day !== weekday)
+      : [...franja.weekdays, weekday]
+
+    patch(index, {
+      weekdays: puestos.sort((a, b) => WEEK_ORDER.indexOf(a) - WEEK_ORDER.indexOf(b)),
+    })
   }
 
   const remove = (index: number) => {
     setWindows(current.filter((_, i) => i !== index))
   }
 
-  const isValid = current.every(
-    (window) => window.from !== window.to && window.hourlyRate > 0,
-  )
+  /**
+   * Qué le falta a cada franja para poder guardar, dicho con el día por
+   * delante.
+   *
+   * El botón se apagaba sin explicar por qué. El aviso existía —dentro de la
+   * franja, junto al campo— pero una franja recién añadida nace sin tarifa y
+   * la lista crece hacia abajo: con tres días puestos, el que falla se queda
+   * fuera de pantalla y desde el botón no se ve nada. Quien mira solo tiene un
+   * botón muerto.
+   *
+   * Se nombra por el día y no por la posición: "la del martes" se encuentra de
+   * un vistazo y "la segunda" hay que contarla.
+   */
+  const problemas = current.flatMap((franja, index) => {
+    const cual = franja.weekdays.length > 0 ? `de ${nombrarDias(franja.weekdays)}` : `${index + 1}`
+
+    if (franja.weekdays.length === 0) {
+      return [`La franja ${index + 1} no tiene ningún día elegido.`]
+    }
+
+    if (franja.from === franja.to) {
+      return [`La franja ${cual} empieza y acaba a la misma hora.`]
+    }
+
+    if (!(franja.hourlyRate > 0)) {
+      return [`Falta lo que cobras por hora en la franja ${cual}.`]
+    }
+
+    return []
+  })
+
+  const isValid = problemas.length === 0
 
   const handleSave = async () => {
-    const { ok, error } = await save(current)
+    /* Una fila por día, que es lo que espera el servidor: ver `toWindows` */
+    const { ok, error } = await save(toWindows(current))
 
     if (!ok) {
       Alert.alert(
@@ -207,15 +334,71 @@ export function UrgencySchedulePage({
           <View style={styles.list}>
             {current.map((window, index) => (
               <InfoCard key={index} style={styles.window} testID={`window-${index}`}>
-                <FormField label="Día">
-                  <Picker
-                    options={WEEKDAY_OPTIONS}
-                    value={String(window.weekday)}
-                    onChange={(value) => patch(index, { weekday: Number(value) })}
-                    title="Día de la semana"
-                    disabled={isSaving}
-                    testID={`window-${index}-weekday`}
-                  />
+                {/**
+                  * Los días que comparten este horario, no uno solo.
+                  *
+                  * Quien hace guardia de lunes a viernes rellenaba cinco veces
+                  * la misma hora y la misma tarifa, y cambiar el precio le
+                  * obligaba a repasar las cinco. Aquí se marcan los días y el
+                  * horario se escribe una vez.
+                  */}
+                <FormField label="Días">
+                  <View style={styles.days}>
+                    {WEEK_ORDER.map((weekday) => {
+                      const puesto = window.weekdays.includes(weekday)
+
+                      return (
+                        <Pressable
+                          key={weekday}
+                          onPress={() => toggleDay(index, weekday)}
+                          disabled={isSaving}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: puesto }}
+                          accessibilityLabel={WEEKDAY_NAMES[weekday]}
+                          style={[styles.day, puesto && styles.dayOn]}
+                          testID={`window-${index}-day-${weekday}`}
+                        >
+                          <Text style={[styles.dayText, puesto && styles.dayTextOn]}>
+                            {WEEKDAY_INITIALS[weekday]}
+                          </Text>
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+
+                  {/*
+                    Los dos repartos de siempre, de un toque. Son lo que se
+                    elige el noventa por ciento de las veces, y marcarlos a mano
+                    son cinco toques y dos.
+                  */}
+                  <View style={styles.dayShortcuts}>
+                    <Pressable
+                      onPress={() => patch(index, { weekdays: [...WEEKDAYS_LABORABLES] })}
+                      disabled={isSaving}
+                      accessibilityRole="button"
+                      testID={`window-${index}-days-weekdays`}
+                    >
+                      <Text style={styles.dayShortcut}>Lunes a viernes</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => patch(index, { weekdays: [...WEEKDAYS_FIN_DE_SEMANA] })}
+                      disabled={isSaving}
+                      accessibilityRole="button"
+                      testID={`window-${index}-days-weekend`}
+                    >
+                      <Text style={styles.dayShortcut}>Fin de semana</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => patch(index, { weekdays: [...WEEK_ORDER] })}
+                      disabled={isSaving}
+                      accessibilityRole="button"
+                      testID={`window-${index}-days-all`}
+                    >
+                      <Text style={styles.dayShortcut}>Todos</Text>
+                    </Pressable>
+                  </View>
                 </FormField>
 
                 <View style={styles.hours}>
@@ -313,6 +496,22 @@ export function UrgencySchedulePage({
         >
           Añadir franja
         </Button>
+
+        {/*
+          Lo que falta, justo encima del botón: es donde se mira cuando no se
+          puede pulsar. Repite lo que ya dice cada franja, y esa repetición es
+          el arreglo —el aviso de dentro solo se ve si esa franja está en
+          pantalla—.
+        */}
+        {problemas.length > 0 && (
+          <View style={styles.missing} testID="urgency-schedule-missing">
+            {problemas.map((problema) => (
+              <Text key={problema} style={styles.missingText}>
+                {problema}
+              </Text>
+            ))}
+          </View>
+        )}
 
         <Button
           fullWidth

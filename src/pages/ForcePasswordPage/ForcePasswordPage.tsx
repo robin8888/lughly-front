@@ -33,13 +33,22 @@ export function ForcePasswordPage({ onDone, onLogout }: ForcePasswordPageProps) 
   const user = useUser()
   const { change, isLoading, fieldErrors, formError } = useChangePassword()
 
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
+  /**
+   * **No se manda la contraseña temporal**, y por eso esta pantalla ya no la
+   * pide: quien llega aquí la acaba de escribir para entrar, hace un momento y
+   * en la pantalla anterior. Volvérsela a pedir era hacerle abrir el correo
+   * para copiar un dato que el sistema ya había comprobado.
+   *
+   * El servidor lo admite solo mientras la cuenta esté marcada con contraseña
+   * temporal; en "Cambiar contraseña", que es la misma llamada desde la
+   * cuenta, la anterior se sigue exigiendo.
+   */
   const handleSubmit = async () => {
-    const ok = await change({ currentPassword, newPassword, repeatPassword })
+    const ok = await change({ newPassword, repeatPassword })
     if (ok) onDone()
   }
 
@@ -53,25 +62,6 @@ export function ForcePasswordPage({ onDone, onLogout }: ForcePasswordPageProps) 
       error={formError}
       testID="force-password-page"
     >
-      <FormField
-        label="Contraseña temporal"
-        helper="La que venía en el correo de alta."
-        error={fieldErrors.currentPassword}
-        testID="force-password-current-field"
-      >
-        <Input
-          value={currentPassword}
-          onChangeText={setCurrentPassword}
-          placeholder="••••••••••"
-          secureTextEntry={!showPassword}
-          autoCapitalize="none"
-          autoCorrect={false}
-          error={Boolean(fieldErrors.currentPassword)}
-          editable={!isLoading}
-          testID="force-password-current"
-        />
-      </FormField>
-
       <FormField
         label="Contraseña nueva"
         hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres. Solo la sabrás tú.`}

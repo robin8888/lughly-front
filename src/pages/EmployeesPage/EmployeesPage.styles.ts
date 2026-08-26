@@ -6,6 +6,28 @@ import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
+  /**
+   * Lo que falta para poder continuar, encima del botón.
+   *
+   * En una caja con fondo y no como texto suelto: va al final de un formulario
+   * largo y un párrafo del mismo color que el resto se pierde justo cuando
+   * hace falta que se vea.
+   */
+  missing: {
+    // El rojo de la app al 10 %: se ve la caja sin que grite
+    backgroundColor: 'rgba(163, 69, 58, 0.10)',
+    borderRadius: theme.radius.card,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 4,
+    marginBottom: 12,
+  },
+  missingText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.45,
+    color: theme.colors.error,
+  },
   screen: {
     flex: 1,
     backgroundColor: theme.colors.bg,

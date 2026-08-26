@@ -17,7 +17,17 @@ import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from './useRegister'
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Escribe tu contraseña actual'),
+    /**
+     * **Opcional**, y solo para la pantalla de "Cambiar contraseña" de la
+     * cuenta. Quien viene obligado por una contraseña temporal no la manda: la
+     * acaba de escribir para entrar, y pedírsela otra vez es hacerle copiar
+     * del correo un dato que el sistema ya comprobó.
+     *
+     * Quien decide es el servidor, mirando si la cuenta está marcada con
+     * contraseña temporal. Omitirla en una cuenta normal se rechaza igual que
+     * mandarla mal.
+     */
+    currentPassword: z.string().min(1, 'Escribe tu contraseña actual').optional(),
     newPassword: z
       .string()
       .min(MIN_PASSWORD_LENGTH, `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`)
@@ -33,7 +43,7 @@ export const changePasswordSchema = z
       })
     }
 
-    if (data.currentPassword === data.newPassword) {
+    if (data.currentPassword !== undefined && data.currentPassword === data.newPassword) {
       ctx.addIssue({
         code: 'custom',
         path: ['newPassword'],

@@ -43,6 +43,13 @@ import type { LegalForm } from '@/api/employees.api'
 import { TRADE_OPTIONS } from '@/utils/trades'
 import { theme } from '@/theme'
 import { styles } from './EmployeesPage.styles'
+import { useUser } from '@/stores/useAuthStore'
+import {
+  TAX_ID_LABELS,
+  TAX_ID_PLACEHOLDERS,
+  isValidTaxIdOfKind,
+  type TaxIdKind,
+} from '@/utils/taxId'
 
 const EMPTY_FORM = {
   name: '',
@@ -55,8 +62,26 @@ const EMPTY_FORM = {
 const EMPTY_EMPLOYER_FORM = {
   legalForm: '' as '' | LegalForm,
   legalName: '',
+  taxIdKind: '' as '' | TaxIdKind,
   taxId: '',
 }
+
+/**
+ * Con qué documento se identifica una persona física.
+ *
+ * DNI y NIF son el mismo número —el NIF es el DNI con su letra— y se validan
+ * igual. Están los dos porque es como los llama la gente: obligar a elegir el
+ * nombre "correcto" hace dudar sobre un dato que se tiene delante.
+ *
+ * Una sociedad no elige: se identifica con su CIF y punto, así que ahí el
+ * selector no sale.
+ */
+const TAX_ID_KIND_OPTIONS: { value: TaxIdKind; label: string }[] = [
+  { value: 'DNI', label: 'DNI' },
+  { value: 'NIF', label: 'NIF' },
+  { value: 'NIE', label: 'NIE' },
+  { value: 'PASSPORT', label: 'Pasaporte' },
+]
 
 const LEGAL_FORM_OPTIONS = [
   { value: 'SELF_EMPLOYED', label: 'Autónomo — trabajo por mi cuenta' },
@@ -87,19 +112,85 @@ export interface EmployeesPageProps {
  */
 function EmployerForm({ onBack }: { onBack: () => void }) {
   const { declare, isDeclaring, fieldErrors, formError, reset } = useBecomeEmployer()
-  const [form, setForm] = useState(EMPTY_EMPLOYER_FORM)
+  const user = useUser()
+
+  /**
+   * El nombre fiscal viene puesto con el de su cuenta.
+   *
+   * Para un autónomo son la misma cosa —su nombre fiscal es su nombre— así que
+   * pedírselo otra vez es pedirle que copie algo que ya nos dio al
+   * registrarse. Queda editable: hay quien factura con los dos apellidos
+   * completos y en la app puso solo uno.
+   *
+   * El NIF **no** se puede rellenar: no se guarda en ninguna parte hasta que
+   * existe este `Employer`, que es justo lo que este formulario crea. Es el
+   * único de los tres que hay que escribir.
+   */
+  const [form, setForm] = useState({
+    ...EMPTY_EMPLOYER_FORM,
+    legalName: user?.name ?? '',
+  })
   const [accepts, setAccepts] = useState(false)
 
   const isCompany = form.legalForm === 'COMPANY'
 
-  const canSubmit =
-    form.legalForm !== '' &&
-    form.legalName.trim().length >= 3 &&
-    /^([0-9]{8}[A-Z]|[XYZ][0-9]{7}[A-Z]|[A-Z][0-9]{7}[A-Z0-9])$/.test(
-      form.taxId.trim().toUpperCase(),
-    ) &&
-    accepts &&
-    !isDeclaring
+  /**
+   * Al pasar a empresa, el nombre puesto se retira **si no lo han tocado**.
+   *
+   * Una razón social no es el nombre de una persona: dejar "Felipe Riaño" en
+   * el campo de una S.L. es peor que dejarlo vacío, porque parece rellenado a
+   * conciencia y se firma sin mirar.
+   */
+  const elegirForma = (value: LegalForm) => {
+    setForm((current) => ({
+      ...current,
+      legalForm: value,
+      legalName:
+        value === 'COMPANY' && current.legalName === (user?.name ?? '')
+          ? ''
+          : current.legalName,
+    }))
+  }
+
+  /* Una sociedad va siempre con CIF; una persona elige entre los cuatro */
+  const taxIdKind: TaxIdKind | '' = isCompany ? 'CIF' : form.taxIdKind
+
+  /**
+   * Qué falta para poder continuar.
+   *
+   * El botón se apagaba sin decir por qué, y este formulario tiene cinco
+   * requisitos: es imposible adivinar cuál falla. Pasa sobre todo con el
+   * documento —es un campo nuevo y se pasa por alto— y con la casilla, que
+   * queda debajo del identificador y fuera de vista mientras se teclea.
+   *
+   * Es el mismo arreglo que el horario de urgencias: la validación estaba
+   * bien, lo que faltaba era decirlo donde se mira.
+   */
+  const problemas: string[] = []
+
+  if (form.legalForm === '') problemas.push('Elige si trabajas como autónomo o como empresa.')
+
+  if (form.legalName.trim().length < 3) {
+    problemas.push(
+      isCompany ? 'Escribe la razón social.' : 'Escribe tu nombre fiscal.',
+    )
+  }
+
+  if (taxIdKind === '') {
+    problemas.push('Elige con qué documento te identificas.')
+  } else if (!isValidTaxIdOfKind(taxIdKind, form.taxId)) {
+    problemas.push(
+      form.taxId.trim() === ''
+        ? `Escribe tu número de ${TAX_ID_LABELS[taxIdKind]}.`
+        : taxIdKind === 'PASSPORT'
+          ? 'Ese número de pasaporte no tiene una forma válida.'
+          : `Ese ${TAX_ID_LABELS[taxIdKind]} no es correcto: revisa el último carácter.`,
+    )
+  }
+
+  if (!accepts) problemas.push('Marca que respondes ante los clientes de tus trabajadores.')
+
+  const canSubmit = problemas.length === 0 && !isDeclaring
 
   const handleSubmit = async () => {
     reset()
@@ -110,6 +201,7 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
     await declare({
       legalForm: form.legalForm,
       legalName: form.legalName.trim(),
+      taxIdKind: taxIdKind as TaxIdKind,
       taxId: form.taxId.trim().toUpperCase(),
       acceptsStaffResponsibility: true,
     })
@@ -134,9 +226,7 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
         <Picker
           options={LEGAL_FORM_OPTIONS}
           value={form.legalForm === '' ? null : form.legalForm}
-          onChange={(value) =>
-            setForm((current) => ({ ...current, legalForm: value as LegalForm }))
-          }
+          onChange={(value) => elegirForma(value as LegalForm)}
           placeholder="Autónomo o empresa"
           title="Trabajas como"
           testID="employer-legal-form"
@@ -145,7 +235,11 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
 
       <FormField
         label={isCompany ? 'Razón social' : 'Nombre fiscal'}
-        hint="Es el nombre que verá el cliente encabezando la ficha de cada uno de tus trabajadores."
+        hint={
+          isCompany
+            ? 'Es el nombre que verá el cliente encabezando la ficha de cada uno de tus trabajadores.'
+            : 'Lo hemos puesto con el de tu cuenta. Cámbialo si facturas con otro.'
+        }
         error={fieldErrors.legalName}
       >
         <Input
@@ -162,13 +256,52 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
         />
       </FormField>
 
-      <FormField label={isCompany ? 'CIF' : 'NIF'} error={fieldErrors.taxId}>
+      {/**
+        * Primero **con qué documento**, y después el número.
+        *
+        * Se pregunta en vez de adivinarse por el pasaporte: no se puede
+        * comprobar —no lleva dígito de control y cada país numera a su
+        * manera—, así que deduciendo la clase del número habría que aceptar
+        * como pasaporte cualquier cosa que no encajara en las formas
+        * españolas, incluido un NIF con una cifra de menos. Sabiendo la clase,
+        * cada uno se valida con su regla.
+        *
+        * Una sociedad no elige: va con su CIF y el selector no sale.
+        */}
+      {!isCompany && (
+        <FormField
+          label="Documento"
+          hint="El NIF es el número de tu DNI con su letra: son el mismo."
+          error={fieldErrors.taxIdKind}
+        >
+          <Picker
+            options={TAX_ID_KIND_OPTIONS}
+            value={form.taxIdKind === '' ? null : form.taxIdKind}
+            onChange={(value) =>
+              setForm((current) => ({ ...current, taxIdKind: value as TaxIdKind }))
+            }
+            placeholder="DNI, NIF, NIE o pasaporte"
+            title="Con qué documento te identificas"
+            testID="employer-tax-id-kind"
+          />
+        </FormField>
+      )}
+
+      <FormField
+        label={taxIdKind === '' ? 'Número' : `Número de ${TAX_ID_LABELS[taxIdKind]}`}
+        hint={
+          taxIdKind === 'PASSPORT'
+            ? 'Un pasaporte no se puede comprobar, así que revísalo bien antes de seguir.'
+            : undefined
+        }
+        error={fieldErrors.taxId}
+      >
         <Input
           value={form.taxId}
           onChangeText={(value) =>
             setForm((current) => ({ ...current, taxId: value.toUpperCase() }))
           }
-          placeholder={isCompany ? 'B12345678' : '12345678Z'}
+          placeholder={taxIdKind === '' ? '' : TAX_ID_PLACEHOLDERS[taxIdKind]}
           autoCapitalize="characters"
           autoCorrect={false}
           editable={!isDeclaring}
@@ -187,6 +320,21 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
           Por eso no les pedimos documentación por adelantado.
         </Text>
       </Checkbox>
+
+      {/*
+        Lo que falta, justo encima del botón: es donde se mira cuando no se
+        puede pulsar. Los avisos de cada campo siguen estando; la diferencia es
+        que estos se ven sin tener que subir a buscarlos.
+      */}
+      {problemas.length > 0 && (
+        <View style={styles.missing} testID="employer-missing">
+          {problemas.map((problema) => (
+            <Text key={problema} style={styles.missingText}>
+              {problema}
+            </Text>
+          ))}
+        </View>
+      )}
 
       <Button
         fullWidth

@@ -5,6 +5,8 @@
  * Reglas del README (las valida el backend; aquí se replican para dar
  * respuesta inmediata al usuario):
  * - Rol cliente o profesional; si es profesional: oficio, tarifa y ciudad.
+ * - Dirección obligatoria para los dos, y **elegida del autocompletado**: sin
+ *   coordenadas no se puede ordenar por cercanía, que es para lo que se pide.
  * - Consentimiento RGPD obligatorio; comunicaciones opcional y desmarcado.
  * - Contraseña mínima de 10 caracteres.
  */
@@ -17,6 +19,7 @@ import { useAuthStore, type User } from '@/stores/useAuthStore'
 import { useRoleStore } from '@/stores/useRoleStore'
 import { toFieldErrors, type FieldErrors } from '@/utils/formErrors'
 import { getTrade, getTradeLabel } from '@/utils/trades'
+import { TAX_ID_LABELS, isValidTaxIdOfKind } from '@/utils/taxId'
 import { toAuthErrorState } from './useAuthError'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -41,6 +44,28 @@ export const registerSchema = z
       .max(MAX_PASSWORD_LENGTH, `Máximo ${MAX_PASSWORD_LENGTH} caracteres`),
     phone: z.string().optional(),
     role: z.enum(['client', 'pro']),
+    /**
+     * La dirección, tal cual la devolvió el geocodificador al elegirla.
+     *
+     * Es un objeto y no una cadena porque lo que importa son las
+     * coordenadas: un texto escrito a mano no sirve para ordenar a nadie por
+     * cercanía. `null` mientras no se haya elegido ninguna, y el
+     * `superRefine` de abajo lo rechaza —para los dos roles—.
+     *
+     * El campo se encarga de que no se pueda llegar aquí con una dirección
+     * desparejada: tocar el texto después de elegir vuelve a poner esto a
+     * null (`AddressInput`).
+     */
+    address: z
+      .object({
+        label: z.string(),
+        lat: z.number(),
+        lng: z.number(),
+        city: z.string().nullable(),
+        postcode: z.string().nullable(),
+      })
+      .nullable()
+      .default(null),
     /**
      * Solo profesionales: los oficios que ejerce, con la tarifa de cada uno.
      * Una persona que limpia casas también puede cuidar mascotas, y no cobra
@@ -82,11 +107,31 @@ export const registerSchema = z
      */
     hasStaff: z.boolean().default(false),
     legalForm: z.enum(['SELF_EMPLOYED', 'COMPANY']).optional(),
+    /**
+     * Con qué documento se identifica. Se pregunta en vez de deducirse del
+     * número, por el pasaporte: no se puede comprobar, así que sin la clase
+     * habría que aceptar como pasaporte cualquier cosa que no encajara en las
+     * formas españolas —un NIF con una cifra de menos, por ejemplo—.
+     */
+    taxIdKind: z.enum(['DNI', 'NIF', 'NIE', 'PASSPORT', 'CIF']).optional(),
     taxId: z.string().optional(),
     legalName: z.string().optional(),
     acceptsStaffResponsibility: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
+    /*
+      Antes que nada y para los dos roles. Va aquí arriba y no en el bloque de
+      profesional que hay debajo porque al cliente le hace la misma falta: es
+      su dirección la que decide qué profesionales se le enseñan primero.
+    */
+    if (!data.address) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['address'],
+        message: 'Elige tu dirección de la lista de sugerencias',
+      })
+    }
+
     if (!data.acceptTerms) {
       ctx.addIssue({
         code: 'custom',
@@ -138,7 +183,14 @@ export const registerSchema = z
       }
     }
 
-    if (!data.city || data.city.trim().length < 2) {
+    /*
+      La que escribió o, si no tocó el campo, la del geocodificador. Solo
+      falla cuando no hay ninguna de las dos: es el caso del punto que el
+      proveedor devuelve sin municipio, y ahí sí tiene que escribirla él.
+    */
+    const ciudadBase = data.city?.trim() || data.address?.city?.trim()
+
+    if (!ciudadBase || ciudadBase.length < 2) {
       ctx.addIssue({
         code: 'custom',
         path: ['city'],
@@ -156,19 +208,30 @@ export const registerSchema = z
       })
     }
 
-    /**
-     * Un NIF y un CIF se distinguen por la primera posición, así que la
-     * misma expresión vale para los dos. Comprobar que la letra case con el
-     * número es cosa del backend: aquí solo se evita el error de dedo.
-     */
-    if (!data.taxId || !/^([0-9]{8}[A-Z]|[XYZ][0-9]{7}[A-Z]|[A-Z][0-9]{7}[A-Z0-9])$/.test(data.taxId.trim().toUpperCase())) {
+    /*
+      Una sociedad va siempre con CIF y no elige; una persona sí. Es la misma
+      regla que "Mis trabajadores" y refleja la del servidor.
+    */
+    const taxIdKind = data.legalForm === 'COMPANY' ? 'CIF' : data.taxIdKind
+
+    if (!taxIdKind) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['taxIdKind'],
+        message: 'Elige con qué documento te identificas',
+      })
+    }
+
+    if (!data.taxId || !taxIdKind || !isValidTaxIdOfKind(taxIdKind, data.taxId)) {
       ctx.addIssue({
         code: 'custom',
         path: ['taxId'],
         message:
-          data.legalForm === 'COMPANY'
-            ? 'Escribe el CIF de la empresa'
-            : 'Escribe tu NIF',
+          taxIdKind === 'PASSPORT'
+            ? 'Ese número de pasaporte no tiene una forma válida'
+            : taxIdKind
+              ? `Ese ${TAX_ID_LABELS[taxIdKind]} no es correcto: revisa el último carácter`
+              : 'Escribe tu número de identificación',
       })
     }
 
@@ -258,6 +321,21 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
         const esPro = parsed.data.role === 'pro'
         const ciudad = parsed.data.city?.trim()
 
+        /*
+          El `superRefine` ya la exige, así que aquí no puede ser null. Se
+          comprueba igual porque TypeScript no lo sabe —el tipo la declara
+          anulable— y porque un `!` escondería el día que alguien afloje esa
+          validación.
+        */
+        const { address } = parsed.data
+        if (!address) {
+          setFieldErrors({ address: 'Elige tu dirección de la lista de sugerencias' })
+          setFormError('Revisa los campos marcados.')
+          setErrorNonce((n) => n + 1)
+          setIsLoading(false)
+          return { ok: false }
+        }
+
         const session = await authApi.register({
           name: parsed.data.name,
           email: parsed.data.email,
@@ -293,7 +371,15 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
                 }
               })
             : undefined,
-          city: ciudad ? ciudad : undefined,
+          address,
+          /*
+            Y la ciudad base **solo si es profesional**, como los oficios. El
+            formulario la rellena sola con el municipio de la dirección, así
+            que desde que la dirección se pide a todo el mundo un cliente
+            también la tiene puesta; mandarla sería colarle al servidor un
+            campo que en su rol no significa nada.
+          */
+          city: esPro && ciudad ? ciudad : undefined,
           acceptTerms: parsed.data.acceptTerms,
           acceptComms: parsed.data.acceptComms,
         })
@@ -315,6 +401,11 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
           try {
             await employeesApi.declare({
               legalForm: parsed.data.legalForm,
+              /* La sociedad va con CIF; la persona, con lo que haya elegido */
+              taxIdKind:
+                parsed.data.legalForm === 'COMPANY'
+                  ? 'CIF'
+                  : (parsed.data.taxIdKind ?? 'DNI'),
               taxId: parsed.data.taxId.trim().toUpperCase(),
               legalName: (parsed.data.legalName ?? '').trim(),
               acceptsStaffResponsibility: true,

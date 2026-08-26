@@ -24,6 +24,13 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import type { IdentityKind } from '@/api'
 import { TradeRatesField, type TradeRate } from '@/components/molecules/TradeRatesField'
+import { AddressInput } from '@/components/molecules/AddressInput'
+import type { ApiGeocodeMatch } from '@/api/geocode.api'
+import {
+  TAX_ID_LABELS,
+  TAX_ID_PLACEHOLDERS,
+  type TaxIdKind,
+} from '@/utils/taxId'
 import { getTradeLabel, isRegulatedTrade } from '@/utils/trades'
 import { styles } from './RegisterPage.styles'
 
@@ -43,6 +50,18 @@ const IDENTITY_OPTIONS = [
  * en la app: sirve para saber si el identificador fiscal es un NIF o un CIF,
  * y para dirigirse a quien sea con las palabras que le corresponden.
  */
+/**
+ * Con qué documento se identifica una persona física. DNI y NIF son el mismo
+ * número y se validan igual; están los dos porque es como los llama la gente.
+ * Una sociedad no elige: va con su CIF.
+ */
+const TAX_ID_KIND_OPTIONS: { value: TaxIdKind; label: string }[] = [
+  { value: 'DNI', label: 'DNI' },
+  { value: 'NIF', label: 'NIF' },
+  { value: 'NIE', label: 'NIE' },
+  { value: 'PASSPORT', label: 'Pasaporte' },
+]
+
 const LEGAL_FORM_OPTIONS = [
   { value: 'SELF_EMPLOYED', label: 'Autónomo — trabajo por mi cuenta' },
   { value: 'COMPANY', label: 'Empresa — sociedad con CIF' },
@@ -61,10 +80,19 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
   const [role, setRole] = useState<'client' | 'pro'>('client')
   const [hasStaff, setHasStaff] = useState(false)
   const [legalForm, setLegalForm] = useState<'SELF_EMPLOYED' | 'COMPANY' | null>(null)
+  const [taxIdKind, setTaxIdKind] = useState<TaxIdKind | null>(null)
   const [taxId, setTaxId] = useState('')
   const [legalName, setLegalName] = useState('')
   const [acceptsStaffResponsibility, setAcceptsStaffResponsibility] = useState(false)
   const [trades, setTrades] = useState<TradeRate[]>([])
+  const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
+  /**
+   * Si tocó "Ciudad base" a mano. Mientras no lo haga, el campo sigue a la
+   * dirección; en cuanto escriba algo deja de pisárselo, porque quien corrige
+   * el municipio que propuso el geocodificador lo está corrigiendo a
+   * propósito y verlo volver atrás al cambiar el portal es exasperante.
+   */
+  const [cityTouched, setCityTouched] = useState(false)
   const [city, setCity] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [acceptComms, setAcceptComms] = useState(false)
@@ -112,12 +140,14 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
       password,
       phone,
       role,
+      address,
       trades,
       city,
       acceptTerms,
       acceptComms,
       hasStaff: isPro && hasStaff,
       legalForm: legalForm ?? undefined,
+      taxIdKind: taxIdKind ?? undefined,
       taxId,
       legalName,
       acceptsStaffResponsibility,
@@ -260,6 +290,41 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
         />
       </FormField>
 
+      {/**
+        * La dirección, y para los dos roles.
+        *
+        * Va **antes** de elegir cliente o profesional, en la parte común del
+        * formulario, porque los dos la necesitan y por lo mismo: es el punto
+        * desde el que se mide la cercanía. Al cliente le ordena el directorio
+        * sin tener que darle permiso de GPS —que mucha gente no da, y sin él
+        * el directorio salía sin ordenar—, y al profesional le coloca la base
+        * de cobertura desde el minuto uno.
+        *
+        * Ese segundo caso arregla un agujero que estaba abierto: hasta ahora
+        * un profesional recién registrado no tenía coordenadas, así que no
+        * aparecía en ninguna búsqueda por cercanía ni le llegaba ninguna
+        * urgencia, y nada en la app se lo decía. Solo se arreglaba si entraba
+        * por su cuenta a la pantalla de Cobertura.
+        */}
+      <FormField
+        label="Dirección"
+        helper="La usamos para enseñarte a los profesionales que tienes más cerca. No se publica."
+        error={fieldErrors.address}
+        testID="register-address-field"
+      >
+        <AddressInput
+          value={address}
+          onChange={(elegida) => {
+            setAddress(elegida)
+            // La ciudad base del profesional sale de aquí mientras no la toque
+            if (elegida?.city && !cityTouched) setCity(elegida.city)
+          }}
+          error={Boolean(fieldErrors.address)}
+          editable={!isBusy}
+          testID="register-address"
+        />
+      </FormField>
+
       <FormField
         label="Uso la plataforma como"
         error={fieldErrors.role}
@@ -342,15 +407,59 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
                   />
                 </FormField>
 
+                {/*
+                  Primero con qué documento y después el número, igual que en
+                  "Mis trabajadores". Se pregunta en vez de adivinarse por el
+                  pasaporte, que no se puede comprobar: sin la clase habría que
+                  aceptar como pasaporte cualquier cosa que no encajara en las
+                  formas españolas, incluido un NIF con una cifra de menos.
+
+                  Una sociedad no elige: va con su CIF.
+                */}
+                {legalForm !== 'COMPANY' && (
+                  <FormField
+                    label="Documento"
+                    hint="El NIF es el número de tu DNI con su letra: son el mismo."
+                    error={fieldErrors.taxIdKind}
+                    testID="register-tax-id-kind-field"
+                  >
+                    <Picker
+                      options={TAX_ID_KIND_OPTIONS}
+                      value={taxIdKind}
+                      onChange={(value) => setTaxIdKind(value as TaxIdKind)}
+                      placeholder="DNI, NIF, NIE o pasaporte"
+                      title="Con qué documento te identificas"
+                      testID="register-tax-id-kind"
+                    />
+                  </FormField>
+                )}
+
                 <FormField
-                  label={legalForm === 'COMPANY' ? 'CIF' : 'NIF'}
+                  label={
+                    legalForm === 'COMPANY'
+                      ? 'CIF'
+                      : taxIdKind
+                        ? `Número de ${TAX_ID_LABELS[taxIdKind]}`
+                        : 'Número'
+                  }
+                  hint={
+                    taxIdKind === 'PASSPORT'
+                      ? 'Un pasaporte no se puede comprobar, así que revísalo bien.'
+                      : undefined
+                  }
                   error={fieldErrors.taxId}
                   testID="register-tax-id-field"
                 >
                   <Input
                     value={taxId}
                     onChangeText={(value) => setTaxId(value.toUpperCase())}
-                    placeholder={legalForm === 'COMPANY' ? 'B12345678' : '12345678Z'}
+                    placeholder={
+                      legalForm === 'COMPANY'
+                        ? TAX_ID_PLACEHOLDERS.CIF
+                        : taxIdKind
+                          ? TAX_ID_PLACEHOLDERS[taxIdKind]
+                          : ''
+                    }
                     autoCapitalize="characters"
                     autoCorrect={false}
                     error={Boolean(fieldErrors.taxId)}
@@ -420,14 +529,25 @@ export function RegisterPage({ onSuccess, onLogin }: RegisterPageProps) {
             />
           </FormField>
 
+          {/**
+            * Se rellena sola con el municipio de la dirección, y se puede
+            * cambiar. No es un duplicado por descuido: hay quien tiene la
+            * base en un pueblo y se anuncia con el nombre de la ciudad grande
+            * de al lado, porque es ahí donde le van a buscar. La dirección
+            * dice dónde está; esto dice cómo quiere que le encuentren.
+            */}
           <FormField
             label="Ciudad base"
+            hint="Sale en tu ficha del directorio. La rellenamos con la de tu dirección; cámbiala si te buscan por otra."
             error={fieldErrors.city}
             testID="register-city-field"
           >
             <Input
               value={city}
-              onChangeText={setCity}
+              onChangeText={(texto) => {
+                setCityTouched(true)
+                setCity(texto)
+              }}
               placeholder="Ej. Madrid"
               autoCapitalize="words"
               error={Boolean(fieldErrors.city)}

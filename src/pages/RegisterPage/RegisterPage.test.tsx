@@ -27,6 +27,25 @@ jest.mock('@/api', () => {
   }
 })
 
+/**
+ * El geocodificador, mudo. El campo de dirección le pregunta al escribir, y
+ * sin este `mock` cada test intentaría salir a la red de verdad.
+ */
+const SUGERENCIA = {
+  label: 'Calle Virgen del Puig 4, Valencia',
+  lat: 39.4699,
+  lng: -0.3763,
+  city: 'Valencia',
+  postcode: '46013',
+}
+
+jest.mock('@/api/geocode.api', () => ({
+  geocodeApi: {
+    search: jest.fn(() => Promise.resolve({ matches: [SUGERENCIA] })),
+    reverse: jest.fn(() => Promise.resolve({ match: null })),
+  },
+}))
+
 jest.mock('@/hooks/auth/useRegistrationUploads', () => ({
   useRegistrationUploads: () => ({
     uploadAll: jest.fn().mockResolvedValue({ failed: [] }),
@@ -47,14 +66,32 @@ jest.mock('@/stores/useRoleStore', () => ({
     selector({ setActiveRole: jest.fn() }),
 }))
 
-/** Un alta de cliente con lo mínimo que el esquema da por bueno. */
-function rellenarClienteValido(screen: ReturnType<typeof render>) {
+/**
+ * Un alta de cliente con lo mínimo que el esquema da por bueno.
+ *
+ * Es `async` desde que la dirección es obligatoria: hay que escribirla,
+ * **esperar** a que vuelvan las sugerencias —el campo rebota 400 ms antes de
+ * preguntar— y elegir una. Escribirla sin elegir no vale, y es a propósito:
+ * lo que el alta necesita son las coordenadas, no el texto.
+ */
+async function rellenarClienteValido(screen: ReturnType<typeof render>) {
   fireEvent.changeText(screen.getByTestId('register-name'), 'Robin Ruiz')
   fireEvent.changeText(
     screen.getByTestId('register-email'),
     'robin@ejemplo.test',
   )
   fireEvent.changeText(screen.getByTestId('register-password'), 'Contrasena10')
+
+  fireEvent.changeText(
+    screen.getByTestId('register-address'),
+    'Calle Virgen del Puig 4',
+  )
+  fireEvent.press(
+    await screen.findByTestId(
+      `register-address-match-${SUGERENCIA.lat},${SUGERENCIA.lng}`,
+    ),
+  )
+
   fireEvent.press(screen.getByTestId('register-terms'))
 }
 
@@ -72,7 +109,7 @@ describe('RegisterPage', () => {
   it('manda el alta cuando el formulario de cliente está completo', async () => {
     const screen = render(<RegisterPage onSuccess={jest.fn()} onLogin={jest.fn()} />)
 
-    rellenarClienteValido(screen)
+    await rellenarClienteValido(screen)
     fireEvent.press(screen.getByTestId('register-submit'))
 
     await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
@@ -87,7 +124,7 @@ describe('RegisterPage', () => {
   it('omite los campos de profesional en el alta de un cliente', async () => {
     const screen = render(<RegisterPage onSuccess={jest.fn()} onLogin={jest.fn()} />)
 
-    rellenarClienteValido(screen)
+    await rellenarClienteValido(screen)
     fireEvent.press(screen.getByTestId('register-submit'))
 
     await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
@@ -97,6 +134,51 @@ describe('RegisterPage', () => {
     expect(enviado.role).toBe('client')
     expect(enviado.trades).toBeUndefined()
     expect(enviado.city).toBeUndefined()
+  })
+
+  /**
+   * La dirección sí viaja, y con sus coordenadas: es lo único que permite
+   * ordenar el directorio por cercanía, que es la razón entera de pedirla.
+   */
+  it('manda la dirección elegida, con coordenadas', async () => {
+    const screen = render(<RegisterPage onSuccess={jest.fn()} onLogin={jest.fn()} />)
+
+    await rellenarClienteValido(screen)
+    fireEvent.press(screen.getByTestId('register-submit'))
+
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    const enviado = mockRegister.mock.calls[0]![0] as Record<string, unknown>
+    expect(enviado.address).toEqual(SUGERENCIA)
+  })
+
+  /**
+   * Y sin elegirla no se manda nada. Escribir una dirección a mano y que el
+   * alta saliera con ella dejaría una cuenta sin coordenadas —justo lo que
+   * pasaba con los profesionales antes de esto—, así que el rechazo va atado.
+   */
+  it('no deja crear la cuenta con una dirección escrita pero no elegida', async () => {
+    const screen = render(<RegisterPage onSuccess={jest.fn()} onLogin={jest.fn()} />)
+
+    fireEvent.changeText(screen.getByTestId('register-name'), 'Robin Ruiz')
+    fireEvent.changeText(
+      screen.getByTestId('register-email'),
+      'robin@ejemplo.test',
+    )
+    fireEvent.changeText(screen.getByTestId('register-password'), 'Contrasena10')
+    // Escrita, pero sin tocar ninguna sugerencia
+    fireEvent.changeText(
+      screen.getByTestId('register-address'),
+      'Calle Virgen del Puig 4',
+    )
+    fireEvent.press(screen.getByTestId('register-terms'))
+
+    fireEvent.press(screen.getByTestId('register-submit'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('auth-form-error')).toBeTruthy(),
+    )
+    expect(mockRegister).not.toHaveBeenCalled()
   })
 
   /**
@@ -121,7 +203,7 @@ describe('RegisterPage', () => {
 
     const screen = render(<RegisterPage onSuccess={jest.fn()} onLogin={jest.fn()} />)
 
-    rellenarClienteValido(screen)
+    await rellenarClienteValido(screen)
     fireEvent.press(screen.getByTestId('register-submit'))
 
     // El mensaje del campo, repetido donde el usuario sí lo ve

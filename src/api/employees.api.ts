@@ -15,12 +15,18 @@ import type {
   ApiHolidayCalendar,
   ApiSurcharges,
 } from './pros.api'
+import type { TaxIdKind } from '@/utils/taxId'
 
 export type LegalForm = 'SELF_EMPLOYED' | 'COMPANY'
 
 export interface ApiEmployer {
   legalForm: LegalForm
-  /** NIF si es autónomo, CIF si es empresa */
+  /**
+   * Con qué documento. **Null en las cuentas anteriores a que se preguntara**:
+   * de aquellas solo se sabe que pasaron la comprobación de NIF o CIF.
+   */
+  taxIdKind: TaxIdKind | null
+  /** El número: NIF, NIE, pasaporte o CIF, según `taxIdKind` */
   taxId: string
   legalName: string
   employeeCount: number
@@ -49,6 +55,15 @@ export interface ApiEmployee {
 
 export interface BecomeEmployerPayload {
   legalForm: LegalForm
+  /**
+   * Con qué documento se identifica. **Se manda, no se deduce del número.**
+   *
+   * Un pasaporte no se puede comprobar —no lleva dígito de control y cada país
+   * numera a su manera—, así que sin la clase habría que aceptar como
+   * pasaporte cualquier cosa que no encajara en las formas españolas, incluido
+   * un NIF con una cifra de menos. Con ella, cada uno se valida con su regla.
+   */
+  taxIdKind: TaxIdKind
   taxId: string
   legalName: string
   /** Obligatorio: es lo que sostiene no pedir documento a cada empleado */
