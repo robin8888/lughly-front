@@ -9,6 +9,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { jobsApi, type ApiJobDetail } from '@/api/jobs.api'
+import { assignmentsApi } from '@/api/assignments.api'
 
 export function jobQueryKey(jobId: string) {
   return ['jobs', 'detail', jobId] as const
@@ -144,4 +145,93 @@ export function useReassignJob() {
     },
     isReassigning: mutation.isPending,
   }
+}
+
+/**
+ * Los dos pasos del día del trabajo, para quien lo hace: empezar y terminar.
+ *
+ * Se invalidan también la agenda y la bandeja porque el mismo trabajo se pinta
+ * en las tres pantallas por su estado: dejar una sin refrescar la deja
+ * enseñando "por hacer" algo que se acaba de terminar.
+ *
+ * Terminar **no cobra**: abre el plazo de 24 horas que tiene el cliente para
+ * decir que no fue así. Quien lo cierra —y suelta el dinero— es
+ * `useCompleteJob`, o el plazo si el cliente no dice nada.
+ */
+export function useJobProgress() {
+  const queryClient = useQueryClient()
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
+    void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
+  }
+
+  const start = useMutation({
+    mutationFn: (jobId: string) => assignmentsApi.start(jobId),
+    onSuccess: invalidate,
+  })
+
+  const finish = useMutation({
+    mutationFn: (jobId: string) => assignmentsApi.finish(jobId),
+    onSuccess: invalidate,
+  })
+
+  return {
+    start: async (jobId: string) => {
+      try {
+        return { ok: true as const, error: null, result: await start.mutateAsync(jobId) }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    finish: async (jobId: string) => {
+      try {
+        return { ok: true as const, error: null, result: await finish.mutateAsync(jobId) }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isStarting: start.isPending,
+    isFinishing: finish.isPending,
+  }
+}
+
+/**
+ * El cliente da por bueno un trabajo terminado.
+ *
+ * Es lo que suelta el dinero: lo contratado desde la carta se retiene al
+ * reservar, se cobra cuando el profesional acepta, y se queda en la
+ * plataforma hasta que alguien cierra el trabajo. Si el cliente no pulsa nada, el servidor lo da por bueno a las 24
+ * horas — este botón es para no esperarlas.
+ *
+ * Refresca también la agenda del profesional por si quien mira es una empresa
+ * con las dos caras abiertas en el mismo móvil.
+ */
+export function useCompleteJob() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (jobId: string) => jobsApi.complete(jobId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
+    },
+  })
+
+  return {
+    complete: async (jobId: string) => {
+      try {
+        return { ok: true as const, result: await mutation.mutateAsync(jobId), error: null }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isCompleting: mutation.isPending,
+  }
+}
+
+/** Lo que se le puede enseñar a alguien de un fallo, si es que se puede algo */
+function mensajeDe(error: unknown): string | null {
+  return error instanceof NetworkError || error instanceof ApiError ? error.message : null
 }

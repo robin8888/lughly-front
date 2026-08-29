@@ -195,6 +195,20 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  /** El botón del día: separado de lo que se lee, y a lo ancho de la tarjeta */
+  action: {
+    marginTop: 12,
+  },
+  /** Lo que sustituye al botón cuando ya no hay nada que pulsar */
+  awaitingClient: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.85,
+    marginTop: 12,
+  },
+
   amountRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

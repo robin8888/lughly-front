@@ -188,6 +188,17 @@ export interface ApiJobDetail {
   preferredDate: string | null
   /** Hasta cuándo hay para responder, si se espera a alguien */
   respondByAt: string | null
+  /**
+   * El cierre, en tres relojes.
+   *
+   * Con `workFinishedAt` puesto y el trabajo todavía `IN_PROGRESS`, el
+   * profesional ha dicho que ha terminado y falta que el cliente lo dé por
+   * bueno: es lo que enciende el botón de confirmar y el aviso de que, si no
+   * hace nada, se dará por bueno el `confirmByAt`.
+   */
+  workFinishedAt: string | null
+  confirmByAt: string | null
+  completedAt: string | null
   maxBudget: number | null
   /** El precio acordado, cuando lo hay */
   amount: number | null
@@ -272,6 +283,25 @@ export const jobsApi = {
       body: { proId },
     }),
 
+  /**
+   * Dar por bueno un trabajo terminado: se cierra y lo que la plataforma tenía
+   * retenido se transfiere al profesional. Si el cliente no hace nada, a las
+   * 24 horas se da por bueno igual.
+   *
+   * `complete` y no `confirm` porque `assignmentsApi.confirm` ya es otra cosa:
+   * allí un trabajador dice que puede con lo que le mandó su empresa.
+   */
+  complete: (jobId: string) =>
+    apiRequest<{
+      jobId: string
+      status: ApiJobStatus
+      completedAt: string
+      /** Cuánto se le ha soltado al profesional, en euros */
+      released: number
+      /** Cobros que no han podido salir y quedan para el siguiente barrido */
+      stuck: number
+    }>(`/v1/jobs/${jobId}/complete`, { method: 'POST', auth: true }),
+
   cancel: (jobId: string) =>
     apiRequest<{ jobId: string; status: ApiJobStatus }>(
       `/v1/jobs/${jobId}/cancel`,
@@ -283,7 +313,13 @@ export const jobsApi = {
    *
    * Endpoint distinto de `cancel` y no un caso suyo: aquel es del cliente y
    * antes de que nadie mueva nada; este exige motivo, lo puede usar también el
-   * profesional, y devuelve lo que la plataforma tuviera retenido.
+   * profesional, y deshace el dinero que hubiera puesto.
+   *
+   * **`refunded` y `voided` no son lo mismo y no se cuentan igual al
+   * cliente.** `refunded` es dinero que se le cobró y vuelve, y tarda días en
+   * aparecer en su banco; `voided` es una retención que se suelta, y ese cargo
+   * nunca llegó a existir. Decirle "se te ha devuelto" de una retención le
+   * manda a buscar al extracto algo que no va a encontrar.
    *
    * `releasedCharges` son los cobros ya transferidos al profesional, que no se
    * tocan: si viene con algo, ese dinero se resuelve con administración.
@@ -293,6 +329,7 @@ export const jobsApi = {
       jobId: string
       status: ApiJobStatus
       refunded: number
+      voided: number
       releasedCharges: number
     }>(`/v1/jobs/${jobId}/cancel-contract`, {
       method: 'POST',

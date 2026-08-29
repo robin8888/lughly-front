@@ -20,6 +20,7 @@ import { useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable, Linking, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Animated from 'react-native-reanimated'
+import { Button } from '@/components/atoms/Button'
 import { Money } from '@/components/atoms/Money'
 import { Tag } from '@/components/atoms/Tag'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -28,6 +29,7 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
+import { useJobProgress } from '@/hooks/domain/useJob'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
@@ -43,6 +45,7 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch, isFetching } = useAssignedJobs()
+  const { start, finish, isStarting, isFinishing } = useJobProgress()
 
   const jobs = data?.items ?? []
 
@@ -216,6 +219,84 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                           ))}
                         </View>
                       </View>
+                    )}
+
+                    {/**
+                     * El día del trabajo, en la pantalla en la que se vive.
+                     *
+                     * Aquí y no solo en la ficha porque esta es la lista que
+                     * se abre estando en el portal: dos toques menos para lo
+                     * que se hace de pie en la calle. Terminar no cobra —abre
+                     * el plazo del cliente—, así que el texto no lo promete.
+                     */}
+                    {job.status === 'CONTRACTED' &&
+                      job.appointmentStatus === 'CONFIRMED' && (
+                        <Button
+                          fullWidth
+                          onPress={() => {
+                            void (async () => {
+                              const { ok, error } = await start(job.id)
+                              if (!ok) {
+                                Alert.alert(
+                                  'No se ha podido empezar',
+                                  error ?? 'Inténtalo de nuevo en un momento.',
+                                )
+                              }
+                            })()
+                          }}
+                          disabled={isStarting}
+                          style={styles.action}
+                          testID={`assigned-${job.id}-start`}
+                        >
+                          {isStarting ? 'Un momento…' : 'He llegado, empiezo'}
+                        </Button>
+                      )}
+
+                    {job.status === 'IN_PROGRESS' &&
+                      job.appointmentStatus === 'STARTED' &&
+                      !job.workFinishedAt && (
+                        <Button
+                          fullWidth
+                          onPress={() => {
+                            void (async () => {
+                              const { ok, error } = await finish(job.id)
+
+                              if (!ok) {
+                                Alert.alert(
+                                  'No se ha podido marcar como terminado',
+                                  error ?? 'Inténtalo de nuevo en un momento.',
+                                )
+                                return
+                              }
+
+                              Alert.alert(
+                                'Terminado',
+                                'Se lo hemos dicho al cliente. Si no dice lo contrario en 24 horas, se da por bueno y se te paga.',
+                              )
+                            })()
+                          }}
+                          disabled={isFinishing}
+                          style={styles.action}
+                          testID={`assigned-${job.id}-finish`}
+                        >
+                          {isFinishing ? 'Un momento…' : 'He terminado'}
+                        </Button>
+                      )}
+
+                    {/*
+                      Y cuando ya se ha terminado, lo que hay que saber es
+                      cuándo se cobra. Sin esta línea el trabajo se queda en la
+                      agenda sin botón y sin explicación, que se lee como que
+                      algo no se ha guardado.
+                    */}
+                    {job.workFinishedAt && job.status === 'IN_PROGRESS' && (
+                      <Text
+                        style={styles.awaitingClient}
+                        testID={`assigned-${job.id}-awaiting`}
+                      >
+                        Terminado. Falta que el cliente lo dé por bueno; si no
+                        dice nada, se da por bueno solo y cobras.
+                      </Text>
                     )}
 
                     {/**

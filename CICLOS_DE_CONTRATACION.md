@@ -43,6 +43,69 @@ están escritos sobre las tres entidades de la v3: `Job` (contrato),
 11. **`EXPIRED` permite reasignar** (`reassign-job`) sin mirar si hubo cobros.
 12. **Ni pagos, ni valoraciones creables, ni cuenta de cobro.**
 
+### Lo construido de esta lista (29 Agosto 2026)
+
+**El cierre del ciclo, y con él la salida del dinero.** Un trabajo contratado
+desde la carta se cobraba al contratar y el cobro se quedaba retenido en la
+plataforma **para siempre**: no había ningún camino de `CONTRACTED` a
+`COMPLETED` fuera de las urgencias, que no cobran, así que
+`ReleaseChargeUseCase` existía sin que lo llamara nadie. Ahora:
+
+- `POST /v1/jobs/:id/start` y `/finish` — de quien lo hace o de su empresa.
+  Terminar **no cierra ni cobra**: pone `Job.workFinishedAt` y abre
+  `Job.confirmByAt`, 24 h.
+- `POST /v1/jobs/:id/complete` — del cliente: cierra y libera.
+- El barrido de plazos cierra por silencio cuando vence `confirmByAt`, y
+  reintenta los cobros que se quedaron sin salir (`releaseStuckCharges`).
+
+Son las tres rutas sobre el **trabajo**, no sobre la cita: hoy solo hay una
+cita en juego por trabajo y actúan sobre ella. Cuando un trabajo tenga dos
+—visita y después arreglo, §C— habrá que llevarlas a `Appointment`, que es lo
+que dice la tabla de §Z.
+
+### Y el dinero se retiene, no se cobra (29 Agosto 2026)
+
+Los pasos 3 y 4 del ciclo de §A —autorizar al reservar, capturar al aceptar—
+**ya están**, aplicados a lo único que hoy cobra: la carta.
+
+- `Charge` nace `AUTHORIZED`: `capture_method: 'manual'`, el importe se retiene
+  en la tarjeta del cliente y no se cobra nada.
+- Se **captura** en los tres sitios donde un trabajo pasa a `CONTRACTED`: el
+  autónomo que se asigna a sí mismo, el trabajador que confirma, y el cliente
+  que acepta un sustituto.
+- Se **anula** (`VOIDED`, coste cero) donde antes se reembolsaba: rechazo,
+  plazo cumplido, sustituto rechazado y contrato roto antes de capturar.
+- El barrido reintenta las capturas que no salieron: la autorización caduca a
+  los 7 días y después el dinero se suelta solo.
+
+Motivo, en una línea: un reembolso no recupera la comisión de Stripe y una
+autorización cancelada no cuesta nada. Con la comisión de plataforma al 0 %,
+cada encargo caído salía de nuestro bolsillo.
+
+**Y el 3D Secure, tapado el mismo día.** El cobro se confirma en el servidor,
+así que una tarjeta que pedía autenticación devolvía `requires_action` y el
+contrato moría sin salida: ese cliente no podía contratar nunca con esa
+tarjeta. Ahora:
+
+- El `Job` nace en `DRAFT` —no lo ve nadie, ningún reloj corre— y solo pasa a
+  `PENDING_PRO` cuando la tarjeta ha dicho que sí. El plazo de 24 h del
+  profesional empieza ahí, no al pulsar contratar.
+- `book-services` devuelve `status: 'requires_action'` con el `clientSecret`;
+  la app abre el reto con `handleNextAction` y llama a
+  `POST /v1/jobs/:id/confirm-payment`.
+- Ese endpoint **le pregunta a Stripe** cómo acabó (`RefreshChargeUseCase`), no
+  se cree al móvil: si no, cualquiera que sepa llamarlo tendría un profesional
+  trabajando gratis.
+- Lo que se queda a medias —cierra la app, se le va la batería— lo recoge el
+  barrido a la media hora: suelta el intento y borra el borrador.
+
+Todo esto vive dentro de `useBookServices`: para la pantalla es la misma
+llamada de siempre, que a veces tarda un poco más.
+
+Sigue sin hacerse todo lo demás del cobro por horas: el desglose con
+`minHours` y recargos, y `book-hours` (que ya solo tendría que reusar lo de
+arriba).
+
 ---
 
 ## Común: el alta

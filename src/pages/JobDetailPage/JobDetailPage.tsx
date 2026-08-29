@@ -28,7 +28,13 @@ import { Avatar } from '@/components/atoms/Avatar'
 import { Countdown } from '@/components/atoms/Countdown'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
-import { useJob, useCancelJob, useCancelContract } from '@/hooks/domain/useJob'
+import {
+  useJob,
+  useCancelJob,
+  useCancelContract,
+  useJobProgress,
+  useCompleteJob,
+} from '@/hooks/domain/useJob'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -65,6 +71,18 @@ function whatIsHappening(job: ApiJobDetail): string {
         return 'Te lo han encargado y esperan tu respuesta.'
       case 'CONTRACTED':
         return 'Es tuyo. Tienes la dirección y el teléfono del cliente.'
+      case 'IN_PROGRESS':
+        /*
+          Terminado no es un estado aparte: es el mismo trabajo esperando al
+          cliente, y lo que lo dice es la hora de fin. Aquí importa porque
+          cambia lo único que quiere saber quien acaba de terminar — cuándo
+          cobra.
+        */
+        return job.workFinishedAt
+          ? 'Has terminado. Falta que el cliente lo dé por bueno; si no dice nada, se da por bueno solo y cobras.'
+          : 'Estás con ello. Cuando acabes, márcalo aquí.'
+      case 'COMPLETED':
+        return 'Cerrado. El importe va de camino a tu cuenta de cobro.'
       default:
         return ''
     }
@@ -101,7 +119,9 @@ function whatIsHappening(job: ApiJobDetail): string {
         ? `Cerrado. Lo hará ${quien}, y ya tienes su teléfono por si necesitas hablar con alguien.`
         : `Cerrado. Lo hará ${quien}.`
     case 'IN_PROGRESS':
-      return `${quien} está con ello.`
+      return job.workFinishedAt
+        ? `${quien} dice que ha terminado. Si no nos dices lo contrario, lo damos por bueno y se le paga.`
+        : `${quien} está con ello.`
     case 'COMPLETED':
       return 'Terminado. Si aún no lo has valorado, tu opinión ayuda a quien busque después.'
     case 'DECLINED':
@@ -158,6 +178,8 @@ export function JobDetailPage({
   const { data: job, isPending, isError, refetch } = useJob(jobId)
   const { cancel, isCancelling } = useCancelJob()
   const { cancelContract, isCancelling: isBreaking } = useCancelContract()
+  const { start, finish, isStarting, isFinishing } = useJobProgress()
+  const { complete, isCompleting } = useCompleteJob()
 
   /**
    * El diálogo de romper un contrato, con su motivo.
@@ -282,6 +304,69 @@ export function JobDetailPage({
    * Por eso pide motivo y no se resuelve con un toque: ver `breaking`.
    */
   const canBreak = job.status === 'CONTRACTED'
+
+  /**
+   * El día del trabajo, del lado de quien lo hace.
+   *
+   * Empezar pide la cita confirmada y terminar pide haber empezado: son las
+   * mismas condiciones que el servidor, escritas aquí para que el botón no
+   * aparezca cuando pulsarlo daría error. Terminar no cobra —abre el plazo
+   * del cliente—, y por eso el texto no promete dinero.
+   */
+  const canStart =
+    job.viewer === 'pro' &&
+    job.status === 'CONTRACTED' &&
+    job.appointmentStatus === 'CONFIRMED'
+
+  const canFinish =
+    job.viewer === 'pro' &&
+    job.status === 'IN_PROGRESS' &&
+    job.appointmentStatus === 'STARTED' &&
+    !job.workFinishedAt
+
+  /**
+   * Y el último paso, del cliente: dar por bueno lo terminado.
+   *
+   * **Es lo que suelta el dinero.** Lo contratado desde la carta se cobró al
+   * contratar y sigue retenido; hasta que existió este botón —y su plazo— no
+   * había forma de que llegara al profesional.
+   */
+  const canComplete =
+    job.viewer === 'client' && job.status === 'IN_PROGRESS' && Boolean(job.workFinishedAt)
+
+  /** Se pregunta antes: dar por bueno paga, y pagar no se deshace con otro toque. */
+  const confirmComplete = (id: string) => {
+    Alert.alert(
+      '¿Todo correcto?',
+      'Daremos el trabajo por terminado y se le pagará al profesional. Si algo no ha ido bien, escríbenos antes.',
+      [
+        { text: 'Volver', style: 'cancel' },
+        {
+          text: 'Sí, todo bien',
+          onPress: () => {
+            void (async () => {
+              const { ok, result, error } = await complete(id)
+
+              if (!ok) {
+                Alert.alert(
+                  'No se ha podido cerrar',
+                  error ?? 'Inténtalo de nuevo en un momento.',
+                )
+                return
+              }
+
+              Alert.alert(
+                'Trabajo cerrado',
+                result.released > 0
+                  ? `Gracias. Se le han pagado ${result.released.toFixed(2)} € al profesional.`
+                  : 'Gracias. Queda cerrado.',
+              )
+            })()
+          },
+        },
+      ],
+    )
+  }
 
   /** Diez caracteres, lo mismo que exige el servidor */
   const reasonOk = reason.trim().length >= 10
@@ -460,6 +545,96 @@ export function JobDetailPage({
           )}
         </InfoCard>
 
+        {/*
+          El día del trabajo, arriba de las demás acciones: cuando toca, es lo
+          único a lo que se entra aquí.
+        */}
+        {canStart && (
+          <Button
+            fullWidth
+            onPress={() => {
+              void (async () => {
+                const { ok, error } = await start(job.id)
+                if (!ok) {
+                  Alert.alert(
+                    'No se ha podido empezar',
+                    error ?? 'Inténtalo de nuevo en un momento.',
+                  )
+                }
+              })()
+            }}
+            disabled={isStarting}
+            style={styles.bids}
+            testID="job-detail-start"
+          >
+            {isStarting ? 'Un momento…' : 'He llegado, empiezo'}
+          </Button>
+        )}
+
+        {canFinish && (
+          <Button
+            fullWidth
+            onPress={() => {
+              void (async () => {
+                const { ok, error } = await finish(job.id)
+
+                if (!ok) {
+                  Alert.alert(
+                    'No se ha podido marcar como terminado',
+                    error ?? 'Inténtalo de nuevo en un momento.',
+                  )
+                  return
+                }
+
+                /*
+                  Se dice lo que pasa ahora. Quien acaba de terminar espera
+                  cobrar, y encontrarse el trabajo todavía "en curso" sin
+                  explicación se lee como que no se ha guardado.
+                */
+                Alert.alert(
+                  'Terminado',
+                  'Se lo hemos dicho al cliente. Si no dice lo contrario en 24 horas, se da por bueno y se te paga.',
+                )
+              })()
+            }}
+            disabled={isFinishing}
+            style={styles.bids}
+            testID="job-detail-finish"
+          >
+            {isFinishing ? 'Un momento…' : 'He terminado'}
+          </Button>
+        )}
+
+        {/*
+          Y el botón que paga. Con el plazo a la vista: es lo que convierte
+          "confirma" en una decisión con fecha, y lo que explica que no hacer
+          nada también sea una respuesta.
+        */}
+        {canComplete && (
+          <>
+            <Button
+              fullWidth
+              onPress={() => confirmComplete(job.id)}
+              disabled={isCompleting}
+              style={styles.bids}
+              testID="job-detail-complete"
+            >
+              {isCompleting ? 'Cerrando…' : 'Todo bien, dalo por bueno'}
+            </Button>
+
+            {job.confirmByAt && (
+              <View style={styles.deadline}>
+                <Text style={styles.deadlineLabel}>Si no dices nada, se cierra en</Text>
+                <Countdown
+                  target={job.confirmByAt}
+                  expiredLabel="Dado por bueno"
+                  testID="job-detail-confirm-countdown"
+                />
+              </View>
+            )}
+          </>
+        )}
+
         {job.chatWith && onOpenChat && (
           <Button
             fullWidth
@@ -587,12 +762,20 @@ export function JobDetailPage({
                   se pregunta quien cancela algo que ya había pagado. Callarlo
                   obligaría a ir a buscarlo a Pagos.
                 */
+                /*
+                  Soltar una retención y devolver un cobro no son lo mismo
+                  para quien lo lee: en el primer caso nunca le llegó a salir
+                  el cargo, así que "se te ha devuelto" le mandaría a buscar al
+                  banco algo que no existe.
+                */
                 const dinero =
                   result.releasedCharges > 0
                     ? ' Parte del importe ya se había liberado al profesional: escríbenos y lo revisamos.'
                     : result.refunded > 0
                       ? ` Se han devuelto ${result.refunded} € al método de pago.`
-                      : ''
+                      : result.voided > 0
+                        ? ' Se ha soltado la retención de tu tarjeta: no se te ha cobrado nada.'
+                        : ''
 
                 Alert.alert(
                   'Trabajo cancelado',

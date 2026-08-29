@@ -34,14 +34,35 @@ export interface BookServicesPayload {
   city: string
   addressLine: string
   preferredDate?: string
-  /** La tarjeta guardada con la que se cobra (`paymentsApi.methods()`) */
+  /** La tarjeta guardada en la que se retiene, y con la que se cobrará (`paymentsApi.methods()`) */
   paymentMethodId: string
 }
 
 /** Lo que devuelve contratar la carta: ya cobrado, encargo enviado */
+/** Un cobro tal y como lo cuenta el servidor */
+export interface ApiChargeView {
+  id: string
+  kind: string
+  amount: number
+  commissionAmount: number
+  status: string
+}
+
 export interface ApiBookedServices {
   jobId: string
   amount: number
+  /**
+   * `booked`: el importe está retenido y el encargo ya le ha llegado al
+   * profesional. `requires_action`: **la tarjeta pide autenticación** (3D
+   * Secure, que en España salta a menudo). En ese caso el encargo espera en
+   * borrador sin que lo vea nadie, y hay que abrir el reto con `clientSecret`
+   * y después llamar a `confirmPayment`. Lo hace `useBookServices`: la
+   * pantalla no se entera de nada.
+   */
+  status: 'booked' | 'requires_action'
+  charge: ApiChargeView | null
+  /** Solo cuando hay que autenticarse */
+  clientSecret: string | null
 }
 
 export interface ApiDirectRequest {
@@ -131,6 +152,29 @@ export interface ApiAssignment {
   awaitingClient: boolean
 }
 
+/** Lo que devuelve empezar un trabajo contratado */
+export interface ApiStartedJob {
+  jobId: string
+  status: ApiJobStatus
+  startedAt: string
+}
+
+/**
+ * Lo que devuelve terminarlo.
+ *
+ * `status` sigue siendo `IN_PROGRESS` a propósito: terminar no cierra el
+ * trabajo ni cobra. Abre el plazo que tiene el cliente para decir que no fue
+ * así, y hasta que ese plazo vence —o el cliente confirma— el dinero sigue
+ * retenido en la plataforma.
+ */
+export interface ApiFinishedJob {
+  jobId: string
+  status: ApiJobStatus
+  finishedAt: string
+  /** Hasta cuándo puede el cliente decir que no fue así */
+  confirmByAt: string
+}
+
 export interface ApiSubstituteDecision {
   jobId: string
   status: string
@@ -148,6 +192,15 @@ export interface ApiAssignedJob {
   id: string
   type: ApiJobType
   status: ApiJobStatus
+  /**
+   * En qué punto está la cita, y cuándo se dio por terminado el trabajo.
+   *
+   * Es lo que decide qué botón sale en la agenda: `CONFIRMED` toca empezar,
+   * `STARTED` toca terminar, y con `workFinishedAt` puesto no toca nada — se
+   * está esperando a que el cliente lo dé por bueno.
+   */
+  appointmentStatus: ApiAppointmentStatus | null
+  workFinishedAt: string | null
   title: string
   description: string
   trade: string
@@ -183,12 +236,31 @@ export const assignmentsApi = {
       body: payload,
     }),
 
-  /** Contratar la carta: se cobra en el momento con la tarjeta guardada */
+  /**
+   * Contratar la carta. **Retiene, no cobra**: el importe se aparta en la
+   * tarjeta guardada y solo se cobra cuando el profesional acepta. Si rechaza
+   * o se le pasa el plazo, la retención se suelta y el cliente nunca ve un
+   * cargo — que es además lo que evita perder la comisión de Stripe de un
+   * cobro que habría que devolver.
+   */
   bookServices: (proId: string, payload: BookServicesPayload) =>
     apiRequest<ApiBookedServices>(`/v1/pros/${proId}/book-services`, {
       method: 'POST',
       auth: true,
       body: payload,
+    }),
+
+  /**
+   * El segundo tiempo de contratar, cuando la tarjeta pidió autenticación.
+   *
+   * Se llama después de resolver el reto con `handleNextAction`. El servidor
+   * no se cree lo que diga el móvil: le pregunta a Stripe cómo acabó, y solo
+   * entonces manda el encargo al profesional.
+   */
+  confirmPayment: (jobId: string) =>
+    apiRequest<ApiBookedServices>(`/v1/jobs/${jobId}/confirm-payment`, {
+      method: 'POST',
+      auth: true,
     }),
 
   /** Lo que tengo pendiente de responder: lo mío, o lo de toda mi gente */
@@ -228,6 +300,26 @@ export const assignmentsApi = {
       method: 'POST',
       auth: true,
       body: { reason },
+    }),
+
+  /**
+   * Los dos pasos del día del trabajo, para quien va a hacerlo o para la
+   * empresa que responde por él.
+   *
+   * Las urgencias tienen los suyos en `urgenciesApi`: allí terminar cierra el
+   * trabajo y libera al profesional, aquí abre el plazo del cliente y acaba
+   * en una transferencia.
+   */
+  start: (jobId: string) =>
+    apiRequest<ApiStartedJob>(`/v1/jobs/${jobId}/start`, {
+      method: 'POST',
+      auth: true,
+    }),
+
+  finish: (jobId: string) =>
+    apiRequest<ApiFinishedJob>(`/v1/jobs/${jobId}/finish`, {
+      method: 'POST',
+      auth: true,
     }),
 
   /** La respuesta del cliente al cambio de persona */
