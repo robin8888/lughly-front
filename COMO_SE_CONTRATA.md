@@ -242,17 +242,37 @@ PENDING_WORKER ─► SUBSTITUTE_PROPOSED ─► CONFIRMED ─► STARTED ─►
 urgencia). `CommissionPolicy` tiene una fila por cada uno, a 0 %, con
 `validFrom`. Los `*_EXTRA` heredan la tasa de su base.
 
-Ciclo (S1):
+Ciclo (S1), **corregido el 29 Agosto 2026**: entre reservar y cobrar hay un
+paso más, y ese paso es dinero.
 
 ```
-PAID (cobrado, retenido) ─► RELEASED (transferido al profesional)
-        │                      ▲
-        ├─► REFUNDED           └── confirmación del cliente, o silencio 24 h
-        └─► DISPUTED ─► RELEASED / REFUNDED / PARTIAL
+PENDING_ACTION (la tarjeta pide 3D Secure; nada apartado todavía)
+     │
+     └─► AUTHORIZED (retenido en la tarjeta, sin cobrar)
+     │
+     ├─► VOIDED    el pro rechaza, expira, o se rompe antes de aceptar → 0 € de coste
+     │
+     └─► PAID (cobrado, retenido en la plataforma) ─► RELEASED (transferido)
+              │                                          ▲
+              ├─► REFUNDED                               └── confirmación del
+              └─► DISPUTED ─► RELEASED / REFUNDED / PARTIAL      cliente, o silencio 24 h
 ```
 
-- **Se cobra al crear el `Job`** (o la cita, en recurrencia). Sin cobro no hay
-  contrato. Si el profesional rechaza o expira, **`REFUNDED`** automático.
+- **Se autoriza al crear el `Job`** (o la cita, en recurrencia) y **se captura
+  cuando el profesional acepta**. Si el banco pide autenticación, el cobro
+  espera en `PENDING_ACTION` y el `Job` en `DRAFT` hasta que el cliente
+  resuelve el reto en la app. Sin dinero puesto no hay contrato. Si
+  rechaza o expira, la retención se **anula** (`VOIDED`).
+- **Por qué el paso de más.** Un cobro reembolsado no recupera la comisión de
+  Stripe —1,5 % + 0,25 € con tarjeta europea, que en un encargo de 77 € son
+  1,41 € por cada uno que se cae, con la comisión de plataforma al 0 %—;
+  cancelar una autorización no cuesta nada. Es lo que la propia documentación
+  de Stripe recomienda para esto.
+- **Por qué se captura al aceptar y no el día de la cita.** Una autorización de
+  tarjeta vive 7 días (5 en Visa si la red la clasifica como iniciada por el
+  comercio). El plazo de respuesta son 24 h, así que la captura entra con
+  margen; el día de la cita puede caer dos semanas después y la autorización
+  ya no existiría.
 - `MATERIALS_ADVANCE` **también se retiene** hasta que el profesional marca
   «material comprado» con justificante; se libera entonces. Si cancela antes,
   se devuelve. Es el cobro de más riesgo y en la v2 era el único sin retención.

@@ -1,7 +1,7 @@
 /**
  * HireCartaPage
  * Contratar la carta de un profesional: la visita, más lo que se haya
- * marcado en su ficha, cobrado en el momento.
+ * marcado en su ficha, **retenido** en el momento.
  *
  * No reutiliza `RequestProPage`: ahí el precio es orientativo o no existe
  * —el cliente escribe título y descripción y espera respuesta—, aquí el
@@ -193,9 +193,17 @@ export function HireCartaPage({
             <Money amount={total} style={styles.total} />
           </View>
 
+          {/*
+            "Se retiene" y no "se cobra", porque es literalmente lo que pasa:
+            el importe se aparta en la tarjeta y solo se cobra cuando el
+            profesional acepta. Contarlo bien no es solo honestidad — es lo
+            que evita que alguien busque un cargo que no existe, y de paso se
+            vende mejor que "te cobramos y ya te devolveremos".
+          */}
           <Text style={styles.note}>
-            Se cobra ahora, con tu tarjeta guardada. Si {pro.name.split(' ')[0]} no
-            puede o no contesta a tiempo, se te devuelve entero.
+            Se retiene ahora en tu tarjeta y solo se te cobra cuando{' '}
+            {pro.name.split(' ')[0]} lo acepte. Si no puede o no contesta a
+            tiempo, se suelta y no se te cobra nada.
           </Text>
         </InfoCard>
 
@@ -217,7 +225,7 @@ export function HireCartaPage({
           </InfoCard>
         ) : (
           <InfoCard style={styles.paymentCard} testID="hire-carta-method">
-            <Text style={styles.paymentTitle}>Se cobrará a</Text>
+            <Text style={styles.paymentTitle}>Se retendrá en</Text>
             <Text style={styles.paymentBody}>
               {method.brand} •••• {method.last4}
             </Text>
@@ -283,7 +291,7 @@ export function HireCartaPage({
           style={styles.submit}
           testID="hire-carta-submit"
         >
-          Pagar y contratar por {formatAmount(total)} €
+          Contratar por {formatAmount(total)} €
         </Button>
       </Animated.ScrollView>
     </View>
