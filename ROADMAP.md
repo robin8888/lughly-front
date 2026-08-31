@@ -1526,6 +1526,99 @@ git push
 
 ---
 
+## 🎯 El horario en calendario, los niveles y los recurrentes ✅ parcial (31 Agosto 2026)
+
+Tres cosas de la misma tarde, y el hilo que las une es la agenda: **quién está
+libre, cuándo, y qué se cobra por ello**.
+
+### El horario del profesional pasa a ser un calendario ✅
+
+`AvailabilityPage` era una lista de siete filas —una por día de la semana—.
+Compacta y mentirosa en dos sentidos: no dejaba decir "este jueves solo por la
+mañana", y no enseñaba lo ya comprometido, así que se podía abrir un hueco
+encima de un trabajo que ya se tenía.
+
+- [x] Tabla `availability_overrides`: excepciones por fecha encima del patrón
+      semanal. Sin filas manda el semanal; con filas la fecha queda sustituida
+      entera; una fila con las horas a nulo es el día cerrado —**que no es lo
+      mismo que no tener filas**, y por eso guardar vacío y el `DELETE` son dos
+      operaciones distintas—.
+- [x] `GET /v1/pro/availability/calendar?month=` — el mes resuelto día a día:
+      horario, excepciones, ausencias, festivos y citas.
+- [x] `PUT/DELETE /v1/pro/availability/days/:date` y el atajo
+      `PUT /v1/pro/availability/weekdays`.
+- [x] `MonthCalendar` (organismo nuevo), `AvailabilityPage` rehecha, y el
+      horario semanal listado y editable debajo del calendario.
+- [x] Lo mismo para la empresa sobre sus trabajadores.
+
+**Un fallo que borraba datos, encontrado por el camino**: el servidor escribe la
+medianoche como `"00:00"`, así que al reguardar un turno de noche se creaba una
+franja de cero minutos el día siguiente y **se le borraba a ese día su horario
+de verdad**. La aritmética vive ahora en `weeklyPieces`/`weekdaysTouched`,
+aparte y probada.
+
+### Los niveles de comisión ✅ (`COMO_SE_CONTRATA.md` §12)
+
+De 0 % a **10 %**, y baja con el volumen que el profesional trae a la
+plataforma. Los nombres son las castas de un hormiguero: **Obrera, Forrajera,
+Soldado y Reina**.
+
+- [x] La comisión deja de ser un porcentaje puro: pasa a
+      `porcentaje × importe + 0,40 €`, que es la forma con la que cobra Stripe.
+      Con solo un porcentaje **siempre** hay un importe por debajo del cual se
+      pierde dinero, y un mínimo en euros no lo arregla: mueve el punto malo al
+      cruce en vez de quitarlo.
+- [x] `CommissionPolicy` con clave `(kind, level)` y `fixedFee`; 44 filas
+      sembradas. `Employer.commissionLevel`.
+- [x] `ReviewCommissionLevelsUseCase` + cron el día 1 de cada mes sobre los 90
+      días anteriores. Un plantón congela la subida pero **no** la bajada.
+- [x] `GET /v1/payments/commission-level` y la pantalla `/mi-nivel`, en Mi
+      cuenta al lado de la cartera.
+
+La comisión se congela al crear cada cobro, así que en un contrato recurrente
+—un cobro por sesión— **subir de nivel se nota en la sesión siguiente**, también
+en lo ya firmado.
+
+### Contratos recurrentes 🚧 (`CICLOS_DE_CONTRATACION.md` §F)
+
+Diseñado entero y construida la primera pieza.
+
+- [x] **El diseño**, §F: sin fecha de fin con ventana móvil de 8 semanas; los
+      días que no caben se avisan antes de pagar; **los que chocan por hora se
+      pueden mover a otra hora de ese mismo día**; y el dinero va por sesión,
+      porque una autorización de Stripe caduca a los 7 días.
+- [x] **La comprobación de disponibilidad**: `recurrence.ts`,
+      `CheckRecurrenceUseCase` y `POST /v1/pros/:id/recurrence-check`. Cinco
+      motivos de choque, y **solo dos llevan alternativas** —`busy` y
+      `outside`—; `away`, `closed` y `notice` no tienen nada que ofrecer.
+- [x] `prisma/seed-recurrentes.ts`: cuatro clientes y cuatro trabajadores de
+      prueba, uno de ellos (**Rosa**) con las mañanas de L/X/V ya comprometidas,
+      que es lo que hace falta para ver el choque.
+- [ ] `book-hours` — la reserva por horas. **No existe**: hoy solo se sabe
+      contratar la carta a precio cerrado.
+- [ ] El selector de huecos en el móvil. `FreeSlotsUseCase` lleva semanas hecho
+      y probado en el servidor y **no lo llama nadie desde la app**.
+- [ ] `book-recurring`, `accept-recurring`, los dos pasos del barrido
+      —autorizar 24 h antes y estirar la ventana— y las cancelaciones.
+- [ ] Las tres pantallas de §F10.
+
+**El orden para seguir está en §F11**: selector de huecos → `book-hours` →
+la pantalla de la comprobación → la serie → cancelaciones.
+
+### Suelto
+
+- [x] Oficio **Reformas**, con su ilustración (`src/images/reformas.png`).
+- [x] **El icono de la app**: era el logotipo apaisado (2067x761) con
+      transparencia, así que iOS lo estiraba dentro del cuadrado y se veía
+      enorme. Ahora 1024x1024, sin alfa y con margen para la máscara de
+      esquinas. Hay una variante con la cara de Uhiro sin aplicar en
+      `_fuentes/icono/icon-uhiro.png` — decisión de marca.
+
+**Verde al terminar: 427 pruebas en el backend, 322 en el móvil**, `tsc` limpio
+en los dos. Commits `172029e` (backend), `42001e3` y `550e521` (móvil).
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
@@ -1550,4 +1643,4 @@ git push
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: Fase 1 completada - 11 Agosto 2026_
+_Última actualización: horario en calendario, niveles de comisión y §F — 31 Agosto 2026_
