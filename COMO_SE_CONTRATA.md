@@ -29,7 +29,9 @@ Lo que cambia de fondo en la v3: **tres entidades donde había una**.
 **Decisiones de Robin, 21 Agosto 2026:**
 
 1. Comisión **0 % en la primera etapa**, pero todo preparado para cobrarla sin
-   rehacer nada.
+   rehacer nada. **Revisado el 31 Agosto 2026: se cobra el 10 %**, y se baja por
+   niveles según el volumen que el profesional traiga a la plataforma. El plan
+   entero, en §12.
 2. Se comisiona la **visita**, las **horas** y el **trabajo de importe
    definido**. El porcentaje se define después. Si el presupuesto aceptado se
    comisiona sigue **sin decidir**; queda preparado a 0 como el resto.
@@ -239,8 +241,9 @@ PENDING_WORKER ─► SUBSTITUTE_PROPOSED ─► CONFIRMED ─► STARTED ─►
 **`kind`, lista única**: `VISIT`, `HOURS`, `HOURS_EXTRA`, `FIXED_SERVICE`,
 `FIXED_EXTRA`, `QUOTE`, `QUOTE_EXTRA`, `MATERIALS_ADVANCE`, `URGENT_CALLOUT`,
 `URGENT_HOURS`, `URGENT_SERVICE` (un servicio de la carta a precio de
-urgencia). `CommissionPolicy` tiene una fila por cada uno, a 0 %, con
-`validFrom`. Los `*_EXTRA` heredan la tasa de su base.
+urgencia). `CommissionPolicy` tiene una fila por cada uno, con `validFrom`. Los `*_EXTRA`
+heredan la tasa de su base. Nacieron a 0 %; **desde el 31 Agosto 2026 van al
+10 %**, y con los niveles de §12 la fila pasa a ser por `(kind, nivel)`.
 
 Ciclo (S1), **corregido el 29 Agosto 2026**: entre reservar y cobrar hay un
 paso más, y ese paso es dinero.
@@ -265,7 +268,7 @@ PENDING_ACTION (la tarjeta pide 3D Secure; nada apartado todavía)
   rechaza o expira, la retención se **anula** (`VOIDED`).
 - **Por qué el paso de más.** Un cobro reembolsado no recupera la comisión de
   Stripe —1,5 % + 0,25 € con tarjeta europea, que en un encargo de 77 € son
-  1,41 € por cada uno que se cae, con la comisión de plataforma al 0 %—;
+  1,41 € por cada uno que se cae—;
   cancelar una autorización no cuesta nada. Es lo que la propia documentación
   de Stripe recomienda para esto.
 - **Por qué se captura al aceptar y no el día de la cita.** Una autorización de
@@ -437,3 +440,220 @@ botón en la tarjeta del directorio, en la ficha y en la lista de
 favoritos—. Es cliente-profesional, uno a uno, y no depende de que exista
 `Job`/`Appointment` en curso ni de en qué punto esté el resto de §9: se
 puede construir en paralelo, no bloquea ni le bloquea nada a lo demás.
+
+---
+
+## §12. La comisión, y los niveles (decidido por Robin, 31 Ago 2026)
+
+**El 10 % se cobra ya.** Lo que sigue en propuesta es la escalera.
+
+### 12.1. Lo que no hay que construir
+
+Casi nada. El mecanismo se hizo entero cuando se construyeron los pagos:
+
+- `CommissionPolicy` existe, con una fila por `ChargeKind` y su `rate` en
+  decimal —10 son diez por ciento—.
+- `CreateChargeUseCase` **congela** `commissionRate` y `commissionAmount` al
+  crear cada cobro, con la política vigente en ese instante.
+- `ReleaseChargeUseCase` transfiere `importe − comisión` al `Employer`.
+
+Así que **pasar de 0 % a 10 % es actualizar filas, no tocar código**. Y una cosa
+que ya funciona y que resulta ser justo lo que los niveles necesitan: como la
+comisión se congela **al crear cada cobro**, y en un contrato fijo hay un cobro
+por sesión (§F3), un profesional que suba de nivel lo nota **en su siguiente
+sesión**, también en los contratos que ya tiene firmados. No hay que esperar a
+que se renueve nada.
+
+### 12.2. A quién se le cobra
+
+Al `Employer`, que es el `payee` del cobro. Un trabajador por cuenta ajena no
+paga comisión: la paga la empresa que le da de alta. Un autónomo tiene su propio
+`Employer` y es él.
+
+Por eso **el nivel es del `Employer`, no de la persona**. Una empresa con cinco
+trabajadores acumula volumen cinco veces más rápido y llegará arriba enseguida;
+es un descuento por volumen y es lo normal, pero conviene saberlo antes de fijar
+los umbrales, no después.
+
+### 12.3. Un porcentaje puro no puede tener suelo
+
+Esto es lo primero, porque cambia la forma de la comisión y no solo el número.
+
+Stripe cobra **1,5 % + 0,25 € fijos**. Ese fijo no depende del importe, así que
+con una comisión que sea solo un porcentaje **siempre existe un importe por
+debajo del cual se pierde dinero**, por alto que se ponga el porcentaje:
+
+| Comisión | Se pierde dinero por debajo de |
+|---|---|
+| 10 % | 2,94 € |
+| 6 % | 5,56 € |
+| 5 % | 7,14 € |
+| 4 % | 10,00 € |
+| 3 % | 16,67 € |
+| 2 % | 50,00 € |
+
+Al 3 %, una clase de una hora a 14 € **deja 4 céntimos de pérdida**. Y no vale
+con poner un mínimo en euros —`max(4 %, 1 €)`—, porque eso no quita el problema,
+lo mueve: el punto peor deja de ser el importe más pequeño y pasa a ser **el
+cruce**, justo donde el porcentaje alcanza al mínimo.
+
+| Regla | El cruce cae en | Y ahí el neto baja a |
+|---|---|---|
+| `max(5 %, 0,75 €)` | 15,00 € | 0,28 € |
+| `max(5 %, 1,00 €)` | 20,00 € | 0,45 € |
+| `max(4 %, 1,00 €)` | 25,00 € | 0,38 € |
+
+Funciona, pero es una regla con un agujero en medio que hay que ir tapando a
+mano cada vez que se toca un número.
+
+### 12.4. La forma: porcentaje **más** fijo
+
+**`comisión = porcentaje × importe + 0,40 €`**
+
+Es la misma forma con la que cobra Stripe, y por eso es la única que no se
+rompe: el fijo cubre el fijo y el porcentaje cubre el porcentaje.
+
+```
+neto = importe × (comisión% − 1,5 %) + (0,40 € − 0,25 €)
+```
+
+Mientras el porcentaje pase del 1,5 %, **el neto nunca es negativo y crece con
+el importe, sin ningún punto malo en medio**. El suelo absoluto son 15 céntimos,
+que es lo que queda aunque el cobro sea de un euro.
+
+### 12.4b. La escalera, con los números
+
+| Nivel | Cómo se llega | Comisión |
+|---|---|---|
+| **Obrera** | al darse de alta | 10 % + 0,40 € |
+| **Forrajera** | 1.000 € facturados en 90 días | 8 % + 0,40 € |
+| **Soldado** | 3.000 € en 90 días | 6 % + 0,40 € |
+| **Reina** | 6.000 € en 90 días | **4 % + 0,40 €** |
+
+**Los nombres son las castas de un hormiguero** (decisión de Robin, 31 Ago
+2026), y no son adorno: cada una dice qué es ese profesional para la colonia.
+
+- **Obrera** — la casta más numerosa del hormiguero. Construye, cuida y sale a
+  cazar. Es por donde se empieza y donde está casi todo el mundo.
+- **Forrajera** — la obrera grande que sale a buscar comida y, cuando encuentra
+  un buen sitio, **vuelve y deja un rastro para que las demás lo sigan**. Es
+  literalmente lo que hace un profesional que trae volumen a la plataforma, y
+  por eso es el primer escalón: el que empieza a traer.
+- **Soldado** — cuerpo más robusto y mandíbulas más grandes; sostiene y defiende
+  la colonia. El que ya es parte de la estructura.
+- **Reina** — de la que depende el hormiguero, y la que vive treinta años cuando
+  una obrera vive meses. La longevidad es el punto: este nivel se gana con
+  volumen sostenido, no con un buen trimestre.
+
+Fuera quedan a propósito los **zánganos**, que son los machos: no trabajan, solo
+se aparean y mueren. No hay nivel para eso.
+
+Si algún día hicieran falta más escalones, las obreras se subdividen por tamaño
+y tarea —**nodrizas** las pequeñas, que cuidan a la reina y las crías; las
+medianas reparan y amplían el nido—, así que hay nombres de sobra sin salirse
+del hormiguero.
+
+**El nivel más alto —Reina— es el 4 % + 0,40 €**, y ese es el número que pedía
+fijarse.
+No pierde a ningún importe, y lo que deja:
+
+| Cobro | Se le cobra | Le queda a Lughly |
+|---|---|---|
+| 14 € (1 h) | 0,96 € | **0,50 €** |
+| 28 € (2 h) | 1,52 € | 0,85 € |
+| 42 € (3 h) | 2,08 € | 1,20 € |
+| 84 € (6 h) | 3,76 € | 2,25 € |
+| 150 € | 6,40 € | 3,90 € |
+
+Y en Obrera, para comparar: un cobro de 42 € deja 3,72 € en vez de 1,20 €.
+
+**Por qué el 4 % y no el 5 %**: al 5 % la sesión de una hora dejaría 0,64 € en
+vez de 0,50 €, catorce céntimos más. No compensa: el nivel más alto es el que
+compra la lealtad del profesional que más factura y más motivos tiene para
+irse, y ahí un punto de comisión vale más como argumento que como margen. Por
+debajo del 4 % sí que dejaría de tener sentido: al 3 % + 0,40 € una sesión de
+42 € deja 0,78 €, y ya no paga el trabajo de sostener la plataforma.
+
+**Lo que se le enseña al profesional es la tasa efectiva**, no la fórmula: en
+Reina, del 6,9 % en un cobro de 14 € al 4,3 % en uno de 150 €. Un fijo de
+0,40 € pesa más cuanto más pequeño es el cobro, y eso hay que decirlo en la
+pantalla de 12.6 en vez de que lo descubra al ver la transferencia.
+
+### 12.4c. Lo que este suelo **no** cubre
+
+Que cada cobro deje margen no es lo mismo que ganar dinero con cada
+profesional, y conviene no confundirlo antes de dar el número por bueno:
+
+- **Coste mensual por cuenta de Connect.** Si Stripe cobra una cuota por cuenta
+  Express activa, un profesional que haga dos trabajos al mes deja 1 € y puede
+  no cubrirla. **Hay que mirarlo en el contrato real de Stripe antes de fijar
+  esto**; no está comprobado aquí.
+- **Impagados y reclamaciones.** Una reclamación de tarjeta en Europa ronda los
+  15 € de penalización. A 0,50 € por cobro, una se lleva por delante treinta.
+- **Los reembolsos no devuelven la comisión de Stripe** (§5). Es lo que ya
+  justificó retener en vez de cobrar, y sigue valiendo.
+
+Ninguna de las tres se arregla con el porcentaje. Las dos primeras se arreglan
+con volumen, que es justo lo que la escalera persigue.
+
+### 12.5. Por qué al que más factura se le cobra menos
+
+Es al revés que en casi todo, y merece la pena decir el motivo en voz alta:
+**el profesional con más volumen es el que más incentivo tiene para llevarse a
+sus clientes fuera de la plataforma.** A ese es a quien hay que comprarle la
+lealtad. Un autónomo con dos trabajos al mes no se va a montar su propio sistema
+de cobros; uno que factura 6.000 € al trimestre, sí.
+
+Lo que cuesta, sobre el contrato fijo de Lucía (546 €/mes):
+
+| Nivel | Comisión de las 13 sesiones | Menos Stripe | Neto para Lughly |
+|---|---|---|---|
+| Obrera 10 % + 0,40 € | 59,80 € | 11,44 € | 48,36 €/mes |
+| Forrajera 8 % + 0,40 € | 48,88 € | 11,44 € | 37,44 €/mes |
+| Soldado 6 % + 0,40 € | 37,96 € | 11,44 € | 26,52 €/mes |
+| Reina 4 % + 0,40 € | 27,04 € | 11,44 € | 15,60 €/mes |
+
+Una Reina deja 15,60 € al mes por contrato en vez de 48,36 €. Ese es el precio
+de que no se vaya, y solo lo paga quien ya trae mucho.
+
+**Y engancha con §F**: un contrato fijo son 546 € al mes de volumen constante,
+así que **dos contratos fijos son el camino más rápido y más estable para subir
+de nivel**. La escalera hace que el profesional quiera contratos recurrentes, que
+es justo la función que se está construyendo. No es casualidad buscada, pero
+conviene no romperla.
+
+### 12.6. Que se vea
+
+Un descuento que nadie sabe que existe no incentiva nada. Hace falta, en «Mi
+cuenta»: el nivel actual, lo facturado en los últimos 90 días, **cuánto falta
+para el siguiente**, y qué comisión se está pagando ahora. Sin esa pantalla, la
+escalera es solo una línea en una tabla de precios.
+
+### 12.7. Lo que sí hay que construir
+
+| Pieza | Cambio |
+|---|---|
+| `CommissionLevel` | **nuevo** enum: `WORKER`, `FORAGER`, `SOLDIER`, `QUEEN`. En inglés como el resto de enums del esquema —`JobStatus`, `AppointmentStatus`—; el nombre que se lee (Obrera, Forrajera, Soldado, Reina) lo pone el móvil, que es donde vive el idioma |
+| `Employer` | + `commissionLevel` (por defecto `BASE`), + `levelReviewedAt` |
+| `CommissionPolicy` | la clave única pasa de `kind` a **`(kind, level)`**: cuatro filas por tipo de cobro en vez de una. Y **`fixedFee Decimal`** además de `rate`, que es lo que hace que el suelo exista (12.4) |
+| `CreateChargeUseCase` | busca la política por `(kind, nivel del payee)` en vez de solo por `kind`, y calcula `rate × importe + fixedFee` en vez de solo el porcentaje. **Es el único punto del código que cambia** |
+| `review-commission-levels` | nuevo paso mensual: suma lo liberado en 90 días por `Employer`, aplica umbrales y la traba por plantones, avisa de subidas y bajadas |
+| `MyAccountPage` | el bloque de 12.6 |
+
+### 12.8. Lo que queda por decidir
+
+- **Los umbrales**: son propuesta, calibrada sobre 14 €/h. Un oficio caro los
+  cruza sin esfuerzo y uno barato no llega nunca; puede que tengan que ir por
+  oficio, pero eso es complicarlo antes de tener datos.
+- **Si el volumen se mide por `Employer` o por trabajador activo.** Por
+  `Employer` favorece a las empresas (12.2). Por trabajador es más justo con el
+  autónomo y más difícil de explicar.
+- **El coste mensual por cuenta de Connect** (12.4c). Es lo único que puede
+  hacer que un profesional de poco volumen no salga rentable por mucho suelo por
+  cobro que haya. Hay que mirarlo en el contrato real antes de dar 12.4 por
+  cerrado.
+- **Si los niveles aplican a todos los `ChargeKind` o solo a los de trabajo.**
+  Un `MATERIALS_ADVANCE` no es margen del profesional; comisionarlo al mismo
+  porcentaje que su trabajo es discutible.
+
+---

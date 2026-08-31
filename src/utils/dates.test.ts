@@ -4,13 +4,17 @@ import {
   formatDate,
   formatDateTime,
   formatDaySeparator,
+  formatIsoDayLong,
   formatLongDate,
   formatJobWhen,
   formatLongDateTime,
   formatMessageTime,
+  formatMonth,
   formatTime,
+  monthOf,
   parseIsoDate,
   parseIsoDateTime,
+  shiftMonth,
   timeLeft,
   toIsoDate,
   toIsoDateTime,
@@ -290,5 +294,50 @@ describe('citas con hora', () => {
     expect(parseIsoDateTime('')).toBeNull()
     expect(parseIsoDateTime('el jueves')).toBeNull()
     expect(formatJobWhen('el jueves')).toBeNull()
+  })
+})
+
+/**
+ * Los meses del calendario.
+ *
+ * Se hacen sobre el calendario y no sumando días, y eso es lo que se ata aquí:
+ * sumar treinta días para "el mes que viene" se salta febrero y repite marzo.
+ */
+describe('monthOf, shiftMonth y formatMonth', () => {
+  it('monthOf da el mes de una fecha', () => {
+    expect(monthOf(new Date(2026, 8, 16))).toBe('2026-09')
+    // Enero es el 0 de `getMonth()`: es donde se pierde el que no lo sabe
+    expect(monthOf(new Date(2026, 0, 1))).toBe('2026-01')
+  })
+
+  it('shiftMonth cruza el cambio de año en los dos sentidos', () => {
+    expect(shiftMonth('2026-12', 1)).toBe('2027-01')
+    expect(shiftMonth('2026-01', -1)).toBe('2025-12')
+  })
+
+  it('shiftMonth no se salta febrero', () => {
+    expect(shiftMonth('2026-01', 1)).toBe('2026-02')
+    expect(shiftMonth('2026-02', 1)).toBe('2026-03')
+  })
+
+  it('formatMonth escribe el mes como se lee', () => {
+    expect(formatMonth('2026-09')).toBe('septiembre 2026')
+  })
+})
+
+/**
+ * El día largo a partir de un "AAAA-MM-DD".
+ *
+ * Sin pasar por la hora del móvil: el día viene decidido por el servidor en
+ * hora española, y construir un `Date` local para volver a leerlo lo correría
+ * al anterior en las dos primeras horas de cada noche.
+ */
+describe('formatIsoDayLong', () => {
+  it('escribe el día de la semana y la fecha', () => {
+    expect(formatIsoDayLong('2026-09-16')).toBe('miércoles, 16 de septiembre')
+  })
+
+  it('acierta el primero de mes', () => {
+    expect(formatIsoDayLong('2026-09-01')).toBe('martes, 1 de septiembre')
   })
 })

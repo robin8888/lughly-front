@@ -307,6 +307,78 @@ export interface ApiAvailabilityWindow {
 }
 
 /**
+ * Una franja de un día del calendario, ya resuelta por el servidor.
+ *
+ * `endsNextDay` no es un adorno: sin él "de 22:00 a 06:00" se leería como un
+ * turno hacia atrás, y "de 22:00 a 00:00" no diría si esa medianoche cierra el
+ * día o lo abre.
+ */
+export interface ApiCalendarWindow {
+  from: string
+  to: string
+  endsNextDay: boolean
+}
+
+/** Un rato ya comprometido en un trabajo: es lo que se pinta en color */
+export interface ApiCalendarCommitment extends ApiCalendarWindow {
+  appointmentId: string
+  jobId: string
+  title: string
+  status: string
+}
+
+/**
+ * De dónde salen las horas de un día.
+ *
+ * - `weekly`: del horario semanal, como todos los martes.
+ * - `day`: de algo puesto a ese día concreto.
+ * - `closed`: de algo puesto a ese día que dice que no se trabaja. **No es lo
+ *   mismo que `weekly` sin franjas**: aquel es "los domingos no trabajo", este
+ *   es "este domingo concreto, no", y solo el segundo se puede deshacer.
+ */
+export type ApiCalendarDaySource = 'weekly' | 'day' | 'closed'
+
+export interface ApiCalendarDay {
+  /** "AAAA-MM-DD" */
+  date: string
+  /** 0 domingo … 6 sábado */
+  weekday: number
+  windows: ApiCalendarWindow[]
+  source: ApiCalendarDaySource
+  /** Vacaciones o baja: manda sobre las horas, que siguen llegando igual */
+  away: boolean
+  /** El nombre del festivo, o null */
+  holiday: string | null
+  commitments: ApiCalendarCommitment[]
+}
+
+/**
+ * Un mes del horario, día a día.
+ *
+ * Lo resuelve el servidor entero —horario semanal, excepciones, ausencias,
+ * festivos y citas— y no el móvil: es la misma regla que decide qué huecos se
+ * pueden reservar, y calcularla dos veces acabaría con un calendario que dice
+ * una cosa y una reserva que hace otra. Además `Intl` va incompleto en Hermes,
+ * así que el día español se decide allí.
+ */
+export interface ApiAvailabilityCalendar {
+  /** "AAAA-MM" */
+  month: string
+  /** Hoy en España, "AAAA-MM-DD" */
+  today: string
+  /** Si lo pone su empresa: se mira, no se toca */
+  setByEmployer: boolean
+  weekly: ApiAvailabilityWindow[]
+  days: ApiCalendarDay[]
+}
+
+/** Las horas de un día suelto, tal y como se mandan */
+export interface ApiDayWindow {
+  from: string
+  to: string
+}
+
+/**
  * Dónde trabaja el profesional. `latitude` y `longitude` en null significan que
  * todavía no ha fijado su base: sin ella su ficha no enseña mapa, y las
  * urgencias no se le filtran por distancia.
@@ -587,6 +659,48 @@ export const prosApi = {
       method: 'PUT',
       auth: true,
       body: { windows },
+    }),
+
+  /** Un mes del calendario propio, "AAAA-MM" */
+  availabilityCalendar: (month: string) =>
+    apiRequest<ApiAvailabilityCalendar>(
+      `/v1/pro/availability/calendar?month=${month}`,
+      { auth: true },
+    ),
+
+  /**
+   * Las horas de un día suelto. Sustituyen al horario semanal solo esa fecha.
+   *
+   * **La lista vacía es "ese día no trabajo"**, no "vuelve al semanal": para
+   * eso está `clearAvailabilityDay`. Si vaciarla volviera al semanal, quitarle
+   * las horas a un jueves se las dejaría puestas.
+   */
+  setAvailabilityDay: (date: string, windows: ApiDayWindow[]) =>
+    apiRequest<ApiCalendarDay>(`/v1/pro/availability/days/${date}`, {
+      method: 'PUT',
+      auth: true,
+      body: { windows },
+    }),
+
+  /** Quita lo puesto a ese día: vuelve a mandar el horario semanal */
+  clearAvailabilityDay: (date: string) =>
+    apiRequest<ApiCalendarDay>(`/v1/pro/availability/days/${date}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
+  /**
+   * El atajo: las mismas horas a varios días de la semana de una vez.
+   *
+   * Cambia el horario **semanal**, que es lo que se repite solo el mes que
+   * viene, y solo los días que se le pasan: quien trabaja los sábados no los
+   * pierde por aplicar de lunes a viernes.
+   */
+  setAvailabilityWeekdays: (weekdays: number[], windows: ApiDayWindow[]) =>
+    apiRequest<ApiAvailabilityWindow[]>('/v1/pro/availability/weekdays', {
+      method: 'PUT',
+      auth: true,
+      body: { weekdays, windows },
     }),
 
   /**

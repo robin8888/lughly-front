@@ -9,8 +9,11 @@
 import { apiRequest } from './http'
 import type {
   ApiAbsence,
+  ApiAvailabilityCalendar,
   ApiAvailabilityWindow,
+  ApiCalendarDay,
   ApiCoverageSettings,
+  ApiDayWindow,
   ApiHoliday,
   ApiHolidayCalendar,
   ApiSurcharges,
@@ -159,6 +162,38 @@ export const employeesApi = {
       auth: true,
       body: { windows },
     }),
+
+  /**
+   * Su calendario, mes a mes. Mismo formato que el propio y por lo mismo: es
+   * la misma pantalla y el servidor comparte el código.
+   */
+  availabilityCalendar: (id: string, month: string) =>
+    apiRequest<ApiAvailabilityCalendar>(
+      `/v1/employees/${id}/availability/calendar?month=${month}`,
+      { auth: true },
+    ),
+
+  /** Las horas de un día suelto suyo. La lista vacía es "ese día no trabaja". */
+  setAvailabilityDay: (id: string, date: string, windows: ApiDayWindow[]) =>
+    apiRequest<ApiCalendarDay>(`/v1/employees/${id}/availability/days/${date}`, {
+      method: 'PUT',
+      auth: true,
+      body: { windows },
+    }),
+
+  /** Quita lo puesto a ese día: vuelve a mandar su horario semanal */
+  clearAvailabilityDay: (id: string, date: string) =>
+    apiRequest<ApiCalendarDay>(`/v1/employees/${id}/availability/days/${date}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
+  /** El atajo de varios días de la semana de una vez, sobre su horario semanal */
+  setAvailabilityWeekdays: (id: string, weekdays: number[], windows: ApiDayWindow[]) =>
+    apiRequest<ApiAvailabilityWindow[]>(
+      `/v1/employees/${id}/availability/weekdays`,
+      { method: 'PUT', auth: true, body: { weekdays, windows } },
+    ),
 
   /**
    * Los recargos de un trabajador. Los pone la empresa, igual que su horario,

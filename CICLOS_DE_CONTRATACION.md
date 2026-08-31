@@ -79,8 +79,10 @@ Los pasos 3 y 4 del ciclo de §A —autorizar al reservar, capturar al aceptar�
   los 7 días y después el dinero se suelta solo.
 
 Motivo, en una línea: un reembolso no recupera la comisión de Stripe y una
-autorización cancelada no cuesta nada. Con la comisión de plataforma al 0 %,
-cada encargo caído salía de nuestro bolsillo.
+autorización cancelada no cuesta nada. Se decidió con la comisión de plataforma
+al 0 %, cuando cada encargo caído salía íntegro de nuestro bolsillo; con el
+10 % de `COMO_SE_CONTRATA.md` §12 duele menos, pero el reembolso sigue sin
+devolver nada y la decisión no cambia.
 
 **Y el 3D Secure, tapado el mismo día.** El cobro se confirma en el servidor,
 así que una tarjeta que pedía autenticación devolvía `requires_action` y el
@@ -157,7 +159,7 @@ Cancelación gratis hasta 24 h antes.
 **A3. Lucía paga.** *Hoy*: no existe. *Cambio*: `Job(HOURLY, agreedHourlyRate
 14, agreedMinHours 2, status PENDING_PRO)` + `Appointment(WORK, jueves 10:00,
 180 min, PENDING_WORKER)` + `Charge(HOURS, 42, payer Lucía, payee Employer de
-Marta, 0 %, PAID)`. Cobrado y retenido (S1).
+Marta, comisión congelada al 10 %, PAID)`. Cobrado y retenido (S1).
 
 **A4. Marta responde.** *Hoy*: `InboxPage`, acepta (`assign` a sí misma →
 `AWARDED`) o rechaza con motivo; 24 h. *Cambio*: igual, pero aceptar lleva a
@@ -190,6 +192,11 @@ mínimo: 2 h = 28 €, 14 € devueltos.
 *Cambio*: un `Job(HOURLY)` con 8 `Appointment(SESSION)` y **un `Charge` por
 sesión cobrado 24 h antes** de cada una. Cancelar una sesión no cancela el
 contrato; cancelar el contrato devuelve las sesiones no empezadas.
+
+Este esbozo se quedó corto en cuanto se miró de cerca: no decía hasta cuándo
+dura, ni qué pasa cuando un día de la serie no le cabe al profesional, que es
+casi todo el asunto. **El caso entero está en §F**, y esta línea se conserva
+solo porque es de donde salió.
 
 ---
 
@@ -266,7 +273,7 @@ pasa 15 días sin reemisión → `CLOSED`.
 
 **C6. Pablo acepta v2 (198 €).** `Job CONTRACTED` otra vez —es el mismo hecho,
 hay acuerdo y dinero— con una **nueva `Appointment(WORK)`** sobre el horario de
-Sergio. `Charge(QUOTE, 198, PAID)` con su fila de política a 0 %. Si Sergio
+Sergio. `Charge(QUOTE, 198, PAID)` con su comisión congelada. Si Sergio
 marcó pago a cuenta: `Charge(MATERIALS_ADVANCE, 138, PAID)` que **se retiene**
 hasta que marca «material comprado» con justificante; entonces `RELEASED`. Si
 Pablo cancela antes de eso, se devuelve; después, se cobra el material.
@@ -386,6 +393,416 @@ aprobación de Elena, como en cualquier cita. `Charge(QUOTE, 13, PAID)`.
 
 ---
 
+## F. Recurrente — Lucía contrata a Marta los lunes, miércoles y viernes
+
+**Diseñado el 31 de agosto de 2026.** Desarrolla lo que §A8 dejó apuntado.
+
+### F0. Qué problema es
+
+Lucía quiere a Marta tres horas los lunes, miércoles y viernes. Hoy eso son
+**tres encargos nuevos cada semana**: buscar a Marta, rellenar el formulario,
+elegir hueco, pagar. Ciento cuarenta veces al año para un acuerdo que se toma
+una vez.
+
+Lo que se contrata aquí no es un trabajo repetido: es **un contrato con muchas
+sesiones**. Un solo acuerdo, un solo precio pactado, un solo «sí» del
+profesional, y después las sesiones caen solas.
+
+**Y la regla que lo gobierna todo**: en ningún momento se le dice a Lucía que
+tiene un día que Marta no tiene. Ni al contratar, ni tres semanas después
+cuando Marta se coja vacaciones.
+
+### F0b. Lo que hace falta y no existe
+
+Esto va encima de dos piezas sin construir, y conviene decirlo antes de
+empezar:
+
+1. **La reserva por horas (`book-hours`).** Lo único que sabe contratar hoy es
+   la carta a precio cerrado (`book-services`). Lo recurrente es por horas.
+2. **El selector de huecos en el móvil.** `FreeSlotsUseCase` está hecho y
+   probado en el servidor desde hace semanas y **no lo llama nadie desde la
+   app**. Es justo la pantalla de «estas son las horas que tiene libres».
+
+Construir lo recurrente construye las dos: una reserva de una sola vez es una
+serie de una sesión.
+
+### F1. Lucía elige
+
+*Hoy*: `ProProfilePage` con «Reservar ahora» / «Presupuesto», sin horas ni
+huecos.
+*Cambio*: un botón **Contratar**, y dentro la elección que hoy no existe:
+
+```
+¿Cómo lo quieres?
+  ○ Una vez            un día concreto
+  ● Fijo cada semana   los mismos días, todas las semanas
+```
+
+Con «fijo cada semana», tres preguntas y ya:
+
+```
+¿Qué días?     L  M  X  J  V  S  D      (los mismos botones del horario)
+¿A qué hora?   10:00        ¿Cuánto?   3 h
+¿Desde?        lunes 7 de septiembre
+```
+
+**Una sola hora y una sola duración para todos los días**, a propósito. «Los
+lunes tres horas y los viernes dos» dobla el modelo y la pantalla, y quien lo
+necesite contrata dos fijos sobre el mismo profesional, que es exactamente lo
+mismo y no cuesta nada. Si algún día se pide de verdad, se añade otra
+`JobRecurrence` al mismo `Job` y la pantalla crece; el modelo ya lo admite.
+
+### F2. Se le dice qué días puede y cuáles no
+
+Es el paso que da sentido a todo. Antes de pedir la tarjeta, el servidor cruza
+la serie con la agenda de Marta —su horario semanal, las excepciones de días
+sueltos, sus ausencias, los festivos que no trabaja y **las citas que ya
+tiene**— y devuelve la respuesta día a día.
+
+**Y cuando un día choca, no se tira: se ofrece otra hora de ese mismo día.**
+Que Marta esté pillada a las 10:00 el 6 de octubre no quiere decir que ese día
+no pueda; quiere decir que ese día no puede *a esa hora*. Saltárselo sin
+preguntar le quita a Lucía una limpieza que sí existía.
+
+```
+Tu horario con Marta
+──────────────────────────────────────────
+L · X · V   10:00 – 13:00
+42,00 € por día (3 h × 14 €/h)
+
+✓ 22 días confirmados, hasta el 2 de noviembre
+
+⚠ 6 oct — ya tiene otro trabajo a las 10:00
+     Ese día sí puede:
+       ○ 08:00 – 11:00
+       ○ 14:00 – 17:00
+       ○ no vayas ese día
+
+⚠ 13 oct — está de vacaciones
+     Ese día no se contrata y no se cobra.
+
+Se retiene el importe de cada día 24 h antes.
+Cancela un día suelto o el contrato entero cuando quieras.
+
+              [ Contratar ]
+```
+
+Los dos avisos no son el mismo aviso, y por eso no se enseñan igual:
+
+| Motivo | ¿Hay algo que ofrecer? | Qué se enseña |
+|---|---|---|
+| Ya tiene otro trabajo a esa hora | **Sí**: el resto del día está libre | Los huecos de ese día, y «no vayas ese día» |
+| Está de vacaciones o de baja | No | Se salta, dicho |
+| Ese día no trabaja / es festivo que no trabaja | No | Se salta, dicho |
+| Cae dentro de la antelación mínima (los primeros) | No | Se salta, dicho |
+
+**Los días que no tienen alternativa se saltan, no bloquean.** Decisión tomada
+el 31 de agosto sobre las tres opciones: bloquear la contratación entera por un
+choque que cae dentro de cinco semanas deja a casi todas las series sin poder
+contratarse, y contratarlas a ciegas rompe la única regla de F0.
+
+El motivo se dice **en las palabras del cliente y sin destapar la agenda de
+nadie**: «ya tiene otro trabajo» y no con quién ni dónde. Es la misma regla que
+en los huecos libres, que se devuelven en negativo.
+
+### F2b. Por qué mover un día no es un caso especial
+
+Porque **la hora vive en la sesión, no en la regla**. `JobRecurrence` dice la
+hora por defecto —«las diez»— y cada `Appointment` guarda la suya en
+`scheduledAt`, que es lo que ya hace hoy cualquier cita. Un 6 de octubre a las
+14:00 dentro de una serie de las diez es una sesión con otro `scheduledAt` y
+nada más: ni tabla nueva, ni excepción, ni segundo camino en el código.
+
+Es la misma forma que tiene el horario del profesional desde el 31 de agosto
+—un patrón semanal con excepciones por fecha encima— y no es casualidad: son el
+mismo problema visto desde los dos lados del contrato.
+
+### F3. Lucía paga — y aquí el dinero cambia de forma
+
+*Cambio*: `Job(HOURLY, agreedHourlyRate 14, agreedMinHours 2, status
+PENDING_PRO)` + `JobRecurrence` + N `Appointment(SESSION, PENDING_WORKER)`.
+
+**Lo que no se puede hacer**: retener las veinticuatro sesiones al contratar.
+Una autorización de Stripe caduca a los siete días —está escrito en §0, es lo
+que obligó a que el barrido reintente las capturas—, así que ocho semanas de
+retención no existen. Y cobrarlas por adelantado es pedirle a Lucía tres meses
+de limpieza el día uno.
+
+Así que el dinero va **por sesión**, y reusa el ciclo de tres pasos que ya está
+construido:
+
+| Cuándo | Qué pasa | Pieza que ya existe |
+|---|---|---|
+| Al contratar | Se guarda el método de pago. **No se cobra nada** | `SetupIntent`, como en las urgencias (§D2) |
+| 24 h antes de cada sesión | `Charge(HOURS, 42)` nace `AUTHORIZED`: se retiene | `capture_method: 'manual'` |
+| Al empezar la sesión | `CAPTURED` | `CaptureJobChargesUseCase` |
+| Al confirmarla, o 24 h de silencio | `RELEASED` a Marta | `ReleaseJobChargesUseCase` |
+| Plantón del profesional | `VOIDED`, coste cero | ya es lo que se hace |
+
+Las 24 h no son un número redondo: **son el mismo momento en que la cancelación
+deja de ser gratis** (§A2). Se retiene justo cuando ya no se puede deshacer sin
+coste, que es lo único que hace legítima la retención.
+
+**Si la tarjeta falla a las 24 h**: esa sesión se cancela y se les avisa a los
+dos con un día de margen, que es tiempo de sobra para que Lucía cambie la
+tarjeta y para que Marta no se plante en la puerta. Tres fallos seguidos cortan
+el contrato: a la cuarta ya no es un descuido.
+
+### F3b. Por qué por día, y no por semana ni por mes
+
+La pregunta se hizo el 31 de agosto y merece la respuesta entera, porque la
+cadencia del cobro es de lo poco que después no se puede cambiar sin tocar a
+clientes que ya tienen contratos vivos.
+
+**Primero, son dos movimientos distintos y solo uno cuesta comisión.**
+Confundirlos es lo que hace que la pregunta parezca más difícil de lo que es:
+
+| | Qué es | Qué cuesta |
+|---|---|---|
+| **Cliente → Lughly** | Retener y capturar en la tarjeta | 1,5 % + **0,25 € fijos** por transacción |
+| **Lughly → Marta** | Marcar el cobro `RELEASED` y transferirlo a su cuenta de Connect | Va con el calendario de pagos de Stripe; no es una transacción de tarjeta |
+
+Así que **«que se le vaya habilitando el pago al trabajador por día» no obliga a
+nada del lado del cliente**: se puede liberar sesión a sesión conforme cada una
+se da por buena, cobre el cliente como cobre. Eso se hace, y es lo justo: Marta
+cobra el lunes por el lunes, sin esperar a que acabe la semana.
+
+La pregunta que queda es solo la de la izquierda.
+
+**Los números**, sobre el contrato de Lucía: 42 € por sesión, 13 sesiones al
+mes, 546 € facturados.
+
+| Cadencia | Comisión al mes | Sobre lo facturado |
+|---|---|---|
+| Por día (13 cobros de 42 €) | 11,44 € | 2,10 % |
+| Por semana (4,33 cobros de 126 €) | 9,27 € | 1,70 % |
+| Por mes (1 cobro de 546 €) | 8,44 € | 1,55 % |
+
+Por semana se ahorran **2,17 € al mes**, 26 € al año por contrato. Y aun así
+**se cobra por día**, por tres motivos que pesan más:
+
+**1. Por semana no se puede construir.** La idea buena sería retener la semana
+entera y capturar cada día lo suyo. No se puede: una captura parcial en Stripe
+**libera el resto de la retención**, y la captura múltiple es una función
+limitada con la que no se puede contar. Así que «por semana» solo puede
+significar cobrar la semana entera por adelantado, que es otra cosa.
+
+**2. Reabriría el agujero que se tapó el 29 de agosto.** Cobrada la semana el
+domingo, cada sesión que se cae después es un **reembolso**, y un reembolso no
+devuelve la comisión. Por día, una sesión cancelada con más de 24 h es un
+`VOIDED` que **cuesta cero**. En un contrato fijo de meses las cancelaciones no
+son la excepción: son una gripe, un festivo, un viaje. El ahorro de 2,17 € se lo
+come el primer día que se cae.
+
+**3. Lucía no paga por trabajo sin hacer.** El contrato no tiene fecha de fin
+(F5): pedirle 126 € cada domingo por adelantado, indefinidamente, es una venta
+mucho más difícil que «solo pagas los días que se trabajan». Y es lo que
+permite decir sin letra pequeña que cancelar un día suelto no cuesta nada.
+
+**Lo que sí hay que vigilar: el 0,25 € fijo en sesiones cortas.**
+
+| Sesión | Comisión | % |
+|---|---|---|
+| 1 h — 14 € | 0,46 € | **3,3 %** |
+| 2 h — 28 € | 0,67 € | 2,4 % |
+| 3 h — 42 € | 0,88 € | 2,1 % |
+| 4 h — 56 € | 1,09 € | 1,9 % |
+
+Una hora suelta se lleva el 3,3 %. Ahí el que protege es **`agreedMinHours`**,
+que ya existe: el mínimo de Marta son 2 h. No hace falta nada nuevo, pero sí
+saber que un oficio que acepte sesiones de una hora en fijo es el caso caro.
+
+**Qué cambiaría esta decisión.** Se escribió que la cambiaría cobrar comisión
+de plataforma. **Se decidió cobrar el 10 % el 31 de agosto
+(`COMO_SE_CONTRATA.md` §12) y no la cambia**, porque el motivo que manda es el 1
+y es técnico, no económico: por
+semana no se puede construir. Lo que sí hace el 10 % es quitarle importancia al
+2 —los 2,17 € pasan a ser el 4 % de una comisión de 54,60 € al mes en vez de
+salir del bolsillo—, y con eso la balanza se inclina más hacia el día, no menos.
+
+Lo único que la cambiaría de verdad es que **la captura múltiple de Stripe esté
+disponible para esta cuenta**: es lo que haría posible «retener la semana,
+capturar por día» sin reembolsos. Merece una comprobación antes de construir
+F3; no conviene darlo por hecho.
+
+**Un efecto secundario a favor**: por día son trece oportunidades al mes de que
+la tarjeta falle en vez de cuatro, pero **cada fallo se lleva un solo día**, no
+una semana. Con la regla de los tres fallos seguidos de F3, un descuido con la
+tarjeta no tumba el contrato.
+
+### F4. Marta dice que sí **una vez**
+
+*Cambio*: en su bandeja no le llegan veinticuatro encargos, le llega uno:
+
+```
+Lucía · Limpieza
+Fijo: lunes, miércoles y viernes, 10:00 – 13:00
+Desde el 7 de septiembre, sin fecha de fin
+42,00 € por día
+El 6 de octubre, de 14:00 a 17:00
+
+Aceptar compromete tus lunes, miércoles y viernes
+a esa hora. Puedes cancelar un día suelto o el
+contrato entero cuando quieras.
+```
+
+El día movido se le dice aquí, en la misma tarjeta: es parte de a lo que está
+diciendo que sí.
+
+Acepta → `Job CONTRACTED` y **las N sesiones a `CONFIRMED` de golpe**. Es todo
+el sentido de la función: un «sí» por acuerdo, no uno por día. Plazo, el de
+siempre: `min(24 h, primera sesión − antelación)`.
+
+**Si Marta es empleada de una empresa**, el camino es el de §E sin cambios: la
+empresa asigna la serie, Jorge la confirma entera. Un día suelto que no pueda se
+resuelve como una cita cualquiera —`SUBSTITUTE_PROPOSED` solo de esa sesión— y
+**el sustituto no hereda el resto de la serie**: va ese día y ya.
+
+### F5. La ventana móvil
+
+Sin fecha de fin, decidido el 31 de agosto. «Los lunes, miércoles y viernes» y
+ya está, hasta que alguien lo corte, que es lo que quiere quien contrata una
+limpieza fija.
+
+Pero no se pueden crear infinitas sesiones, así que se crean **las de las
+próximas 8 semanas** y el barrido va añadiendo. En `JobRecurrence`:
+
+- `generatedUntil` — hasta qué día hay sesiones creadas.
+- Un paso diario en `expire-overdue` que estira hasta hoy + 8 semanas,
+  **comprobando la disponibilidad en ese momento**, no la de hace dos meses.
+
+Ocho semanas y no cuatro porque una limpieza fija se piensa por meses, y no
+veinticuatro porque una agenda a seis meses vista no significa nada: cuanto más
+lejos, más sesiones habría que cancelar después.
+
+Cuando el barrido estira y una fecha nueva no cabe, **no la crea y se lo dice a
+Lucía**, con los huecos de ese día si los hay. Nunca se crea una sesión que no
+quepa.
+
+### F6. Un choque que aparece más tarde
+
+Es el caso que no cubría §A8 y el que de verdad ocurre. Marta contrata en
+septiembre y en octubre se coge una semana.
+
+- **Al marcar la ausencia**, a Marta se le dice qué se lleva por delante: «esta
+  semana tienes 3 sesiones fijas con Lucía. Si te vas, se cancelan y se le
+  avisa». La pantalla del horario ya sabe hacerlo: el panel del día enseña lo
+  comprometido desde el 31 de agosto.
+- Las sesiones pasan a `CANCELLED(by PRO)`. Como están a más de 24 h, **no hay
+  cobro que devolver**: nunca llegó a retenerse. Ese es el segundo regalo de
+  cobrar por sesión.
+- **A Lucía se le avisa**, con los días concretos, y con la salida delante:
+  «buscar a otra persona para esos días», con el encargo precargado (§A5).
+
+### F7. Cancelar
+
+Dos cosas distintas, y la diferencia importa:
+
+| | Quién | Qué pasa |
+|---|---|---|
+| **Una sesión** | Lucía o Marta | Esa sesión `CANCELLED`. El contrato sigue. Gratis a más de 24 h; dentro de 24 h, la tabla de §6 |
+| **El contrato** | Lucía o Marta | `Job CANCELLED`, todas las sesiones no empezadas `CANCELLED`, `JobRecurrence` inactiva. Se devuelve lo retenido y no empezado |
+
+Un profesional que corta un contrato fijo deja a alguien sin limpieza en
+noviembre, así que **la marca en su ficha vale más que la de una cita suelta**:
+se cuenta aparte. No es una penalización, es información para el siguiente
+cliente que se plantee un fijo con él.
+
+### F8. El precio
+
+Congelado al contratar, como todo (§5): `agreedHourlyRate` y `agreedMinHours`
+del `Job`. Si Marta sube su tarifa en octubre, Lucía sigue pagando 14 €/h hasta
+que el contrato se corte y se rehaga.
+
+**Los recargos se calculan por sesión**, no una vez: un fijo que incluye sábados
+cobra el recargo de sábado los sábados y no los martes, y un festivo que cae en
+lunes lleva el suyo. Como los recargos siguen sin aplicarse en ningún caso de
+uso (§0.3), la primera versión de esto cobra plano y la capa de recargos entra
+por el mismo sitio cuando se construya: el importe de cada `Charge` se calcula
+al crearlo, 24 h antes, que es cuando ya se sabe qué día es.
+
+Si las horas pedidas quedan por debajo del mínimo de Marta, se cobra el mínimo,
+igual que en una reserva suelta.
+
+### F9. Lo que ve cada uno
+
+| | Lucía | Marta | Su empresa, si la tiene |
+|---|---|---|---|
+| Los días que no caben, al contratar | **sí**, con el motivo en sus palabras | — | — |
+| Las horas libres de un día que choca | **sí** | — | — |
+| Con quién es el trabajo que choca | **no** | sí, es suyo | sí |
+| El contrato fijo entero | sí | sí | sí |
+| Los días movidos de hora | sí | sí, al aceptar | sí |
+| Cada sesión en la agenda | sí | sí | sí |
+| El importe por sesión | paga | sí, si es autónoma | recibe |
+| Cancelar una sesión | sí | sí | sí |
+| Cancelar el contrato | sí | sí | sí |
+
+### F10. Piezas
+
+**Esquema**
+
+| Pieza | Cambio |
+|---|---|
+| `JobRecurrence` | **nueva**: `jobId`, `weekdays Int[]`, `startMinute`, `durationMin`, `startsOn`, `generatedUntil`, `active`, `createdAt`. Una fila por regla; varias por `Job` si algún día hacen falta horarios distintos por día |
+| `Appointment` | sin campos nuevos. `kind: SESSION` ya existe; la hora de cada sesión ya vive en `scheduledAt`, que es lo que deja mover un día suelto sin caso especial |
+| `Job` | sin campos nuevos. `mode: HOURLY` y los `agreed*` ya congelan el precio |
+| `Charge` | sin campos nuevos. `appointmentId` ya existe: un cobro por sesión es un cobro atado a su cita |
+| `ProProfile` | sin campos nuevos. Las series contratadas se cuentan aparte para la ficha (F7) |
+
+**Servidor**
+
+| Caso de uso | Qué hace |
+|---|---|
+| `check-recurrence` | La respuesta de F2: por fecha, si cabe, el motivo si no, y **los huecos de ese día** cuando el motivo es un solape. No crea nada |
+| `book-recurring` | `Job` + `JobRecurrence` + N `Appointment(SESSION)` + `SetupIntent`. Salta lo que no cabe y respeta las horas movidas |
+| `accept-recurring` | El «sí» de F4: `Job CONTRACTED` y las sesiones a `CONFIRMED` de una vez |
+| `authorize-session-charges` | Paso del barrido: 24 h antes, `Charge AUTHORIZED` por sesión. Cancela la sesión si la tarjeta falla, y el contrato a los tres fallos |
+| `extend-recurrences` | Paso del barrido: estira la ventana a 8 semanas comprobando disponibilidad |
+| `cancel-session` / `cancel-recurring` | Los dos caminos de F7 |
+| `expire-overdue` | + los dos pasos de arriba |
+| `FreeSlotsUseCase` | sin cambios: `check-recurrence` lo usa por fecha. Ya conoce el horario, las excepciones, las ausencias y las citas |
+
+**Móvil**
+
+| Pantalla | Cambio |
+|---|---|
+| `ProProfilePage` | «Contratar» → una vez / fijo cada semana |
+| **`SlotPickerPage`** (nueva) | Las horas libres de un día. Es la pieza que falta desde que existe `/slots`, y la usan las dos vías |
+| **`RecurringBookingPage`** (nueva) | Días, hora, duración y desde cuándo. Los botones de día son los del horario del profesional, ya construidos |
+| **`RecurrenceReviewPage`** (nueva) | La pantalla de F2: lo que encaja, lo que no, y elegir otra hora donde la haya |
+| `MyJobsPage`, `JobDetailPage` | El contrato fijo y sus sesiones; cancelar una o el contrato |
+| `AgendaPage` | Las sesiones entran como citas normales, sin cambios |
+| `InboxPage` | La tarjeta de F4: un encargo, no veinticuatro |
+| `AbsencesPage` | El aviso de F6: qué sesiones fijas se lleva por delante |
+| `MonthCalendar` | **sin cambios**: una sesión es una cita, y las citas ya salen en rojo desde el 31 de agosto |
+
+**Plazos**
+
+| Plazo | Propuesta |
+|---|---|
+| Responder a un contrato fijo | `min(24 h, primera sesión − antelación)` |
+| Ventana de sesiones creadas | 8 semanas, estirada a diario |
+| Retención de cada sesión | 24 h antes |
+| Cancelación gratis de una sesión | hasta 24 h antes |
+| Fallos de tarjeta seguidos antes de cortar | 3 |
+
+### F11. Orden para construirlo
+
+1. **`SlotPickerPage` sobre `/slots`.** Da valor sola —hoy no hay forma de ver
+   los huecos de nadie— y es la mitad de lo que pide F2.
+2. **`book-hours`**: reserva de una vez, con desglose y cobro. Es §A2–A3, que
+   está pendiente desde la v3.
+3. **`check-recurrence`** y la pantalla de F2, que es la parte que más importa.
+4. **La serie**: `book-recurring`, `accept-recurring` y los dos pasos del
+   barrido.
+5. **Cancelaciones y el aviso de las ausencias** (F6, F7).
+
+Los tres primeros dejan algo usable aunque lo recurrente no llegue: un cliente
+que ve huecos y reserva por horas.
+
+---
+
 ## §Z. Cambios por pieza
 
 **Esquema**
@@ -403,7 +820,7 @@ aprobación de Elena, como en cualquier cita. `Charge(QUOTE, 13, PAID)`.
 | `Quote` | — | nuevo: versiones, líneas tipadas, `deductsVisit`, `parentQuoteId`, `validUntil`, `issuedBy` (Employer) |
 | `VisitReport` | — | nuevo, cuelga de `Appointment` |
 | `Charge` | — | **nuevo**: jobId, appointmentId?, kind (10), amount, payer, payee (Employer), comisión congelada, status (`PAID`, `RELEASED`, `REFUNDED`, `DISPUTED`, `PARTIAL`), providerRef |
-| `CommissionPolicy` | — | nuevo: una fila por kind a 0 %, `validFrom` |
+| `CommissionPolicy` | — | nuevo: una fila por kind, `validFrom`. **Construido**; al 10 % desde `COMO_SE_CONTRATA.md` §12, y con `level` cuando entren los niveles |
 | `Review` | solo lectura | + `appointmentId` único: una por cita hecha |
 | `ProProfile` | recargos, `availableNow`, `busyWithJobId`, `completedJobs` | sin campos nuevos; `busyWithJobId` se suelta en `DONE`; recargos se aplican en el servidor |
 

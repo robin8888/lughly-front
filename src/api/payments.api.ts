@@ -41,7 +41,66 @@ export interface ApiPaymentMethod {
   expYear: number
 }
 
+/**
+ * Los niveles de comisión, con los nombres de las castas de un hormiguero.
+ *
+ * Cuanto más se factura por la plataforma, menos comisión se paga. En inglés
+ * como el enum del servidor; el nombre que se lee llega en `name`, y **no se
+ * escribe aquí a mano**: un rótulo o un porcentaje pintado en el móvil que no
+ * coincida con el que se cobra es la peor clase de error, porque nadie lo mira
+ * hasta que alguien reclama.
+ */
+export type ApiCommissionLevel = 'WORKER' | 'FORAGER' | 'SOLDIER' | 'QUEEN'
+
+/** Un escalón de la escalera */
+export interface ApiLevelStep {
+  level: ApiCommissionLevel
+  /** Obrera, Forrajera, Soldado, Reina */
+  name: string
+  /** Lo que hay que facturar en la ventana para estar aquí */
+  from: number
+  /** Porcentaje, no fracción: 10 son diez por ciento */
+  rate: number
+  /** Lo que se suma al porcentaje, en euros */
+  fixedFee: number
+  current: boolean
+}
+
+export interface ApiCommissionLevelState {
+  level: ApiCommissionLevel
+  name: string
+  /** Lo liberado en la ventana, en euros */
+  volume: number
+  windowDays: number
+  nextLevel: ApiCommissionLevel | null
+  nextName: string | null
+  /** Lo que falta para el siguiente, o null si ya está arriba del todo */
+  missingToNext: number | null
+  /**
+   * El nivel que **ya le daría su volumen**, cuando es más alto que el que
+   * tiene. El nivel se recalcula una vez al mes y el volumen cambia cada día,
+   * así que sin esto quien acaba de pasar el umbral leería "te faltan 0,00 €"
+   * y seguiría en el nivel de antes, que parece un error.
+   */
+  earnedLevel: ApiCommissionLevel | null
+  earnedName: string | null
+  /** ISO, o null si todavía no se ha revisado ninguna vez */
+  reviewedAt: string | null
+  ladder: ApiLevelStep[]
+}
+
 export const paymentsApi = {
+  /**
+   * Su nivel de comisión, lo que lleva facturado y lo que le falta para el
+   * siguiente. Devuelve 404 a quien no tiene cuenta de cobro propia: un
+   * trabajador por cuenta ajena —cuya comisión paga su empresa— o quien
+   * todavía no la ha activado.
+   */
+  commissionLevel: () =>
+    apiRequest<ApiCommissionLevelState>('/v1/payments/commission-level', {
+      auth: true,
+    }),
+
   /**
    * Crea la cuenta Connect del `Employer` si no existe todavía, y devuelve el
    * enlace de onboarding de Stripe. Solo para quien es empleador (autónomo o

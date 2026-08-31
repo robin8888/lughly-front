@@ -196,6 +196,21 @@ export default function AccountRoute() {
                     },
                   ]),
               { label: 'Cartera', onPress: () => router.navigate('/wallet'), icon: 'card-wallet' },
+              /*
+                Pegado a la cartera a propósito: es lo mismo visto del otro
+                lado —la cartera dice lo que cobra, el nivel lo que se queda la
+                plataforma por hacerlo—, y una comisión que se explica lejos de
+                donde se ve el dinero no la lee nadie.
+
+                Con el icono del porcentaje, que es el de los recargos: son dos
+                cosas distintas pero la figura es la misma, y van en grupos
+                distintos, así que no se cruzan en pantalla.
+              */
+              {
+                label: 'Mi nivel y mi comisión',
+                onPress: () => router.navigate('/mi-nivel'),
+                icon: 'surcharge',
+              },
               { label: 'Panel profesional', comingSoon: true, icon: 'bar-chart' },
             ],
           },

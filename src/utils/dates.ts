@@ -45,6 +45,9 @@ const WEEKDAYS = [
 /** Los días de la semana como los ordena `Date.getDay()`: 0 es domingo. */
 export const WEEKDAY_NAMES = WEEKDAYS
 
+/** Los meses como los cuenta `Date.getMonth()`: 0 es enero. */
+export const MONTH_NAMES = MONTHS
+
 function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
@@ -121,6 +124,50 @@ export function formatDaySeparator(date: Date, now: Date = new Date()): string {
  */
 export function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/**
+ * El mes de una fecha, "AAAA-MM".
+ *
+ * Es la unidad del calendario: se pide un mes entero y se pinta un mes entero,
+ * así que hace falta un nombre para él que se pueda comparar como texto.
+ */
+export function monthOf(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`
+}
+
+/**
+ * El mes de al lado: `shiftMonth('2026-01', -1)` es `'2025-12'`.
+ *
+ * Sobre el calendario y no sumando treinta días, por lo mismo que en el
+ * servidor: los meses no duran lo mismo, y sumar treinta se salta febrero.
+ */
+export function shiftMonth(month: string, delta: number): string {
+  const [year, monthNumber] = month.split('-').map(Number)
+  const moved = new Date(year!, monthNumber! - 1 + delta, 1)
+
+  return monthOf(moved)
+}
+
+/** "septiembre 2026", para encabezar el calendario */
+export function formatMonth(month: string): string {
+  const [year, monthNumber] = month.split('-').map(Number)
+
+  return `${MONTHS[monthNumber! - 1]} ${year}`
+}
+
+/**
+ * "miércoles, 16 de septiembre" a partir de un "AAAA-MM-DD".
+ *
+ * Sin pasar por `Date` con la hora del móvil: el día ya viene decidido por el
+ * servidor en hora española, y construir un `Date` para volver a leerlo lo
+ * correría al día anterior en las dos primeras horas de cada noche.
+ */
+export function formatIsoDayLong(day: string): string {
+  const [year, month, date] = day.split('-').map(Number)
+  const weekday = new Date(Date.UTC(year!, month! - 1, date!)).getUTCDay()
+
+  return `${WEEKDAYS[weekday]}, ${date} de ${MONTHS[month! - 1]}`
 }
 
 /**

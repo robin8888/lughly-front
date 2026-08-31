@@ -127,6 +127,12 @@ export const tradeImages = {
    * `_fuentes/oficios-2026-08/anteriores`.
    * No queda ninguna del lote `robot-hormiga-*`.
    */
+  /*
+    Reformas es la única PNG de la tanda y no lleva el prefijo `oficio-`: la
+    trajo Robin aparte (`assets/mascota/reformas.png`), después de las
+    dieciocho. Si algún día se rehace el lote, va con ellas.
+  */
+  reformas: require('./reformas.png'),
   carpinteria: require('./oficio-carpinteria.jpg'),
   electricidad: require('./oficio-electricidad.jpg'),
   fontaneria: require('./oficio-fontaneria.jpg'),

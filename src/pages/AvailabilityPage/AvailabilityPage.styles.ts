@@ -1,7 +1,10 @@
 /**
  * AvailabilityPage styles
- * Una tarjeta por franja: día y las dos horas. Sin tarifa, que es lo que la
- * distingue del horario de urgencias.
+ *
+ * Arriba el mes en rejilla y debajo el día abierto: se mira, se toca un día y
+ * se edita sin cambiar de pantalla. El panel del día no va en tarjeta blanca
+ * como las franjas, sino separado por una línea, para que se lea como "lo que
+ * hay debajo del calendario" y no como una tarjeta más de una lista.
  */
 
 import { StyleSheet } from 'react-native'
@@ -79,18 +82,114 @@ export const styles = StyleSheet.create({
     borderTopColor: 'rgba(255, 255, 255, 0.25)',
   },
 
-  empty: {
+  calendarSlot: {
+    marginTop: 16,
+  },
+  /**
+   * "actualizando…" debajo del mes y no encima: un velo de carga sobre la
+   * rejilla la dejaría ilegible justo mientras se cambia de mes, que es cuando
+   * se está mirando.
+   */
+  updating: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+    textAlign: 'center',
+    marginTop: 6,
+  },
+
+  shortcut: {
+    marginTop: 12,
+  },
+
+  /** El día abierto, separado del calendario por una línea */
+  day: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.hairline,
+  },
+  dayTitle: {
+    fontFamily: theme.typography.fonts.heading,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.text,
+    textTransform: 'capitalize',
+  },
+  daySource: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
+    color: theme.colors.textSoft,
+    marginTop: 4,
+  },
+  /**
+   * Festivo y "estás fuera": los dos avisan de algo que manda sobre el horario
+   * y que no se arregla desde aquí, así que van con la misma pinta.
+   */
+  dayFlag: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.urgency,
+    marginTop: 8,
+  },
+
+  /**
+   * Lo ya comprometido, en el rojo apagado de "ahora no" y **no** en el de
+   * error: tener trabajo no es un fallo, y con el rojo de error un día lleno se
+   * leería como un día roto. Es el mismo color del punto del calendario, que es
+   * por donde se ha llegado hasta aquí.
+   */
+  commitments: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.unavailable,
+  },
+  commitmentsTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+    marginBottom: 8,
+  },
+  commitment: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
+    marginBottom: 4,
+  },
+  commitmentHours: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+  },
+  commitmentTitle: {
+    flex: 1,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.textSoft,
+  },
+  commitmentsNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.textSoft,
+    marginTop: 8,
+  },
+
+  dayEmpty: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
     lineHeight: theme.typography.sizes.small * 1.5,
     color: theme.colors.text,
     opacity: 0.75,
-    marginTop: 16,
+    marginTop: 12,
   },
 
   list: {
     gap: 12,
-    marginTop: 16,
+    marginTop: 12,
   },
   window: {
     gap: 0,
@@ -132,22 +231,178 @@ export const styles = StyleSheet.create({
   },
 
   add: {
-    marginTop: 16,
-  },
-  preset: {
-    marginTop: 10,
+    marginTop: 12,
   },
   save: {
     marginTop: 10,
   },
 
   /**
-   * El aviso de los festivos que chocan con el horario. Fuera de tarjeta y
-   * pegado a la lista: no es parte de lo que se edita, es lo que hay que
-   * mirar antes de darlo por bueno.
+   * Volver al horario de siempre va como enlace y no como botón: deshace, no
+   * decide. Con tres botones seguidos el importante deja de verse.
+   */
+  revert: {
+    marginTop: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  revertText: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
+    textDecorationLine: 'underline',
+  },
+
+  /**
+   * El horario de todas las semanas: siete filas, y la que se abre despliega su
+   * editor debajo. Un acordeón y no siete editores a la vez, que serían
+   * cuarenta campos de hora en una pantalla.
+   */
+  weekly: {
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.hairline,
+  },
+  weeklyTitle: {
+    fontFamily: theme.typography.fonts.heading,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.text,
+  },
+  weeklyNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
+    color: theme.colors.textSoft,
+    marginTop: 4,
+  },
+  weeklyList: {
+    marginTop: 12,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: theme.colors.hairline,
+    overflow: 'hidden',
+  },
+  /*
+    El separador va en el contenedor de cada fila y no en la fila: así el
+    editor desplegado queda dentro del mismo bloque y no partido por una línea
+    a media altura.
+  */
+  weeklyRowSlot: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.hairline,
+  },
+  weeklyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+  },
+  weeklyRowOpen: {
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  /**
+   * Las tres letras del día, con ancho fijo para que las horas de las siete
+   * filas caigan alineadas: en una lista, lo que se compara de un vistazo es la
+   * columna de la derecha.
+   */
+  weeklyDay: {
+    width: 40,
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+  },
+  weeklyHours: {
+    flex: 1,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+  },
+  /** "Sin horario" no es un dato, es la ausencia de uno: se dice más bajo */
+  weeklyHoursOff: {
+    color: theme.colors.textSoft,
+  },
+  weeklyChevron: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSoft,
+  },
+  weeklyEditor: {
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+
+  /** El atajo, dentro del diálogo */
+  shortcutBody: {
+    gap: 12,
+  },
+  /**
+   * Los siete días como interruptores, en varias líneas.
+   *
+   * Antes eran siete círculos repartiéndose el ancho con la inicial dentro, y
+   * no valía por dos motivos: **martes y miércoles empiezan los dos por "m"**,
+   * así que había dos botones idénticos, y en un móvil estrecho cada círculo se
+   * quedaba en poco más que la letra. Ahora llevan tres letras y una marca, y
+   * se envuelven en las líneas que hagan falta.
+   */
+  weekdays: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  weekday: {
+    minWidth: 74,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: theme.colors.fieldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekdayOn: {
+    backgroundColor: theme.colors.accent600,
+    borderColor: theme.colors.accent600,
+  },
+  weekdayText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+  },
+  weekdayTextOn: {
+    color: '#ffffff',
+  },
+
+  /**
+   * Entre semana / fin de semana / todos. Son los tres grupos que se piden
+   * siempre, y sin ellos poner de lunes a viernes son cinco toques.
+   */
+  presets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  preset: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  presetText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+  },
+
+  /**
+   * El aviso de los festivos que chocan con el horario. Va al final y fuera de
+   * tarjeta: no es parte de lo que se edita, es lo que hay que mirar antes de
+   * darlo por bueno, y mira más allá del mes que se está viendo.
    */
   holidays: {
-    marginTop: 16,
+    marginTop: 20,
     padding: 12,
     borderRadius: theme.radius.card,
     borderWidth: 1,

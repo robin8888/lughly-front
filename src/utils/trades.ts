@@ -29,6 +29,7 @@ export interface Trade {
  * del backend (`sortOrder`).
  */
 export const TRADES: readonly Trade[] = [
+  { slug: 'reformas', label: 'Reformas', regulated: false, visitEligible: true },
   { slug: 'carpinteria', label: 'Carpintería', regulated: false, visitEligible: true },
   { slug: 'electricidad', label: 'Electricidad', regulated: true, visitEligible: true },
   { slug: 'fontaneria', label: 'Fontanería', regulated: true, visitEligible: true },
