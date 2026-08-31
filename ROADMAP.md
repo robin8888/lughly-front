@@ -1619,6 +1619,56 @@ en los dos. Commits `172029e` (backend), `42001e3` y `550e521` (móvil).
 
 ---
 
+## 🎯 Que la app se entere sola, sin recargar (pedido por Robin, 31 Agosto 2026)
+
+Hoy hay que salir de la pantalla y volver para ver que te han aceptado un
+trabajo, que un cliente te ha mandado uno, o que te han escrito. En una app así
+eso no se sostiene.
+
+**No es "poner notificaciones": los avisos ya están casi todos.** Lo que falta
+es que la app haga algo con ellos.
+
+### Lo que ya hay, verificado el 31 Agosto 2026
+
+- **18 casos de uso del backend mandan push**: `assign-job`,
+  `confirm-assignment`, `respond-substitute`, `decline-request`, `cancel-job`,
+  `cancel-contract`, `book-services`, `request-pro`, `request-urgency`,
+  `accept-urgency`, `start-job`, `finish-job`, `complete-job`, `reassign-job`,
+  `expire-overdue`, `send-job-message`, `send-admin-reply` y
+  `review-commission-levels`.
+- El móvil **registra el token** (`usePushRegistration`).
+- **Solo el chat se refresca solo**, y por sondeo: hilos cada 20 s, mensajes
+  cada 5 s, no leídos cada 30 s.
+
+### El agujero
+
+`usePushRegistration` **no tiene un solo `invalidateQueries`**. Llega el aviso
+al móvil y la pantalla se queda como estaba. Ese es el fallo, y es pequeño de
+tapar comparado con lo que parece desde fuera.
+
+### Qué hacer
+
+- [ ] **Escuchar la notificación recibida** y traducir su `data.screen`/`jobId`
+      a una invalidación de React Query. Es la pieza que lo arregla casi todo:
+      el aviso ya viaja con lo que hace falta para saber qué recargar.
+- [ ] **Refrescar al volver a primer plano**, que es lo que cubre el caso de
+      "estaba en otra app". Ya existe el patrón en
+      `useRefreshAccountStatusOnForeground`; falta generalizarlo.
+- [ ] **Revisar qué acciones se quedan sin aviso** ahora que hay más caminos:
+      lo que salga de los contratos recurrentes (sesión cancelada, tarjeta que
+      falla 24 h antes, serie aceptada) y los cambios de nivel de comisión ya
+      avisan, pero hay que repasar la lista entera contra §Z.
+- [ ] **Decidir si el chat deja de sondear.** Con la invalidación por push, los
+      5 s de mensajes sobran y gastan batería; el sondeo se queda como red por
+      si el aviso no llega.
+
+**Lo que NO hay que hacer todavía**: websockets. Con push + invalidación +
+refresco al volver a primer plano se cubre todo esto sin montar un transporte
+nuevo, y si algún día hace falta tiempo real de verdad —ver "está escribiendo"—
+se decide entonces y por su cuenta.
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
