@@ -1619,6 +1619,53 @@ en los dos. Commits `172029e` (backend), `42001e3` y `550e521` (móvil).
 
 ---
 
+## 🎯 El dinero no llega a casi ningún camino (comprobado el 31 Agosto 2026)
+
+Robin cerró un trabajo entero en pruebas y **en ningún momento se le pidió
+pagar**. No es un fallo: es que ese camino no cobra.
+
+### Lo comprobado en su base
+
+- **Un solo caso de uso crea cobros: `book-services`** —la carta a precio
+  cerrado—. Ningún otro.
+- **Cero `Charge` en toda la base.**
+- Todos sus trabajos son `INSTANT`: ninguno pasó por la carta.
+- **Un solo `Employer` con cuenta de Stripe.** Los del seed no la tienen.
+
+### Qué significa
+
+El ciclo del dinero del 29 de agosto —autorizar, capturar al contratar, liberar
+al cerrar, anular gratis, 3D Secure— **está construido y probado, pero solo
+cuelga de `book-services`**. El camino genérico (`request-pro` → asignar →
+empezar → terminar → cerrar) crea el trabajo sin ningún `Charge`, así que
+`complete-job` cierra y no hay nada que liberar.
+
+Es lo que ya decía §0 de `CICLOS_DE_CONTRATACION.md` —"`INSTANT` se inventa el
+importe"—, pero visto desde el uso real pesa más de lo que parecía en la lista:
+**la parte más delicada del sistema está hecha y casi nadie pasa por ella.**
+
+Y detrás hay un segundo muro: `CreateChargeUseCase` exige que quien cobra tenga
+`stripeAccountId` y `stripeTransfersEnabled`. Aunque el primer problema no
+existiera, un cobro a los profesionales de prueba fallaría con
+`PayoutAccountNotVerifiedError`.
+
+### Qué hacer
+
+- [ ] **`book-hours`** (§A2–A3): crear `Job(HOURLY)` + `Appointment` + `Charge`
+      con el desglose antes de pagar. Es la pieza que hace que el dinero llegue
+      al camino por el que pasa todo el mundo, y además es de lo que cuelgan los
+      contratos recurrentes.
+- [ ] **Decidir qué pasa con `request-pro`**: o se retira en favor de los tres
+      caminos de la v3 —por horas, carta y visita—, o se le pone precio. Hoy es
+      el único que llega hasta el final sin dinero, y es el que más se usa.
+- [ ] **Cuenta de cobro en el alta del profesional**, con los 30 días de gracia
+      de §9: sin ella no se le puede contratar, y hoy no se le pide en ningún
+      sitio.
+- [ ] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts` para poder
+      probar el cobro de punta a punta.
+
+---
+
 ## 🎯 Que la app se entere sola, sin recargar (pedido por Robin, 31 Agosto 2026)
 
 Hoy hay que salir de la pantalla y volver para ver que te han aceptado un
