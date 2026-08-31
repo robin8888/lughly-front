@@ -1646,11 +1646,26 @@ es que la app haga algo con ellos.
 al móvil y la pantalla se queda como estaba. Ese es el fallo, y es pequeño de
 tapar comparado con lo que parece desde fuera.
 
+**Un ejemplo de que el problema es ese y no otro** (comprobado el 31 Agosto,
+sobre una petición de Robin de "avisar al cliente cuando el trabajador empieza o
+termina"): ese aviso **ya existe y es correcto**.
+
+- `start-job` → al cliente: *"Han empezado — [Pro] ha empezado «[trabajo]»"*
+- `finish-job` → al cliente: *"¿Ha quedado bien? … Si no dices lo contrario en
+  24 horas, lo damos por bueno y se le paga."*
+- Las dos con `data: { screen: 'job', jobId }`.
+
+Es decir: **el estado del trabajo no es reactivo por el mismo motivo**, no por
+falta de avisos. El aviso trae el `jobId` dentro; lo que falta es que alguien lo
+lea y refresque ese trabajo. Un solo arreglo tapa los dos síntomas.
+
 ### Qué hacer
 
 - [ ] **Escuchar la notificación recibida** y traducir su `data.screen`/`jobId`
       a una invalidación de React Query. Es la pieza que lo arregla casi todo:
-      el aviso ya viaja con lo que hace falta para saber qué recargar.
+      el aviso ya viaja con lo que hace falta para saber qué recargar. Con eso,
+      **el estado de un trabajo pasa a moverse solo** —empezado, terminado,
+      cerrado— sin tocar el backend.
 - [ ] **Refrescar al volver a primer plano**, que es lo que cubre el caso de
       "estaba en otra app". Ya existe el patrón en
       `useRefreshAccountStatusOnForeground`; falta generalizarlo.
