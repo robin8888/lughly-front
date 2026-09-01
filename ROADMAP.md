@@ -1661,11 +1661,9 @@ existiera, un cobro a los profesionales de prueba fallaría con
 - [ ] **Cuenta de cobro en el alta del profesional**, con los 30 días de gracia
       de §9: sin ella no se le puede contratar, y hoy no se le pide en ningún
       sitio.
-- [ ] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts` para poder
-      probar el cobro de punta a punta. **Es lo único que queda para verlo
-      funcionar entero**: el 1 de septiembre se comprobó contra la base que la
-      reserva llega hasta la tarjeta, y ahí se para porque nadie del seed tiene
-      cuenta de cobro ni tarjeta guardada.
+- [x] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts`. Hecho el
+      1 de septiembre: `prisma/seed-stripe.ts`, y con él **el ciclo del dinero
+      se ha visto entero por primera vez** —abajo—.
 
 ---
 
@@ -1791,12 +1789,39 @@ Un hueco ya ocupado se rechaza con `SLOT_NOT_AVAILABLE` sin tocar dinero; uno
 libre llega hasta la tarjeta y se para en `PAYMENT_METHOD_MISSING`, que es el
 muro que queda. Sin encargos fantasma ni citas sueltas detrás.
 
-### Lo que falta para verlo entero
+### Visto entero, por fin
 
-- [ ] Cuentas de Stripe y tarjeta guardada en el seed (arriba).
+`prisma/seed-stripe.ts` le da cuenta de cobro a los cuatro trabajadores y
+tarjeta guardada a los cuatro clientes, en el Stripe de pruebas. Con eso, el
+recorrido completo contra el servidor local:
+
+```
+1. tarjeta de Lucía: visa ···4242
+2. hueco libre: 2026-09-02T09:00Z
+3. desglose: 3 h × 14 €/h = 42 €
+4. reserva: booked · cobro AUTHORIZED · 42 €
+5. Rosa acepta: CONTRACTED · cita CONFIRMED
+6-7. empieza y termina
+8. Lucía da por bueno: COMPLETED · released 42
+```
+
+Y en la base: `Charge HOURS 42 € RELEASED`, comisión del 10 % congelada en
+4,60 €, con transferencia real de Stripe (`tr_…`). La cita conserva la hora que
+se pagó de principio a fin.
+
+**Lo que hizo falta para activar una cuenta sin formulario**, comprobado contra
+la API y no deducido: una `recipient` con identidad y términos rellenados se
+queda restringida por dos cosas y solo dos, `defaults.profile.business_url` y
+una cuenta bancaria. Con la url basta para transferir; el banco solo abre los
+`payouts`. Y hay un cerrojo: con una clave que no sea `sk_test_`, el seed no se
+ejecuta.
+
+### Lo que falta
+
 - [ ] **Las pantallas**: el selector de huecos y la de confirmar con el
       desglose. El espejo está entero —`prosApi.slots`, `prosApi.hoursQuote`,
-      `assignmentsApi.bookHours`—, no lo llama nadie todavía.
+      `assignmentsApi.bookHours`—, no lo llama nadie todavía. **Es lo único que
+      separa esto de poder usarse desde el móvil.**
 
 **Verde al terminar: 479 pruebas en el backend, 325 en el móvil**, `tsc` limpio
 en los dos.
