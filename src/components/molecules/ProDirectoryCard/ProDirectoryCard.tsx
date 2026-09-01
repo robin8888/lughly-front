@@ -103,7 +103,17 @@ export function ProDirectoryCard({
   const featuredTrade = pro.trades.find((trade) => trade.slug === pro.trade)
   const isVisitMode = featuredTrade?.visitFee != null
   const pricingMode = isVisitMode ? 'Visita y presupuesto' : 'Por hora'
-  const priceLabel = isVisitMode ? `Visita ${pro.visitFee} €` : `${pro.hourlyRate} €/h`
+  /**
+   * El mínimo va pegado al precio y no en una etiqueta aparte
+   * (`CICLOS_DE_CONTRATACION.md` §A1: «Limpieza · 14 €/h · mín. 2 h»): es
+   * parte de lo que cuesta, no un dato del perfil. Quien no lo tenga puesto
+   * no ve nada, que es lo mismo que había hasta ahora.
+   */
+  const priceLabel = isVisitMode
+    ? `Visita ${pro.visitFee} €`
+    : `${pro.hourlyRate} €/h${
+        featuredTrade?.minHours != null ? ` · mín. ${featuredTrade.minHours} h` : ''
+      }`
 
   /** La carta del oficio de la tarjeta, desplegable: se puede contratar sin salir de aquí */
   const [showCarta, setShowCarta] = useState(false)

@@ -92,6 +92,8 @@ export const registerSchema = z
             nada se lo dijera.
           */
           urgencyRate: z.string().default(''),
+          /* Vacío es "sin mínimo": se le contrata por lo que se pida */
+          minHours: z.string().default(''),
           description: z.string().default(''),
         }),
       )
@@ -363,6 +365,11 @@ export function useRegister({ onSuccess }: UseRegisterOptions = {}) {
                   slug: trade.slug,
                   hourlyRate: esVisita ? null : tarifa(trade.hourlyRate),
                   visitFee: esVisita ? tarifa(trade.visitFee) : null,
+                  /* El mínimo solo en los de hora: en visita el suelo es la visita */
+                  minHours:
+                    esVisita || trade.minHours.trim() === ''
+                      ? null
+                      : tarifa(trade.minHours),
                   urgencyHourlyRate:
                     trade.urgencyRate.trim() === ''
                       ? null

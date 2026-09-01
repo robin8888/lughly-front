@@ -60,6 +60,8 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
           pricingMode: trade.visitFee !== null ? 'VISIT' : 'HOURLY',
           hourlyRate: trade.hourlyRate === null ? '' : String(trade.hourlyRate),
           visitFee: trade.visitFee === null ? '' : String(trade.visitFee),
+          /* Vacío si no tiene mínimo, que es lo normal hasta que lo ponga */
+          minHours: trade.minHours == null ? '' : String(trade.minHours),
           /* Vacío si no atiende urgencias de ese oficio, que es lo normal */
           urgencyRate:
             trade.urgencyHourlyRate == null ? '' : String(trade.urgencyHourlyRate),
@@ -111,6 +113,10 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
       (trade) =>
         trade.urgencyRate.trim() === '' || rateOf(trade.urgencyRate) > 0,
     ) &&
+    /* Y lo mismo con el mínimo: vacío es "sin mínimo", pero un cero no vale */
+    current.every(
+      (trade) => trade.minHours.trim() === '' || rateOf(trade.minHours) > 0,
+    ) &&
     !isSaving
 
   const handleSave = async () => {
@@ -119,6 +125,14 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
         slug: trade.slug,
         hourlyRate: trade.pricingMode === 'VISIT' ? null : rateOf(trade.hourlyRate),
         visitFee: trade.pricingMode === 'VISIT' ? rateOf(trade.visitFee) : null,
+        /*
+          Solo en los oficios por hora: en visita el servidor lo rechaza, y con
+          razón —allí el suelo es la propia visita—.
+        */
+        minHours:
+          trade.pricingMode === 'VISIT' || trade.minHours.trim() === ''
+            ? null
+            : rateOf(trade.minHours),
         urgencyHourlyRate:
           trade.urgencyRate.trim() === '' ? null : rateOf(trade.urgencyRate),
         description: trade.description.trim(),

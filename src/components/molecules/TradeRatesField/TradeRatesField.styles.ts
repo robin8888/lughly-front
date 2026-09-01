@@ -77,6 +77,12 @@ export const styles = StyleSheet.create({
   rateField: {
     flex: 1,
   },
+  /** La fila del mínimo: la misma rejilla de arriba, con la derecha vacía */
+  minHoursRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 12,
+  },
   /*
    * El número pegado a su unidad. A la izquierda quedaba un hueco entre la
    * cifra y el "€/h" que hacía dudar de si formaban parte de lo mismo.

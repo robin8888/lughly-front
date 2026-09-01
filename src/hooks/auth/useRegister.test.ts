@@ -65,6 +65,7 @@ function oficio(overrides: Record<string, unknown>) {
     pricingMode: 'HOURLY' as const,
     hourlyRate: '',
     visitFee: '',
+    minHours: '',
     urgencyRate: '',
     description: '',
     ...overrides,
@@ -120,6 +121,75 @@ describe('useRegister — modo de cobro', () => {
 
     expect(enviado.trades[0]!.hourlyRate).toBe(25)
     expect(enviado.trades[0]!.visitFee).toBeNull()
+  })
+
+  /**
+   * El mínimo de horas viaja desde el alta.
+   *
+   * Es lo que no se ve fallar: si se quedara en el formulario, el profesional
+   * lo escribiría, se guardaría el oficio sin él, y se le podría contratar
+   * media hora hasta que alguien mirase la base.
+   */
+  it('manda el mínimo de horas del oficio por hora', async () => {
+    const { result } = renderHook(() => useRegister())
+
+    await act(async () => {
+      await result.current.register({
+        ...proBase,
+        trades: [oficio({ pricingMode: 'HOURLY', hourlyRate: '14', minHours: '2' })],
+      } as never)
+    })
+
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    const enviado = mockRegister.mock.calls[0]![0] as {
+      trades: { minHours: number | null }[]
+    }
+
+    expect(enviado.trades[0]!.minHours).toBe(2)
+  })
+
+  it('vacío es sin mínimo, no cero', async () => {
+    const { result } = renderHook(() => useRegister())
+
+    await act(async () => {
+      await result.current.register({
+        ...proBase,
+        trades: [oficio({ pricingMode: 'HOURLY', hourlyRate: '14' })],
+      } as never)
+    })
+
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    const enviado = mockRegister.mock.calls[0]![0] as {
+      trades: { minHours: number | null }[]
+    }
+
+    expect(enviado.trades[0]!.minHours).toBeNull()
+  })
+
+  /**
+   * En visita el suelo es la propia visita, y el servidor rechaza un mínimo
+   * ahí. Si el profesional cambia de modo después de haberlo escrito, no
+   * puede irse con el envío: sería un 400 que no sabría explicarse.
+   */
+  it('no manda el mínimo cuando se cobra por visita, aunque esté escrito', async () => {
+    const { result } = renderHook(() => useRegister())
+
+    await act(async () => {
+      await result.current.register({
+        ...proBase,
+        trades: [oficio({ pricingMode: 'VISIT', visitFee: '45', minHours: '2' })],
+      } as never)
+    })
+
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    const enviado = mockRegister.mock.calls[0]![0] as {
+      trades: { minHours: number | null }[]
+    }
+
+    expect(enviado.trades[0]!.minHours).toBeNull()
   })
 
   /**

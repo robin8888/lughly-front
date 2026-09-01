@@ -51,6 +51,14 @@ export interface TradeRate {
   /** Lo que cobra por presentarse a evaluar y presupuestar, también como texto */
   visitFee: string
   /**
+   * Cuántas horas hay que contratarle como mínimo en este oficio, como texto.
+   *
+   * **Vacío significa sin mínimo**, igual que la tarifa de urgencia: es una
+   * decisión y no un campo a medio rellenar. Solo se pregunta en los oficios
+   * por hora; en los de visita, el suelo es la propia visita.
+   */
+  minHours: string
+  /**
    * Lo que cobra por una urgencia de este oficio, también como texto.
    *
    * **Vacío significa que no atiende urgencias de este oficio**, y por eso no
@@ -115,7 +123,15 @@ export function TradeRatesField({
   const add = (slug: string) => {
     onChange([
       ...value,
-      { slug, pricingMode: 'HOURLY', hourlyRate: '', visitFee: '', urgencyRate: '', description: '' },
+      {
+        slug,
+        pricingMode: 'HOURLY',
+        hourlyRate: '',
+        visitFee: '',
+        minHours: '',
+        urgencyRate: '',
+        description: '',
+      },
     ])
     setPickerKey((key) => key + 1)
   }
@@ -143,6 +159,12 @@ export function TradeRatesField({
   const setRate = (slug: string, hourlyRate: string) => {
     onChange(
       value.map((trade) => (trade.slug === slug ? { ...trade, hourlyRate } : trade)),
+    )
+  }
+
+  const setMinHours = (slug: string, minHours: string) => {
+    onChange(
+      value.map((trade) => (trade.slug === slug ? { ...trade, minHours } : trade)),
     )
   }
 
@@ -300,6 +322,50 @@ export function TradeRatesField({
                   />
                 </View>
               </View>
+
+              {/*
+                El mínimo, debajo y solo en los oficios por hora. Fuera de la
+                fila de arriba a propósito: allí van los dos precios de la
+                hora, que se comparan entre sí, y esto no es un precio sino
+                cuánto hay que contratar. En la misma fila, un tercer número
+                con otra unidad se lee como una tercera tarifa.
+              */}
+              {trade.pricingMode === 'HOURLY' && (
+                <View style={styles.minHoursRow}>
+                  <View style={styles.rateField}>
+                    <Text style={styles.fieldLabel} numberOfLines={1} adjustsFontSizeToFit>
+                      Mínimo por trabajo
+                    </Text>
+                    <Input
+                      value={trade.minHours}
+                      onChangeText={(text) =>
+                        setMinHours(trade.slug, text.replace(/[^0-9.,]/g, ''))
+                      }
+                      placeholder="0"
+                      suffix="h"
+                      keyboardType="decimal-pad"
+                      editable={!disabled}
+                      style={styles.rateInput}
+                      testID={`trade-min-hours-${trade.slug}`}
+                    />
+                  </View>
+
+                  {/*
+                    La mitad derecha se queda vacía para que el campo mida lo
+                    mismo que los de arriba: un número que ocupa todo el ancho
+                    parece de otra clase que los que tiene encima.
+                  */}
+                  <View style={styles.rateField} />
+                </View>
+              )}
+
+              {trade.pricingMode === 'HOURLY' && (
+                <Text style={styles.fieldHint}>
+                  {trade.minHours.trim() === ''
+                    ? 'Sin mínimo se te puede contratar por lo que sea, aunque sea media hora.'
+                    : `Por menos de ${trade.minHours} h no se te podrá contratar: se cobran ${trade.minHours} h aunque el trabajo sea más corto.`}
+                </Text>
+              )}
 
               {trade.pricingMode === 'VISIT' && (
                 <Text style={styles.fieldHint}>

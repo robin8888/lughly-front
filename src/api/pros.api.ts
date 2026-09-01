@@ -23,6 +23,17 @@ export interface ApiProTrade {
    */
   hourlyRate: number | null
   /**
+   * Cuántas horas hay que contratarle como mínimo en este oficio.
+   *
+   * `null` es **sin mínimo**: se le contrata por lo que se pida. Va junto a la
+   * tarifa en la tarjeta —«14 €/h · mín. 2 h»— porque es parte del precio: sin
+   * enseñarlo, quien pide una hora descubre el suelo al ver el total.
+   *
+   * Solo lo tienen los oficios por hora; en los de visita el suelo es la
+   * propia visita.
+   */
+  minHours?: number | null
+  /**
    * Lo que cobra por una urgencia de este oficio.
    *
    * `null` **significa que no atiende urgencias de este oficio**, no que falte
@@ -247,10 +258,22 @@ export interface ProsFilters {
   offset?: number
 }
 
-function toQueryString(filters: ProsFilters | ProReviewsFilters): string {
+/**
+ * Los filtros como cadena de consulta, saltándose lo que no se ha puesto.
+ *
+ * Acepta cualquier objeto plano y no una unión de tipos concretos a propósito:
+ * cada endpoint del directorio tiene los suyos —filtros, huecos, precio— y
+ * enumerarlos aquí obligaría a tocar esta línea cada vez que aparece uno,
+ * sin ganar nada: lo que valida los nombres es el esquema del servidor.
+ */
+function toQueryString<T extends object>(filters: T): string {
   const params = new URLSearchParams()
 
-  for (const [key, value] of Object.entries(filters)) {
+  /*
+    El `as` es por las interfaces: TypeScript no les da firma de índice, así
+    que no encajan en un `Record` aunque sus valores sean exactamente eso.
+  */
+  for (const [key, value] of Object.entries(filters as Record<string, unknown>)) {
     if (value !== undefined && value !== null && value !== '') {
       params.append(key, String(value))
     }
@@ -269,7 +292,11 @@ export interface SetTradesPayload {
     slug: string
     hourlyRate?: number | null
     visitFee?: number | null
+    /** Vacío o ausente = sin mínimo. Solo con `hourlyRate` puesto. */
+    minHours?: number | null
     urgencyHourlyRate?: number | null
+    /** Qué hace en ese oficio. Vacío = se enseña la general del perfil */
+    description?: string | null
   }[]
 }
 
@@ -488,6 +515,82 @@ export interface ApiAbsence {
   reason: string | null
 }
 
+/**
+ * Un rato en el que cabe lo que se quiere contratar
+ * (GET /v1/pros/:id/slots).
+ *
+ * Sale de su horario menos sus ausencias menos lo que ya tiene, con la
+ * antelación mínima aplicada. **Es para elegir, no para reservar**: entre ver
+ * la lista y pulsar pagar pasan minutos y la agenda es de otro, así que el
+ * servidor lo vuelve a comprobar al contratar.
+ */
+export interface ApiFreeSlot {
+  /** ISO con zona */
+  startAt: string
+  endAt: string
+}
+
+export interface ApiFreeSlots {
+  /** Lo que se pidió, para no tener que acordarse */
+  durationMin: number
+  /**
+   * Si la hora concreta que traía pensada el cliente cabe. Solo tiene sentido
+   * cuando se ha mandado `preferred`; sin ella llega siempre en `false`.
+   */
+  requestedAvailable: boolean
+  /** Los primeros que caben, el más cercano primero */
+  slots: ApiFreeSlot[]
+}
+
+/** Por qué se cobra de más esa hora. El servidor decide cuál, y solo uno. */
+export type ApiSurchargeKind = 'night' | 'holiday' | 'sunday' | 'saturday'
+
+export interface ApiAppliedSurcharge {
+  kind: ApiSurchargeKind
+  /** Ya escrito para enseñarlo: «Sábado», «Festivo (Todos los Santos)» */
+  label: string
+  /** Porcentaje sobre el importe base */
+  percent: number
+  amount: number
+}
+
+/**
+ * El desglose de contratar por horas, antes de pagar
+ * (GET /v1/pros/:id/hours-quote).
+ *
+ * Lo calcula entero el servidor y por un buen motivo: lleva dentro el mínimo
+ * del oficio, los recargos de esa persona, el calendario de festivos de su
+ * comunidad y la excepción que le haya puesto a ese día. Rehacer la cuenta
+ * aquí acabaría enseñando un total distinto del que se cobra.
+ */
+export interface ApiHoursQuote {
+  hourlyRate: number
+  /** Lo que pidió el cliente */
+  requestedHours: number
+  /** Lo que se cobra: nunca menos del mínimo del oficio */
+  billedHours: number
+  minHours: number | null
+  /**
+   * Si el mínimo ha subido las horas. Con esto la pantalla puede explicar
+   * «pides 1 h, se cobran 2 h de mínimo» en vez de enseñar un total que no
+   * cuadra con lo que se pidió.
+   */
+  minApplied: boolean
+  /** horas cobradas × tarifa */
+  base: number
+  /** El que se aplica, o `null` si es una hora normal de un día laborable */
+  surcharge: ApiAppliedSurcharge | null
+  total: number
+  /** Lo preguntado, tal cual */
+  startAt: string
+  durationMin: number
+  /** Las dos frases que van debajo del total, escritas por el servidor */
+  terms: {
+    hold: string
+    freeCancellation: string
+  }
+}
+
 export const prosApi = {
   list: (filters: ProsFilters = {}) =>
     apiRequest<ProsPage>(`/v1/pros${toQueryString(filters)}`),
@@ -505,6 +608,37 @@ export const prosApi = {
   coverage: (trade: string, lat: number, lng: number) =>
     apiRequest<ApiCoverage>(
       `/v1/pros/coverage?trade=${encodeURIComponent(trade)}&lat=${lat}&lng=${lng}`,
+      { auth: true },
+    ),
+
+  /**
+   * Cuándo puede este profesional, para elegir hueco.
+   *
+   * `preferred` es la hora que el cliente traía pensada: con ella el servidor
+   * contesta además si **esa** cabe, que es la pregunta que de verdad hace
+   * quien ya ha elegido día. Sin ella se devuelven solo los primeros huecos.
+   */
+  slots: (
+    id: string,
+    query: { durationMin: number; from?: string; preferred?: string; limit?: number },
+  ) =>
+    apiRequest<ApiFreeSlots>(
+      `/v1/pros/${id}/slots${toQueryString(query)}`,
+      { auth: true },
+    ),
+
+  /**
+   * Cuánto costaría contratarle esas horas a esa hora. No reserva nada.
+   *
+   * Se pide después de elegir el hueco y antes de pagar: es el desglose que se
+   * enseña, y es el mismo que va a cobrar `book-hours`.
+   */
+  hoursQuote: (
+    id: string,
+    query: { tradeSlug: string; startAt: string; durationMin: number },
+  ) =>
+    apiRequest<ApiHoursQuote>(
+      `/v1/pros/${id}/hours-quote${toQueryString(query)}`,
       { auth: true },
     ),
 

@@ -66,6 +66,12 @@ export interface RegisterPayload {
     hourlyRate?: number | string | null
     /** Lo que cobra por presentarse a evaluar y presupuestar */
     visitFee?: number | null
+    /**
+     * Cuántas horas hay que contratarle como mínimo en ese oficio. Vacío o
+     * ausente = sin mínimo. Solo con `hourlyRate` puesto: en visita el suelo
+     * es la propia visita, y el backend lo rechaza.
+     */
+    minHours?: number | null
     /** Vacío o ausente = no atiende urgencias de ese oficio */
     urgencyHourlyRate?: number | null
     /** Qué hace en ese oficio. Vacío = se enseña la general del perfil */
