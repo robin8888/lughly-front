@@ -102,8 +102,34 @@ Notifications.setNotificationHandler({
  * un identificador. Se comprueba antes para no llenar la consola de errores
  * en desarrollo.
  */
+/**
+ * Por qué este móvil se ha quedado sin avisos, dicho en voz alta.
+ *
+ * Solo en desarrollo, y por un motivo concreto: quedarse sin token **no da
+ * ningún error visible**. La app funciona, las listas siguen siendo la verdad,
+ * y desde fuera es idéntico a que el servidor no esté mandando nada. Costó una
+ * tarde averiguar que en Android faltaba la configuración de Firebase, cuando
+ * la propia excepción lo decía.
+ *
+ * En producción sigue callado: al usuario no se le cuenta esto, y un móvil sin
+ * permiso concedido es una decisión suya, no un fallo.
+ */
+function explicar(motivo: string, error?: unknown): null {
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[push] Este móvil no va a recibir avisos (${Platform.OS}): ${motivo}`,
+      error ?? '',
+    )
+  }
+
+  return null
+}
+
 async function obtainToken(): Promise<string | null> {
-  if (!Device.isDevice) return null
+  if (!Device.isDevice) {
+    return explicar('es un emulador, y ahí no hay servicios de notificación')
+  }
 
   /*
     Antes de pedir el token: el canal tiene que existir cuando llegue el primer
@@ -124,7 +150,7 @@ async function obtainToken(): Promise<string | null> {
     status = asked.status
   }
 
-  if (status !== 'granted') return null
+  if (status !== 'granted') return explicar('el permiso no está concedido')
 
   /**
    * El identificador del proyecto hace falta sí o sí en una compilación
@@ -134,10 +160,25 @@ async function obtainToken(): Promise<string | null> {
     Constants.expoConfig?.extra?.eas?.projectId ??
     Constants.easConfig?.projectId
 
-  if (!projectId) return null
+  if (!projectId) return explicar('falta el projectId de EAS en la configuración')
 
-  const token = await Notifications.getExpoPushTokenAsync({ projectId })
-  return token.data
+  try {
+    const token = await Notifications.getExpoPushTokenAsync({ projectId })
+    return token.data
+  } catch (error) {
+    /**
+     * Aquí es donde se cae Android sin Firebase: sin `google-services.json` en
+     * la compilación, el móvil no puede registrarse en FCM y no hay token que
+     * pedir. iOS no pasa por eso, así que funciona uno y el otro no —y sin
+     * este aviso, los dos se ven igual desde fuera—.
+     */
+    return explicar(
+      Platform.OS === 'android'
+        ? 'no se ha podido registrar en FCM. ¿Está `google-services.json` en la compilación (android.googleServicesFile)?'
+        : 'no se ha podido obtener el token',
+      error,
+    )
+  }
 }
 
 export function usePushRegistration(): void {
