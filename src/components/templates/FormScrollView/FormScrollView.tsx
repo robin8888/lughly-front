@@ -41,7 +41,7 @@
  */
 
 import { forwardRef, type ReactNode } from 'react'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
+import { KeyboardAwareScrollView } from './keyboardController'
 import type { ScrollViewProps } from 'react-native'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 

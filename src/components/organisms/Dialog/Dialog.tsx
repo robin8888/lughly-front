@@ -37,7 +37,7 @@ import {
   que la ventana se encoja al abrirse el teclado, y en Android eso dejó de
   pasar con el dibujo de borde a borde.
 */
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { KeyboardAvoidingView } from '@/components/templates/FormScrollView/keyboardController'
 import { Button } from '@/components/atoms/Button'
 import { images } from '@/images'
 import { styles } from './Dialog.styles'

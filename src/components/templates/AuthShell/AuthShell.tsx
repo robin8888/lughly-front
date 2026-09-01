@@ -15,7 +15,7 @@ import { View, Text, Image, ScrollView } from 'react-native'
   ventana se encoja al abrirse el teclado, y en Android eso dejó de pasar desde
   que la app dibuja de borde a borde. Este mide el teclado de verdad.
 */
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { KeyboardAvoidingView } from '@/components/templates/FormScrollView/keyboardController'
 import { images } from '@/images'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'

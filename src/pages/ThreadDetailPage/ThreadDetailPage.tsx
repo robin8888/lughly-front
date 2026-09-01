@@ -29,7 +29,7 @@ import {
   que la app dibuja de borde a borde. Aquí se nota más que en ningún sitio: sin
   él, el campo de escribir se queda debajo del teclado.
 */
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { KeyboardAvoidingView } from '@/components/templates/FormScrollView/keyboardController'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Path } from 'react-native-svg'
 import { Avatar } from '@/components/atoms/Avatar'
