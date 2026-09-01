@@ -57,7 +57,17 @@ async function ensureAndroidChannel(): Promise<void> {
       aceptado tu trabajo".
     */
     importance: Notifications.AndroidImportance.HIGH,
-    sound: 'default',
+    /*
+      Sin `sound`: el canal se queda con el sonido del sistema, que es lo que
+      se quiere. **No vale poner `'default'`**, aunque lo parezca: en la
+      entrada ese campo es el NOMBRE DE UN FICHERO, así que Android se pone a
+      buscar un sonido personalizado llamado "default", no lo encuentra y lo
+      dice por consola en cada arranque. (Lo confuso es que al leer el canal sí
+      contesta `'default'`; leer y escribir no usan la misma forma.)
+
+      El día que haya sonido propio, aquí va su nombre de fichero y además hay
+      que declararlo en el plugin `expo-notifications` de `app.json`.
+    */
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#04070f',
   })
