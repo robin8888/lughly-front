@@ -73,7 +73,13 @@
           "enableGooglePay": false
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "color": "#04070f"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

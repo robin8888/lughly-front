@@ -23,6 +23,47 @@ import { useIsAuthenticated } from '@/stores/useAuthStore'
 import { usePushStore } from '@/stores/usePushStore'
 
 /**
+ * El canal de Android por el que salen los avisos.
+ *
+ * Tiene que llamarse igual que el `channelId` que manda el servidor
+ * (`ExpoPushSender`). Si dejan de coincidir no hay error: los avisos caen en
+ * el canal por defecto y se pierden el sonido y la prioridad, en silencio.
+ */
+const ANDROID_CHANNEL_ID = 'avisos'
+
+/**
+ * En Android 8 y posteriores **el canal decide** si un aviso suena y si se
+ * asoma por encima de lo que estés mirando, y el mensaje no puede cambiarlo.
+ * Sin crear ninguno, todo cae en el que Expo hace solo, que no tiene prioridad
+ * alta: el aviso llega, pero callado y sin asomarse.
+ *
+ * Y hay una trampa que conviene saber: **de un canal ya creado solo se pueden
+ * cambiar el nombre y la descripción**. El sonido y la prioridad se quedan
+ * como se pusieron la primera vez, para siempre, en cada móvil que ya lo
+ * tenga. Cambiarlos de verdad obliga a borrar el canal y volver a crearlo —o a
+ * estrenar un identificador nuevo—.
+ *
+ * En iOS no existen los canales y esto no hace nada.
+ */
+async function ensureAndroidChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return
+
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+    name: 'Avisos de Lughly',
+    description: 'Encargos, mensajes y cambios en tus trabajos.',
+    /*
+      Alta y no la máxima: MAX es para lo que interrumpe de verdad —una
+      llamada—. HIGH ya suena y se asoma, que es lo que hace falta para "han
+      aceptado tu trabajo".
+    */
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: 'default',
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#04070f',
+  })
+}
+
+/**
  * Qué hacer con un aviso que llega **con la app abierta**.
  *
  * Sin esto, iOS no enseña nada: la notificación llega, el sistema decide que
@@ -63,6 +104,12 @@ Notifications.setNotificationHandler({
  */
 async function obtainToken(): Promise<string | null> {
   if (!Device.isDevice) return null
+
+  /*
+    Antes de pedir el token: el canal tiene que existir cuando llegue el primer
+    aviso, y crearlo es idempotente.
+  */
+  await ensureAndroidChannel()
 
   const { status: existing } = await Notifications.getPermissionsAsync()
   let status = existing
