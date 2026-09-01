@@ -34,7 +34,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { FormField } from '@/components/molecules/FormField'
@@ -177,12 +177,11 @@ export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
         </Text>
       </View>
 
-      <Animated.ScrollView
+      <FormScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         {isPro && (
@@ -324,7 +323,7 @@ export function MyProfilePage({ onBack, onEditTrades }: MyProfilePageProps) {
             Guardar
           </Button>
         </View>
-      </Animated.ScrollView>
+      </FormScrollView>
     </View>
   )
 }

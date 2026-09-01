@@ -17,14 +17,19 @@ import { StatusBar } from 'expo-status-bar'
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native'
+/*
+  El de la librería y no el de React Native: el de React Native necesita que la
+  ventana se encoja al abrirse el teclado, y en Android eso dejó de pasar desde
+  que la app dibuja de borde a borde. Aquí se nota más que en ningún sitio: sin
+  él, el campo de escribir se queda debajo del teclado.
+*/
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Path } from 'react-native-svg'
 import { Avatar } from '@/components/atoms/Avatar'
@@ -221,7 +226,7 @@ export function ThreadDetailPage({
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       testID="thread-detail-page"
     >
       {header}

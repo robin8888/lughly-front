@@ -17,7 +17,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -188,12 +188,11 @@ export function SurchargesPage({
     <View style={styles.screen} testID="surcharges-page">
       {header}
 
-      <Animated.ScrollView
+      <FormScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         <InfoCard variant="accent">
@@ -296,7 +295,7 @@ export function SurchargesPage({
         >
           {isSaving ? 'Guardando…' : 'Guardar'}
         </Button>
-      </Animated.ScrollView>
+      </FormScrollView>
     </View>
   )
 }

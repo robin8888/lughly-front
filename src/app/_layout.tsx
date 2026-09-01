@@ -27,6 +27,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { StripeProvider } from '@stripe/stripe-react-native'
 import { setupSessionBridge } from '@/api/sessionBridge'
 import { useResetCacheOnAccountChange } from '@/hooks/auth/useResetCacheOnAccountChange'
@@ -138,6 +139,12 @@ export default function RootLayout() {
     // Sin este contenedor en la raíz, los gestos (arrastrar el carrusel)
     // no llegan a los componentes.
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {/*
+        Mide el teclado —su alto y su animación— para toda la app. Sin él,
+        `FormScrollView` no sabe cuánto sitio queda y los campos de la mitad de
+        abajo se quedan tapados, que es lo que pasaba en Android.
+      */}
+      <KeyboardProvider>
       <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} urlScheme="lughly">
         <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }}>
@@ -247,6 +254,7 @@ export default function RootLayout() {
           />
         </QueryClientProvider>
       </StripeProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   )
 }

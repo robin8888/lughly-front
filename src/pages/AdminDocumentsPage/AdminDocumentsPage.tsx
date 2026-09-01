@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_BASE_URL, ApiError, NetworkError } from '@/api'
@@ -142,11 +142,10 @@ export function AdminDocumentsPage({ onBack, testID }: AdminDocumentsPageProps) 
         <Text style={styles.title}>Revisar documentos</Text>
       </View>
 
-      <Animated.ScrollView
+      <FormScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
@@ -260,7 +259,7 @@ export function AdminDocumentsPage({ onBack, testID }: AdminDocumentsPageProps) 
             ))}
           </>
         )}
-      </Animated.ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   )
 }

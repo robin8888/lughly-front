@@ -19,7 +19,7 @@
 
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 import { useState } from 'react'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
@@ -375,7 +375,7 @@ export function JobDetailPage({
     <View style={styles.screen} testID="job-detail-page">
       {header}
 
-      <Animated.ScrollView
+      <FormScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
@@ -709,7 +709,7 @@ export function JobDetailPage({
             </Text>
           </Pressable>
         )}
-      </Animated.ScrollView>
+      </FormScrollView>
 
       <Dialog
         visible={breaking}

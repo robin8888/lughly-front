@@ -13,7 +13,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { AddressInput } from '@/components/molecules/AddressInput'
@@ -157,12 +157,11 @@ export function HireCartaPage({
     <View style={styles.screen} testID="hire-carta-page">
       {header}
 
-      <Animated.ScrollView
+      <FormScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         <InfoCard testID="hire-carta-summary">
@@ -293,7 +292,7 @@ export function HireCartaPage({
         >
           Contratar por {formatAmount(total)} €
         </Button>
-      </Animated.ScrollView>
+      </FormScrollView>
     </View>
   )
 }

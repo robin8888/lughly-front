@@ -31,9 +31,13 @@ import {
   Pressable,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native'
+/*
+  El de la librería, como en el resto de la app: el de React Native se apoya en
+  que la ventana se encoja al abrirse el teclado, y en Android eso dejó de
+  pasar con el dibujo de borde a borde.
+*/
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { Button } from '@/components/atoms/Button'
 import { images } from '@/images'
 import { styles } from './Dialog.styles'
@@ -111,10 +115,7 @@ export function Dialog({
           Que el teclado no se coma los botones: sin esto, quien escribe el
           motivo no llega a "Enviar" sin bajarlo antes a mano.
         */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.centered}
-        >
+        <KeyboardAvoidingView behavior="padding" style={styles.centered}>
           <Pressable
             style={[styles.card, tone === 'danger' ? styles.danger : styles.accent]}
             /* Tocar dentro baja el teclado, que es lo que se intenta primero */

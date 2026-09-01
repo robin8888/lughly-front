@@ -1,3 +1,13 @@
+/*
+ * El teclado. La librería trae su propio doble, pero solo lo exporta: hay que
+ * registrarlo aquí. Sin esto, cualquier pantalla con `FormScrollView` revienta
+ * al montarse en un test con "doesn't seem to be linked", que es su forma de
+ * decir que está buscando el módulo nativo.
+ */
+jest.mock('react-native-keyboard-controller', () =>
+  require('react-native-keyboard-controller/jest'),
+)
+
 /**
  * Configuración común de los tests.
  *

@@ -15,7 +15,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Pressable, ActivityIndicator, Keyboard } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Input } from '@/components/atoms/Input'
@@ -156,12 +156,11 @@ export function DirectoryPage({
         )}
       </View>
 
-      <Animated.ScrollView
+      <FormScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         {/*
@@ -371,7 +370,7 @@ export function DirectoryPage({
             </View>
           </>
         )}
-      </Animated.ScrollView>
+      </FormScrollView>
     </View>
   )
 }

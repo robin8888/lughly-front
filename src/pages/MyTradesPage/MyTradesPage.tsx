@@ -14,7 +14,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -186,7 +186,7 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
     <View style={styles.screen} testID="my-trades-page">
       {header}
 
-      <Animated.ScrollView
+      <FormScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
@@ -289,7 +289,7 @@ export function MyTradesPage({ onBack }: MyTradesPageProps) {
           </InfoCard>
           </>
         )}
-      </Animated.ScrollView>
+      </FormScrollView>
     </View>
   )
 }

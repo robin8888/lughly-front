@@ -9,14 +9,13 @@
  */
 
 import { ReactNode, useEffect, useRef } from 'react'
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native'
+import { View, Text, Image, ScrollView } from 'react-native'
+/*
+  El de la librería y no el de React Native: el de React Native necesita que la
+  ventana se encoja al abrirse el teclado, y en Android eso dejó de pasar desde
+  que la app dibuja de borde a borde. Este mide el teclado de verdad.
+*/
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { images } from '@/images'
 // El de `react-native` está deprecado; este además respeta el notch en Android
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -73,10 +72,8 @@ export function AuthShell({
       */}
       <StatusBar style="light" />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      {/* `padding` en las dos: la librería lo aplica igual en Android */}
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.scrollContent}

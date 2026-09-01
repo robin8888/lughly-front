@@ -22,7 +22,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Animated from 'react-native-reanimated'
+import { FormScrollView } from '@/components/templates/FormScrollView'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Button } from '@/components/atoms/Button'
@@ -209,12 +209,11 @@ export function UrgencyPage({
         <Text style={styles.title}>Urgencia</Text>
       </View>
 
-      <Animated.ScrollView
+      <FormScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         <InfoCard variant="accent" style={styles.introCard}>
@@ -389,7 +388,7 @@ export function UrgencyPage({
         >
           Ver profesionales
         </Button>
-      </Animated.ScrollView>
+      </FormScrollView>
     </View>
   )
 }
