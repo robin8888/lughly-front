@@ -231,6 +231,35 @@ export function useCompleteJob() {
   }
 }
 
+/**
+ * El cliente reconoce que el trabajo ha empezado.
+ *
+ * No arranca nada: el reloj corre desde que el profesional pulsó Empezar. Lo
+ * que hace es que a él le llegue que del otro lado se han enterado, y que
+ * quede constancia de las dos versiones si algún día se discute la hora.
+ */
+export function useApproveStart() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (jobId: string) => jobsApi.approveStart(jobId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    approveStart: async (jobId: string) => {
+      try {
+        return { ok: true as const, result: await mutation.mutateAsync(jobId), error: null }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isApproving: mutation.isPending,
+  }
+}
+
 /** Lo que se le puede enseñar a alguien de un fallo, si es que se puede algo */
 function mensajeDe(error: unknown): string | null {
   return error instanceof NetworkError || error instanceof ApiError ? error.message : null

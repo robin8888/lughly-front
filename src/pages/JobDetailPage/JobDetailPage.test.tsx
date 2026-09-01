@@ -23,6 +23,7 @@ jest.mock('@/hooks/domain/useJob', () => {
     started: [] as string[],
     finished: [] as string[],
     completed: [] as string[],
+    startApproved: [] as string[],
   }
 
   return {
@@ -57,6 +58,13 @@ jest.mock('@/hooks/domain/useJob', () => {
       },
       isCompleting: false,
     }),
+    useApproveStart: () => ({
+      approveStart: (jobId: string) => {
+        soporte.startApproved.push(jobId)
+        return Promise.resolve({ ok: true, result: null, error: null })
+      },
+      isApproving: false,
+    }),
   }
 })
 
@@ -90,6 +98,8 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     preferredDate: null,
     respondByAt: null,
     workFinishedAt: null,
+    startedAt: null,
+    startApprovedAt: null,
     confirmByAt: null,
     completedAt: null,
     maxBudget: null,
@@ -161,6 +171,57 @@ describe('JobDetailPage: terminar y cobrar', () => {
         'Has terminado. Falta que el cliente lo dé por bueno; si no dice nada, se da por bueno solo y cobras.',
       ),
     ).toBeTruthy()
+  })
+
+  /**
+   * El reloj lo ven los dos, y desde que empieza. Es lo que se acaba pagando
+   * en un trabajo por horas: que solo lo viera una parte sería pedirle a la
+   * otra que se fíe.
+   */
+  it('el reloj corre para el profesional en cuanto empieza', () => {
+    soporte.job = ficha({
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      startedAt: '2026-08-29T12:00:00.000Z',
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-timer')).toBeTruthy()
+  })
+
+  it('y para el cliente también, con su botón de confirmar el inicio', () => {
+    soporte.job = ficha({
+      viewer: 'client',
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      startedAt: '2026-08-29T12:00:00.000Z',
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-timer')).toBeTruthy()
+
+    fireEvent.press(getByTestId('job-detail-approve-start'))
+
+    expect(soporte.startApproved).toEqual(['job-1'])
+  })
+
+  it('ya confirmado, el botón desaparece pero el reloj sigue', () => {
+    soporte.job = ficha({
+      viewer: 'client',
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      startedAt: '2026-08-29T12:00:00.000Z',
+      startApprovedAt: '2026-08-29T12:01:00.000Z',
+    })
+
+    const { getByTestId, queryByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-approve-start')).toBeNull()
+    expect(getByTestId('job-detail-timer')).toBeTruthy()
   })
 
   it('al cliente le sale el botón que paga, con su plazo', () => {

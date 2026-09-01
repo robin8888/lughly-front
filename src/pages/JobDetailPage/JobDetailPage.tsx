@@ -26,6 +26,7 @@ import { Input } from '@/components/atoms/Input'
 import { Dialog } from '@/components/organisms/Dialog'
 import { Avatar } from '@/components/atoms/Avatar'
 import { Countdown } from '@/components/atoms/Countdown'
+import { WorkTimer } from '@/components/molecules/WorkTimer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import {
@@ -33,6 +34,7 @@ import {
   useCancelJob,
   useCancelContract,
   useJobProgress,
+  useApproveStart,
   useCompleteJob,
 } from '@/hooks/domain/useJob'
 import { API_BASE_URL } from '@/api'
@@ -180,6 +182,7 @@ export function JobDetailPage({
   const { cancelContract, isCancelling: isBreaking } = useCancelContract()
   const { start, finish, isStarting, isFinishing } = useJobProgress()
   const { complete, isCompleting } = useCompleteJob()
+  const { approveStart, isApproving } = useApproveStart()
 
   /**
    * El diálogo de romper un contrato, con su motivo.
@@ -263,7 +266,7 @@ export function JobDetailPage({
     )
   }
 
-  const look = jobStatusLook(job.status, job.appointmentStatus)
+  const look = jobStatusLook(job.status, job.appointmentStatus, job.workFinishedAt)
   /**
    * Esperando a alguien del lado profesional, con su reloj a la vista. Ante
    * un cambio de persona quien tiene que contestar es el propio cliente, y
@@ -333,6 +336,27 @@ export function JobDetailPage({
    */
   const canComplete =
     job.viewer === 'client' && job.status === 'IN_PROGRESS' && Boolean(job.workFinishedAt)
+
+  /**
+   * El reloj se enseña en cuanto hay hora de inicio, a los dos por igual, y
+   * sigue ahí cuando el trabajo acaba: entonces deja de contar y se queda con
+   * el total, que es el dato que importa cuando se paga por horas.
+   */
+  const showTimer = Boolean(job.startedAt)
+
+  /**
+   * Y el cliente puede reconocer que ha empezado, mientras no lo haya hecho ya
+   * ni el profesional haya terminado.
+   *
+   * **No autoriza nada**: el tiempo corre desde que él pulsó Empezar. Es para
+   * que le llegue que del otro lado se han enterado.
+   */
+  const canApproveStart =
+    job.viewer === 'client' &&
+    job.status === 'IN_PROGRESS' &&
+    Boolean(job.startedAt) &&
+    !job.startApprovedAt &&
+    !job.workFinishedAt
 
   /** Se pregunta antes: dar por bueno paga, y pagar no se deshace con otro toque. */
   const confirmComplete = (id: string) => {
@@ -610,6 +634,36 @@ export function JobDetailPage({
           "confirma" en una decisión con fecha, y lo que explica que no hacer
           nada también sea una respuesta.
         */}
+        {showTimer && job.startedAt && (
+          <View style={styles.deadline}>
+            <WorkTimer
+              startedAt={job.startedAt}
+              finishedAt={job.workFinishedAt}
+              label={
+                job.workFinishedAt
+                  ? 'Tiempo trabajado'
+                  : job.viewer === 'pro'
+                    ? 'Llevas trabajando'
+                    : 'Lleva trabajando'
+              }
+              testID="job-detail-timer"
+            />
+          </View>
+        )}
+
+        {canApproveStart && (
+          <Button
+            fullWidth
+            variant="secondary"
+            onPress={() => void approveStart(job.id)}
+            disabled={isApproving}
+            style={styles.bids}
+            testID="job-detail-approve-start"
+          >
+            {isApproving ? 'Confirmando…' : 'Confirmar que ha empezado'}
+          </Button>
+        )}
+
         {canComplete && (
           <>
             <Button

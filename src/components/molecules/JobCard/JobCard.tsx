@@ -45,7 +45,7 @@ export function JobCard({
   isRespondingSubstitute = false,
   testID,
 }: JobCardProps) {
-  const status = jobStatusLook(job.status, job.appointmentStatus)
+  const status = jobStatusLook(job.status, job.appointmentStatus, job.workFinishedAt)
   const image = getTradeImage(job.trade)
 
   /** La empresa propone a otra persona y el cliente tiene que decir */

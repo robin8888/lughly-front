@@ -65,13 +65,35 @@ const WAITING: Partial<Record<ApiAppointmentStatus, StatusLook>> = {
   PENDING_WORKER: { label: 'Pendiente de confirmar', variant: 'accent' },
 }
 
+/**
+ * Terminado no es un estado del servidor: es `IN_PROGRESS` con la hora de fin
+ * puesta, esperando a que el cliente lo dé por bueno.
+ *
+ * Sin distinguirlo, la etiqueta decía "En curso" a un trabajo que el
+ * profesional había cerrado hacía rato, y las dos partes se quedaban mirando
+ * un rótulo que contradecía lo que acababan de hacer. El detalle ya lo
+ * explicaba con palabras; lo que faltaba era que lo dijera la etiqueta, que es
+ * lo único que se ve en una lista.
+ *
+ * Color de "hace falta algo de ti": es exactamente eso, y el reloj de 24 horas
+ * ya está corriendo.
+ */
+const AWAITING_CONFIRMATION: StatusLook = {
+  label: 'Falta darlo por bueno',
+  variant: 'accent2',
+}
+
 export function jobStatusLook(
   status: ApiJobStatus,
   appointmentStatus: ApiAppointmentStatus | null = null,
+  /** Cuándo dijo el profesional que había terminado, si lo dijo */
+  workFinishedAt: string | null = null,
 ): StatusLook {
   if (status === 'PENDING_PRO' && appointmentStatus !== null) {
     return WAITING[appointmentStatus] ?? STATUS[status]
   }
+
+  if (status === 'IN_PROGRESS' && workFinishedAt !== null) return AWAITING_CONFIRMATION
 
   return STATUS[status]
 }

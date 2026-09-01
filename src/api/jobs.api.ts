@@ -106,6 +106,14 @@ export interface ApiJob {
   /** Hasta cuándo tiene para responder quien recibió el encargo */
   respondByAt: string | null
   createdAt: string
+  /**
+   * Cuándo dijo el profesional que había terminado.
+   *
+   * Puesto con el trabajo todavía `IN_PROGRESS` significa **terminado y
+   * esperando a que el cliente lo dé por bueno**, que no es "en curso": la
+   * etiqueta de la tarjeta lo distingue con esto.
+   */
+  workFinishedAt: string | null
 }
 
 export interface CreateJobPayload {
@@ -210,6 +218,23 @@ export interface ApiJobDetail {
   workFinishedAt: string | null
   confirmByAt: string | null
   completedAt: string | null
+  /**
+   * El reloj del trabajo, y lo pone el servidor.
+   *
+   * `startedAt` es cuándo el profesional pulsó Empezar y `workFinishedAt`
+   * cuándo pulsó Terminar: entre los dos está el tiempo trabajado. Con el
+   * primero puesto y el segundo a nulo, **el contador corre ahora mismo**.
+   *
+   * No se deduce aquí a propósito: dos relojes de pared no coinciden, y un
+   * contador que a cada uno le diga una cosa es peor que no tenerlo.
+   */
+  startedAt: string | null
+  /**
+   * Cuándo el cliente reconoció el inicio. **No mueve el contador**: nulo con
+   * el trabajo en curso solo significa que todavía no ha dicho nada, que es
+   * lo normal mientras abre la puerta.
+   */
+  startApprovedAt: string | null
   maxBudget: number | null
   /** El precio acordado, cuando lo hay */
   amount: number | null
@@ -302,6 +327,18 @@ export const jobsApi = {
    * `complete` y no `confirm` porque `assignmentsApi.confirm` ya es otra cosa:
    * allí un trabajador dice que puede con lo que le mandó su empresa.
    */
+  /**
+   * El cliente reconoce que el profesional ha llegado y ha empezado.
+   *
+   * No autoriza nada: el tiempo ya corre desde que él pulsó empezar. Sirve
+   * para que le llegue que del otro lado se han enterado.
+   */
+  approveStart: (jobId: string) =>
+    apiRequest<{ jobId: string; startedAt: string; startApprovedAt: string }>(
+      `/v1/jobs/${jobId}/approve-start`,
+      { method: 'POST', auth: true },
+    ),
+
   complete: (jobId: string) =>
     apiRequest<{
       jobId: string
