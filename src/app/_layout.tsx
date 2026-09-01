@@ -55,6 +55,27 @@ function CacheGuard() {
   return null
 }
 
+/**
+ * Que la app se entere sola de lo que pasa fuera.
+ *
+ * Dos mitades que se cubren: el aviso que llega —y que invalida lo que toque—
+ * y el refresco al volver a primer plano, para cuando el aviso no llega o el
+ * usuario estaba en otra app.
+ *
+ * Componente y no llamada dentro de `RootLayout`, por lo mismo que
+ * `CacheGuard`: los dos hooks invalidan consultas y necesitan el `QueryClient`
+ * del proveedor, que se monta **dentro** del JSX de `RootLayout`. Llamados
+ * arriba quedan fuera de su alcance y revientan con "No QueryClient set".
+ */
+function LiveUpdates() {
+  const isAuthenticated = useIsAuthenticated()
+
+  usePushInvalidation()
+  useRefreshOnForeground(LIVE_QUERY_KEYS, isAuthenticated)
+
+  return null
+}
+
 // Mantener el splash nativo visible hasta que todo esté listo
 SplashScreen.preventAutoHideAsync()
 
@@ -94,23 +115,6 @@ export default function RootLayout() {
    * mandarlo cada vez que se abre la app.
    */
   usePushRegistration()
-
-  /**
-   * Y que la app haga algo con ellos. Hasta hoy los avisos llegaban y la
-   * pantalla se quedaba igual: había que salir y volver a entrar para ver que
-   * te habían aceptado un trabajo o que te habían escrito.
-   */
-  usePushInvalidation()
-
-  /**
-   * La otra mitad, para cuando el aviso no llega o el usuario estaba en otra
-   * app: al volver a primer plano se vuelve a pedir lo que caduca solo.
-   *
-   * Un aviso se pierde por muchos motivos —permiso denegado, el móvil sin
-   * servicios, Expo con un mal minuto— y la app no puede quedarse esperando a
-   * uno que no va a llegar.
-   */
-  useRefreshOnForeground(LIVE_QUERY_KEYS, isAuthenticated)
 
   const hasHydrated = useHasHydrated()
   const isLoading = useIsLoading()
@@ -228,6 +232,12 @@ export default function RootLayout() {
             necesita su cliente, y sin renderizar nada: solo vigila.
           */}
           <CacheGuard />
+
+          {/*
+            Los avisos mueven la pantalla, y volver a la app la pone al día.
+            Aquí dentro por lo mismo que `CacheGuard`: necesita el cliente.
+          */}
+          <LiveUpdates />
 
           {/* Se monta una sola vez y lo controla useLoadingStore desde donde sea */}
           <LoadingOverlay
