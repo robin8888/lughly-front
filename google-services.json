@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "590717640240",
+    "project_id": "lughly",
+    "storage_bucket": "lughly.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590717640240:android:0574b930de9ca33f3d17f5",
+        "android_client_info": {
+          "package_name": "com.lughly.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpwiaWOGnT_2oeBBSe3zMasR2XcrmY6x8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

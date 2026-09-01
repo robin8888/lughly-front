@@ -30,6 +30,7 @@
         "backgroundColor": "#04070f"
       },
       "package": "com.lughly.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
