@@ -2011,7 +2011,7 @@ está, entra sola.
 
 ## 🎯 Lo siguiente (2 Septiembre 2026)
 
-### 1. El botón de reservar no se habilita 🐛
+### 1. El botón de reservar no se habilita ✅ (hecho esa misma noche)
 
 Rellenas el formulario de encargar y «Enviar la reserva» sigue apagado, sin
 decir por qué. No es un fallo nuevo: son cinco condiciones invisibles.
@@ -2033,12 +2033,19 @@ Un botón apagado sin explicación es un callejón sin salida, y ya se arregló 
 vez en otro sitio (commit del 26 de agosto, «Formularios que dicen qué les
 falta»).
 
-- [ ] Decir qué falta debajo del botón, con lo que falla, no con la lista de
-      normas.
-- [ ] Marcar el campo, que `FormField` ya sabe pintar errores y `fieldErrors`
-      solo se usa hoy para lo que devuelve el servidor.
+- [x] Decir qué falta debajo del botón, con lo que falla y no con la lista de
+      normas. En el color del texto, no en rojo: es lo que queda por hacer, no
+      un reproche a quien está rellenando.
+- [x] Marcar el campo, contando lo que falta —«Te faltan 4 caracteres»— y solo
+      cuando ya se ha escrito algo: un formulario recién abierto no puede salir
+      en rojo. El error del servidor sigue mandando sobre el de aquí.
 - [ ] Revisar si 20 caracteres son razonables en una reserva instantánea a
-      tarifa conocida. Para un presupuesto sí.
+      tarifa conocida. Para un presupuesto sí; sin decidir.
+
+**Y el patrón que lo produce, que es lo que conviene recordar**: la regla vive
+solo en la condición que apaga el botón, así que existe pero no se puede leer.
+Ha pasado dos veces en una semana. Merece un vistazo en cualquier formulario
+nuevo.
 
 ### 2. Las pantallas de reservar por horas
 
