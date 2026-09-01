@@ -133,11 +133,14 @@ export function HomePagePro({
   /**
    * Lo que le han encargado y sigue sin respuesta.
    *
-   * Solo lo que no tiene cita abierta: lo ya propuesto a un sustituto está
-   * esperando al cliente, no a él, y contarlo aquí sería meterle prisa por
-   * algo que no depende de él.
+   * Sin cita, o con el hueco apartado de una reserva por horas: las dos
+   * esperan por él. Lo ya propuesto a un sustituto no, que está esperando al
+   * cliente, y contarlo aquí sería meterle prisa por algo que no depende de
+   * él.
    */
-  const pending = items.filter((item) => item.appointmentStatus === null)
+  const pending = items.filter(
+    (item) => item.appointmentStatus === null || item.appointmentStatus === 'RESERVED',
+  )
   const pendingCount = pending.length
 
   /**

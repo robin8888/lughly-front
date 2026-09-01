@@ -51,6 +51,17 @@ export type ApiJobStatus =
  * después arreglo pasa dos veces por "falta que el trabajador confirme".
  */
 export type ApiAppointmentStatus =
+  /**
+   * El hueco está apartado y todavía no lo ha aceptado nadie.
+   *
+   * Nace con una reserva por horas: el cliente eligió a quién, qué día y a qué
+   * hora, y puso el dinero. Ocupa la agenda desde ese momento —si no, ese mismo
+   * hueco se le seguiría ofreciendo a otros mientras él tiene el importe
+   * retenido— pero **no espera respuesta de nadie a nivel de cita**: quien
+   * tiene que contestar es quien recibió el encargo, y su plazo está en el
+   * trabajo. Aceptar la confirma en su sitio, sin abrir otra.
+   */
+  | 'RESERVED'
   /** La empresa ha mandado a uno de los suyos y falta que él confirme */
   | 'PENDING_WORKER'
   /** Va alguien distinto de quien pidió el cliente, y falta que lo acepte */

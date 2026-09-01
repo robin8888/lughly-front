@@ -9,6 +9,7 @@
 
 import { apiRequest } from './http'
 import type { ApiAppointmentStatus, ApiJobStatus, ApiJobType } from './jobs.api'
+import type { ApiHoursQuote } from './pros.api'
 
 export interface RequestProPayload {
   /** Presupuesto directo o reserva; una urgencia no pasa por aquí */
@@ -65,6 +66,41 @@ export interface ApiBookedServices {
   clientSecret: string | null
 }
 
+/**
+ * Lo que hace falta para reservar por horas
+ * (`CICLOS_DE_CONTRATACION.md` §A3).
+ *
+ * **El precio no viaja**: lo calcula el servidor con la misma cuenta que
+ * devolvió el desglose (`prosApi.hoursQuote`). Mandarlo desde aquí sería
+ * dejar que el cliente ponga el suyo.
+ */
+export interface BookHoursPayload {
+  tradeSlug: string
+  /** El hueco elegido, ISO. Se vuelve a comprobar al reservar. */
+  startAt: string
+  durationMin: number
+  city: string
+  addressLine: string
+  /** Lo que hay que hacer, con sus palabras. Opcional. */
+  note?: string
+  /** La tarjeta guardada en la que se retiene (`paymentsApi.methods()`) */
+  paymentMethodId: string
+}
+
+/**
+ * Lo que devuelve reservar por horas.
+ *
+ * Es lo mismo que la carta más el desglose que se ha cobrado, para poder
+ * enseñarlo tal cual en la confirmación sin volver a pedirlo.
+ *
+ * Y una diferencia que importa con `requires_action`: aquí **el hueco ya está
+ * apartado** mientras el cliente se autentica. Si abandona el reto, el barrido
+ * de plazos suelta el intento y libera la hora media hora después.
+ */
+export interface ApiBookedHours extends ApiBookedServices {
+  price: ApiHoursQuote
+}
+
 export interface ApiDirectRequest {
   id: string
   status: string
@@ -94,11 +130,17 @@ export interface ApiInboxItem {
    *
    * - `null`: te han elegido y hay que decir quién lo hace. Lo ve un autónomo
    *   con lo suyo y una empresa con lo de su gente.
+   * - `RESERVED`: lo mismo, **pero con hora ya elegida y pagada**. Es una
+   *   reserva por horas: el hueco está apartado en tu agenda y sigue
+   *   esperando tu sí. Se responde igual que un `null`.
    * - `SUBSTITUTE_PROPOSED`: ya se propuso a otro y se espera al cliente.
    * - `PENDING_WORKER`: tu empresa te lo ha asignado y **tienes que
    *   confirmarlo**. Es lo único que ve aquí un trabajador por cuenta ajena.
    */
-  appointmentStatus: Extract<ApiAppointmentStatus, 'PENDING_WORKER' | 'SUBSTITUTE_PROPOSED'> | null
+  appointmentStatus: Extract<
+    ApiAppointmentStatus,
+    'RESERVED' | 'PENDING_WORKER' | 'SUBSTITUTE_PROPOSED'
+  > | null
   title: string
   description: string
   trade: string
@@ -245,6 +287,22 @@ export const assignmentsApi = {
    */
   bookServices: (proId: string, payload: BookServicesPayload) =>
     apiRequest<ApiBookedServices>(`/v1/pros/${proId}/book-services`, {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
+  /**
+   * Contratar por horas. **Retiene, no cobra**, igual que la carta — y además
+   * aparta el hueco: desde que se pulsa, esa hora deja de ofrecérsele a nadie
+   * más, aunque el profesional tarde 24 horas en contestar.
+   *
+   * Un 409 puede ser dos cosas: que ese oficio suyo no se cobre por horas, o
+   * que el hueco acabe de ocuparse entre verlo y pagarlo. En el segundo caso
+   * no se ha cobrado nada y basta con elegir otro.
+   */
+  bookHours: (proId: string, payload: BookHoursPayload) =>
+    apiRequest<ApiBookedHours>(`/v1/pros/${proId}/book-hours`, {
       method: 'POST',
       auth: true,
       body: payload,
