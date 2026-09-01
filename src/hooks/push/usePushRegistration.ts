@@ -20,6 +20,7 @@ import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 import { meApi } from '@/api/me.api'
 import { useIsAuthenticated } from '@/stores/useAuthStore'
+import { usePushStore } from '@/stores/usePushStore'
 
 /**
  * En un emulador no hay servicios de notificación, así que Expo no puede dar
@@ -74,10 +75,22 @@ export function usePushRegistration(): void {
     void (async () => {
       try {
         const token = await obtainToken()
-        if (!token || cancelled) return
+
+        /*
+          Que haya token o no lo apunta el store, y no es solo informativo: el
+          chat sondea rápido cuando no hay avisos y despacio cuando los hay.
+          Sin esto habría que elegir uno de los dos para todo el mundo.
+        */
+        if (!token || cancelled) {
+          if (!cancelled) usePushStore.getState().setActive(false)
+          return
+        }
 
         await meApi.registerDevice(token, Platform.OS === 'ios' ? 'IOS' : 'ANDROID')
+
+        if (!cancelled) usePushStore.getState().setActive(true)
       } catch {
+        usePushStore.getState().setActive(false)
         // Sin avisos se sigue pudiendo trabajar; no se molesta al usuario
       }
     })()

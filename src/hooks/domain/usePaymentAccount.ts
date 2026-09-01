@@ -12,12 +12,12 @@
  * `useRefreshUserOnForeground` para confirmar el correo.
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
-import { AppState, Linking } from 'react-native'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Linking } from 'react-native'
 import * as ExpoLinking from 'expo-linking'
 import { ApiError, NetworkError } from '@/api'
 import { paymentsApi, type ApiAccountStatus } from '@/api/payments.api'
+import { useRefreshOnForeground } from '@/hooks/ui/useRefreshOnForeground'
 
 export function accountStatusQueryKey() {
   return ['payments', 'account-status'] as const
@@ -37,24 +37,14 @@ export function useAccountStatus(enabled = true) {
  * flujo de onboarding: el empleador sale al navegador, completa sus datos
  * bancarios en Stripe y vuelve; al volver, la app se entera sin que haga
  * falta pulsar nada.
+ *
+ * El mecanismo se mudó a `useRefreshOnForeground`, que es el mismo que ahora
+ * usa todo lo que caduca solo. Esto se queda como el nombre con el que se lee
+ * en la pantalla de empleados: lo que se refresca ahí es "el estado de la
+ * cuenta", no "unas claves".
  */
 export function useRefreshAccountStatusOnForeground(enabled: boolean): void {
-  const queryClient = useQueryClient()
-
-  useEffect(() => {
-    if (!enabled) return
-
-    const refresh = () =>
-      void queryClient.invalidateQueries({ queryKey: accountStatusQueryKey() })
-
-    refresh()
-
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refresh()
-    })
-
-    return () => subscription.remove()
-  }, [enabled, queryClient])
+  useRefreshOnForeground([accountStatusQueryKey()], enabled)
 }
 
 export function useRequestOnboardingLink() {

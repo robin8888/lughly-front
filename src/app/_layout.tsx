@@ -31,6 +31,9 @@ import { StripeProvider } from '@stripe/stripe-react-native'
 import { setupSessionBridge } from '@/api/sessionBridge'
 import { useResetCacheOnAccountChange } from '@/hooks/auth/useResetCacheOnAccountChange'
 import { usePushRegistration } from '@/hooks/push/usePushRegistration'
+import { usePushInvalidation } from '@/hooks/push/usePushInvalidation'
+import { LIVE_QUERY_KEYS } from '@/hooks/push/pushInvalidation'
+import { useRefreshOnForeground } from '@/hooks/ui/useRefreshOnForeground'
 import { BottomTabBar } from '@/components/organisms/BottomTabBar'
 import { LoadingOverlay } from '@/components/organisms/LoadingOverlay'
 import {
@@ -91,6 +94,24 @@ export default function RootLayout() {
    * mandarlo cada vez que se abre la app.
    */
   usePushRegistration()
+
+  /**
+   * Y que la app haga algo con ellos. Hasta hoy los avisos llegaban y la
+   * pantalla se quedaba igual: había que salir y volver a entrar para ver que
+   * te habían aceptado un trabajo o que te habían escrito.
+   */
+  usePushInvalidation()
+
+  /**
+   * La otra mitad, para cuando el aviso no llega o el usuario estaba en otra
+   * app: al volver a primer plano se vuelve a pedir lo que caduca solo.
+   *
+   * Un aviso se pierde por muchos motivos —permiso denegado, el móvil sin
+   * servicios, Expo con un mal minuto— y la app no puede quedarse esperando a
+   * uno que no va a llegar.
+   */
+  useRefreshOnForeground(LIVE_QUERY_KEYS, isAuthenticated)
+
   const hasHydrated = useHasHydrated()
   const isLoading = useIsLoading()
   const loadingMessage = useLoadingMessage()

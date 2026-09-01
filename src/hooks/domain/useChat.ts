@@ -19,20 +19,48 @@ import {
   type SendMessagePayload,
 } from '@/api/chat.api'
 import { useAuthStore } from '@/stores/useAuthStore'
-
-const THREADS_POLL_MS = 20_000
-const MESSAGES_POLL_MS = 5_000
+import { useIsPushActive } from '@/stores/usePushStore'
 
 /**
- * Cada cuánto se vuelve a preguntar cuántos mensajes hay esperando.
+ * Cada cuánto se sondea, **según lleguen o no los avisos**.
  *
- * Más lento que la bandeja —treinta segundos contra veinte— porque el aviso no
- * es una pantalla que se está mirando, es un número encima de un icono que
- * vive en la home. Que tarde diez segundos de más en pasar de 2 a 3 no se lo
- * pierde nadie; sondear rápido desde la pantalla donde más tiempo se está sí
- * se nota en la batería.
+ * Con los avisos funcionando, un mensaje nuevo se ve en el momento: el aviso
+ * invalida la conversación (`usePushInvalidation`) y React Query la vuelve a
+ * pedir. El sondeo se queda solo como red —un aviso se puede perder— y a ese
+ * ritmo no hace falta que sea rápido.
+ *
+ * Sin avisos —permiso denegado, un emulador, un móvil sin servicios de
+ * notificación— el sondeo es lo único que hay, y ahí cinco segundos es lo que
+ * hace que una conversación se sienta viva.
+ *
+ * Elegir un solo número obligaba a decidir entre gastar batería a todo el
+ * mundo o dejar el chat muerto a quien no da el permiso. Son dos situaciones
+ * distintas y se tratan distinto.
  */
-const UNREAD_POLL_MS = 30_000
+const POLL_MS = {
+  threads: { withPush: 60_000, withoutPush: 20_000 },
+  messages: { withPush: 20_000, withoutPush: 5_000 },
+  unread: { withPush: 120_000, withoutPush: 30_000 },
+} as const
+
+/**
+ * El ritmo que toca ahora mismo.
+ *
+ * Exportado para poder probarlo: es una decisión de producto —cuánta batería
+ * a cambio de cuánta frescura— y comprobarla a través de las consultas
+ * obligaría a levantar React Query con sus temporizadores vivos.
+ */
+export function usePollInterval(which: keyof typeof POLL_MS): number {
+  const active = useIsPushActive()
+
+  return active ? POLL_MS[which].withPush : POLL_MS[which].withoutPush
+}
+
+/*
+  El no leído va siempre más lento que la bandeja: no es una pantalla que se
+  está mirando, es un número encima de un icono que vive en la home. Que tarde
+  diez segundos de más en pasar de 2 a 3 no se lo pierde nadie.
+*/
 
 export function myThreadsQueryKey() {
   return ['chat', 'threads'] as const
@@ -64,12 +92,14 @@ export function unreadCountQueryKey() {
  *   mensajes, y preguntarlo devolvería un 401 en cada arranque.
  */
 export function useUnreadCount(enabled = true) {
+  const refetchInterval = usePollInterval('unread')
+
   return useQuery<ApiUnreadCount>({
     queryKey: unreadCountQueryKey(),
     queryFn: () => chatApi.unreadCount(),
     enabled,
     staleTime: 10_000,
-    refetchInterval: UNREAD_POLL_MS,
+    refetchInterval,
   })
 }
 
@@ -109,22 +139,26 @@ export function useMarkThreadRead() {
 }
 
 export function useMyThreads(enabled = true) {
+  const refetchInterval = usePollInterval('threads')
+
   return useQuery<ApiThreadSummary[]>({
     queryKey: myThreadsQueryKey(),
     queryFn: () => chatApi.myThreads(),
     enabled,
     staleTime: 10_000,
-    refetchInterval: THREADS_POLL_MS,
+    refetchInterval,
   })
 }
 
 export function useJobMessages(jobId: string | undefined, enabled = true) {
+  const refetchInterval = usePollInterval('messages')
+
   return useQuery<ApiMessage[]>({
     queryKey: jobMessagesQueryKey(jobId ?? ''),
     queryFn: () => chatApi.jobMessages(jobId as string),
     enabled: enabled && Boolean(jobId),
     staleTime: 2_000,
-    refetchInterval: MESSAGES_POLL_MS,
+    refetchInterval,
   })
 }
 
@@ -162,12 +196,15 @@ export function useSendJobMessage(jobId: string | undefined) {
 }
 
 export function useSupportMessages(enabled = true) {
+  /* La conversación con administración es una conversación: mismo ritmo */
+  const refetchInterval = usePollInterval('messages')
+
   return useQuery<ApiMessage[]>({
     queryKey: supportMessagesQueryKey(),
     queryFn: () => chatApi.supportMessages(),
     enabled,
     staleTime: 2_000,
-    refetchInterval: MESSAGES_POLL_MS,
+    refetchInterval,
   })
 }
 
