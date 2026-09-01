@@ -1922,6 +1922,141 @@ se decide entonces y por su cuenta.
 
 ---
 
+## 🎯 Los avisos, de verdad y en los dos móviles ✅ (1 Septiembre 2026, tarde)
+
+La invalidación por push estaba hecha esa misma mañana, pero **no había llegado
+nunca un aviso a ningún móvil**. Tres muros, uno detrás de otro, y cada uno se
+veía igual desde la app: "no me llega nada".
+
+1. **`PUSH_PROVIDER=console` en el `.env`.** El servidor imprimía una línea en
+   su consola y no mandaba nada. Puesto en `expo`, y avisado en `.env.example`
+   —cuesta una tarde descubrirlo—.
+2. **Con la app abierta, iOS no enseña nada** salvo que se lo digas.
+   `setNotificationHandler` con `shouldShowBanner`: el aviso llegaba y los
+   oyentes se disparaban, pero no se veía.
+3. **Android no tenía canal.** En Android 8+ el canal decide si suena y si se
+   asoma; sin ninguno, todo caía en el que Expo crea solo, sin prioridad. Se
+   crea `avisos`, y el servidor lo nombra al enviar (`channelId`).
+
+### Y Android necesitaba Firebase, que no estaba
+
+El síntoma era "a Android no le llegan", pero la verdad era otra: **ese móvil
+nunca llegó a pedir un token**. Sin `google-services.json` no puede registrarse
+en FCM. iOS no pasa por ahí —habla con Apple y de eso se encarga EAS— y por eso
+funcionaba uno y el otro no.
+
+- `google-services.json` del proyecto `lughly`, commiteado (solo lleva
+  identificadores públicos) y enganchado con `android.googleServicesFile`.
+- La clave de cuenta de servicio FCM V1, subida a EAS. Esa **no** va al
+  repositorio.
+
+**Y se hizo visible el fallo**, que es lo que costó la tarde: quedarse sin
+token no daba error, así que "no llegan avisos" y "nunca pidió token" se veían
+idénticos. Ahora `usePushRegistration` dice el motivo en desarrollo —emulador,
+permiso, projectId, o FCM—. En producción sigue callado.
+
+### Dos trampas que conviene tener escritas
+
+- **El token es del aparato, no de la persona.** Probando dos cuentas en un
+  mismo móvil, solo la última que entra recibe avisos. Para probar los dos
+  lados hacen falta dos aparatos, y ninguno puede ser un emulador.
+- **De un canal de Android ya creado solo se pueden cambiar el nombre y la
+  descripción.** El sonido y la prioridad se quedan como se pusieron la primera
+  vez, en cada móvil que ya lo tenga. Cambiarlos de verdad obliga a desinstalar
+  o a estrenar identificador. (Pasó: el canal se creó con `sound: 'default'`,
+  que en la entrada es **un nombre de fichero**, no la palabra.)
+
+---
+
+## 🎯 El reloj del trabajo ✅ (1 Septiembre 2026, tarde)
+
+Empezar y terminar movían el trabajo pero solo se lo contaban a una parte, y el
+tiempo trabajado no salía a ninguna pantalla.
+
+- **`WorkTimer`**, igual en los dos lados. El origen lo pone el servidor
+  (`startedAt`): dos relojes de pared no coinciden, y un contador que a cada uno
+  le diga una cosa es peor que no tenerlo.
+- **El cliente confirma el inicio** (`approve-start`) y al profesional le llega
+  que del otro lado se han enterado. **No es un permiso**: el reloj corre desde
+  que él pulsa Empezar. Si esperase, un cliente con el móvil en silencio dejaría
+  a alguien trabajando sin que le contaran las horas.
+- **Al terminar se avisa a los dos.** Al profesional le faltaba, y es el aviso
+  de que el reloj se ha parado y de cuándo cobra.
+- **"En curso" deja de mentir.** Con la hora de fin puesta, la etiqueta dice
+  «Falta darlo por bueno». El dato ni siquiera viajaba en la lista.
+
+**El reloj todavía no cobra**: se factura lo pactado al reservar, no lo que
+marque el contador. Enlazarlos es §A6 y es otra pieza.
+
+---
+
+## 🎯 El teclado tapaba los campos en Android ✅ (1 Septiembre 2026, tarde)
+
+El remedio que había era `automaticallyAdjustKeyboardInsets`, **solo de iOS**.
+Estaba en catorce pantallas, y otras cuatro con campos no tenían ni eso.
+
+`react-native-keyboard-controller` —lo que recomienda Expo para formularios
+largos— detrás de `FormScrollView`, que recoge la configuración una vez para
+las dieciséis: el hueco bajo el campo enfocado es el mismo que se reserva para
+la píldora flotante (sigue ahí con el teclado abierto), y
+`keyboardShouldPersistTaps` para que el primer toque en un botón no se lo coma
+el teclado.
+
+**Es nativa, así que hay que reconstruir el dev client.** Y como revienta al
+importarse si falta su módulo, `keyboardController` la carga con cuidado y cae
+a lo de antes: la app arranca igual mientras la build de EAS termina. En cuanto
+está, entra sola.
+
+---
+
+## 🎯 Lo siguiente (2 Septiembre 2026)
+
+### 1. El botón de reservar no se habilita 🐛
+
+Rellenas el formulario de encargar y «Enviar la reserva» sigue apagado, sin
+decir por qué. No es un fallo nuevo: son cinco condiciones invisibles.
+
+```
+chosenTrade !== null
+title.trim().length >= 8
+description.trim().length >= 20
+city.trim().length >= 2
+address !== null
+```
+
+Las dos que muerden: la **descripción pide 20 caracteres** («cambiar bombilla»
+son 16), y la **dirección tiene que elegirse de las sugerencias** —solo
+entonces se rellena `address`, porque de ahí salen las coordenadas—. El campo se
+ve lleno y por dentro está a `null`.
+
+Un botón apagado sin explicación es un callejón sin salida, y ya se arregló una
+vez en otro sitio (commit del 26 de agosto, «Formularios que dicen qué les
+falta»).
+
+- [ ] Decir qué falta debajo del botón, con lo que falla, no con la lista de
+      normas.
+- [ ] Marcar el campo, que `FormField` ya sabe pintar errores y `fieldErrors`
+      solo se usa hoy para lo que devuelve el servidor.
+- [ ] Revisar si 20 caracteres son razonables en una reserva instantánea a
+      tarifa conocida. Para un presupuesto sí.
+
+### 2. Las pantallas de reservar por horas
+
+`book-hours` está construido y probado de punta a punta, y **no lo llama
+nadie**: falta el selector de huecos y la de confirmar con el desglose. El
+espejo está entero (`prosApi.slots`, `prosApi.hoursQuote`,
+`assignmentsApi.bookHours`). Es lo único que separa el ciclo del dinero de
+poder usarse desde el móvil.
+
+### 3. Suelto
+
+- [ ] `BlurView` en Android avisa de que le falta `blurTarget` y se cae a "sin
+      desenfoque": los botones de cristal de la entrada no se ven como en iOS.
+- [ ] El importe en los avisos se escribe «42.00 €», con punto. Viene de
+      `toFixed(2)` y está en los dos sitios; hay que arreglarlos a la vez.
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
