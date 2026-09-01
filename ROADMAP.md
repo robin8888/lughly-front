@@ -1651,10 +1651,12 @@ existiera, un cobro a los profesionales de prueba fallaría con
 
 ### Qué hacer
 
-- [ ] **`book-hours`** (§A2–A3): crear `Job(HOURLY)` + `Appointment` + `Charge`
-      con el desglose antes de pagar. Es la pieza que hace que el dinero llegue
-      al camino por el que pasa todo el mundo, y además es de lo que cuelgan los
-      contratos recurrentes.
+- [x] **El precio por horas** (§A1–A2): el mínimo del oficio y el desglose que
+      se enseña antes de pagar. Hecho el 1 de septiembre, abajo.
+- [ ] **`book-hours`** (§A3): crear `Job(HOURLY)` + `Appointment` + `Charge`
+      con ese desglose. Es la pieza que hace que el dinero llegue al camino por
+      el que pasa todo el mundo, y además es de lo que cuelgan los contratos
+      recurrentes.
 - [ ] **Decidir qué pasa con `request-pro`**: o se retira en favor de los tres
       caminos de la v3 —por horas, carta y visita—, o se le pone precio. Hoy es
       el único que llega hasta el final sin dinero, y es el que más se usa.
@@ -1663,6 +1665,70 @@ existiera, un cobro a los profesionales de prueba fallaría con
       sitio.
 - [ ] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts` para poder
       probar el cobro de punta a punta.
+
+---
+
+## 🎯 El precio de contratar por horas ✅ (1 Septiembre 2026)
+
+El primer paso de `book-hours`: **saber cuánto cuesta antes de pagar**
+(`CICLOS_DE_CONTRATACION.md` §A1–A2). No cobra nada todavía; deja hecha la
+cuenta que va a cobrar el paso siguiente.
+
+### El mínimo de horas, que no existía
+
+La ficha decía «14 €/h» y nada más, así que se le podía pedir a alguien media
+hora de limpieza: el desplazamiento se lo come entero y no había forma de decir
+que no antes de que llegara el encargo.
+
+- `ProTrade.minHours`, nuevo, con su migración. **Nulo es sin mínimo, no cero**,
+  y solo tiene sentido con `hourlyRate` puesto: quien cobra por visita ya tiene
+  un suelo, que es la propia visita, y `proTradeSchema` lo rechaza ahí.
+- Va en el **oficio** y no en el perfil: a nadie le compensa desplazarse por
+  cuarenta minutos de limpieza, y una clase suelta de una hora es el caso
+  normal. Con un solo mínimo para todo el perfil habría que elegir entre perder
+  los encargos cortos o regalar los desplazamientos.
+- En el móvil: campo propio en «Mis oficios y tarifas» y en el alta —solo en
+  modo por hora—, y **en la tarjeta del directorio pegado al precio**,
+  «14 €/h · mín. 2 h», que es donde el cliente tiene que verlo.
+
+### El desglose
+
+`priceHours`, cuenta pura, y `GET /v1/pros/:id/hours-quote` encima. Es el
+ejemplo literal de §A2:
+
+```
+3 h × 14 €/h                        42,00 €
+Jueves laborable                    sin recargo
+Total                               42,00 €
+```
+
+Tres decisiones que estaban escritas y ahora están construidas:
+
+- **El recargo lo decide la hora de inicio.** Una limpieza que empieza el
+  sábado a las 23:00 y cruza a domingo se cobra a un solo precio. Partirla por
+  tramos daría un desglose que nadie sabe leer y una discusión por cada minuto;
+  el sector cobra la salida, no el reloj.
+- **No se acumulan: manda el más alto.** Un festivo en sábado no es +95 %. A
+  igualdad gana el que mejor lo explica —«Festivo (Todos los Santos)» antes que
+  «Domingo»—.
+- **El festivo es el de esa persona**: el de su comunidad por código postal, más
+  los locales que añadió a mano, más la excepción que le haya puesto a ese día.
+  Misma regla que su calendario (`decided ?? sundaySurcharge > 0`), porque es la
+  que se le enseña ahí.
+
+Y **la misma cuenta la hará `book-hours`**: el precio que se enseña y el que se
+cobra no pueden salir de dos sitios, o un redondeo distinto enseña 42,00 y cobra
+42,01.
+
+### Lo que queda pegado a esto
+
+- [ ] `book-hours` (§A3), que es lo siguiente.
+- [ ] **El selector de huecos en el móvil.** El espejo ya está —`prosApi.slots`
+      y `prosApi.hoursQuote`—, falta la pantalla. `FreeSlotsUseCase` sigue sin
+      que lo llame nadie desde la app.
+
+**Verde al terminar: 460 pruebas en el backend, 325 en el móvil**, `tsc` limpio
+en los dos.
 
 ---
 
