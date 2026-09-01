@@ -1868,23 +1868,52 @@ Es decir: **el estado del trabajo no es reactivo por el mismo motivo**, no por
 falta de avisos. El aviso trae el `jobId` dentro; lo que falta es que alguien lo
 lea y refresque ese trabajo. Un solo arreglo tapa los dos síntomas.
 
-### Qué hacer
+### Qué hacer ✅ (1 Septiembre 2026)
 
-- [ ] **Escuchar la notificación recibida** y traducir su `data.screen`/`jobId`
-      a una invalidación de React Query. Es la pieza que lo arregla casi todo:
-      el aviso ya viaja con lo que hace falta para saber qué recargar. Con eso,
-      **el estado de un trabajo pasa a moverse solo** —empezado, terminado,
-      cerrado— sin tocar el backend.
-- [ ] **Refrescar al volver a primer plano**, que es lo que cubre el caso de
-      "estaba en otra app". Ya existe el patrón en
-      `useRefreshAccountStatusOnForeground`; falta generalizarlo.
-- [ ] **Revisar qué acciones se quedan sin aviso** ahora que hay más caminos:
-      lo que salga de los contratos recurrentes (sesión cancelada, tarjeta que
-      falla 24 h antes, serie aceptada) y los cambios de nivel de comisión ya
-      avisan, pero hay que repasar la lista entera contra §Z.
-- [ ] **Decidir si el chat deja de sondear.** Con la invalidación por push, los
-      5 s de mensajes sobran y gastan batería; el sondeo se queda como red por
-      si el aviso no llega.
+- [x] **Escuchar la notificación recibida** y traducir su `data.screen` a una
+      invalidación. `usePushInvalidation`, en la raíz de la app: escucha el
+      aviso que llega con la app abierta **y** el que el usuario toca, que no
+      son el mismo caso —al tocar, lo que se pinte tiene que estar al día en
+      ese primer pintado—.
+- [x] **Refrescar al volver a primer plano**: `useRefreshOnForeground`, que
+      sale de generalizar el de la cuenta de cobro. **Invalida, no solo
+      refresca**: con cinco minutos de `staleTime`, volver a la app a los
+      treinta segundos no traería nada, y treinta segundos es justo lo que
+      tarda alguien en contestarte.
+- [x] **Repasada la lista de quién avisa.** De los 19 casos de uso que cambian
+      algo, faltaban dos: `start-urgency` y `finish-urgency`. Sus equivalentes
+      normales avisaban desde hace tiempo. Se nota más aquí que en ningún
+      sitio: quien tiene una fuga a las tres de la mañana está esperando a que
+      llamen al timbre.
+- [x] **El chat sondea según lleguen o no los avisos.** Con ellos, los mensajes
+      pasan de 5 s a 20 s; sin ellos se queda como estaba. Elegir un solo
+      número obligaba a gastarle batería a todo el mundo o a dejar el chat
+      muerto a quien no da el permiso. Lo dice `usePushStore`, que
+      `usePushRegistration` escribe en cada arranque —el permiso puede
+      cambiarse desde los ajustes del sistema entre dos aperturas—.
+
+### Cómo quedó, y por qué así
+
+**Se invalida a lo bruto, a propósito.** `invalidateQueries` solo vuelve a
+pedir lo que está montado; lo demás se marca caducado y se pedirá al abrirlo.
+Así que enumerar de más no cuesta peticiones, y afinar de menos **no se ve**:
+la app sigue enseñando lo viejo, que es exactamente el fallo que esto arregla y
+que nadie sabría distinguir de "todavía no ha llegado el aviso".
+
+**Un `screen` desconocido refresca lo que caduca solo.** Una app instalada no
+se actualiza a la vez que el servidor; quedarse quieto ante un aviso nuevo
+dejaría al usuario viendo lo de antes sin ninguna pista.
+
+**Dos escrituras para lo mismo**: el backend manda `screen: 'jobs'` en nueve
+sitios y `screen: 'job'` en cuatro. Se aceptan las dos y no se toca el
+servidor: un aviso ya encolado en Expo seguirá trayendo la que traía.
+
+### Lo que sigue sin hacerse, y sigue bien así
+
+- **Navegar al tocar el aviso.** `data.screen` dice a dónde llevar al usuario,
+  pero llevarle es otra decisión —a qué pestaña, qué pasa si está a medias de
+  escribir algo—. Refrescar arregla el fallo de hoy sin mover a nadie.
+- **Websockets.** Nada de lo de arriba los necesita.
 
 **Lo que NO hay que hacer todavía**: websockets. Con push + invalidación +
 refresco al volver a primer plano se cubre todo esto sin montar un transporte
