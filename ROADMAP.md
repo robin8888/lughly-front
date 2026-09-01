@@ -1653,10 +1653,8 @@ existiera, un cobro a los profesionales de prueba fallaría con
 
 - [x] **El precio por horas** (§A1–A2): el mínimo del oficio y el desglose que
       se enseña antes de pagar. Hecho el 1 de septiembre, abajo.
-- [ ] **`book-hours`** (§A3): crear `Job(HOURLY)` + `Appointment` + `Charge`
-      con ese desglose. Es la pieza que hace que el dinero llegue al camino por
-      el que pasa todo el mundo, y además es de lo que cuelgan los contratos
-      recurrentes.
+- [x] **`book-hours`** (§A3): `Job(HOURLY)` + `Appointment(RESERVED)` +
+      `Charge(HOURS)` con ese desglose. Hecho el 1 de septiembre, abajo.
 - [ ] **Decidir qué pasa con `request-pro`**: o se retira en favor de los tres
       caminos de la v3 —por horas, carta y visita—, o se le pone precio. Hoy es
       el único que llega hasta el final sin dinero, y es el que más se usa.
@@ -1664,7 +1662,10 @@ existiera, un cobro a los profesionales de prueba fallaría con
       de §9: sin ella no se le puede contratar, y hoy no se le pide en ningún
       sitio.
 - [ ] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts` para poder
-      probar el cobro de punta a punta.
+      probar el cobro de punta a punta. **Es lo único que queda para verlo
+      funcionar entero**: el 1 de septiembre se comprobó contra la base que la
+      reserva llega hasta la tarjeta, y ahí se para porque nadie del seed tiene
+      cuenta de cobro ni tarjeta guardada.
 
 ---
 
@@ -1728,6 +1729,76 @@ cobra no pueden salir de dos sitios, o un redondeo distinto enseña 42,00 y cobr
       que lo llame nadie desde la app.
 
 **Verde al terminar: 460 pruebas en el backend, 325 en el móvil**, `tsc` limpio
+en los dos.
+
+---
+
+## 🎯 Reservar por horas, y el dinero en el camino normal ✅ (1 Septiembre 2026)
+
+`book-hours` (§A3). Lo que hace que el ciclo del dinero del 29 de agosto deje
+de colgar solo de la carta.
+
+### La cita nace al reservar, y eso cambia de forma el resto
+
+`book-services` no crea cita: la abre el profesional al aceptar. Por horas no
+vale, porque el cliente **ha elegido una hora concreta y ha puesto el dinero**.
+Si la cita no existiera hasta la aceptación, ese jueves a las diez se le
+seguiría ofreciendo a todo el mundo durante 24 horas.
+
+- **`AppointmentStatus.RESERVED`**, nuevo: ocupa agenda como cualquier cita en
+  juego, pero no espera respuesta de nadie a nivel de cita —el reloj de quien
+  tiene que contestar vive en el trabajo—.
+- **`assign-job` la confirma en su sitio** en vez de abrir otra. Sin esto el
+  profesional recibía un 404 al aceptar un encargo que sí era suyo: el índice
+  de "una sola cita en juego por trabajo" no deja abrir la segunda. Y la hora
+  no se toca nunca: es la que se pagó.
+- **Rechazar, cancelar y caducar la sueltan.** Cada uno por su camino, y los
+  tres hacían falta: una reserva que se cae sin soltar el hueco deja la agenda
+  ocupada para siempre por un trabajo cerrado.
+- El índice único pasa a decirse en negativo —en juego es todo lo que no ha
+  terminado— para no tener que tocarlo cada vez que aparece un estado nuevo.
+
+### El hueco se comprueba dos veces
+
+Una antes, con su horario y sus ausencias, para poder decir que no sin cobrar.
+Y otra dentro de la transacción **con la fila del profesional bloqueada**,
+porque entre las dos pasan minutos y la agenda es de otro: sin el cerrojo, dos
+clientes que pulsan a la vez pasan los dos y los dos insertan.
+
+### El plazo deja de ser siempre 24 h
+
+Es lo que quede hasta **dos horas antes de la cita**, si es menos (§A4). Con 24
+h fijas, una reserva para mañana a las diez se contestaría después de la hora a
+la que había que estar allí.
+
+### Dos agujeros que estaban abiertos y aparecieron por el camino
+
+- **`book-services` buscaba al que cobra por la relación equivocada.**
+  `ProProfile.employer` es «para quién trabajo» y en un autónomo es nulo
+  siempre; la empresa propia cuelga del **usuario**. O sea que **ningún
+  autónomo podía cobrar** —y son justo los que tienen carta—. Es la razón de
+  que no hubiera ni un `Charge` en la base, y no solo que el camino genérico no
+  cobre. Los dobles de prueba tenían la forma vieja, así que el fallo no lo veía
+  nadie.
+- **Cancelar no soltaba el dinero.** Quien contrataba y se arrepentía antes de
+  que el profesional contestase se quedaba con el importe retenido para
+  siempre: el trabajo se cancelaba y el `Charge` no lo tocaba nadie. Ahora pasa
+  por el mismo `UndoJobChargesUseCase` que rechazar y caducar.
+
+### Comprobado contra la base
+
+Un hueco ya ocupado se rechaza con `SLOT_NOT_AVAILABLE` sin tocar dinero; uno
+libre llega hasta la tarjeta y se para en `PAYMENT_METHOD_MISSING`, que es el
+muro que queda. Sin encargos fantasma ni citas sueltas detrás.
+
+### Lo que falta para verlo entero
+
+- [ ] Cuentas de Stripe y tarjeta guardada en el seed (arriba).
+- [ ] **Las pantallas**: el selector de huecos y la de confirmar con el
+      desglose. El espejo está entero —`prosApi.slots`, `prosApi.hoursQuote`,
+      `assignmentsApi.bookHours`—, no lo llama nadie todavía.
+
+**Verde al terminar: 479 pruebas en el backend, 325 en el móvil**, `tsc` limpio
 en los dos.
 
 ---
