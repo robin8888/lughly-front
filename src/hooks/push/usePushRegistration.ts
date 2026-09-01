@@ -23,6 +23,40 @@ import { useIsAuthenticated } from '@/stores/useAuthStore'
 import { usePushStore } from '@/stores/usePushStore'
 
 /**
+ * Qué hacer con un aviso que llega **con la app abierta**.
+ *
+ * Sin esto, iOS no enseña nada: la notificación llega, el sistema decide que
+ * ya estás dentro de la app y se la calla. Es lo que hacía que un aviso
+ * pareciera perdido cuando en realidad había llegado —los oyentes de
+ * `usePushInvalidation` sí se disparaban y la pantalla se refrescaba, pero sin
+ * que nadie viera por qué—.
+ *
+ * Se enseña igual que si la app estuviera cerrada, y a propósito: los avisos
+ * de Lughly no son ruido de fondo, son "han aceptado tu trabajo" y "te han
+ * escrito". Quien está mirando la home tiene el mismo derecho a enterarse que
+ * quien tiene el móvil en el bolsillo.
+ *
+ * Va fuera del componente porque es una configuración del módulo, no un
+ * efecto: tiene que estar puesta antes de que llegue el primer aviso, y
+ * ponerla dos veces no significa nada.
+ */
+Notifications.setNotificationHandler({
+  handleNotification: () =>
+    Promise.resolve({
+      shouldShowBanner: true,
+      /* Y que se quede en el centro de notificaciones, no solo de paso */
+      shouldShowList: true,
+      shouldPlaySound: true,
+      /*
+        El globo del icono no: lo que hay pendiente se cuenta en la app —el
+        punto rojo del botón de mensajes, la bandeja de encargos— y un número
+        en el icono que nadie borra al leer acaba diciendo otra cosa.
+      */
+      shouldSetBadge: false,
+    }),
+})
+
+/**
  * En un emulador no hay servicios de notificación, así que Expo no puede dar
  * un identificador. Se comprueba antes para no llenar la consola de errores
  * en desarrollo.
