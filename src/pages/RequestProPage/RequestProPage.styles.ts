@@ -105,6 +105,19 @@ export const styles = StyleSheet.create({
   send: {
     marginTop: 16,
   },
+  /*
+    Lo que falta, debajo del botón apagado. En el color del texto y no en rojo:
+    no es un error del usuario, es una instrucción de lo que queda por hacer, y
+    en rojo se lee como un reproche a quien todavía está rellenando.
+  */
+  missing: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.4,
+    color: theme.colors.textSoft,
+    textAlign: 'center',
+    marginTop: 10,
+  },
 
   /** Las fotos, con presencia: son lo que más afina el precio */
   photosCard: {

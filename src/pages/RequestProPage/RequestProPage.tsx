@@ -98,13 +98,66 @@ export function RequestProPage({
       ? `Visita ${chosenTradeEntry.visitFee} €`
       : `${chosenTradeEntry.hourlyRate} €/h`)
 
-  const canSend =
-    chosenTrade !== null &&
-    title.trim().length >= 8 &&
-    description.trim().length >= 20 &&
-    city.trim().length >= 2 &&
-    address !== null &&
-    !isRequesting
+  /**
+   * Lo que hace falta para poder enviar, en un solo sitio.
+   *
+   * Estaba escrito solo como una condición del botón, así que el botón se
+   * quedaba apagado **sin decir por qué**: rellenas el formulario, lo ves
+   * completo, y no pasa nada. Un callejón sin salida, porque no hay forma de
+   * saber qué falta.
+   *
+   * Ahora cada regla lleva su mensaje y se usa dos veces: para marcar el campo
+   * que la incumple y para decir debajo del botón qué queda por hacer.
+   */
+  const MIN_TITLE = 8
+  const MIN_DESCRIPTION = 20
+  const MIN_CITY = 2
+
+  /**
+   * Cuántos caracteres faltan, dicho como se cuenta y no como se programa.
+   * «Te faltan 4 caracteres» sirve; «mínimo 20» obliga a contar a mano.
+   */
+  const faltan = (valor: string, minimo: number) => {
+    const restan = minimo - valor.trim().length
+    return `Te ${restan === 1 ? 'falta 1 carácter' : `faltan ${restan} caracteres`}.`
+  }
+
+  /**
+   * El error de un campo **solo cuando ya se ha escrito algo**.
+   *
+   * Un formulario recién abierto no puede salir en rojo: todavía no ha hecho
+   * nada mal nadie. Lo que está vacío se dice debajo del botón, que es donde
+   * se mira cuando no pasa nada al pulsarlo.
+   *
+   * El del servidor manda sobre el de aquí: si ya contestó, sabe más.
+   */
+  const errorDe = (campo: string | undefined, valor: string, minimo: number) =>
+    campo ??
+    (valor.trim().length > 0 && valor.trim().length < minimo
+      ? faltan(valor, minimo)
+      : undefined)
+
+  const titleError = errorDe(fieldErrors.title, title, MIN_TITLE)
+  const descriptionError = errorDe(fieldErrors.description, description, MIN_DESCRIPTION)
+  const cityError = errorDe(fieldErrors.city, city, MIN_CITY)
+
+  /** Lo que falta, en el orden en que está el formulario */
+  const missing = [
+    chosenTrade === null && 'el oficio',
+    title.trim().length < MIN_TITLE && 'el título',
+    description.trim().length < MIN_DESCRIPTION && 'la descripción',
+    city.trim().length < MIN_CITY && 'la ciudad',
+    /*
+      La que más despista: el campo se ve lleno y por dentro está a nulo,
+      porque `address` solo se rellena al **elegir una sugerencia** —de ahí
+      salen las coordenadas—. Quien la teclea entera y no toca ninguna se queda
+      mirando un botón apagado con la dirección escrita delante, así que aquí
+      se dice con esas palabras.
+    */
+    address === null && 'la dirección (elígela de las sugerencias)',
+  ].filter((entrada): entrada is string => typeof entrada === 'string')
+
+  const canSend = missing.length === 0 && !isRequesting
 
   const handleSend = async () => {
     reset()
@@ -245,14 +298,14 @@ export function RequestProPage({
         <FormField
           label="¿Qué necesitas?"
           hint="Un título corto, como lo dirías por teléfono."
-          error={fieldErrors.title}
+          error={titleError}
         >
           <Input
             value={title}
             onChangeText={setTitle}
             placeholder="Ej. Cambiar el grifo del baño"
             editable={!isRequesting}
-            error={Boolean(fieldErrors.title)}
+            error={Boolean(titleError)}
             testID="request-title"
           />
         </FormField>
@@ -264,7 +317,7 @@ export function RequestProPage({
               ? 'Cuanto mejor lo describas, menos sorpresas el día del trabajo.'
               : 'Sin detalle no puede darte un precio y tendrá que ir a verlo antes.'
           }
-          error={fieldErrors.description}
+          error={descriptionError}
         >
           <Input
             value={description}
@@ -273,12 +326,12 @@ export function RequestProPage({
             multiline
             numberOfLines={5}
             editable={!isRequesting}
-            error={Boolean(fieldErrors.description)}
+            error={Boolean(descriptionError)}
             testID="request-description"
           />
         </FormField>
 
-        <FormField label="Ciudad" error={fieldErrors.city}>
+        <FormField label="Ciudad" error={cityError}>
           <Input
             value={city}
             onChangeText={(texto) => {
@@ -288,7 +341,7 @@ export function RequestProPage({
             placeholder="Ej. Madrid"
             autoCapitalize="words"
             editable={!isRequesting}
-            error={Boolean(fieldErrors.city)}
+            error={Boolean(cityError)}
             testID="request-city"
           />
         </FormField>
@@ -410,6 +463,22 @@ export function RequestProPage({
         >
           {isInstant ? 'Enviar la reserva' : 'Pedir presupuesto'}
         </Button>
+
+        {/**
+         * Qué falta, debajo del botón que no se puede pulsar.
+         *
+         * Es donde se mira cuando no pasa nada al tocarlo. Los campos ya
+         * marcan lo que está a medias; esto cubre lo que está **vacío**, que
+         * no lleva error propio —un formulario recién abierto no puede salir
+         * en rojo— y es justo lo que dejaba el botón apagado sin explicación.
+         */}
+        {!canSend && !isRequesting && (
+          <Text style={styles.missing} testID="request-missing">
+            {missing.length === 1
+              ? `Falta ${missing[0]}.`
+              : `Faltan ${missing.slice(0, -1).join(', ')} y ${missing[missing.length - 1]}.`}
+          </Text>
+        )}
       </FormScrollView>
     </View>
   )
