@@ -130,23 +130,47 @@ export function RequestProPage({
   }
 
   /**
-   * El error de un campo **solo cuando ya se ha escrito algo**.
+   * Los campos por los que ya ha pasado el cliente.
    *
-   * Un formulario recién abierto no puede salir en rojo: todavía no ha hecho
-   * nada mal nadie. Lo que está vacío se dice debajo del botón, que es donde
-   * se mira cuando no pasa nada al pulsarlo.
+   * Un formulario recién abierto no puede salir en rojo —todavía no ha hecho
+   * nada mal nadie—, pero **uno que se ha rellenado y se ha dejado a medias
+   * sí**: quien escribe la descripción, la borra y se va al siguiente campo ha
+   * dejado ahí algo que no vale, y decírselo solo debajo del botón obliga a
+   * atar el aviso al campo por su cuenta.
+   *
+   * Se marca al salir del campo, que es cuando se sabe que ha terminado con
+   * él. Mientras escribe no: contar en rojo los caracteres que le faltan a una
+   * frase a medio escribir es regañar a alguien por no haber acabado.
+   */
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+  const touch = (campo: string) => setTouched((antes) => ({ ...antes, [campo]: true }))
+
+  /**
+   * El error de un campo: cuando ya se ha escrito algo, o cuando se ha pasado
+   * por él y se ha dejado como estaba.
    *
    * El del servidor manda sobre el de aquí: si ya contestó, sabe más.
    */
-  const errorDe = (campo: string | undefined, valor: string, minimo: number) =>
+  const errorDe = (
+    campo: string | undefined,
+    valor: string,
+    minimo: number,
+    nombre: string,
+  ) =>
     campo ??
-    (valor.trim().length > 0 && valor.trim().length < minimo
+    ((valor.trim().length > 0 || touched[nombre] === true) &&
+    valor.trim().length < minimo
       ? faltan(valor, minimo)
       : undefined)
 
-  const titleError = errorDe(fieldErrors.title, title, MIN_TITLE)
-  const descriptionError = errorDe(fieldErrors.description, description, MIN_DESCRIPTION)
-  const cityError = errorDe(fieldErrors.city, city, MIN_CITY)
+  const titleError = errorDe(fieldErrors.title, title, MIN_TITLE, 'title')
+  const descriptionError = errorDe(
+    fieldErrors.description,
+    description,
+    MIN_DESCRIPTION,
+    'description',
+  )
+  const cityError = errorDe(fieldErrors.city, city, MIN_CITY, 'city')
 
   /** Lo que falta, en el orden en que está el formulario */
   const missing = [
@@ -311,6 +335,7 @@ export function RequestProPage({
           <Input
             value={title}
             onChangeText={setTitle}
+            onBlur={() => touch('title')}
             placeholder="Ej. Cambiar el grifo del baño"
             editable={!isRequesting}
             error={Boolean(titleError)}
@@ -330,6 +355,7 @@ export function RequestProPage({
           <Input
             value={description}
             onChangeText={setDescription}
+            onBlur={() => touch('description')}
             placeholder="Qué pasa, desde cuándo, y cualquier cosa que ayude a valorarlo."
             multiline
             numberOfLines={5}
@@ -346,6 +372,7 @@ export function RequestProPage({
               setCityTouched(true)
               setCity(texto)
             }}
+            onBlur={() => touch('city')}
             placeholder="Ej. Madrid"
             autoCapitalize="words"
             editable={!isRequesting}

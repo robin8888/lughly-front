@@ -84,6 +84,15 @@ export function UrgencyPage({
   const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
   const [detail, setDetail] = useState<AddressDetail>(EMPTY_ADDRESS_DETAIL)
   const [description, setDescription] = useState('')
+  /**
+   * Si ya ha pasado por el campo de la descripción y lo ha dejado corto.
+   *
+   * Con una fuga en casa, el aviso de debajo del botón se lee tarde: lo que se
+   * mira es el campo que se acaba de dejar. Se marca al salir de él y no
+   * mientras escribe —contar en rojo lo que le falta a una frase a medias es
+   * regañar a alguien por no haber acabado—.
+   */
+  const [descriptionTouched, setDescriptionTouched] = useState(false)
   const [photos, setPhotos] = useState<PickedImage[]>([])
 
   /**
@@ -149,6 +158,20 @@ export function UrgencyPage({
   if (description.trim().length < 20) {
     missing.push('Cuenta qué ocurre, con veinte caracteres o más.')
   }
+
+  /**
+   * Y el mismo aviso pegado al campo, contando lo que falta.
+   *
+   * Solo cuando ya ha escrito algo o ha pasado por él: un formulario recién
+   * abierto no puede salir en rojo, que ahí todavía no ha hecho nada mal
+   * nadie. El del servidor manda sobre el de aquí.
+   */
+  const faltanCaracteres = 20 - description.trim().length
+  const descriptionError =
+    fieldErrors.description ??
+    ((description.trim().length > 0 || descriptionTouched) && faltanCaracteres > 0
+      ? `Te ${faltanCaracteres === 1 ? 'falta 1 carácter' : `faltan ${faltanCaracteres} caracteres`}.`
+      : undefined)
 
   if (located !== null && detail.number.trim() === '') {
     missing.push('Pon el número de la calle: sin él no hay portal al que ir.')
@@ -332,16 +355,18 @@ export function UrgencyPage({
         <FormField
           label="Qué ocurre"
           hint="Mínimo 20 caracteres."
-          error={fieldErrors.description}
+          {...(descriptionError ? { error: descriptionError } : {})}
         >
           <Input
             value={description}
             onChangeText={setDescription}
+            onBlur={() => setDescriptionTouched(true)}
             placeholder="Ej. Se ha quedado la llave dentro y no puedo entrar."
             multiline
             numberOfLines={3}
             style={styles.textarea}
             editable={!isBusy}
+            error={Boolean(descriptionError)}
             testID="urgency-description"
           />
         </FormField>

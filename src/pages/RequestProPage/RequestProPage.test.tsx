@@ -83,6 +83,31 @@ describe('RequestProPage: qué falta para poder enviar', () => {
     expect(screen.queryByText(/Te falta/)).toBeNull()
   })
 
+  /**
+   * Y el campo por el que se ha pasado sin rellenar **sí** se marca: no es un
+   * formulario recién abierto, es uno que se ha dejado a medias. Es donde mira
+   * quien no entiende por qué no puede enviar.
+   */
+  it('al salir de la descripción vacía, se marca en rojo', () => {
+    abrir()
+
+    fireEvent(screen.getByTestId('request-description'), 'blur')
+
+    expect(screen.getByText('Te faltan 20 caracteres.')).toBeTruthy()
+  })
+
+  it('y al salir de una que ya vale, no se marca nada', () => {
+    abrir()
+
+    fireEvent.changeText(
+      screen.getByTestId('request-description'),
+      'Cambiar la bombilla del pasillo',
+    )
+    fireEvent(screen.getByTestId('request-description'), 'blur')
+
+    expect(screen.queryByText(/Te falta/)).toBeNull()
+  })
+
   it('el título corto también se cuenta', () => {
     abrir()
 
