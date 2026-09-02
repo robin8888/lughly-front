@@ -1655,16 +1655,14 @@ existiera, un cobro a los profesionales de prueba fallaría con
       se enseña antes de pagar. Hecho el 1 de septiembre, abajo.
 - [x] **`book-hours`** (§A3): `Job(HOURLY)` + `Appointment(RESERVED)` +
       `Charge(HOURS)` con ese desglose. Hecho el 1 de septiembre, abajo.
-- [x] **Decidir qué pasa con `request-pro`** — decidido el 2 de septiembre y
-      sin retirarlo: **deja de ser el destino de «Reservar ahora»**. Ese botón
+- [x] **Decidir qué pasa con `request-pro`** — primer paso dado el 2 de
+      septiembre: **deja de ser el destino de «Reservar ahora»**. Ese botón
       lleva ahora a donde se paga, por horas o por carta según cobre ese
-      oficio, y el encargo genérico queda solo para quien no tiene ninguna de
-      las dos tarifas. «Presupuesto» sigue siendo suyo, que es lo que de verdad
-      no lleva precio.
-- [ ] **Cuenta de cobro en el alta del profesional**, con los 30 días de gracia
-      de §9: sin ella no se le puede contratar, y hoy no se le pide en ningún
-      sitio. **Muleta mientras tanto**: `prisma/seed-cuentas.ts` se la da a una
-      cuenta creada a mano, del 2 de septiembre.
+      oficio. **Pero no basta**: ver la regla de abajo, que manda sobre esto.
+- [x] **Cuenta de cobro para todo profesional**. Hecho el 2 de septiembre por
+      la tarde: pantalla propia, accesible desde Mi cuenta, y exigida para
+      aceptar. Lo que queda es **pedirla en el alta** y los 30 días de gracia
+      de §9 —abajo—.
 - [x] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts`. Hecho el
       1 de septiembre: `prisma/seed-stripe.ts`, y con él **el ciclo del dinero
       se ha visto entero por primera vez** —abajo—.
@@ -2203,6 +2201,128 @@ en los dos.
 
 ---
 
+## 🎯 El profesional no tenía dónde cobrar ✅ (2 Septiembre 2026, tarde)
+
+Leti intenta contratar a Rocío Vega y el pago muere en «Todavía no se puede
+contratar: falta completar la cuenta de cobro». Ni ella ni Rocío podían
+arreglarlo desde ninguna pantalla.
+
+### El nudo
+
+La cuenta de cobro cuelga del `Employer`, y **la única forma de tener uno era
+declararse con gente a cargo**. El autónomo que trabaja solo —la mayoría— no
+pasaba por ahí nunca:
+
+- En el alta, los datos fiscales solo se piden si marca «tengo gente a cargo».
+- El único botón para abrirla vivía **dentro de «Mis trabajadores»**, y solo
+  aparece con `Employer` ya creado.
+- La Cartera está sin construir.
+
+Resultado: se registra, sale en el directorio, le eligen, y el cliente se
+estrella en el paso de pagar. **Los quince profesionales sembrados estaban
+así**, y por eso se topó con ello a la primera.
+
+### Cómo se resolvió
+
+- **`PUT /v1/payments/identity`** guarda nombre fiscal y NIF **sin** pasar por
+  la declaración de empleador. Colar esa aceptación para poder abrir la cuenta
+  dejaría a todo autónomo firmado como responsable de una plantilla que no
+  tiene: `staffResponsibilityAcceptedAt` se queda a nulo, que es lo que dice.
+- **`PayoutAccountPage`** (`/mi-cobro`), desde Mi cuenta. Empieza explicando
+  qué es —«aquí se te consigna el total de cada trabajo que te pague un
+  cliente, menos la comisión»— porque es la única pantalla donde alguien teclea
+  un número de cuenta.
+- **Aceptar un trabajo la exige**, junto con el horario y el documento
+  (`requireReadyToWork`). Aceptar uno que no se puede cobrar no es aceptar
+  nada. Rechazar sigue pudiéndose.
+- **`seed-pros.ts` les da cuenta de cobro** a los doce, con el cerrojo de
+  siempre: sin clave `sk_test_` no se ejecuta.
+
+### El camino del dinero, escrito para no volver a deducirlo
+
+Son **tres saltos** y solo hacemos el segundo:
+
+1. La tarjeta del cliente se retiene contra **nuestra** cuenta de Stripe.
+2. Al cerrar el trabajo, `transfers.create` mueve **total − comisión** al saldo
+   de la cuenta Connect del profesional (`transfersEnabled`).
+3. Stripe le hace el *payout* a su banco según su calendario
+   (`payoutsEnabled`). Ese salto no lo tocamos.
+
+**El IBAN no pasa por nuestro servidor.** Se teclea en el formulario alojado de
+Stripe y lo único que vuelve es el `acct_…`.
+
+### Lo que falta
+
+- [ ] **Pedirla en el alta**, con un «Ahora no» bien visible: obligar a pasar
+      por Stripe en el registro pierde altas.
+- [ ] **Los 30 días de gracia de §9.** Ojo con el orden: la gracia **no
+      protege al cliente**, porque el muro está al reservar y no al aceptar.
+      Solo tiene sentido para el camino genérico, que no cobra.
+
+---
+
+## 🎯 Lo que salió de probar la reserva por horas ✅ (2 Septiembre 2026, tarde)
+
+Robin fue recorriendo la pantalla y apareciendo cosas. Todas arregladas:
+
+- **El día lleno decía dos cosas a la vez.** La pista del campo —«sus huecos
+  libres de 1 h ese día»— salía debajo de «ese día no trabaja». La pista solo
+  aparece si hay algo que elegir, y el aviso es uno solo.
+- **«Lo más pronto que puede» enseñaba tres comienzos del mismo día** —09:00,
+  09:30, 10:00—, que se leen como un horario de 9 a 10 en vez de como tres
+  formas de reservar el mismo rato. Ahora es **uno por día**, con su hora de
+  fin, el campo se llama «¿A qué hora empieza?» y el desglose abre diciendo
+  cuándo es.
+- **La hora elegida** se pinta en el azul de la app con letra blanca
+  (`accent700`: el blanco sobre el azul claro se queda en 2,6:1).
+- **La tarjeta de arriba**: foto, nombre y oficio a la izquierda, la tarifa al
+  otro extremo en grande, y el aviso de la retención en naranja.
+- **La dirección, a la española**: número y código postal en una fila —los dos
+  que no se pueden dejar en blanco— y escalera, piso y puerta debajo. Antes era
+  un solo campo libre que dejaba fuera **lo único que no es opcional**, el
+  número. `composeAddressLine` los junta en la línea que lee quien va.
+- **El horario de la ficha**, un tramo por línea: dos tramos son veintinueve
+  caracteres y la línea se partía por la mitad de una hora.
+- **La descripción que no vale se marca en rojo** al salir del campo, no solo
+  debajo del botón.
+
+**Verde al cerrar el día: 511 pruebas en el backend, 406 en el móvil**, `tsc`
+limpio en los dos.
+
+---
+
+## 🔴 Regla: no hay camino que no cobra (Robin, 2 Septiembre 2026)
+
+**En Lughly no puede existir un camino de contratación que no cobre.** El que
+aparezca se analiza y se corrige; no se deja «para más adelante» ni se
+documenta como excepción aceptable.
+
+**Por qué.** Un camino gratis vacía la plataforma por dentro: el trabajo se
+hace, el cliente paga por fuera, la comisión no existe, y ni el cobro retenido
+ni la garantía protegen a nadie. Y es el fallo que no se ve — todo lo demás
+funciona: avisos, estados, chat—. Se ha topado con él dos veces seguidas
+probando en el móvil, el 31 de agosto y el 2 de septiembre, las dos con «se
+hizo el trabajo entero y no se me pidió pagar».
+
+**Cómo se comprueba.** Antes de dar por bueno cualquier flujo, mirar si termina
+creando un `Charge`. Hoy solo lo hacen **dos** casos de uso: `book-hours` y
+`book-services`. Cualquier otro camino que llegue a `COMPLETED` es un agujero,
+aunque nadie se haya quejado.
+
+### Lo que queda abierto, verificado el 2 de septiembre
+
+- [ ] **`request-pro`** — el encargo directo, `INSTANT` y `QUOTE`. Ya no es el
+      destino de «Reservar ahora», pero sigue existiendo y sigue sin cobrar.
+- [ ] **`create-job`** — publicar un trabajo y la subasta.
+- [ ] **Las urgencias enteras** — `request-urgency`, `accept-urgency`,
+      `finish-urgency`. Ninguna crea cobro, y es el camino donde más se cobra
+      en el sector: una salida de madrugada es lo que más se paga y lo único
+      que hoy sale gratis.
+
+**Es lo primero del día 3**, por encima de lo demás que hay apuntado.
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
@@ -2227,4 +2347,4 @@ en los dos.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: contratar por horas desde el móvil — 2 Septiembre 2026_
+_Última actualización: la cuenta de cobro del profesional — 2 Septiembre 2026_
