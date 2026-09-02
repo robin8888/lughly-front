@@ -2138,6 +2138,55 @@ npx ts-node prisma/seed-cuentas.ts robin@yopmail.com leti@yopmail.com
 Es una **muleta**, no el arreglo: lo que hay que construir es pedir la cuenta
 de cobro en el alta, que sigue en la lista de arriba.
 
+### Lo que apareció al probarlo, esa misma tarde
+
+**El día sin huecos no decía nada útil.** «Ese día no le queda hueco de 3 h» y
+se acabó. Con la lista de comienzos vacía no se puede distinguir «solo le caben
+dos horas» de «ese día no trabaja», que son dos respuestas muy distintas para
+quien está eligiendo, y mandarle a otro día por media hora teniendo la tarde
+libre es la forma más tonta de perder una reserva.
+
+- **`GET /v1/pros/:id/day-ranges`**: los ratos libres seguidos de ese día y el
+  más largo de todos, con la antelación mínima aplicada. Sale de partir en dos
+  lo que ya hacía `findFreeSlots` —los huecos primero, los comienzos después—,
+  así que la búsqueda de siempre no cambia.
+- En la pantalla, el aviso **en rojo**, debajo su horario libre de ese día
+  («10:00 – 12:00 · 2 h») y un botón para pedir lo que sí cabe sin cambiar de
+  día.
+
+**Y detrás, el motivo de verdad: 18 de los 23 perfiles sembrados no tenían
+horario.** Los huecos salen del horario, así que esos no tenían ni uno **en
+todo el mes**: salían en el directorio, su ficha ofrecía «Reservar ahora» y la
+pantalla no encontraba nada ningún día. Dos arreglos, y son distintos:
+
+- **El horario supuesto** (`weeklyByWeekday`): quien no ha puesto ninguno se
+  considera disponible **todos los días de 8 a 18**. Es una suposición nuestra,
+  no un dato suyo, y vive en un solo sitio para que los huecos que se enseñan y
+  los que acepta la reserva salgan de la misma. Una excepción de un día suelto
+  sigue mandando sobre ella.
+- **`seed-pros.ts` les pone horario**: de lunes a viernes, 9–14 y 16–19. Con
+  parón de comida a propósito, que es lo que hace que la pantalla enseñe dos
+  ratos sueltos y no un bloque.
+
+### Y la otra cara: no se acepta con la ficha a medias
+
+Si al profesional se le supone un horario, no puede comprometerse de verdad
+sobre esa suposición. **Aceptar un trabajo exige ahora tener puesto el horario
+y aportado el documento de identidad** (`requireReadyToWork`, en `assign-job` y
+en `confirm-assignment`).
+
+- Se comprueba **al aceptar y no en el alta**: quien se registra un domingo por
+  la noche puede terminar su ficha, y solo cuando hay un trabajo de verdad
+  delante se le pide lo que hace falta.
+- **Decir que no sí puede** aunque le falte: bloquearlo dejaría la cita colgada
+  esperando a alguien que ya sabe que no va.
+- El mensaje dice **qué** falta, y se escribe distinto según quién lo lea: al
+  autónomo se le tutea, a la empresa que manda a uno de los suyos se le nombra
+  a quién le falta.
+- Y en la bandeja —la pantalla a la que lleva el aviso de «te han elegido»—
+  sale arriba, con un botón a cada cosa. Enterarse **al pulsar «Aceptar»**, con
+  el reloj de 24 horas corriendo, es la peor forma de saberlo.
+
 ### Lo que falta
 
 - [ ] Probarlo en los dos móviles de punta a punta: reservar, aceptar, empezar,
@@ -2145,8 +2194,11 @@ de cobro en el alta, que sigue en la lista de arriba.
 - [ ] Un profesional de pruebas **con carta**, para ver el otro reparto del
       botón. Robin no tiene servicios, así que hoy solo se recorre la rama de
       horas.
+- [ ] Si tiene un oficio por horas y otro por visita, «Reservar ahora» elige el
+      de horas sin preguntar. Lo suyo es preguntar para cuál se le contrata,
+      como hace el formulario de encargo.
 
-**Verde al terminar: 490 pruebas en el backend, 382 en el móvil**, `tsc` limpio
+**Verde al terminar: 505 pruebas en el backend, 389 en el móvil**, `tsc` limpio
 en los dos.
 
 ---
