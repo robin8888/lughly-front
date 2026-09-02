@@ -44,21 +44,62 @@ export function isPostcode(value: string): boolean {
 }
 
 /**
+ * Un número de portal: dígitos con una letra pegada como mucho («14», «14B»).
+ */
+const HOUSE_NUMBER = /^\d+[A-Za-z]?$/
+
+/**
+ * Las piezas de la dirección elegida, separadas.
+ *
+ * El geocodificador —Photon, vía `/v1/geocode`— arma la etiqueta uniendo con
+ * comas **nombre, calle, número y ciudad**, así que «Calle Mayor 14, Madrid»
+ * llega en realidad como `"Calle Mayor, 14, Madrid"`: el número es una pieza
+ * suelta, no va pegado a la calle. Leerlo como texto corrido —buscando el
+ * número antes de la primera coma— no encontraba nada y dejaba el campo del
+ * número vacío después de haber elegido una sugerencia que lo traía.
+ *
+ * Se admiten las dos formas porque la inversa —la del GPS de una urgencia— y
+ * otros proveedores sí lo pegan.
+ */
+function splitLabel(
+  label: string,
+  city: string | null,
+): { street: string; number: string } {
+  const parts = label
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+
+  /*
+    La ciudad, fuera: se vuelve a escribir al final de la línea junto al código
+    postal, y repetida en medio se lee como un error.
+  */
+  const withoutCity = parts.filter(
+    (part) => city === null || part.toLowerCase() !== city.trim().toLowerCase(),
+  )
+
+  const number = withoutCity.find((part) => HOUSE_NUMBER.test(part))
+  const street = withoutCity.filter((part) => !HOUSE_NUMBER.test(part)).join(', ')
+
+  if (number !== undefined) return { street, number }
+
+  // Y la otra forma: el número pegado al final de la calle, «Calle Mayor 14»
+  const inline = street.match(/^(.*?)[\s,]+(\d+[A-Za-z]?)$/)
+
+  return inline
+    ? { street: inline[1]!.trim(), number: inline[2]! }
+    : { street, number: '' }
+}
+
+/**
  * El número que ya venga dentro de la dirección elegida.
  *
  * Quien escribe «Calle Mayor 14» y elige la sugerencia ya ha dicho el número:
  * volvérselo a preguntar con el campo vacío al lado de una línea que lo lleva
  * dentro parece que la app no ha leído lo que acaba de elegir.
- *
- * Se busca un número suelto **antes de la primera coma**, que es donde va en
- * las direcciones que devuelve el geocodificador. Después de la coma vienen la
- * ciudad y el código postal, y esos también son números.
  */
-export function numberFromLabel(label: string): string {
-  const street = label.split(',')[0] ?? ''
-  const found = street.match(/\b(\d+[A-Za-z]?)\b/)
-
-  return found?.[1] ?? ''
+export function numberFromLabel(label: string, city: string | null = null): string {
+  return splitLabel(label, city).number
 }
 
 /**
@@ -68,35 +109,28 @@ export function numberFromLabel(label: string): string {
  * que va a presentarse allí, así que va seguido y se puede copiar al navegador
  * del coche.
  *
- * El número no se repite si la dirección elegida ya lo trae: el
- * geocodificador devuelve unas veces «Calle Mayor 14» y otras «Calle Mayor», y
- * escribir «Calle Mayor 14, 14» por si acaso es peor que las dos.
+ * El número sale del campo, no de la etiqueta: si el cliente lo corrige —el
+ * geocodificador acierta la calle y a veces no el portal— manda el suyo, y no
+ * se escribe dos veces.
  */
 export function composeAddressLine(
   match: Pick<ApiGeocodeMatch, 'label' | 'city'>,
   detail: AddressDetail,
 ): string {
-  const number = detail.number.trim()
-  const street = match.label.split(',')[0]?.trim() ?? match.label.trim()
-  const rest = match.label.slice(street.length).replace(/^,\s*/, '').trim()
-
-  const head =
-    number === '' || numberFromLabel(match.label) === number
-      ? street
-      : `${street} ${number}`
+  const { street, number: fromLabel } = splitLabel(match.label, match.city)
+  const number = detail.number.trim() === '' ? fromLabel : detail.number.trim()
 
   const parts = [
-    head,
+    number === '' ? street : `${street} ${number}`,
     detail.stair.trim() === '' ? null : `esc. ${detail.stair.trim()}`,
     floorAndDoor(detail),
   ].filter((part): part is string => part !== null && part !== '')
 
   /*
     El código postal y la ciudad al final, juntos y en ese orden, como en un
-    sobre. La ciudad sale de la dirección elegida cuando la trae; si no, de lo
-    que quede de la línea después de la calle.
+    sobre.
   */
-  const tail = [detail.postcode.trim(), match.city?.trim() ?? rest]
+  const tail = [detail.postcode.trim(), match.city?.trim() ?? '']
     .filter((part) => part !== '')
     .join(' ')
 

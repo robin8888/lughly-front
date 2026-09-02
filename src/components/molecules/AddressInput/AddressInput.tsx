@@ -109,7 +109,7 @@ export function AddressInput({
     if (onDetailChange && detail) {
       onDetailChange({
         ...detail,
-        number: detail.number === '' ? numberFromLabel(match.label) : detail.number,
+        number: detail.number === '' ? numberFromLabel(match.label, match.city) : detail.number,
         postcode: detail.postcode === '' ? (match.postcode ?? '') : detail.postcode,
       })
     }

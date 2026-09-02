@@ -15,27 +15,39 @@ import {
 } from './address'
 
 const MADRID = { label: 'Calle Mayor, Madrid', city: 'Madrid' }
-const CON_NUMERO = { label: 'Calle Mayor 14, Madrid', city: 'Madrid' }
+/**
+ * Como la devuelve de verdad el buscador: el geocodificador une con comas
+ * **nombre, calle, número y ciudad**, así que el número llega suelto y no
+ * pegado a la calle. Es la forma que hay que leer bien.
+ */
+const CON_NUMERO = { label: 'Calle Mayor, 14, Madrid', city: 'Madrid' }
+/** Y la del GPS de una urgencia, que sí lo pega */
+const PEGADO = { label: 'Calle Mayor 14, Madrid', city: 'Madrid' }
 
 describe('numberFromLabel', () => {
-  it('saca el número que ya venía en la dirección elegida', () => {
-    expect(numberFromLabel('Calle Mayor 14, Madrid')).toBe('14')
+  /** La forma real del buscador: el número, como pieza suelta */
+  it('saca el número que viene como pieza suelta', () => {
+    expect(numberFromLabel('Calle Mayor, 14, Madrid', 'Madrid')).toBe('14')
   })
 
-  it('y admite el bis a la española', () => {
-    expect(numberFromLabel('Calle Mayor 14B, Madrid')).toBe('14B')
+  it('y también el que viene pegado a la calle', () => {
+    expect(numberFromLabel('Calle Mayor 14, Madrid', 'Madrid')).toBe('14')
+  })
+
+  it('admite el bis a la española', () => {
+    expect(numberFromLabel('Calle Mayor, 14B, Madrid', 'Madrid')).toBe('14B')
   })
 
   it('sin número, nada', () => {
-    expect(numberFromLabel('Calle Mayor, Madrid')).toBe('')
+    expect(numberFromLabel('Calle Mayor, Madrid', 'Madrid')).toBe('')
   })
 
   /*
-    Detrás de la coma vienen la ciudad y el código postal, que también son
-    números: cogerlos daría un portal que no existe.
+    El código postal también son dígitos, y cogerlo daría un portal que no
+    existe: «Calle Mayor 28013».
   */
   it('no confunde el código postal con el número', () => {
-    expect(numberFromLabel('Calle Mayor, 28013 Madrid')).toBe('')
+    expect(numberFromLabel('Calle Mayor, 28013 Madrid', 'Madrid')).toBe('')
   })
 })
 
@@ -59,6 +71,35 @@ describe('composeAddressLine', () => {
         postcode: '28013',
       }),
     ).toBe('Calle Mayor 14, 28013 Madrid')
+
+    expect(
+      composeAddressLine(PEGADO, {
+        ...EMPTY_ADDRESS_DETAIL,
+        number: '14',
+        postcode: '28013',
+      }),
+    ).toBe('Calle Mayor 14, 28013 Madrid')
+  })
+
+  /**
+   * Y si lo corrige, manda el suyo: el geocodificador acierta la calle y a
+   * veces no el portal, y quien vive allí sabe cuál es su número.
+   */
+  it('el número del campo manda sobre el de la dirección elegida', () => {
+    expect(
+      composeAddressLine(CON_NUMERO, {
+        ...EMPTY_ADDRESS_DETAIL,
+        number: '16',
+        postcode: '28013',
+      }),
+    ).toBe('Calle Mayor 16, 28013 Madrid')
+  })
+
+  /** La ciudad, una sola vez y al final: en medio se lee como un error */
+  it('no repite la ciudad que ya venía en la dirección', () => {
+    expect(
+      composeAddressLine(CON_NUMERO, { ...EMPTY_ADDRESS_DETAIL, number: '14' }),
+    ).toBe('Calle Mayor 14, Madrid')
   })
 
   it('escribe la escalera, el piso y la puerta como se leen', () => {
