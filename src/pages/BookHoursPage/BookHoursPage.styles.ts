@@ -126,6 +126,14 @@ export const styles = StyleSheet.create({
   },
 
   /* El desglose */
+  /** Cuándo, arriba del todo: es lo que se está comprando */
+  when: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+    marginBottom: 8,
+    textTransform: 'capitalize',
+  },
   line: {
     flexDirection: 'row',
     justifyContent: 'space-between',

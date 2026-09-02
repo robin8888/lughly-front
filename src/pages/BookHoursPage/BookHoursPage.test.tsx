@@ -205,6 +205,10 @@ describe('BookHoursPage', () => {
     expect(screen.getByTestId('book-hours-quote')).toBeTruthy()
     // El total sale dos veces: en el desglose y en el botón, que es el sitio
     // donde de verdad se mira antes de pulsar.
+    // Y cuándo es, escrito entero: es lo que se está comprando
+    expect(screen.getByTestId('book-hours-when')).toHaveTextContent(
+      'jueves, 3 de septiembre, de 10:00 a 11:00',
+    )
     expect(screen.getByTestId('book-hours-total')).toHaveTextContent('75,00€')
     expect(screen.getByTestId('book-hours-submit')).toHaveTextContent('Reservar por 75,00 €')
   })
@@ -218,6 +222,42 @@ describe('BookHoursPage', () => {
 
     expect(screen.getByTestId('book-hours-no-slots')).toBeTruthy()
     expect(screen.getByTestId('book-hours-next-2026-09-05T08:00:00.000Z')).toBeTruthy()
+  })
+
+  /**
+   * Y **uno por día**, no los tres primeros comienzos que haya.
+   *
+   * Van en cuadrícula de media hora, así que los tres primeros de una mañana
+   * libre son «jueves 09:00, jueves 09:30, jueves 10:00»: tres formas de
+   * reservar el mismo rato, que además se leen como un horario de 9 a 10.
+   */
+  it('lo más pronto es un día distinto en cada píldora', () => {
+    mockSlotsResponse = {
+      ...SLOTS,
+      slots: [
+        { startAt: '2026-09-05T08:00:00.000Z', endAt: '2026-09-05T11:00:00.000Z' },
+        { startAt: '2026-09-05T08:30:00.000Z', endAt: '2026-09-05T11:30:00.000Z' },
+        { startAt: '2026-09-05T09:00:00.000Z', endAt: '2026-09-05T12:00:00.000Z' },
+        { startAt: '2026-09-07T08:00:00.000Z', endAt: '2026-09-07T11:00:00.000Z' },
+      ],
+    }
+
+    abrir()
+
+    expect(screen.getByTestId('book-hours-next-2026-09-05T08:00:00.000Z')).toBeTruthy()
+    expect(screen.getByTestId('book-hours-next-2026-09-07T08:00:00.000Z')).toBeTruthy()
+    // Los otros dos comienzos del sábado no repiten día
+    expect(screen.queryByTestId('book-hours-next-2026-09-05T08:30:00.000Z')).toBeNull()
+    expect(screen.queryByTestId('book-hours-next-2026-09-05T09:00:00.000Z')).toBeNull()
+  })
+
+  /** Y con la hora de fin: sin ella, la píldora no dice cuánto dura */
+  it('la píldora dice el rato entero, no solo el comienzo', () => {
+    sinHuecosEseDia()
+
+    expect(
+      screen.getByTestId('book-hours-next-2026-09-05T08:00:00.000Z'),
+    ).toHaveTextContent(/10:00 – 11:00$/)
   })
 
   /**

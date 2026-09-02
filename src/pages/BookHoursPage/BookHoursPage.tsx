@@ -164,9 +164,25 @@ export function BookHoursPage({
   const slotsOfDay = (freeSlots?.slots ?? []).filter(
     (slot) => toIsoDate(new Date(slot.startAt)) === dayKey,
   )
-  /** Lo primero que tiene después, para cuando el día pedido está lleno */
+  /**
+   * Lo primero que tiene después, para cuando el día pedido está lleno:
+   * **el primer hueco de cada uno de los días siguientes**, no los primeros
+   * huecos que haya.
+   *
+   * Los comienzos van en cuadrícula de media hora, así que los tres primeros
+   * de una mañana libre son «jueves 09:00, jueves 09:30, jueves 10:00»: tres
+   * formas de reservar el mismo rato, que además se leen como si fueran un
+   * horario de 9 a 10. Uno por día dice lo que de verdad se pregunta —cuándo
+   * es lo más pronto— y ofrece tres días en vez de media hora.
+   */
   const nextSlots = (freeSlots?.slots ?? [])
     .filter((slot) => toIsoDate(new Date(slot.startAt)) !== dayKey)
+    .filter(
+      (slot, index, all) =>
+        all.findIndex(
+          (other) => toIsoDate(new Date(other.startAt)) === toIsoDate(new Date(slot.startAt)),
+        ) === index,
+    )
     .slice(0, 3)
 
   /**
@@ -423,9 +439,9 @@ export function BookHoursPage({
           que se acaba de leer.
         */}
         <FormField
-          label="¿A qué hora?"
+          label="¿A qué hora empieza?"
           {...(slotsOfDay.length > 0 && {
-            hint: `Sus huecos libres de ${formatDuration(durationMin)} ese día.`,
+            hint: `Cada hora es el comienzo de un rato de ${formatDuration(durationMin)}.`,
           })}
         >
           {isLoadingSlots ? (
@@ -528,8 +544,15 @@ export function BookHoursPage({
                           style={styles.slot}
                           testID={`book-hours-next-${slot.startAt}`}
                         >
+                          {/*
+                            Con la hora de fin: «jueves, 3 de septiembre,
+                            09:00» a secas no dice cuánto dura, y tres de esas
+                            seguidas se leen como un horario en vez de como
+                            tres opciones.
+                          */}
                           <Text style={styles.slotText}>
-                            {formatLongDate(when)}, {formatTime(when)}
+                            {formatLongDate(when)}, {formatTime(when)} –{' '}
+                            {formatTime(new Date(slot.endAt))}
                           </Text>
                         </Pressable>
                       )
@@ -602,6 +625,18 @@ export function BookHoursPage({
               </View>
             ) : quote ? (
               <>
+                {/*
+                  Cuándo, escrito entero y arriba del todo. Es lo que se está
+                  comprando y lo único que no se puede deducir del desglose:
+                  abajo pone «3 h × 75 €/h», que dice cuánto dura pero no
+                  cuándo empieza ni cuándo se va.
+                */}
+                <Text style={styles.when} testID="book-hours-when">
+                  {formatLongDate(new Date(startAt))}, de{' '}
+                  {formatTime(new Date(startAt))} a{' '}
+                  {formatTime(new Date(new Date(startAt).getTime() + durationMin * 60_000))}
+                </Text>
+
                 <View style={styles.line}>
                   <Text style={styles.lineLabel}>
                     {formatDuration(Math.round(quote.billedHours * 60))} × {quote.hourlyRate} €/h
