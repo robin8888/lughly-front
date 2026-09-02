@@ -18,6 +18,12 @@ import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { AddressInput } from '@/components/molecules/AddressInput'
 import type { ApiGeocodeMatch } from '@/api/geocode.api'
+import {
+  EMPTY_ADDRESS_DETAIL,
+  composeAddressLine,
+  isPostcode,
+  type AddressDetail,
+} from '@/utils/address'
 import { Money, formatAmount } from '@/components/atoms/Money'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -62,8 +68,9 @@ export function HireCartaPage({
 
   const [city, setCity] = useState('')
   const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
-  /** Piso, puerta, escalera: lo que el geocodificador no sabe */
-  const [detail, setDetail] = useState('')
+  /** Número, escalera, piso, puerta y código postal: lo que el
+   * geocodificador no sabe y quien va necesita para llamar al timbre */
+  const [detail, setDetail] = useState<AddressDetail>(EMPTY_ADDRESS_DETAIL)
   const [preferredDate, setPreferredDate] = useState<Date | null>(null)
   const [cityTouched, setCityTouched] = useState(false)
 
@@ -96,6 +103,9 @@ export function HireCartaPage({
     trade?.visitFee != null &&
     city.trim().length >= 2 &&
     address !== null &&
+    /* El número y el código postal: sin ellos no hay portal al que ir */
+    detail.number.trim() !== '' &&
+    isPostcode(detail.postcode) &&
     method !== null &&
     !isBooking
 
@@ -106,10 +116,8 @@ export function HireCartaPage({
       tradeSlug,
       serviceIds,
       city: city.trim(),
-      // La dirección normalizada más el piso: una línea que se lee entera
-      addressLine: detail.trim()
-        ? `${address!.label} (${detail.trim()})`
-        : address!.label,
+      // La dirección entera en una línea, a la española: se lee de corrido
+      addressLine: composeAddressLine(address!, detail),
       ...(preferredDate && { preferredDate: toIsoDateTime(preferredDate) }),
       paymentMethodId: method.id,
     })

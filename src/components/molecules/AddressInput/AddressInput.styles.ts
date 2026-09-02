@@ -50,9 +50,39 @@ export const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
   },
-  /** El piso y la puerta, pegados debajo de la dirección ya elegida */
+  /** El resto de la dirección, pegado debajo de la calle ya elegida */
   detail: {
     marginTop: theme.spacing[2],
+    gap: theme.spacing[2],
+  },
+  detailRow: {
+    flexDirection: 'row',
+    gap: theme.spacing[2],
+  },
+  /* El número y el código postal: los dos que no se pueden dejar en blanco */
+  detailNumber: {
+    flex: 1,
+    gap: 4,
+  },
+  detailPostcode: {
+    flex: 1,
+    gap: 4,
+  },
+  /** Escalera, piso y puerta: tres en una fila, que son cortos */
+  detailSmall: {
+    flex: 1,
+    gap: 4,
+  },
+  detailLabel: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+  },
+  detailNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.textSoft,
   },
   suggestions: {
     position: 'absolute',

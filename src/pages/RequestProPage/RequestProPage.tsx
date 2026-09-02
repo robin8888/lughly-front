@@ -19,6 +19,12 @@ import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { AddressInput } from '@/components/molecules/AddressInput'
 import type { ApiGeocodeMatch } from '@/api/geocode.api'
+import {
+  EMPTY_ADDRESS_DETAIL,
+  composeAddressLine,
+  isPostcode,
+  type AddressDetail,
+} from '@/utils/address'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -68,8 +74,9 @@ export function RequestProPage({
   /** Si tocó la ciudad a mano; hasta entonces la pone la dirección elegida */
   const [cityTouched, setCityTouched] = useState(false)
   const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
-  /** Piso, puerta, escalera: lo que el geocodificador no sabe */
-  const [detail, setDetail] = useState('')
+  /** Número, escalera, piso, puerta y código postal: lo que el
+   * geocodificador no sabe y quien va necesita para llamar al timbre */
+  const [detail, setDetail] = useState<AddressDetail>(EMPTY_ADDRESS_DETAIL)
   const [preferredDate, setPreferredDate] = useState<Date | null>(null)
   const [maxBudget, setMaxBudget] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
@@ -155,6 +162,8 @@ export function RequestProPage({
       se dice con esas palabras.
     */
     address === null && 'la dirección (elígela de las sugerencias)',
+    address !== null && detail.number.trim() === '' && 'el número de la calle',
+    address !== null && !isPostcode(detail.postcode) && 'el código postal',
   ].filter((entrada): entrada is string => typeof entrada === 'string')
 
   const canSend = missing.length === 0 && !isRequesting
@@ -172,18 +181,17 @@ export function RequestProPage({
       description: description.trim(),
       city: city.trim(),
       /*
-        La dirección normalizada del geocodificador más el piso. Quien la lee
-        es la persona que va a presentarse allí, así que van juntos: una línea
-        que se puede copiar al navegador del coche y llamar al timbre.
+        La dirección entera en una línea, a la española: calle y número,
+        escalera, piso y puerta, y el código postal con la ciudad. Quien la lee
+        es la persona que va a presentarse allí, así que va seguida: se puede
+        copiar al navegador del coche y llamar al timbre.
 
         No viajan las coordenadas, y no es un olvido: en un encargo directo el
         profesional ya está elegido, así que no hay ninguna distancia que
         calcular. Las urgencias sí las mandan, porque ahí el punto decide a
         quién se avisa.
       */
-      addressLine: detail.trim()
-        ? `${address!.label} (${detail.trim()})`
-        : address!.label,
+      addressLine: composeAddressLine(address!, detail),
       ...(preferredDate && { preferredDate: toIsoDateTime(preferredDate) }),
       ...(maxBudget !== '' &&
         Number.isFinite(budget) &&

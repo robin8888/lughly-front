@@ -33,6 +33,7 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native'
 import { Input } from '@/components/atoms/Input'
 import { Icon } from '@/components/atoms/Icon'
 import { type ApiGeocodeMatch } from '@/api/geocode.api'
+import { numberFromLabel, type AddressDetail } from '@/utils/address'
 import {
   useAddressSuggestions,
   MIN_SUGGEST_QUERY,
@@ -48,13 +49,20 @@ export interface AddressInputProps {
   error?: boolean
   editable?: boolean
   /**
-   * Texto libre que acompaña a la dirección elegida —piso, puerta, "portón
-   * verde"—. El geocodificador no llega ahí y el profesional lo necesita para
-   * llamar al timbre, así que se pide aparte en vez de dejar que se escriba
-   * dentro de la dirección y le rompa la elección.
+   * Las piezas que acompañan a la calle —número, escalera, piso, puerta y
+   * código postal—, como se piden en cualquier formulario español.
+   *
+   * El geocodificador llega al portal y no más allá, y el profesional necesita
+   * el resto para llamar al timbre. Van aparte y no dentro de la dirección
+   * porque escribirlas ahí rompe la elección: el campo de la calle solo vale
+   * si lo que tiene dentro es una sugerencia elegida.
+   *
+   * Antes era un solo campo de texto libre —«Piso, puerta, escalera…
+   * (opcional)»— y eso dejaba fuera lo único que **no** es opcional: el
+   * número. Sin él no hay portal al que ir.
    */
-  detail?: string
-  onDetailChange?: (detail: string) => void
+  detail?: AddressDetail
+  onDetailChange?: (detail: AddressDetail) => void
   testID?: string
 }
 
@@ -89,6 +97,22 @@ export function AddressInput({
   const choose = (match: ApiGeocodeMatch) => {
     setQuery(match.label)
     onChange(match)
+
+    /*
+      Lo que la sugerencia ya sabe, puesto: el código postal viene con ella, y
+      el número suele venir dentro de la propia línea. Preguntar con el campo
+      vacío lo que se acaba de elegir parece que la app no lo ha leído.
+
+      Solo lo que esté en blanco: quien haya escrito ya su piso y cambie de
+      calle no debería perderlo.
+    */
+    if (onDetailChange && detail) {
+      onDetailChange({
+        ...detail,
+        number: detail.number === '' ? numberFromLabel(match.label) : detail.number,
+        postcode: detail.postcode === '' ? (match.postcode ?? '') : detail.postcode,
+      })
+    }
   }
 
   const handleChangeText = (text: string) => {
@@ -203,20 +227,93 @@ export function AddressInput({
         )}
 
       {/*
-        El piso y la puerta, solo cuando ya hay dirección: antes no hay nada
-        que completar, y enseñarlo vacío desde el principio hace parecer que
-        el formulario pide dos direcciones.
+        El resto de la dirección, solo cuando ya hay calle elegida: antes no
+        hay nada que completar, y enseñar seis campos vacíos desde el principio
+        hace parecer que el formulario pide dos direcciones.
+
+        En dos filas y por tamaños: el número y el código postal son cortos y
+        obligatorios, y la escalera, el piso y la puerta van debajo porque
+        muchos edificios no los tienen.
       */}
-      {onDetailChange && value !== null && (
-        <Input
-          value={detail ?? ''}
-          onChangeText={onDetailChange}
-          placeholder="Piso, puerta, escalera… (opcional)"
-          placeholderTextColor="rgba(29, 31, 32, 0.62)"
-          editable={editable}
-          style={styles.detail}
-          testID={testID ? `${testID}-detail` : undefined}
-        />
+      {onDetailChange && detail && value !== null && (
+        <View style={styles.detail} testID={testID ? `${testID}-detail` : undefined}>
+          <View style={styles.detailRow}>
+            <View style={styles.detailNumber}>
+              <Text style={styles.detailLabel}>Número</Text>
+              <Input
+                value={detail.number}
+                onChangeText={(number) => onDetailChange({ ...detail, number })}
+                placeholder="14"
+                placeholderTextColor="rgba(29, 31, 32, 0.62)"
+                keyboardType="numbers-and-punctuation"
+                editable={editable}
+                testID={testID ? `${testID}-number` : undefined}
+              />
+            </View>
+
+            <View style={styles.detailPostcode}>
+              <Text style={styles.detailLabel}>Código postal</Text>
+              <Input
+                value={detail.postcode}
+                /* Cinco dígitos: lo que no sea un dígito no llega a entrar */
+                onChangeText={(postcode) =>
+                  onDetailChange({
+                    ...detail,
+                    postcode: postcode.replace(/\D/g, '').slice(0, 5),
+                  })
+                }
+                placeholder="28013"
+                placeholderTextColor="rgba(29, 31, 32, 0.62)"
+                keyboardType="number-pad"
+                editable={editable}
+                testID={testID ? `${testID}-postcode` : undefined}
+              />
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailSmall}>
+              <Text style={styles.detailLabel}>Escalera</Text>
+              <Input
+                value={detail.stair}
+                onChangeText={(stair) => onDetailChange({ ...detail, stair })}
+                placeholder="—"
+                placeholderTextColor="rgba(29, 31, 32, 0.62)"
+                editable={editable}
+                testID={testID ? `${testID}-stair` : undefined}
+              />
+            </View>
+
+            <View style={styles.detailSmall}>
+              <Text style={styles.detailLabel}>Piso</Text>
+              <Input
+                value={detail.floor}
+                onChangeText={(floor) => onDetailChange({ ...detail, floor })}
+                placeholder="3"
+                placeholderTextColor="rgba(29, 31, 32, 0.62)"
+                editable={editable}
+                testID={testID ? `${testID}-floor` : undefined}
+              />
+            </View>
+
+            <View style={styles.detailSmall}>
+              <Text style={styles.detailLabel}>Puerta</Text>
+              <Input
+                value={detail.door}
+                onChangeText={(door) => onDetailChange({ ...detail, door })}
+                placeholder="B"
+                placeholderTextColor="rgba(29, 31, 32, 0.62)"
+                editable={editable}
+                testID={testID ? `${testID}-door` : undefined}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.detailNote}>
+            La escalera, el piso y la puerta son opcionales. El número no: sin
+            él no hay portal al que ir.
+          </Text>
+        </View>
       )}
     </View>
   )

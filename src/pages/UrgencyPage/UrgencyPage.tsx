@@ -35,6 +35,12 @@ import { CoverageIndicator } from '@/components/organisms/CoverageIndicator'
 import { useAddressCoverage } from '@/hooks/domain/useAddressCoverage'
 import { AddressInput } from '@/components/molecules/AddressInput'
 import type { ApiGeocodeMatch } from '@/api/geocode.api'
+import {
+  EMPTY_ADDRESS_DETAIL,
+  composeAddressLine,
+  isPostcode,
+  type AddressDetail,
+} from '@/utils/address'
 import { usePublishJob } from '@/hooks/domain/usePublishJob'
 import {
   useShareLocation,
@@ -71,11 +77,12 @@ export function UrgencyPage({
   const [trade, setTrade] = useState('')
   /**
    * La dirección elegida de las sugerencias. Llega con coordenadas, que es lo
-   * que el servidor exige para una urgencia; `detail` es el piso y la puerta,
-   * que ningún geocodificador sabe y quien va a llamar al timbre necesita.
+   * que el servidor exige para una urgencia; `detail` es el número, la
+   * escalera, el piso, la puerta y el código postal, que ningún geocodificador
+   * sabe y quien va a llamar al timbre necesita.
    */
   const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
-  const [detail, setDetail] = useState('')
+  const [detail, setDetail] = useState<AddressDetail>(EMPTY_ADDRESS_DETAIL)
   const [description, setDescription] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
 
@@ -113,7 +120,17 @@ export function UrgencyPage({
    * urgencia. Se espera a que la dirección esté situada en el mapa.
    */
   const canPublish =
-    trade !== '' && description.trim().length >= 20 && located !== null && !isBusy
+    trade !== '' &&
+    description.trim().length >= 20 &&
+    located !== null &&
+    /*
+      El número, también en una urgencia. Es lo primero que pregunta quien va
+      de camino a las tres de la mañana, y preguntarlo por teléfono a esa hora
+      es media hora perdida. El código postal no se exige aquí: lo trae el
+      punto del mapa, y con una fuga en casa un campo más es un campo de más.
+    */
+    detail.number.trim() !== '' &&
+    !isBusy
 
   /**
    * Qué falta para poder seguir.
@@ -131,6 +148,10 @@ export function UrgencyPage({
 
   if (description.trim().length < 20) {
     missing.push('Cuenta qué ocurre, con veinte caracteres o más.')
+  }
+
+  if (located !== null && detail.number.trim() === '') {
+    missing.push('Pon el número de la calle: sin él no hay portal al que ir.')
   }
 
   if (located === null) {
@@ -153,7 +174,7 @@ export function UrgencyPage({
       Y se rellena el campo con lo que devuelva el mapa. Va como dirección
       elegida —con las coordenadas del GPS, no las del texto— porque eso es lo
       que es: un punto real, solo que situado por el móvil en vez de por una
-      lista. El piso y la puerta se siguen añadiendo aparte.
+      lista. El número, el piso y la puerta se siguen añadiendo aparte.
     */
     if (position.label !== '') {
       setAddress({
@@ -179,14 +200,11 @@ export function UrgencyPage({
         description: description.trim(),
         city: located.city ?? 'Sin ciudad',
         /*
-          El piso y la puerta se pegan a la dirección al enviar: el servidor
-          guarda una sola línea, y quien la lee la lee entera. Separarlos en
-          dos campos obligaría a tocar el contrato de encargos para un dato
-          que nunca se consulta por separado.
+          Las piezas se juntan en una línea al enviar: el servidor guarda una
+          sola, y quien la lee la lee entera. Separarlas en el contrato
+          obligaría a tocarlo para un dato que nunca se consulta por separado.
         */
-        addressLine: detail.trim()
-          ? `${located.label} (${detail.trim()})`
-          : located.label,
+        addressLine: composeAddressLine(located, detail),
         latitude: located.lat,
         longitude: located.lng,
       },
