@@ -73,7 +73,15 @@ function formatAbsentUntil(lastDayOut: string): string {
 export interface ProProfilePageProps {
   id: string | undefined
   onBack: () => void
+  /**
+   * Reservar sin precio: el encargo genérico, con su título y su descripción.
+   * Es la salida de quien no cobra ni por horas ni por visita, que hoy no
+   * debería existir —el alta obliga a uno de los dos— pero puede llegar de
+   * una ficha vieja.
+   */
   onBook: () => void
+  /** Reservar horas suyas: se elige el hueco y se paga por adelantado */
+  onBookHours: (tradeSlug: string) => void
   onQuote: () => void
   onReport: () => void
   /** Contratar la carta de un oficio: la visita, más lo que haya marcado */
@@ -90,6 +98,7 @@ export function ProProfilePage({
   id,
   onBack,
   onBook,
+  onBookHours,
   onQuote,
   onReport,
   onHireCarta,
@@ -305,6 +314,40 @@ export function ProProfilePage({
    * entre uno y otro.
    */
   const allPhotos = pro.photos.map((photo) => `${API_BASE_URL}${photo.fullUrl}`)
+
+  /**
+   * «Reservar ahora» lleva a donde se paga, y eso depende de **cómo cobra**.
+   *
+   * Son dos formas distintas del mismo oficio y no dos botones: quien cobra
+   * por hora vende ratos de su agenda —se elige día, cuánto y a qué hora— y
+   * quien cobra por visita vende un precio cerrado de puerta a puerta, donde
+   * no hay horas que elegir. Preguntárselo al cliente sería pedirle que
+   * adivine el modelo de negocio de otro.
+   *
+   * Se prefiere el oficio con el que venía mirando; si no traía ninguno, el
+   * primero que tenga. Y si no cobra de ninguna de las dos formas queda el
+   * encargo genérico, que **no cobra nada**: es la puerta de atrás que este
+   * botón tenía para todo el mundo hasta el 2 de septiembre de 2026.
+   */
+  const preferredTrade = pro.trades.find(
+    (entry) => entry.slug === initialSelection?.tradeSlug,
+  )
+  const hourTrade =
+    preferredTrade?.hourlyRate != null
+      ? preferredTrade
+      : pro.trades.find((entry) => entry.hourlyRate != null)
+  const visitTrade =
+    preferredTrade?.visitFee != null
+      ? preferredTrade
+      : pro.trades.find((entry) => entry.visitFee != null)
+
+  const handleBook = () => {
+    if (hourTrade) return onBookHours(hourTrade.slug)
+    if (visitTrade) {
+      return onHireCarta(visitTrade.slug, selectedServices[visitTrade.slug] ?? [])
+    }
+    return onBook()
+  }
 
   return (
     <View style={styles.screen} testID="pro-profile-page">
@@ -668,7 +711,7 @@ export function ProProfilePage({
         <ReviewList proId={pro.id} proName={pro.name} testID="pro-reviews" />
 
         <View style={styles.actions}>
-          <Button onPress={onBook} style={styles.actionButton} testID="pro-book">
+          <Button onPress={handleBook} style={styles.actionButton} testID="pro-book">
             Reservar ahora
           </Button>
           <Button

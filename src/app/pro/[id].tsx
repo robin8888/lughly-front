@@ -45,10 +45,21 @@ export default function ProProfileRoute() {
           serviceIds: serviceIds ? serviceIds.split(',') : [],
         },
       })}
+      /*
+        Sin tarifa de ninguna clase no hay nada que cobrar, así que queda el
+        encargo genérico. La página decide: por horas o por carta cuando se
+        puede, y esto solo cuando no se puede ninguna de las dos.
+      */
       onBook={() =>
         router.navigate({
           pathname: '/encargar',
           params: { proId: id ?? '', type: 'INSTANT' },
+        })
+      }
+      onBookHours={(trade) =>
+        router.navigate({
+          pathname: '/reservar-horas',
+          params: { proId: id ?? '', trade },
         })
       }
       onQuote={() =>
