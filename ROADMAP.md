@@ -1655,12 +1655,16 @@ existiera, un cobro a los profesionales de prueba fallaría con
       se enseña antes de pagar. Hecho el 1 de septiembre, abajo.
 - [x] **`book-hours`** (§A3): `Job(HOURLY)` + `Appointment(RESERVED)` +
       `Charge(HOURS)` con ese desglose. Hecho el 1 de septiembre, abajo.
-- [ ] **Decidir qué pasa con `request-pro`**: o se retira en favor de los tres
-      caminos de la v3 —por horas, carta y visita—, o se le pone precio. Hoy es
-      el único que llega hasta el final sin dinero, y es el que más se usa.
+- [x] **Decidir qué pasa con `request-pro`** — decidido el 2 de septiembre y
+      sin retirarlo: **deja de ser el destino de «Reservar ahora»**. Ese botón
+      lleva ahora a donde se paga, por horas o por carta según cobre ese
+      oficio, y el encargo genérico queda solo para quien no tiene ninguna de
+      las dos tarifas. «Presupuesto» sigue siendo suyo, que es lo que de verdad
+      no lleva precio.
 - [ ] **Cuenta de cobro en el alta del profesional**, con los 30 días de gracia
       de §9: sin ella no se le puede contratar, y hoy no se le pide en ningún
-      sitio.
+      sitio. **Muleta mientras tanto**: `prisma/seed-cuentas.ts` se la da a una
+      cuenta creada a mano, del 2 de septiembre.
 - [x] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts`. Hecho el
       1 de septiembre: `prisma/seed-stripe.ts`, y con él **el ciclo del dinero
       se ha visto entero por primera vez** —abajo—.
@@ -2047,13 +2051,10 @@ solo en la condición que apaga el botón, así que existe pero no se puede leer
 Ha pasado dos veces en una semana. Merece un vistazo en cualquier formulario
 nuevo.
 
-### 2. Las pantallas de reservar por horas
+### 2. Las pantallas de reservar por horas ✅ (hecho el 2 de septiembre)
 
-`book-hours` está construido y probado de punta a punta, y **no lo llama
-nadie**: falta el selector de huecos y la de confirmar con el desglose. El
-espejo está entero (`prosApi.slots`, `prosApi.hoursQuote`,
-`assignmentsApi.bookHours`). Es lo único que separa el ciclo del dinero de
-poder usarse desde el móvil.
+`BookHoursPage`, la ruta `/reservar-horas` y el reparto de «Reservar ahora»
+según cómo cobre cada oficio. Abajo, en su propia sección.
 
 ### 3. Suelto
 
@@ -2061,6 +2062,92 @@ poder usarse desde el móvil.
       desenfoque": los botones de cristal de la entrada no se ven como en iOS.
 - [ ] El importe en los avisos se escribe «42.00 €», con punto. Viene de
       `toFixed(2)` y está en los dos sitios; hay que arreglarlos a la vez.
+
+---
+
+## 🎯 Contratar por horas desde el móvil ✅ (2 Septiembre 2026)
+
+Robin volvió a probar el ciclo entero —Leti de clienta, él de trabajador— y el
+resultado fue el mismo que el 31 de agosto: **los avisos perfectos y a Leti no
+se le pidió pagar en ningún momento**. Seis trabajos entre los dos en la base,
+los seis `INSTANT`, `mode` a nulo, **cero cobros**.
+
+No era un fallo nuevo: era que «Reservar ahora» llevaba al encargo genérico,
+que no cobra. Y Leti no tenía forma de llegar a lo que sí cobra —Robin no tiene
+carta, y las pantallas de horas no existían—.
+
+### El botón lleva a donde se paga
+
+«Reservar ahora» ya no tiene un solo destino. Lo decide **cómo cobra ese
+oficio**, que es un dato del profesional y no algo que el cliente deba adivinar:
+
+| Cómo cobra | A dónde va | Qué se paga |
+|---|---|---|
+| Por hora (`hourlyRate`) | `/reservar-horas` | Las horas elegidas, con el mínimo del oficio y los recargos |
+| Por visita (`visitFee`) | `/contratar-carta` | La visita, más lo que se haya marcado de la carta |
+| Ninguna de las dos | `/encargar` (`INSTANT`) | Nada: el camino de antes |
+
+Se prefiere el oficio con el que venía mirando el cliente; si no traía ninguno,
+el primero que tenga. **`Presupuesto` no cambia**: pedir precio es justo lo que
+no lleva precio todavía.
+
+### La pantalla: se elige un rato de la agenda de alguien
+
+`BookHoursPage`. El orden es el de la pregunta real —cuánto, qué día, a qué
+hora— y no el del formulario de antes:
+
+1. **Cuánto tiempo**, en pasos de media hora hasta ocho. De aquí salen las
+   horas que se cobran **y** los huecos donde le cabe: son el mismo dato.
+2. **Qué día**, hasta un mes vista, que es lo que mira el servidor.
+3. **A qué hora**, y esto es lo que hace que sea una reserva y no un encargo:
+   una rejilla con **sus huecos libres de ese día para ese rato**, sacados de
+   su horario menos sus ausencias menos lo que ya tiene.
+4. Dirección, y una nota opcional.
+5. **El desglose del servidor**, tal cual: horas × tarifa, el mínimo del oficio
+   si ha subido las horas, el recargo que toque, el total y las dos frases de
+   las condiciones. Aquí no se suma nada —el calendario de festivos y las
+   excepciones de esa persona viven en el servidor— porque rehacer la cuenta
+   acabaría enseñando un total distinto del que se cobra.
+
+**El día sin huecos no se queda en un «no» a secas.** Los primeros que tenga
+después ya vienen en la misma respuesta, así que se ofrecen para tocarlos: sin
+eso, quien pide un martes lleno se pone a probar días a ciegas.
+
+Y el formulario dice qué le falta, con el patrón del 1 de septiembre: la hora,
+la dirección —que hay que elegir de las sugerencias—, la tarjeta.
+
+### El segundo muro: quien se registra a mano no puede cobrar
+
+Con las pantallas hechas, la reserva seguía sin poder salir: **`robin@yopmail.com`
+no tenía `Employer`**, o sea nadie a quien pagarle, y `CreateChargeUseCase` la
+habría parado con `PayoutAccountNotVerifiedError`.
+
+No es un olvido del seed. La cuenta de cobro cuelga del `Employer`, y **un
+autónomo solo tiene `Employer` si se declara así** (`BecomeEmployerUseCase`),
+cosa que el alta de profesional no pregunta. `seed-stripe.ts` se salta con un
+aviso a quien no lo tenga, así que las cuentas creadas a mano desde la app
+—las que se usan para probar de verdad— quedaban fuera del dinero.
+
+`prisma/seed-cuentas.ts`: le crea el `Employer` de autónomo a quien le falte y
+después llama al seed de siempre. Se le pasan correos y reparte por rol.
+
+```
+npx ts-node prisma/seed-cuentas.ts robin@yopmail.com leti@yopmail.com
+```
+
+Es una **muleta**, no el arreglo: lo que hay que construir es pedir la cuenta
+de cobro en el alta, que sigue en la lista de arriba.
+
+### Lo que falta
+
+- [ ] Probarlo en los dos móviles de punta a punta: reservar, aceptar, empezar,
+      terminar y cerrar, mirando que el cobro pase de retenido a liberado.
+- [ ] Un profesional de pruebas **con carta**, para ver el otro reparto del
+      botón. Robin no tiene servicios, así que hoy solo se recorre la rama de
+      horas.
+
+**Verde al terminar: 490 pruebas en el backend, 382 en el móvil**, `tsc` limpio
+en los dos.
 
 ---
 
@@ -2088,4 +2175,4 @@ poder usarse desde el móvil.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: horario en calendario, niveles de comisión y §F — 31 Agosto 2026_
+_Última actualización: contratar por horas desde el móvil — 2 Septiembre 2026_
