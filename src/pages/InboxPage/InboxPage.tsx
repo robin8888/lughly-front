@@ -27,6 +27,7 @@ import { useInbox, useAssignJob } from '@/hooks/domain/useInbox'
 import { useEmployees, useEmployer } from '@/hooks/domain/useEmployees'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useProfileChecklist } from '@/hooks/domain/useProfileChecklist'
+import { useAccountStatus } from '@/hooks/domain/usePaymentAccount'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { useUser } from '@/stores/useAuthStore'
@@ -44,12 +45,15 @@ export interface InboxPageProps {
   onGoToSchedule: () => void
   /** A subir el documento de identidad, por lo mismo */
   onGoToDocuments: () => void
+  /** A dar la cuenta de cobro: sin ella no hay dónde pagarle */
+  onGoToPayout: () => void
 }
 
 export function InboxPage({
   onBack,
   onGoToSchedule,
   onGoToDocuments,
+  onGoToPayout,
 }: InboxPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
@@ -82,9 +86,21 @@ export function InboxPage({
    */
   const { data: checklist } = useProfileChecklist()
 
+  /**
+   * Y la cuenta de cobro, que es la tercera. No la mira el checklist —es de
+   * Stripe, no de la ficha— así que se pregunta aparte.
+   *
+   * Sin ella el trabajo se acepta y **el cliente no puede pagarlo**: se
+   * estrella al reservar contra un aviso que habla de la cuenta de otro. Vale
+   * con que pueda recibir transferencias; sacar el saldo al banco es cosa suya
+   * y no impide cobrar.
+   */
+  const { data: account } = useAccountStatus()
+
   const missingToAccept = [
     checklist?.schedule === 'MISSING' && 'tu horario de trabajo',
     checklist?.identityDocuments === 'MISSING' && 'tu documento de identidad',
+    account !== undefined && !account.transfersEnabled && 'tu cuenta de cobro',
   ].filter((entry): entry is string => typeof entry === 'string')
 
   /**
@@ -235,7 +251,10 @@ export function InboxPage({
                 </Text>
                 <Text style={styles.blockedBody}>
                   Antes de aceptar un trabajo tienes que poner{' '}
-                  {missingToAccept.join(' y ')}. Se hace una vez.
+                  {missingToAccept.length === 1
+                    ? missingToAccept[0]
+                    : `${missingToAccept.slice(0, -1).join(', ')} y ${missingToAccept[missingToAccept.length - 1]}`}
+                  . Se hace una vez.
                 </Text>
 
                 <View style={styles.blockedActions}>
@@ -258,6 +277,17 @@ export function InboxPage({
                       testID="inbox-missing-documents"
                     >
                       <Text style={styles.blockedActionText}>Subir mi documento</Text>
+                    </Pressable>
+                  )}
+
+                  {account !== undefined && !account.transfersEnabled && (
+                    <Pressable
+                      onPress={onGoToPayout}
+                      accessibilityRole="button"
+                      style={styles.blockedAction}
+                      testID="inbox-missing-payout"
+                    >
+                      <Text style={styles.blockedActionText}>Dar mi cuenta de cobro</Text>
                     </Pressable>
                   )}
                 </View>

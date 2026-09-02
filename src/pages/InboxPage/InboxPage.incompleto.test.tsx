@@ -70,6 +70,13 @@ jest.mock('@/hooks/domain/useProfileChecklist', () => ({
   }),
 }))
 
+/* La cuenta de cobro, lista: aquí se prueba otra cosa */
+jest.mock('@/hooks/domain/usePaymentAccount', () => ({
+  useAccountStatus: () => ({
+    data: { hasAccount: true, transfersEnabled: true, payoutsEnabled: true },
+  }),
+}))
+
 jest.mock('@/hooks/domain/useIsEmployee', () => ({ useIsEmployee: () => false }))
 
 jest.mock('@/stores/useAuthStore', () => ({
@@ -91,12 +98,14 @@ describe('InboxPage: la ficha a medias', () => {
   const abrir = (
     onGoToSchedule = () => {},
     onGoToDocuments = () => {},
+    onGoToPayout = () => {},
   ) =>
     render(
       <InboxPage
         onBack={() => {}}
         onGoToSchedule={onGoToSchedule}
         onGoToDocuments={onGoToDocuments}
+        onGoToPayout={onGoToPayout}
       />,
     )
 

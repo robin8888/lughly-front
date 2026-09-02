@@ -195,6 +195,17 @@ export default function AccountRoute() {
                       icon: 'team' as const,
                     },
                   ]),
+              /*
+                La cuenta de cobro, para todo profesional y no solo para quien
+                tiene plantilla: el botón vivía dentro de "Mis trabajadores" y
+                el autónomo que trabaja solo no lo veía nunca, así que no había
+                dónde pagarle.
+              */
+              {
+                label: 'Cuenta de cobro',
+                onPress: () => router.navigate('/mi-cobro'),
+                icon: 'card-wallet' as const,
+              },
               { label: 'Cartera', onPress: () => router.navigate('/wallet'), icon: 'card-wallet' },
               /*
                 Pegado a la cartera a propósito: es lo mismo visto del otro

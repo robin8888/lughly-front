@@ -31,6 +31,7 @@ export default function InboxRoute() {
         onBack={() => router.navigate('/inicio')}
         onGoToSchedule={() => router.push('/mi-horario')}
         onGoToDocuments={() => router.push('/mis-documentos')}
+        onGoToPayout={() => router.push('/mi-cobro')}
       />
     </RoleGate>
   )

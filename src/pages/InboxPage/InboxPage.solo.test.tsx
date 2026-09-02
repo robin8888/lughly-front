@@ -76,6 +76,13 @@ jest.mock('@/hooks/domain/useProfileChecklist', () => ({
   }),
 }))
 
+/* La cuenta de cobro, lista: aquí se prueba otra cosa */
+jest.mock('@/hooks/domain/usePaymentAccount', () => ({
+  useAccountStatus: () => ({
+    data: { hasAccount: true, transfersEnabled: true, payoutsEnabled: true },
+  }),
+}))
+
 jest.mock('@/hooks/domain/useIsEmployee', () => ({ useIsEmployee: () => false }))
 
 jest.mock('@/stores/useAuthStore', () => ({
@@ -90,7 +97,7 @@ jest.mock('@/components/molecules/InfoCard', () => {
 
 describe('InboxPage: quien trabaja solo', () => {
   it('le da aceptar y rechazar, sin preguntarle quién va', () => {
-    render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} />)
+    render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} onGoToPayout={() => {}} />)
 
     expect(screen.getByTestId('inbox-job-1-accept')).toBeTruthy()
     expect(screen.getByTestId('inbox-job-1-decline')).toBeTruthy()
@@ -106,7 +113,7 @@ describe('InboxPage: quien trabaja solo', () => {
    * viajaba el recuento y la tira no existía en esta pantalla.
    */
   it('enseña las fotos del cliente antes de responder', () => {
-    render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} />)
+    render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} onGoToPayout={() => {}} />)
 
     expect(screen.getByText('2 fotos del cliente')).toBeTruthy()
     expect(screen.getByTestId('inbox-job-1-photo-0')).toBeTruthy()

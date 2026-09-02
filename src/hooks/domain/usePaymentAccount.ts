@@ -12,11 +12,17 @@
  * `useRefreshUserOnForeground` para confirmar el correo.
  */
 
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Linking } from 'react-native'
 import * as ExpoLinking from 'expo-linking'
 import { ApiError, NetworkError } from '@/api'
-import { paymentsApi, type ApiAccountStatus } from '@/api/payments.api'
+import {
+  paymentsApi,
+  type ApiAccountStatus,
+  type ApiBillingIdentity,
+  type BillingIdentityPayload,
+} from '@/api/payments.api'
+import type { FieldErrors } from '@/utils/formErrors'
 import { useRefreshOnForeground } from '@/hooks/ui/useRefreshOnForeground'
 
 export function accountStatusQueryKey() {
@@ -47,7 +53,69 @@ export function useRefreshAccountStatusOnForeground(enabled: boolean): void {
   useRefreshOnForeground([accountStatusQueryKey()], enabled)
 }
 
-export function useRequestOnboardingLink() {
+/**
+ * Los datos fiscales con los que cobra, y guardarlos.
+ *
+ * Es el paso de antes del enlace de Stripe: la cuenta se abre a nombre de
+ * estos datos, y sin ellos no hay a quién abrírsela. Hasta hoy solo se podían
+ * dar declarándose con gente a cargo, así que el autónomo que trabaja solo se
+ * quedaba sin cuenta de cobro y sin forma de conseguirla.
+ */
+export function billingIdentityQueryKey() {
+  return ['payments', 'identity'] as const
+}
+
+export function useBillingIdentity(enabled = true) {
+  return useQuery<ApiBillingIdentity | null>({
+    queryKey: billingIdentityQueryKey(),
+    queryFn: () => paymentsApi.identity(),
+    enabled,
+    staleTime: 30_000,
+  })
+}
+
+export function useSaveBillingIdentity() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (payload: BillingIdentityPayload) => paymentsApi.setIdentity(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: billingIdentityQueryKey() })
+      /*
+        Y el estado de la cuenta: al guardar los datos ya hay `Employer`, así
+        que la consulta que antes devolvía "no eres empleador" ahora contesta.
+      */
+      void queryClient.invalidateQueries({ queryKey: accountStatusQueryKey() })
+    },
+  })
+
+  const error = mutation.error
+
+  return {
+    save: async (payload: BillingIdentityPayload): Promise<boolean> => {
+      try {
+        await mutation.mutateAsync(payload)
+        return true
+      } catch {
+        return false
+      }
+    },
+    isSaving: mutation.isPending,
+    fieldErrors:
+      error instanceof ApiError
+        ? error.toFieldErrors<BillingIdentityPayload>()
+        : ({} as FieldErrors<BillingIdentityPayload>),
+    formError:
+      error instanceof NetworkError
+        ? error.message
+        : error instanceof ApiError && error.details.length === 0
+          ? error.message
+          : null,
+    reset: () => mutation.reset(),
+  }
+}
+
+export function useRequestOnboardingLink(returnTo = 'mi-cobro') {
   const mutation = useMutation({
     mutationFn: async () => {
       /**
@@ -55,7 +123,7 @@ export function useRequestOnboardingLink() {
        * distintas para "terminado" y "sigo a medias", Stripe decide sola
        * cuándo mandar de vuelta.
        */
-      const returnUrl = ExpoLinking.createURL('empleados')
+      const returnUrl = ExpoLinking.createURL(returnTo)
       const { url } = await paymentsApi.onboardingLink(returnUrl, returnUrl)
       return url
     },

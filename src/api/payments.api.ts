@@ -89,6 +89,24 @@ export interface ApiCommissionLevelState {
   ladder: ApiLevelStep[]
 }
 
+/**
+ * Los datos con los que cobra el profesional
+ * (GET/PUT /v1/payments/identity).
+ *
+ * **La cuenta bancaria no está aquí**, y no es un olvido: el IBAN se teclea en
+ * el formulario de Stripe y no pasa por el servidor de Lughly ni por este
+ * código. Lo único que se guarda es el identificador de la cuenta.
+ */
+export interface ApiBillingIdentity {
+  legalForm: 'SELF_EMPLOYED' | 'COMPANY'
+  taxId: string
+  legalName: string
+}
+
+export interface BillingIdentityPayload extends ApiBillingIdentity {
+  taxIdKind: 'DNI' | 'NIF' | 'NIE' | 'CIF'
+}
+
 export const paymentsApi = {
   /**
    * Su nivel de comisión, lo que lleva facturado y lo que le falta para el
@@ -114,6 +132,21 @@ export const paymentsApi = {
     }),
 
   /** Pregunta a Stripe si la cuenta ya puede recibir transferencias y retirar */
+  /** Los datos fiscales guardados, o null si todavía no los ha dado */
+  identity: () =>
+    apiRequest<ApiBillingIdentity | null>('/v1/payments/identity', { auth: true }),
+
+  /**
+   * Guarda con qué nombre y qué NIF cobra. Es el paso de antes del enlace de
+   * Stripe: la cuenta se abre a nombre de estos datos.
+   */
+  setIdentity: (payload: BillingIdentityPayload) =>
+    apiRequest<ApiBillingIdentity>('/v1/payments/identity', {
+      method: 'PUT',
+      auth: true,
+      body: payload,
+    }),
+
   accountStatus: () =>
     apiRequest<ApiAccountStatus>('/v1/payments/connect/account-status', {
       auth: true,
