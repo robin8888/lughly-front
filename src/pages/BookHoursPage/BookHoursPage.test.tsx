@@ -16,6 +16,12 @@ const PRO = {
   name: 'Robinson Rodriguez',
   city: 'Madrid',
   employerName: null,
+  /** Lunes a viernes de 9 a 14: sin esto no se le puede reservar nada */
+  availability: [1, 2, 3, 4, 5].map((weekday) => ({
+    weekday,
+    startMinute: 9 * 60,
+    endMinute: 14 * 60,
+  })),
   trades: [
     {
       slug: 'electricidad',
@@ -70,12 +76,13 @@ const RANGES = {
   longestMinutes: 120,
 }
 
+let mockPro: typeof PRO = PRO
 let mockSlotsResponse: typeof SLOTS = SLOTS
 let mockRangesResponse: typeof RANGES | undefined = RANGES
 let mockQuoteResponse: typeof QUOTE | undefined = QUOTE
 
 jest.mock('@/hooks/domain/useProProfile', () => ({
-  useProProfile: () => ({ data: PRO, isPending: false, isError: false }),
+  useProProfile: () => ({ data: mockPro, isPending: false, isError: false }),
 }))
 
 jest.mock('@/hooks/domain/usePaymentMethods', () => ({
@@ -137,6 +144,7 @@ afterAll(() => {
 })
 
 beforeEach(() => {
+  mockPro = PRO
   mockSlotsResponse = SLOTS
   mockRangesResponse = RANGES
   mockQuoteResponse = QUOTE
@@ -240,12 +248,32 @@ describe('BookHoursPage', () => {
     expect(screen.queryByTestId('book-hours-shorter')).toBeNull()
   })
 
-  it('un día que no trabaja se dice, y no se ofrece nada', () => {
+  /**
+   * Y un solo mensaje, no dos. «No le queda hueco de 1 h» y «ese día no
+   * trabaja» juntos se contradicen: si no trabaja, no es que le falte una hora.
+   */
+  it('un día que no trabaja se dice así, y no se ofrece nada', () => {
     mockRangesResponse = { day: '2026-09-03', ranges: [], longestMinutes: 0 }
     sinHuecosEseDia()
 
-    expect(screen.getByTestId('book-hours-day-closed')).toBeTruthy()
+    expect(screen.getByText('Ese día no trabaja.')).toBeTruthy()
+    expect(screen.queryByText(/no le queda hueco/)).toBeNull()
     expect(screen.queryByTestId('book-hours-shorter')).toBeNull()
+  })
+
+  /**
+   * Y a quien no ha puesto horario se le pregunta igual: el servidor le supone
+   * uno —todos los días de 8 a 18— para que se le pueda contratar mientras
+   * tanto. Aquí no se decide nada de eso; lo que se comprueba es que la
+   * pantalla no se cierre por su cuenta.
+   */
+  it('a quien no ha puesto su horario se le pregunta igual', () => {
+    mockPro = { ...PRO, availability: [] }
+
+    abrir()
+
+    expect(screen.getByTestId('book-hours-day')).toBeTruthy()
+    expect(screen.getByTestId('book-hours-slots')).toBeTruthy()
   })
 
   /** El precio no viaja: lo pone el servidor con la misma cuenta que enseñó */

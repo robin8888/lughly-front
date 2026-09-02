@@ -19,6 +19,15 @@
  * No sustituye a `HireCartaPage`, que es el otro modo de cobrar: quien cobra
  * por visita tiene un precio cerrado de puerta a puerta y ahí no hay horas que
  * elegir. La ficha manda a una o a otra según cómo cobre ese oficio.
+ *
+ * ## Al que no ha puesto su horario se le supone uno
+ *
+ * Todos los días de 8 a 18, y lo hace el servidor. Sin eso, quien se da de
+ * alta y no lo rellena sale en el directorio y **no tiene un solo hueco en
+ * todo el mes**, porque los huecos salen del horario: el cliente prueba día
+ * tras día leyendo «ese día no trabaja» en los treinta y uno. Es una
+ * suposición, no un dato suyo, y por eso el servidor **le exige poner el suyo
+ * de verdad antes de dejarle aceptar** el trabajo.
  */
 
 import { useMemo, useState } from 'react'
@@ -174,6 +183,9 @@ export function BookHoursPage({
     dayKey,
     !isLoadingSlots && slotsOfDay.length === 0,
   )
+
+  /** Ese día no tiene nada libre: o no trabaja, o lo tiene ocupado entero */
+  const closedThatDay = dayRanges !== undefined && dayRanges.ranges.length === 0
 
   /**
    * El rato más largo que le cabe ese día, redondeado al paso de media hora.
@@ -405,9 +417,16 @@ export function BookHoursPage({
          * Las horas que tiene libres ese día para ese rato. No es un reloj
          * abierto: son los ratos donde de verdad cabe lo que se ha pedido.
          */}
+        {/*
+          La pista solo cuando hay algo que elegir. Debajo de un «ese día no
+          trabaja», «sus huecos libres de 1 h ese día» dice lo contrario de lo
+          que se acaba de leer.
+        */}
         <FormField
           label="¿A qué hora?"
-          hint={`Sus huecos libres de ${formatDuration(durationMin)} ese día.`}
+          {...(slotsOfDay.length > 0 && {
+            hint: `Sus huecos libres de ${formatDuration(durationMin)} ese día.`,
+          })}
         >
           {isLoadingSlots ? (
             <View style={styles.quoting} testID="book-hours-slots-loading">
@@ -437,8 +456,16 @@ export function BookHoursPage({
             </View>
           ) : (
             <View testID="book-hours-no-slots">
+              {/*
+                Uno solo. «No le queda hueco de 3 h» y «ese día no trabaja»
+                juntos se leen como dos motivos distintos para lo mismo, y el
+                segundo contradice al primero: si no trabaja, no es que le
+                falten tres horas.
+              */}
               <Text style={styles.slotsEmpty}>
-                Ese día no le queda hueco de {formatDuration(durationMin)}.
+                {closedThatDay
+                  ? 'Ese día no trabaja.'
+                  : `Ese día no le queda hueco de ${formatDuration(durationMin)}.`}
               </Text>
 
               {/*
@@ -475,10 +502,6 @@ export function BookHoursPage({
                     </Button>
                   )}
                 </View>
-              ) : dayRanges ? (
-                <Text style={styles.nextDayLabel} testID="book-hours-day-closed">
-                  Ese día no trabaja o lo tiene ocupado entero.
-                </Text>
               ) : null}
 
               {/*
