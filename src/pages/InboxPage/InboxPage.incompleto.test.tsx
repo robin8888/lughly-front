@@ -1,16 +1,14 @@
 /**
- * La bandeja de quien trabaja solo.
+ * Lo que le falta para poder aceptar, dicho donde se acepta.
  *
- * A un autónomo sin gente a cargo la pregunta "¿quién va?" no le dice nada: el
- * encargo es suyo y no hay a quién mandar. Le salía igualmente, con una lista
- * de una sola opción —él— y un "No podemos" en plural. Aquí se ata que ve dos
- * botones y ninguna lista.
- *
- * Y que las fotos del cliente se ven **antes** de responder, que es lo que
- * separa decidir de adivinar.
+ * Aceptar es comprometerse a presentarse en casa de alguien y cobrar por ello:
+ * sin horario puesto —lo que vio el cliente era una suposición nuestra— y sin
+ * documento de identidad, el servidor lo rechaza. Enterarse **al pulsar**, con
+ * el reloj de 24 horas corriendo, es la peor forma de saberlo.
  */
 
-import { render, screen } from '@testing-library/react-native'
+
+import { fireEvent, render, screen } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import { InboxPage } from './InboxPage'
 
@@ -65,14 +63,10 @@ jest.mock('@/hooks/domain/useEmployees', () => ({
   useEmployees: () => ({ data: { items: [] } }),
 }))
 
-/*
-  La ficha, completa: lo que se prueba aquí es a quién se puede mandar, y un
-  aviso de "te falta el horario" encima no cambiaría nada pero saldría en todos
-  los casos.
-*/
+/** La ficha a medias: ni horario ni documento */
 jest.mock('@/hooks/domain/useProfileChecklist', () => ({
   useProfileChecklist: () => ({
-    data: { schedule: 'DONE', identityDocuments: 'DONE' },
+    data: { schedule: 'MISSING', identityDocuments: 'MISSING' },
   }),
 }))
 
@@ -83,33 +77,58 @@ jest.mock('@/stores/useAuthStore', () => ({
   useAccessToken: () => 'token-de-prueba',
 }))
 
+/* Con el testID, que aquí es justo lo que se busca */
 jest.mock('@/components/molecules/InfoCard', () => {
   const { View } = require('react-native')
-  return { InfoCard: ({ children }: { children: ReactNode }) => <View>{children}</View> }
+  return {
+    InfoCard: ({ children, testID }: { children: ReactNode; testID?: string }) => (
+      <View testID={testID}>{children}</View>
+    ),
+  }
 })
 
-describe('InboxPage: quien trabaja solo', () => {
-  it('le da aceptar y rechazar, sin preguntarle quién va', () => {
-    render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} />)
+describe('InboxPage: la ficha a medias', () => {
+  const abrir = (
+    onGoToSchedule = () => {},
+    onGoToDocuments = () => {},
+  ) =>
+    render(
+      <InboxPage
+        onBack={() => {}}
+        onGoToSchedule={onGoToSchedule}
+        onGoToDocuments={onGoToDocuments}
+      />,
+    )
 
-    expect(screen.getByTestId('inbox-job-1-accept')).toBeTruthy()
-    expect(screen.getByTestId('inbox-job-1-decline')).toBeTruthy()
+  it('avisa de lo que falta, encima de los encargos', () => {
+    abrir()
 
-    // Ni la pregunta ni la lista de a quién mandar
-    expect(screen.queryByText('¿Quién va?')).toBeNull()
-    expect(screen.queryByTestId('inbox-job-1-assign-requested')).toBeNull()
-    expect(screen.queryByTestId('inbox-job-1-assign-self')).toBeNull()
+    const aviso = screen.getByTestId('inbox-missing')
+    expect(aviso).toHaveTextContent(/tu horario de trabajo y tu documento de identidad/)
+  })
+
+  /** Con un camino a cada cosa: decir qué falta sin llevar allí es la mitad */
+  it('lleva a ponerlo, cada cosa a su sitio', () => {
+    const alHorario = jest.fn()
+    const alDocumento = jest.fn()
+
+    abrir(alHorario, alDocumento)
+
+    fireEvent.press(screen.getByTestId('inbox-missing-schedule'))
+    expect(alHorario).toHaveBeenCalled()
+
+    fireEvent.press(screen.getByTestId('inbox-missing-documents'))
+    expect(alDocumento).toHaveBeenCalled()
   })
 
   /**
-   * Lo que hace falta para decidir: una fuga se valora mirándola. Antes solo
-   * viajaba el recuento y la tira no existía en esta pantalla.
+   * Y los encargos siguen ahí. Esconderlos sería peor: el reloj de 24 horas
+   * corre igual, y hay que poder verlos —y rechazarlos— aunque falte la ficha.
    */
-  it('enseña las fotos del cliente antes de responder', () => {
-    render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} />)
+  it('no esconde los encargos ni el rechazar', () => {
+    abrir()
 
-    expect(screen.getByText('2 fotos del cliente')).toBeTruthy()
-    expect(screen.getByTestId('inbox-job-1-photo-0')).toBeTruthy()
-    expect(screen.getByTestId('inbox-job-1-photo-1')).toBeTruthy()
+    expect(screen.getByTestId('inbox-job-1-accept')).toBeTruthy()
+    expect(screen.getByTestId('inbox-job-1-decline')).toBeTruthy()
   })
 })

@@ -27,7 +27,11 @@ export default function InboxRoute() {
       unavailableMessage="Tu cuenta es de cliente."
       testID="inbox-denied"
     >
-      <InboxPage onBack={() => router.navigate('/inicio')} />
+      <InboxPage
+        onBack={() => router.navigate('/inicio')}
+        onGoToSchedule={() => router.push('/mi-horario')}
+        onGoToDocuments={() => router.push('/mis-documentos')}
+      />
     </RoleGate>
   )
 }

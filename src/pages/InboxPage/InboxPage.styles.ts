@@ -8,6 +8,41 @@ import { StyleSheet } from 'react-native'
 import { theme } from '@/theme'
 
 export const styles = StyleSheet.create({
+  /* Lo que le falta para poder aceptar: encima de la lista y en aviso */
+  blocked: {
+    borderWidth: 1,
+    borderColor: theme.colors.error,
+    gap: 6,
+  },
+  blockedTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.error,
+  },
+  blockedBody: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.45,
+    color: theme.colors.cardText,
+  },
+  blockedActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  blockedAction: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.accent700,
+  },
+  blockedActionText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent700,
+  },
   screen: {
     flex: 1,
     backgroundColor: theme.colors.bg,

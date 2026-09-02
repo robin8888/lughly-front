@@ -72,6 +72,17 @@ jest.mock('@/hooks/domain/useEmployees', () => ({
   }),
 }))
 
+/*
+  La ficha, completa: lo que se prueba aquí es a quién se puede mandar, y un
+  aviso de "te falta el horario" encima no cambiaría nada pero saldría en todos
+  los casos.
+*/
+jest.mock('@/hooks/domain/useProfileChecklist', () => ({
+  useProfileChecklist: () => ({
+    data: { schedule: 'DONE', identityDocuments: 'DONE' },
+  }),
+}))
+
 jest.mock('@/hooks/domain/useIsEmployee', () => ({ useIsEmployee: () => false }))
 jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefined }))
 /*
@@ -90,7 +101,7 @@ jest.mock('@/components/molecules/InfoCard', () => {
 
 describe('InboxPage: a quién se puede mandar', () => {
   it('apaga "Yo mismo" cuando el servidor lo rechazaría', () => {
-    const { getByTestId, getByText } = render(<InboxPage onBack={() => {}} />)
+    const { getByTestId, getByText } = render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} />)
 
     expect(getByTestId('inbox-job-1-assign-self')).toBeDisabled()
     // Y dice por qué, que es lo que permite arreglarlo
@@ -98,7 +109,7 @@ describe('InboxPage: a quién se puede mandar', () => {
   })
 
   it('deja al empleado que tiene el oficio', () => {
-    const { getByTestId } = render(<InboxPage onBack={() => {}} />)
+    const { getByTestId } = render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} />)
 
     expect(getByTestId('inbox-job-1-assign-u2')).not.toBeDisabled()
   })
@@ -108,7 +119,7 @@ describe('InboxPage: a quién se puede mandar', () => {
      * Esconderlo sería peor: quien busca a Luis en la lista y no lo ve piensa
      * que la app ha perdido a su empleado.
      */
-    const { getByTestId, getByText } = render(<InboxPage onBack={() => {}} />)
+    const { getByTestId, getByText } = render(<InboxPage onBack={() => {}} onGoToSchedule={() => {}} onGoToDocuments={() => {}} />)
 
     expect(getByTestId('inbox-job-1-assign-u3')).toBeDisabled()
     expect(getByText('No tiene fontanería dado de alta')).toBeTruthy()

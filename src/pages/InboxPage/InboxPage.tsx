@@ -26,6 +26,7 @@ import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { useInbox, useAssignJob } from '@/hooks/domain/useInbox'
 import { useEmployees, useEmployer } from '@/hooks/domain/useEmployees'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
+import { useProfileChecklist } from '@/hooks/domain/useProfileChecklist'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { useUser } from '@/stores/useAuthStore'
@@ -39,9 +40,17 @@ import { styles } from './InboxPage.styles'
 
 export interface InboxPageProps {
   onBack: () => void
+  /** A poner el horario, que sin él no se puede aceptar */
+  onGoToSchedule: () => void
+  /** A subir el documento de identidad, por lo mismo */
+  onGoToDocuments: () => void
 }
 
-export function InboxPage({ onBack }: InboxPageProps) {
+export function InboxPage({
+  onBack,
+  onGoToSchedule,
+  onGoToDocuments,
+}: InboxPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
   const user = useUser()
@@ -62,6 +71,21 @@ export function InboxPage({ onBack }: InboxPageProps) {
     null,
   )
   const { assign, isAssigning } = useAssignJob()
+
+  /**
+   * Qué le falta para poder aceptar.
+   *
+   * Se mira **aquí**, en la pantalla a la que lleva el aviso de «te han
+   * elegido», y no en Mi cuenta: es el único momento en que a nadie le da
+   * pereza rellenarlo, porque hay un trabajo de verdad esperando. El servidor
+   * lo comprueba igual al aceptar; esto es para que no se entere pulsando.
+   */
+  const { data: checklist } = useProfileChecklist()
+
+  const missingToAccept = [
+    checklist?.schedule === 'MISSING' && 'tu horario de trabajo',
+    checklist?.identityDocuments === 'MISSING' && 'tu documento de identidad',
+  ].filter((entry): entry is string => typeof entry === 'string')
 
   /**
    * Los suyos, para poder mandar a otro. Solo se piden si tiene empresa: a
@@ -193,6 +217,53 @@ export function InboxPage({ onBack }: InboxPageProps) {
           />
         ) : (
           <View style={styles.list}>
+            {/**
+             * Lo que le falta para poder aceptar, encima de todo y antes de
+             * tocar nada.
+             *
+             * Aceptar es comprometerse a presentarse en casa de alguien y
+             * cobrar: sin horario puesto, lo que vio el cliente era una
+             * suposición nuestra, y sin documento no hay nada con lo que
+             * responder. El servidor lo rechaza igual, pero enterarse al
+             * pulsar «Aceptar» —con el reloj de 24 horas corriendo— es la
+             * peor forma de saberlo.
+             */}
+            {missingToAccept.length > 0 && (
+              <InfoCard style={styles.blocked} testID="inbox-missing">
+                <Text style={styles.blockedTitle}>
+                  Te falta algo para poder aceptar
+                </Text>
+                <Text style={styles.blockedBody}>
+                  Antes de aceptar un trabajo tienes que poner{' '}
+                  {missingToAccept.join(' y ')}. Se hace una vez.
+                </Text>
+
+                <View style={styles.blockedActions}>
+                  {checklist?.schedule === 'MISSING' && (
+                    <Pressable
+                      onPress={onGoToSchedule}
+                      accessibilityRole="button"
+                      style={styles.blockedAction}
+                      testID="inbox-missing-schedule"
+                    >
+                      <Text style={styles.blockedActionText}>Poner mi horario</Text>
+                    </Pressable>
+                  )}
+
+                  {checklist?.identityDocuments === 'MISSING' && (
+                    <Pressable
+                      onPress={onGoToDocuments}
+                      accessibilityRole="button"
+                      style={styles.blockedAction}
+                      testID="inbox-missing-documents"
+                    >
+                      <Text style={styles.blockedActionText}>Subir mi documento</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </InfoCard>
+            )}
+
             {items.map((job) => {
               const deadline = job.respondByAt ? new Date(job.respondByAt) : null
               const isProposed = job.appointmentStatus === 'SUBSTITUTE_PROPOSED'
