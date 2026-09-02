@@ -323,9 +323,14 @@ describe('BookHoursPage', () => {
     fireEvent.press(screen.getByTestId('book-hours-slot-2026-09-03T08:00:00.000Z'))
     fireEvent.changeText(screen.getByTestId('book-hours-city'), 'Madrid')
     fireEvent(screen.getByTestId('book-hours-address'), 'onChange', {
-      label: 'Calle Mayor 14, Madrid',
+      label: 'Calle Mayor, Madrid',
       city: 'Madrid',
+      postcode: '28013',
     })
+
+    // El número y el código postal, que es lo que se pide en España
+    fireEvent.changeText(screen.getByTestId('book-hours-address-number'), '14')
+    fireEvent.changeText(screen.getByTestId('book-hours-address-postcode'), '28013')
 
     fireEvent.press(screen.getByTestId('book-hours-submit'))
 
@@ -336,7 +341,7 @@ describe('BookHoursPage', () => {
         tradeSlug: 'electricidad',
         startAt: '2026-09-03T08:00:00.000Z',
         durationMin: 60,
-        addressLine: 'Calle Mayor 14, Madrid',
+        addressLine: 'Calle Mayor 14, 28013 Madrid',
         paymentMethodId: 'pm_1',
       }),
     )

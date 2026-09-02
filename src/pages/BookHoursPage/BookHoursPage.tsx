@@ -37,8 +37,15 @@ import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Money, formatAmount } from '@/components/atoms/Money'
+import { Avatar } from '@/components/atoms/Avatar'
 import { AddressInput } from '@/components/molecules/AddressInput'
 import type { ApiGeocodeMatch } from '@/api/geocode.api'
+import {
+  EMPTY_ADDRESS_DETAIL,
+  composeAddressLine,
+  isPostcode,
+  type AddressDetail,
+} from '@/utils/address'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
@@ -61,6 +68,7 @@ import {
   toIsoDate,
   toIsoDateTime,
 } from '@/utils/dates'
+import { API_BASE_URL } from '@/api'
 import { theme } from '@/theme'
 import { styles } from './BookHoursPage.styles'
 
@@ -118,8 +126,9 @@ export function BookHoursPage({
   const [city, setCity] = useState('')
   const [cityTouched, setCityTouched] = useState(false)
   const [address, setAddress] = useState<ApiGeocodeMatch | null>(null)
-  /** Piso, puerta, escalera: lo que el geocodificador no sabe */
-  const [detail, setDetail] = useState('')
+  /** Número, escalera, piso, puerta y código postal: lo que el
+   * geocodificador no sabe y quien va necesita para llamar al timbre */
+  const [detail, setDetail] = useState<AddressDetail>(EMPTY_ADDRESS_DETAIL)
   const [note, setNote] = useState('')
 
   /**
@@ -247,6 +256,8 @@ export function BookHoursPage({
       porque `address` solo se rellena al **elegir una sugerencia**.
     */
     address === null && 'la dirección (elígela de las sugerencias)',
+    address !== null && detail.number.trim() === '' && 'el número de la calle',
+    address !== null && !isPostcode(detail.postcode) && 'el código postal',
     method === null && 'una tarjeta guardada',
     startAt !== null && quote === undefined && 'saber el precio',
   ].filter((entry): entry is string => typeof entry === 'string')
@@ -274,8 +285,8 @@ export function BookHoursPage({
       startAt,
       durationMin,
       city: cityValue.trim(),
-      // La dirección normalizada más el piso: una línea que se lee entera
-      addressLine: detail.trim() ? `${address!.label} (${detail.trim()})` : address!.label,
+      // La dirección entera en una línea, a la española: se lee de corrido
+      addressLine: composeAddressLine(address!, detail),
       ...(note.trim() !== '' && { note: note.trim() }),
       paymentMethodId: method.id,
     })
@@ -362,12 +373,39 @@ export function BookHoursPage({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/**
+         * A quién se contrata y a cuánto, de un vistazo: la cara, el nombre y
+         * la tarifa en la misma línea. El precio va al otro extremo y en
+         * grande porque es lo que se está comprobando al llegar aquí —el
+         * cliente viene de una ficha con diez cosas más— y porque todo lo que
+         * viene debajo son multiplicaciones de ese número.
+         */}
         <InfoCard testID="book-hours-who">
-          <Text style={styles.proName}>{pro.employerName ?? pro.name}</Text>
-          <Text style={styles.rate}>
-            {tradeEntry.label} · {tradeEntry.hourlyRate} €/h
+          <View style={styles.whoRow}>
+            <Avatar
+              uri={pro.avatarUrl ? `${API_BASE_URL}${pro.avatarUrl}` : null}
+              size={48}
+            />
+
+            <Text style={styles.proName} numberOfLines={2}>
+              {pro.employerName ?? pro.name}
+            </Text>
+
+            <Text style={styles.proRate}>{tradeEntry.hourlyRate} €/h</Text>
+          </View>
+
+          {/* El oficio debajo, que es de quién y de qué van esas horas */}
+          <Text style={styles.trade}>
+            {tradeEntry.label}
             {tradeEntry.minHours ? ` · mín. ${formatDuration(tradeEntry.minHours * 60)}` : ''}
+            {pro.employerName ? ` · trabajo de ${pro.name}` : ''}
           </Text>
+
+          {/*
+            En naranja: no es un error ni una nota al pie, es lo que va a pasar
+            con su dinero. El mismo naranja de "esto espera por ti" del resto
+            de la app —el importe queda retenido esperando una respuesta—.
+          */}
           <Text style={styles.whoNote}>
             {pro.employerName
               ? `Responde ${pro.employerName}, que es quien contrata y factura. El importe se retiene ahora y solo se cobra si aceptan.`

@@ -43,24 +43,42 @@ export const styles = StyleSheet.create({
     paddingVertical: 40,
     alignItems: 'center',
   },
+  /** La cara, el nombre y la tarifa, en una línea */
+  whoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   proName: {
+    /* Se queda con lo que sobre entre la foto y el precio */
+    flex: 1,
     fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.small,
+    fontSize: theme.typography.sizes.body,
     color: theme.colors.cardText,
   },
-  rate: {
+  /** El precio, al otro extremo y en grande: es lo que se viene a comprobar */
+  proRate: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.h5,
+    color: theme.colors.accent700,
+  },
+  trade: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
     color: theme.colors.cardText,
     opacity: 0.85,
-    marginTop: 4,
+    marginTop: 8,
   },
+  /*
+    En naranja, el de "esto espera por ti": el importe queda retenido
+    esperando una respuesta. No es un error —no hay nada roto— ni una nota al
+    pie: es lo que va a pasar con su dinero.
+  */
   whoNote: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: theme.colors.cardText,
-    opacity: 0.65,
+    color: theme.colors.pendingText,
     marginTop: 8,
   },
 
@@ -78,9 +96,17 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.fieldBorder,
     backgroundColor: theme.colors.field,
   },
+  /*
+    La hora elegida, en el azul de la app y con la letra en blanco. Antes era
+    un fondo casi blanco con el borde azul: al lado de las otras nueve píldoras
+    apenas se distinguía cuál estaba elegida.
+
+    `accent700` y no `accent`: el blanco encima de este llega a 6,3:1, y encima
+    del azul claro se queda en 2,6:1 —lo dice la propia ficha del color—.
+  */
   slotChosen: {
     borderColor: theme.colors.accent700,
-    backgroundColor: theme.colors.accent100,
+    backgroundColor: theme.colors.accent700,
   },
   slotText: {
     fontFamily: theme.typography.fonts.body,
@@ -89,7 +115,7 @@ export const styles = StyleSheet.create({
   },
   slotTextChosen: {
     fontFamily: theme.typography.fonts.bodySemiBold,
-    color: theme.colors.accent700,
+    color: '#ffffff',
   },
   /*
     En rojo, y no en gris de aviso: es un "no" a lo que el cliente acaba de
