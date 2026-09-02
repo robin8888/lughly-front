@@ -38,6 +38,7 @@ import { Picker } from '@/components/molecules/Picker'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { useFreeSlots } from '@/hooks/domain/useFreeSlots'
+import { useDayRanges } from '@/hooks/domain/useDayRanges'
 import { useHoursQuote } from '@/hooks/domain/useHoursQuote'
 import { useBookHours } from '@/hooks/domain/useBookHours'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -158,6 +159,34 @@ export function BookHoursPage({
   const nextSlots = (freeSlots?.slots ?? [])
     .filter((slot) => toIsoDate(new Date(slot.startAt)) !== dayKey)
     .slice(0, 3)
+
+  /**
+   * Y qué tiene libre **ese día**, que es lo que de verdad se pregunta al ver
+   * el «no».
+   *
+   * Solo se pide cuando hace falta: mandar a alguien a otro día porque le
+   * faltan treinta minutos, teniendo el resto de la tarde libre, es la forma
+   * más tonta de perder una reserva. Con esto se puede ofrecer lo que sí le
+   * cabe sin salir del día.
+   */
+  const { data: dayRanges, isFetching: isLoadingRanges } = useDayRanges(
+    proId,
+    dayKey,
+    !isLoadingSlots && slotsOfDay.length === 0,
+  )
+
+  /**
+   * El rato más largo que le cabe ese día, redondeado al paso de media hora.
+   * `null` cuando no hay nada que ofrecer: o no tiene sitio, o ya cabe lo que
+   * se pidió.
+   */
+  const shorter =
+    dayRanges && dayRanges.longestMinutes >= MIN_DURATION && dayRanges.longestMinutes < durationMin
+      ? Math.min(
+          MAX_DURATION,
+          Math.floor(dayRanges.longestMinutes / DURATION_STEP) * DURATION_STEP,
+        )
+      : null
 
   const {
     data: quote,
@@ -411,6 +440,46 @@ export function BookHoursPage({
               <Text style={styles.slotsEmpty}>
                 Ese día no le queda hueco de {formatDuration(durationMin)}.
               </Text>
+
+              {/*
+                Y debajo, lo que sí tiene libre ese día. Es lo primero que se
+                pregunta al leer el «no», y sin ello la única salida es probar
+                días a ciegas: se pierde una reserva por media hora teniendo la
+                tarde entera libre.
+              */}
+              {isLoadingRanges ? (
+                <View style={styles.quoting}>
+                  <ActivityIndicator color={theme.colors.accent} />
+                </View>
+              ) : dayRanges && dayRanges.ranges.length > 0 ? (
+                <View style={styles.ranges} testID="book-hours-ranges">
+                  <Text style={styles.nextDayLabel}>Ese día tiene libre:</Text>
+
+                  {dayRanges.ranges.map((range) => (
+                    <Text key={range.startAt} style={styles.rangeText}>
+                      {formatTime(new Date(range.startAt))} –{' '}
+                      {formatTime(new Date(range.endAt))} ·{' '}
+                      {formatDuration(range.minutes)}
+                    </Text>
+                  ))}
+
+                  {shorter !== null && (
+                    <Button
+                      variant="secondary"
+                      onPress={() => changeDuration(String(shorter))}
+                      style={styles.suggest}
+                      disabled={isBooking}
+                      testID="book-hours-shorter"
+                    >
+                      Ver sus horas de {formatDuration(shorter)} ese día
+                    </Button>
+                  )}
+                </View>
+              ) : dayRanges ? (
+                <Text style={styles.nextDayLabel} testID="book-hours-day-closed">
+                  Ese día no trabaja o lo tiene ocupado entero.
+                </Text>
+              ) : null}
 
               {/*
                 Un «no» a secas deja al cliente buscando a ciegas por el

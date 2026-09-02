@@ -60,7 +60,18 @@ const mockBook = jest.fn().mockResolvedValue({ jobId: 'job-1' })
 /** El día que la pantalla trae puesto: hoy. Los huecos se colocan ahí. */
 const HOY = new Date('2026-09-03T12:00:00.000Z')
 
+/** Ese día solo le quedan libres dos ratos, y el mayor es de 2 h */
+const RANGES = {
+  day: '2026-09-03',
+  ranges: [
+    { startAt: '2026-09-03T08:00:00.000Z', endAt: '2026-09-03T10:00:00.000Z', minutes: 120 },
+    { startAt: '2026-09-03T14:00:00.000Z', endAt: '2026-09-03T15:00:00.000Z', minutes: 60 },
+  ],
+  longestMinutes: 120,
+}
+
 let mockSlotsResponse: typeof SLOTS = SLOTS
+let mockRangesResponse: typeof RANGES | undefined = RANGES
 let mockQuoteResponse: typeof QUOTE | undefined = QUOTE
 
 jest.mock('@/hooks/domain/useProProfile', () => ({
@@ -77,6 +88,13 @@ jest.mock('@/hooks/domain/usePaymentMethods', () => ({
 
 jest.mock('@/hooks/domain/useFreeSlots', () => ({
   useFreeSlots: () => ({ data: mockSlotsResponse, isFetching: false }),
+}))
+
+jest.mock('@/hooks/domain/useDayRanges', () => ({
+  useDayRanges: (_proId: string, _day: string, enabled: boolean) => ({
+    data: enabled ? mockRangesResponse : undefined,
+    isFetching: false,
+  }),
 }))
 
 jest.mock('@/hooks/domain/useHoursQuote', () => ({
@@ -120,10 +138,27 @@ afterAll(() => {
 
 beforeEach(() => {
   mockSlotsResponse = SLOTS
+  mockRangesResponse = RANGES
   mockQuoteResponse = QUOTE
   mockBook.mockClear()
   onBooked.mockClear()
 })
+
+/** Ese día lleno: los únicos huecos que salen son de otro día */
+function sinHuecosEseDia() {
+  mockSlotsResponse = {
+    ...SLOTS,
+    slots: [{ startAt: '2026-09-05T08:00:00.000Z', endAt: '2026-09-05T09:00:00.000Z' }],
+  }
+
+  return abrir()
+}
+
+/** El caso real: pide tres horas y ese día solo le caben dos */
+function pedirTresHoras() {
+  fireEvent.press(screen.getByTestId('book-hours-duration'))
+  fireEvent.press(screen.getByTestId('book-hours-duration-option-180'))
+}
 
 describe('BookHoursPage', () => {
   it('recién abierta no se puede reservar, y dice qué falta', () => {
@@ -171,15 +206,46 @@ describe('BookHoursPage', () => {
    * después ya viene en la misma respuesta y se ofrece para tocarlo.
    */
   it('si ese día no le cabe, ofrece lo más pronto que puede', () => {
-    mockSlotsResponse = {
-      ...SLOTS,
-      slots: [{ startAt: '2026-09-05T08:00:00.000Z', endAt: '2026-09-05T09:00:00.000Z' }],
-    }
-
-    abrir()
+    sinHuecosEseDia()
 
     expect(screen.getByTestId('book-hours-no-slots')).toBeTruthy()
     expect(screen.getByTestId('book-hours-next-2026-09-05T08:00:00.000Z')).toBeTruthy()
+  })
+
+  /**
+   * Y antes que mandarle a otro día, lo que sí tiene libre **ese** día. Perder
+   * una reserva por media hora teniendo la tarde entera libre es la forma más
+   * tonta de perderla.
+   */
+  it('enseña el horario libre de ese día', () => {
+    sinHuecosEseDia()
+
+    expect(screen.getByTestId('book-hours-ranges')).toBeTruthy()
+    expect(screen.getByText('10:00 – 12:00 · 2 h')).toBeTruthy()
+    expect(screen.getByText('16:00 – 17:00 · 1 h')).toBeTruthy()
+  })
+
+  /** Y ofrece pedir lo que sí cabe, que es la salida sin cambiar de día */
+  it('ofrece el rato más largo que le cabe ese día', () => {
+    sinHuecosEseDia()
+    pedirTresHoras()
+
+    const oferta = screen.getByTestId('book-hours-shorter')
+    expect(oferta).toHaveTextContent('Ver sus horas de 2 h ese día')
+
+    fireEvent.press(oferta)
+
+    // Aceptarlo cambia lo pedido: dos horas, y con eso ya no sobra la oferta
+    expect(screen.getByTestId('book-hours-duration')).toHaveTextContent(/^2 h/)
+    expect(screen.queryByTestId('book-hours-shorter')).toBeNull()
+  })
+
+  it('un día que no trabaja se dice, y no se ofrece nada', () => {
+    mockRangesResponse = { day: '2026-09-03', ranges: [], longestMinutes: 0 }
+    sinHuecosEseDia()
+
+    expect(screen.getByTestId('book-hours-day-closed')).toBeTruthy()
+    expect(screen.queryByTestId('book-hours-shorter')).toBeNull()
   })
 
   /** El precio no viaja: lo pone el servidor con la misma cuenta que enseñó */

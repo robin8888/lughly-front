@@ -542,6 +542,30 @@ export interface ApiFreeSlots {
   slots: ApiFreeSlot[]
 }
 
+/**
+ * Un rato libre seguido de un día concreto
+ * (GET /v1/pros/:id/day-ranges).
+ *
+ * No es lo mismo que un hueco: un hueco es un comienzo donde cabe lo que se
+ * quiere contratar, y esto es **todo lo que tiene libre**, sin partir. Hace
+ * falta para poder decir algo cuando lo pedido no cabe: una lista de huecos
+ * vacía no distingue «solo le caben dos horas» de «ese día no trabaja».
+ */
+export interface ApiFreeRange {
+  startAt: string
+  endAt: string
+  /** Cuánto dura, ya contado por el servidor */
+  minutes: number
+}
+
+export interface ApiDayRanges {
+  /** El día preguntado, "AAAA-MM-DD" */
+  day: string
+  ranges: ApiFreeRange[]
+  /** El rato libre más largo de ese día. Cero si no tiene nada. */
+  longestMinutes: number
+}
+
 /** Por qué se cobra de más esa hora. El servidor decide cuál, y solo uno. */
 export type ApiSurchargeKind = 'night' | 'holiday' | 'sunday' | 'saturday'
 
@@ -624,6 +648,19 @@ export const prosApi = {
   ) =>
     apiRequest<ApiFreeSlots>(
       `/v1/pros/${id}/slots${toQueryString(query)}`,
+      { auth: true },
+    ),
+
+  /**
+   * Qué tiene libre ese día, seguido y sin partir en comienzos.
+   *
+   * Es la pregunta de después del «no»: cuando `slots` viene vacío, esto dice
+   * si es que solo le caben dos horas o es que ese día no trabaja, que son dos
+   * respuestas muy distintas para quien está eligiendo.
+   */
+  dayRanges: (id: string, day: string) =>
+    apiRequest<ApiDayRanges>(
+      `/v1/pros/${id}/day-ranges${toQueryString({ day })}`,
       { auth: true },
     ),
 

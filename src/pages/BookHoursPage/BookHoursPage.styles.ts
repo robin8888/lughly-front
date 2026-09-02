@@ -91,10 +91,28 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bodySemiBold,
     color: theme.colors.accent700,
   },
+  /*
+    En rojo, y no en gris de aviso: es un "no" a lo que el cliente acaba de
+    pedir, y lo que hay debajo son alternativas que solo se entienden si se ha
+    leído primero que lo pedido no cabe.
+  */
   slotsEmpty: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.error,
+  },
+  /** Lo que sí tiene libre ese día, para poder pedir menos */
+  ranges: {
+    marginTop: 10,
+    gap: 6,
+  },
+  rangeText: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
-    color: theme.colors.textSoft,
+    color: theme.colors.text,
+  },
+  suggest: {
+    marginTop: 6,
   },
   /** Lo más pronto que puede, cuando el día pedido no le cabe */
   nextDay: {
