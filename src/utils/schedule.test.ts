@@ -21,14 +21,14 @@ describe('toWeekSchedule', () => {
       { weekday: 1, from: '16:00', to: '20:00' },
     ])
 
-    expect(week[0]?.hours).toBe('09:00 - 14:00 · 16:00 - 20:00')
+    expect(week[0]?.ranges).toEqual(['09:00 - 14:00', '16:00 - 20:00'])
   })
 
   it('el día sin horas se queda en null, para poder decir "cerrado"', () => {
     const week = toWeekSchedule([{ weekday: 1, from: '09:00', to: '14:00' }])
 
-    expect(week[0]?.hours).toBe('09:00 - 14:00')
-    expect(week[1]?.hours).toBeNull()
+    expect(week[0]?.ranges).toEqual(['09:00 - 14:00'])
+    expect(week[1]?.ranges).toEqual([])
   })
 
   it('el turno de noche se lee en los dos días que ocupa', () => {
@@ -41,13 +41,13 @@ describe('toWeekSchedule', () => {
       { weekday: 6, from: '00:00', to: '06:00' },
     ])
 
-    expect(week[4]?.hours).toBe('22:00 - 00:00')
-    expect(week[5]?.hours).toBe('00:00 - 06:00')
+    expect(week[4]?.ranges).toEqual(['22:00 - 00:00'])
+    expect(week[5]?.ranges).toEqual(['00:00 - 06:00'])
   })
 
   it('el domingo va el último aunque el servidor lo cuente como día cero', () => {
     const week = toWeekSchedule([{ weekday: 0, from: '10:00', to: '14:00' }])
 
-    expect(week[6]?.hours).toBe('10:00 - 14:00')
+    expect(week[6]?.ranges).toEqual(['10:00 - 14:00'])
   })
 })

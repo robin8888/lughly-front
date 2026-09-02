@@ -659,21 +659,45 @@ export function ProProfilePage({
                   testID={`pro-schedule-${day.weekday}`}
                 >
                   <Text
+                    numberOfLines={1}
                     style={[styles.scheduleDay, isToday && styles.scheduleToday]}
                   >
                     {day.label}
                     {/* Hoy destacado: la pregunta que trae casi todo el mundo es si puede ir hoy */}
                     {isToday ? ' (hoy)' : ''}
                   </Text>
-                  <Text
-                    style={[
-                      styles.scheduleHours,
-                      isToday && styles.scheduleToday,
-                      day.hours === null && styles.scheduleClosed,
-                    ]}
-                  >
-                    {day.hours ?? 'Cerrado'}
-                  </Text>
+
+                  {/*
+                    Cada tramo en su línea, y no los dos seguidos en una.
+                    «09:00 - 14:00 · 16:00 - 19:00» son veintinueve caracteres:
+                    no caben en lo que le queda al día —menos aún el de hoy,
+                    que va en negrita y con «(hoy)» detrás— y la línea se
+                    partía por donde tocaba, dejando media hora arriba y media
+                    abajo. Partida a propósito se lee como un cartel.
+                  */}
+                  <View style={styles.scheduleHours}>
+                    {day.ranges.length === 0 ? (
+                      <Text
+                        style={[
+                          styles.scheduleRange,
+                          isToday && styles.scheduleToday,
+                          styles.scheduleClosed,
+                        ]}
+                      >
+                        Cerrado
+                      </Text>
+                    ) : (
+                      day.ranges.map((range) => (
+                        <Text
+                          key={range}
+                          numberOfLines={1}
+                          style={[styles.scheduleRange, isToday && styles.scheduleToday]}
+                        >
+                          {range}
+                        </Text>
+                      ))
+                    )}
+                  </View>
                 </View>
               )
             })}

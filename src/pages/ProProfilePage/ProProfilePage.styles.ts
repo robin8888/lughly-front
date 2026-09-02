@@ -338,21 +338,32 @@ export const styles = StyleSheet.create({
   scheduleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    /*
+      Arriba y no al centro: un día con dos tramos ocupa dos líneas a la
+      derecha, y centrado dejaría el nombre del día flotando entre las dos en
+      vez de al lado de la primera.
+    */
+    alignItems: 'flex-start',
     gap: 12,
     paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.cardDivider,
   },
   scheduleDay: {
+    /* No encoge: es corto, y encogerlo partiría «miércoles (hoy)» */
+    flexShrink: 0,
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
     color: theme.colors.cardText,
     opacity: 0.85,
     textTransform: 'capitalize',
   },
+  /** La columna de la derecha: un tramo por línea */
   scheduleHours: {
     flexShrink: 1,
+    alignItems: 'flex-end',
+  },
+  scheduleRange: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.small,
     color: theme.colors.cardText,

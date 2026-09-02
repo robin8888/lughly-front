@@ -24,8 +24,17 @@ export interface ScheduleWindow {
 export interface ScheduleDay {
   weekday: number
   label: string
-  /** "09:00 - 14:00 · 16:00 - 20:00", o null si ese día no trabaja */
-  hours: string | null
+  /**
+   * Los tramos de ese día, cada uno entero: `["09:00 - 14:00", "16:00 - 20:00"]`.
+   * Vacío es que ese día no trabaja.
+   *
+   * Sueltos y no unidos en una línea, que es como estaban. Dos tramos son
+   * veintinueve caracteres, y en la ficha no caben en el ancho que le queda al
+   * día: la línea se partía por donde tocara —«09:00 - 14:00 · 16:00» arriba y
+   * «- 19:00» debajo—, que es peor que dos líneas a propósito. Quien pinta
+   * decide dónde cortar; aquí solo se dice qué hay.
+   */
+  ranges: string[]
 }
 
 /**
@@ -45,15 +54,14 @@ const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]
  */
 export function toWeekSchedule(windows: ScheduleWindow[]): ScheduleDay[] {
   return WEEK_ORDER.map((weekday) => {
-    const hours = windows
+    const ranges = windows
       .filter((window) => window.weekday === weekday)
       .map((window) => `${window.from} - ${window.to}`)
-      .join(' · ')
 
     return {
       weekday,
       label: WEEKDAY_NAMES[weekday]!,
-      hours: hours === '' ? null : hours,
+      ranges,
     }
   })
 }
