@@ -49,9 +49,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  proName: {
-    /* Se queda con lo que sobre entre la foto y el precio */
+  /** El nombre y el oficio: lo que sobra entre la foto y el precio */
+  whoText: {
     flex: 1,
+    gap: 2,
+  },
+  proName: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.body,
     color: theme.colors.cardText,
@@ -67,7 +70,6 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     color: theme.colors.cardText,
     opacity: 0.85,
-    marginTop: 8,
   },
   /*
     En naranja, el de "esto espera por ti": el importe queda retenido

@@ -387,19 +387,28 @@ export function BookHoursPage({
               size={48}
             />
 
-            <Text style={styles.proName} numberOfLines={2}>
-              {pro.employerName ?? pro.name}
-            </Text>
+            {/*
+              El nombre y el oficio, uno debajo del otro y los dos al lado de
+              la foto: son la misma cosa —quién es— y se leen juntos. El oficio
+              suelto debajo de la foto empezaba una línea nueva que parecía de
+              otra sección.
+            */}
+            <View style={styles.whoText}>
+              <Text style={styles.proName} numberOfLines={2}>
+                {pro.employerName ?? pro.name}
+              </Text>
+
+              <Text style={styles.trade} numberOfLines={2}>
+                {tradeEntry.label}
+                {tradeEntry.minHours
+                  ? ` · mín. ${formatDuration(tradeEntry.minHours * 60)}`
+                  : ''}
+                {pro.employerName ? ` · trabajo de ${pro.name}` : ''}
+              </Text>
+            </View>
 
             <Text style={styles.proRate}>{tradeEntry.hourlyRate} €/h</Text>
           </View>
-
-          {/* El oficio debajo, que es de quién y de qué van esas horas */}
-          <Text style={styles.trade}>
-            {tradeEntry.label}
-            {tradeEntry.minHours ? ` · mín. ${formatDuration(tradeEntry.minHours * 60)}` : ''}
-            {pro.employerName ? ` · trabajo de ${pro.name}` : ''}
-          </Text>
 
           {/*
             En naranja: no es un error ni una nota al pie, es lo que va a pasar
