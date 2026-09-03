@@ -293,11 +293,17 @@ cita en juego por trabajo y la crea el reparto (`assign-job`), como en cualquier
 encargo. El descuento de la visita al aceptar el presupuesto tampoco: vive en
 §C5, que no existe.
 
-**Y quien cobra por horas también tiene visita.** `visitFee` es excluyente con
-`hourlyRate`, así que la mitad del directorio no tiene ninguna puesta; en ellos
-la visita es **su suelo**, la tarifa por el `minHours` que declaró, o una hora
-si no tiene mínimo (`visitPriceOf`). Sin esa rama, pedirles presupuesto seguiría
-siendo gratis.
+**Y solo presupuesta quien tiene `visitFee`.** Es excluyente con `hourlyRate`,
+así que la mitad del directorio no tiene ninguna puesta — y esos **no dan
+presupuestos**: no venden precios cerrados, venden ratos de su agenda, que es el
+ciclo §A. A Marta no se le pide presupuesto de limpieza, se le reservan las
+horas que hagan falta.
+
+Se intentó lo contrario el mismo día —calcularles una visita con `hourlyRate ×
+minHours` para que el camino cobrara— y **lo corrigió Robin**: cobraba, sí, pero
+vendía un paso que en ese oficio no existe. La exclusión de las dos tarifas en
+el esquema no es un detalle de columnas, son dos modelos de negocio, y la tarifa
+de visita es exactamente la puerta de este ciclo.
 
 **C3. Sergio acepta.** *Hoy*: `AWARDED` + dirección. *Cambio*: `Job CONTRACTED`,
 `Appointment CONFIRMED`, y **la dirección llega aquí** (`get-job` cambia:

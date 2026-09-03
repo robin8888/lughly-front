@@ -117,26 +117,47 @@ describe('ProProfilePage: el aviso de que la visita se paga', () => {
   })
 
   /**
-   * Quien cobra por horas no tiene ninguna «tarifa de visita» que el cliente
-   * pueda haber visto: es su mínimo, y hay que decirlo o el número parece
-   * inventado.
+   * Y a quien cobra por horas **no se le pide presupuesto**, que es la
+   * corrección del mismo día: no vende precios cerrados, vende ratos de su
+   * agenda. Se intentó calcularle una visita con su mínimo para que el camino
+   * cobrara —cobraba, pero vendía algo que en ese oficio nadie ofrece—.
+   *
+   * No se esconde el botón: se explica y se le lleva a su puerta, que existe y
+   * también cobra. Un botón desaparecido deja al cliente buscándolo.
    */
-  it('a quien cobra por horas le dice de dónde sale la cifra', () => {
+  it('a quien cobra por horas no se le pide presupuesto: se le reservan horas', () => {
     mockPro = perfil([
-      {
-        slug: 'fontaneria',
-        label: 'Fontanería',
-        hourlyRate: 14,
-        visitFee: null,
-        minHours: 2,
-      },
+      { slug: 'limpieza', label: 'Limpieza', hourlyRate: 14, visitFee: null },
     ])
 
     abrir()
     fireEvent.press(screen.getByTestId('pro-quote'))
 
-    expect(screen.getByText(/La visita cuesta 28,00 €/)).toBeTruthy()
-    expect(screen.getByText(/sus 2 horas de mínimo/)).toBeTruthy()
+    expect(onQuote).not.toHaveBeenCalled()
+    expect(screen.getByTestId('pro-hourly-dialog')).toBeTruthy()
+    expect(screen.getByText(/no da presupuestos de limpieza/)).toBeTruthy()
+
+    fireEvent.press(screen.getByTestId('pro-hourly-book'))
+    expect(onBookHours).toHaveBeenCalledWith('limpieza')
+  })
+
+  /**
+   * Y si ejerce los dos, el botón presupuesta el que sí puede: se le puede
+   * pedir algo a esa persona, aunque no sea por el oficio que estaba abierto.
+   */
+  it('con un oficio por horas y otro con visita, presupuesta el de la visita', () => {
+    mockPro = perfil([
+      { slug: 'limpieza', label: 'Limpieza', hourlyRate: 14, visitFee: null },
+      { slug: 'fontaneria', label: 'Fontanería', hourlyRate: null, visitFee: 30 },
+    ])
+
+    abrir()
+    fireEvent.press(screen.getByTestId('pro-quote'))
+
+    expect(screen.getByText(/La visita cuesta 30,00 €/)).toBeTruthy()
+
+    fireEvent.press(screen.getByTestId('pro-quote-confirm'))
+    expect(onQuote).toHaveBeenCalledWith('fontaneria')
   })
 
   it('al confirmar, se va al formulario con el oficio del precio', () => {

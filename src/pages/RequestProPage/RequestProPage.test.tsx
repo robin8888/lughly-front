@@ -15,17 +15,21 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { RequestProPage } from './RequestProPage'
 
+/**
+ * Con tarifa de visita, que es lo único que se puede presupuestar: quien cobra
+ * por horas no da presupuestos, se le reservan horas. Un fixture por horas
+ * dejaría esta pantalla en su estado de «no da presupuestos» y estos casos no
+ * comprobarían nada.
+ */
 const PRO = {
   id: 'pro-1',
   name: 'Robinson Rodriguez',
-  /** Cobra por horas y sin minimo, asi que su visita es una hora: 75 € */
   trades: [
     {
       slug: 'electricidad',
       label: 'Electricidad',
-      hourlyRate: 75,
-      visitFee: null,
-      minHours: null,
+      hourlyRate: null,
+      visitFee: 75,
     },
   ],
   employerName: null,

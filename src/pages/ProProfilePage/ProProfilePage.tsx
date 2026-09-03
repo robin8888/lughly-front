@@ -42,7 +42,7 @@ import { surchargesSummary } from '@/utils/surcharges'
 import { ApiError, API_BASE_URL } from '@/api'
 import { formatDate, parseIsoDate } from '@/utils/dates'
 import { toWeekSchedule } from '@/utils/schedule'
-import { visitPriceOf, visitPriceReason } from '@/utils/visitPrice'
+import { quotableTradeOf } from '@/utils/visitPrice'
 import { theme } from '@/theme'
 import { AVATAR_SIZE, styles } from './ProProfilePage.styles'
 
@@ -158,7 +158,9 @@ export function ProProfilePage({
    * dos salidas —cargando y error— y un hook detrás de un `return` no se
    * ejecuta en esos renders.
    */
-  const [warning, setWarning] = useState<'quote' | 'no-price' | null>(null)
+  const [warning, setWarning] = useState<
+    'quote' | 'hourly-no-quote' | 'no-price' | null
+  >(null)
 
   const toggleService = (tradeSlug: string, serviceId: string) => {
     setSelectedServices((current) => {
@@ -360,22 +362,34 @@ export function ProProfilePage({
   }
 
   /**
-   * El oficio por el que se le va a pedir presupuesto, y lo que cuesta su
+   * El oficio por el que se le puede pedir presupuesto, y lo que cuesta su
    * visita.
    *
-   * El precio es **del oficio**, no del profesional: quien pone bombines y
+   * **Solo los que tienen tarifa de visita.** `visitFee` es literalmente lo que
+   * cobra por ir a ver la avería antes de dar un precio, así que quien la tiene
+   * es quien presupuesta. Quien cobra por horas no vende precios cerrados sino
+   * ratos de su agenda —a una limpiadora no se le pide presupuesto, se le
+   * reservan las horas que hagan falta—, y a ese se le manda a su puerta, que
+   * es reservar horas y también cobra.
+   *
+   * El precio es **del oficio** y no del profesional: quien pone bombines y
    * además hace mudanzas no cobra lo mismo por ir a ver una cosa que la otra.
-   * Se prefiere el que el cliente venía mirando, y si no traía ninguno, el
-   * principal —que es el que la ficha está enseñando—.
+   * Se prefiere el que el cliente venía mirando; si ese no presupuesta, el
+   * primero suyo que sí.
    */
-  const quoteTrade = preferredTrade ?? pro.trades[0]
-  const quoteVisitFee = visitPriceOf(quoteTrade)
-  const quoteVisitReason = visitPriceReason(quoteTrade)
+  const quoteTrade = quotableTradeOf(pro.trades, preferredTrade)
+  const quoteVisitFee = quoteTrade?.visitFee ?? null
 
   const handleQuote = () => {
-    // Sin precio de visita tampoco hay presupuesto que pedirle
-    if (!quoteTrade || quoteVisitFee === null) return setWarning('no-price')
-    return setWarning('quote')
+    if (quoteTrade && quoteVisitFee !== null) return setWarning('quote')
+
+    /*
+      No presupuesta, y hay dos motivos que el cliente vive distinto: si cobra
+      por horas sí se le puede contratar —por su agenda— y si no tiene ninguna
+      tarifa, no se le puede contratar de ninguna forma. Mandar a los dos al
+      mismo aviso dejaría al primero pensando que no hay nada que hacer.
+    */
+    return setWarning(hourTrade ? 'hourly-no-quote' : 'no-price')
   }
 
   return (
@@ -802,13 +816,13 @@ export function ProProfilePage({
         * paga aunque el presupuesto no le convenza—. Sin la tercera, el primer
         * presupuesto caro se lee como un cobro a traición.
         *
-        * Y dice de dónde sale la cifra: quien cobra 14 €/h con mínimo de dos no
-        * entiende «visita 28 €» hasta que se le cuenta que son sus dos horas.
+        * Nombra el oficio porque el precio es suyo: el cliente puede estar
+        * mirando la ficha de alguien que ejerce tres.
         */}
       <Dialog
         visible={warning === 'quote'}
         title={`La visita cuesta ${formatAmount(quoteVisitFee ?? 0)} €`}
-        message={`Para darte un presupuesto, ${pro.name.split(' ')[0]} tiene que ir a tu dirección y verlo. ${quoteVisitReason ?? ''} Se retiene ahora y se cobra cuando acepte; si no puede o no contesta a tiempo, no se te cobra nada.
+        message={`Para darte un presupuesto de ${(quoteTrade?.label ?? '').toLowerCase()}, ${pro.name.split(' ')[0]} tiene que ir a tu dirección y verlo. Es su tarifa por desplazarse: se retiene ahora y se cobra cuando acepte; si no puede o no contesta a tiempo, no se te cobra nada.
 
 El presupuesto del arreglo llega después, y decides tú. La visita se paga igual, también si al final no lo aceptas: el viaje ya se hizo.`}
         actions={[
@@ -829,6 +843,37 @@ El presupuesto del arreglo llega después, y decides tú. La visita se paga igua
         ]}
         onDismiss={() => setWarning(null)}
         testID="pro-quote-dialog"
+      />
+
+      {/**
+        * Quien cobra por horas no da presupuestos, y eso no es un impedimento
+        * sino **otro modelo**: no vende precios cerrados, vende ratos de su
+        * agenda. Se dice así y se le lleva a la puerta que sí tiene, que es
+        * reservarle horas. Un botón escondido habría dejado al cliente
+        * buscándolo; uno que no explica nada, pensando que no se puede.
+        */}
+      <Dialog
+        visible={warning === 'hourly-no-quote'}
+        title="Cobra por horas"
+        message={`${pro.name.split(' ')[0]} no da presupuestos${hourTrade ? ` de ${hourTrade.label.toLowerCase()}` : ''}: cobra ${formatAmount(hourTrade?.hourlyRate ?? 0)} € la hora y se le reservan las horas que necesites. Eliges el día y el rato, y ves el total antes de pagar.`}
+        actions={[
+          {
+            label: 'Reservar horas',
+            onPress: () => {
+              setWarning(null)
+              if (hourTrade) onBookHours(hourTrade.slug)
+            },
+            testID: 'pro-hourly-book',
+          },
+          {
+            label: 'Ahora no',
+            variant: 'secondary',
+            onPress: () => setWarning(null),
+            testID: 'pro-hourly-cancel',
+          },
+        ]}
+        onDismiss={() => setWarning(null)}
+        testID="pro-hourly-dialog"
       />
 
       {/**

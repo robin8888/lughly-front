@@ -1,71 +1,62 @@
 /**
  * visitPrice
- * Lo que cuesta que un profesional se presente en una dirección.
+ * Lo que cuesta que un profesional vaya a ver el problema para presupuestarlo.
  *
  * **Espejo de `lughly-backend/src/modules/jobs/domain/visit-price.ts`.** El
  * precio lo decide el servidor —el móvil no manda importes, nunca—, pero hace
  * falta aquí para poder decir la cifra **antes** de que el cliente pulse:
  * primero en el aviso de «Presupuesto», que explica que la visita se paga, y
- * después en el desglose de la pantalla. Un modal que dijera «se te cobrará la
+ * después en el desglose de la pantalla. Un aviso que dijera «se te cobrará la
  * visita» sin decir cuánto no avisaría de nada.
  *
  * Si las dos cuentas discrepasen, manda el servidor y el cliente vería un
- * importe distinto del que se le retiene. Por eso son treinta líneas iguales a
- * las de allí y no una llamada más: cambiar la regla obliga a tocar los dos
- * lados, que es lo que dice `AGENTS.md` de cualquier contrato.
+ * importe distinto del que se le retiene. Por eso son las mismas líneas que las
+ * de allí y no una llamada más: cambiar la regla obliga a tocar los dos lados,
+ * que es lo que dice `AGENTS.md` de cualquier contrato.
  *
- * ## La cuenta
+ * ## Solo da presupuestos quien tiene tarifa de visita
  *
- * `hourlyRate` y `visitFee` son excluyentes: un oficio se cobra por hora o por
- * visita, nunca las dos cosas. Quien tiene carta cobra su `visitFee`; quien
- * cobra por horas cobra **su suelo**, la tarifa por el mínimo que declaró en
- * ese oficio, o una hora si no tiene mínimo.
+ * `visitFee` **es** eso: lo que cobra por presentarse a ver la avería antes de
+ * dar un precio. Quien la tiene puesta es quien presupuesta.
  *
- * `null` es «este oficio no tiene precio todavía», que no es un cero: es un
- * oficio con el que aún no se puede contratar.
+ * Quien cobra por horas no: no vende precios cerrados, vende ratos de su
+ * agenda — a una limpiadora no se le pide presupuesto, se le reservan las horas
+ * que hagan falta—. Las dos tarifas son excluyentes en el servidor, y esa
+ * exclusión son **dos modelos de negocio**, no un detalle de columnas.
+ *
+ * Los dos casos en que no se puede presupuestar se distinguen a propósito:
+ * a quien cobra por horas **sí se le puede contratar** —por su agenda— y a
+ * quien no tiene ninguna tarifa no se le puede contratar de ninguna forma. La
+ * pantalla tiene que poder mandar a cada uno a un sitio distinto.
  */
 
 export interface TradeRates {
   hourlyRate?: number | null
   visitFee?: number | null
-  minHours?: number | null
 }
 
-/** Lo que se factura de una hora suelta cuando no hay mínimo declarado */
-const HORAS_SIN_MINIMO = 1
+export type VisitPrice =
+  /** Tiene tarifa de visita: se le puede pedir presupuesto, y cuesta esto */
+  | { kind: 'fee'; amount: number }
+  /** Cobra por horas: no da presupuestos, se le reservan horas */
+  | { kind: 'hourly' }
+  /** Sin ninguna tarifa: no se le puede contratar por ese oficio */
+  | { kind: 'none' }
 
-export function visitPriceOf(trade: TradeRates | undefined | null): number | null {
-  if (!trade) return null
-  if (trade.visitFee != null) return trade.visitFee
-  if (trade.hourlyRate == null) return null
+export function visitPriceOf(trade: TradeRates | undefined | null): VisitPrice {
+  if (!trade) return { kind: 'none' }
+  if (trade.visitFee != null) return { kind: 'fee', amount: trade.visitFee }
+  if (trade.hourlyRate != null) return { kind: 'hourly' }
 
-  /*
-    Un mínimo a cero significa lo mismo que el nulo —sin mínimo— y multiplicar
-    por él dejaría la visita gratis, que es el único resultado que esto no
-    puede dar.
-  */
-  const horas =
-    trade.minHours != null && trade.minHours > 0 ? trade.minHours : HORAS_SIN_MINIMO
-
-  return Math.round(trade.hourlyRate * horas * 100) / 100
+  return { kind: 'none' }
 }
 
-/**
- * De dónde sale ese número, dicho para leerlo.
- *
- * Es lo que hace que el aviso no parezca una cifra inventada: quien cobra 14 €
- * la hora con mínimo de dos no entiende «visita 28 €» hasta que se le dice que
- * son sus dos horas mínimas.
- */
-export function visitPriceReason(trade: TradeRates | undefined | null): string | null {
-  if (!trade) return null
-  if (trade.visitFee != null) return 'Es su tarifa por desplazarse.'
-  if (trade.hourlyRate == null) return null
+/** El oficio con el que se le puede pedir presupuesto, si tiene alguno. */
+export function quotableTradeOf<T extends TradeRates>(
+  trades: T[],
+  preferred?: T,
+): T | null {
+  if (preferred && visitPriceOf(preferred).kind === 'fee') return preferred
 
-  if (trade.minHours != null && trade.minHours > 0) {
-    const horas = trade.minHours === 1 ? '1 hora' : `${trade.minHours} horas`
-    return `Cobra por horas, así que la visita son sus ${horas} de mínimo.`
-  }
-
-  return 'Cobra por horas, así que la visita es una hora suya.'
+  return trades.find((trade) => visitPriceOf(trade).kind === 'fee') ?? null
 }

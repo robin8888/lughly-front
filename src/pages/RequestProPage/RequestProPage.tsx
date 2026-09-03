@@ -14,9 +14,17 @@
  *
  * Esta pantalla servía para dos cosas —pedir precio y reservar a tarifa fija—
  * y no cobraba ninguna de las dos. Era el camino gratis abierto a todo el
- * directorio. Ahora es una sola cosa: se retiene lo que ese profesional cobra
- * por presentarse, y se le paga cuando acepta. Reservar tiene sus pantallas,
- * `BookHoursPage` y `HireCartaPage`, que también cobran.
+ * directorio. Ahora es una sola cosa: se retiene su tarifa de visita, y se le
+ * paga cuando acepta. Reservar tiene sus pantallas, `BookHoursPage` y
+ * `HireCartaPage`, que también cobran.
+ *
+ * ## Solo los oficios con tarifa de visita
+ *
+ * `visitFee` es literalmente lo que cobra por ir a ver la avería antes de dar
+ * un precio, así que quien la tiene es quien presupuesta. Un oficio que cobra
+ * por horas no sale en el desplegable: no vende precios cerrados sino ratos de
+ * su agenda, y se le reserva por `BookHoursPage`. Ofrecerlo aquí daría un
+ * desplegable donde media lista falla al enviar.
  *
  * El desglose está arriba y no debajo del botón a propósito: es lo primero que
  * hay que leer, no la letra pequeña de lo que ya has decidido. La ficha ya ha
@@ -48,7 +56,7 @@ import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { useRequestPro } from '@/hooks/domain/useRequestPro'
-import { visitPriceOf, visitPriceReason } from '@/utils/visitPrice'
+import { visitPriceOf } from '@/utils/visitPrice'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import type { PickedImage } from '@/hooks/media/usePickImage'
@@ -102,38 +110,37 @@ export function RequestProPage({
   const [photos, setPhotos] = useState<PickedImage[]>([])
 
   /**
-   * Quien ejerce varios oficios cobra distinto por cada uno, así que hay que
-   * decir para cuál se le contrata. Con uno solo no se pregunta: sería un
-   * desplegable de una única opción.
+   * Los oficios suyos por los que **se puede pedir presupuesto**: los que
+   * tienen tarifa de visita.
    *
-   * La etiqueta dice **lo que va a costar la visita** y no su tarifa: es lo
-   * que se paga aquí, y cambiar de oficio en el desplegable cambia el importe
-   * del botón. Poner «14 €/h» al lado de un botón que cobra 28 € sería el
-   * mejor sitio posible para un malentendido.
+   * No salen todos. `visitFee` es lo que cobra por ir a ver la avería antes de
+   * dar un precio, así que un oficio que cobra por horas no presupuesta —se le
+   * reservan horas, que es otra pantalla— y ofrecerlo aquí llevaría a un
+   * desplegable donde media lista da error al enviar.
+   *
+   * Y la etiqueta dice **lo que va a costar la visita**: es lo que se paga
+   * aquí, y cambiar de oficio cambia el importe del botón.
    */
-  const tradeOptions =
-    pro?.trades.map((entry) => {
-      const visita = visitPriceOf(entry)
+  const quotableTrades = (pro?.trades ?? []).filter(
+    (entry) => visitPriceOf(entry).kind === 'fee',
+  )
 
-      return {
-        value: entry.slug,
-        label:
-          visita === null
-            ? `${entry.label} · sin precio`
-            : `${entry.label} · visita ${formatAmount(visita)} €`,
-      }
-    }) ?? []
+  const tradeOptions = quotableTrades.map((entry) => ({
+    value: entry.slug,
+    label: `${entry.label} · visita ${formatAmount(entry.visitFee ?? 0)} €`,
+  }))
 
-  const chosenTrade = trade ?? pro?.trades[0]?.slug ?? null
-  const chosenTradeEntry = pro?.trades.find((entry) => entry.slug === chosenTrade)
+  /*
+    El que venía marcado si presupuesta, y si no, el primero que sí. Se llega
+    aquí desde la ficha, que ya ha elegido uno y ha avisado de su precio.
+  */
+  const chosenTrade =
+    (trade && quotableTrades.some((entry) => entry.slug === trade)
+      ? trade
+      : quotableTrades[0]?.slug) ?? null
 
-  /**
-   * Lo que cuesta la visita de ESE oficio, con la misma cuenta que hace el
-   * servidor (`visitPrice`, espejo de `visit-price.ts`). Nulo es un oficio sin
-   * precios, con el que no se puede contratar.
-   */
-  const visitFee = visitPriceOf(chosenTradeEntry)
-  const visitReason = visitPriceReason(chosenTradeEntry)
+  const chosenTradeEntry = quotableTrades.find((entry) => entry.slug === chosenTrade)
+  const visitFee = chosenTradeEntry?.visitFee ?? null
 
   const method = methods?.[0] ?? null
 
@@ -227,7 +234,6 @@ export function RequestProPage({
       qué el botón está apagado.
     */
     method === null && 'una tarjeta guardada',
-    chosenTradeEntry != null && visitFee === null && 'el precio de ese oficio (no lo tiene puesto)',
   ].filter((entrada): entrada is string => typeof entrada === 'string')
 
   const canSend = missing.length === 0 && !isRequesting
@@ -324,6 +330,28 @@ export function RequestProPage({
     )
   }
 
+  /**
+   * Y si no presupuesta ninguno de sus oficios, aquí no hay nada que hacer.
+   *
+   * Desde la ficha no se llega —ella misma manda a reservar horas antes de
+   * abrir esto—, pero la ruta existe y sus tarifas pueden haber cambiado entre
+   * que se abrió y se llegó. Se dice lo que pasa en vez de enseñar un
+   * formulario que va a fallar al enviar.
+   */
+  if (quotableTrades.length === 0) {
+    return (
+      <View style={styles.screen} testID="request-pro-page">
+        {header}
+        <EmptyState
+          title="No da presupuestos"
+          message={`${pro.name.split(' ')[0]} cobra por horas, así que no presupuesta: se le reservan las horas que necesites desde su ficha.`}
+          actions={[{ label: 'Volver a su ficha', onPress: onBack, testID: 'request-pro-back' }]}
+          testID="request-pro-no-quote"
+        />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.screen} testID="request-pro-page">
       {header}
@@ -371,7 +399,9 @@ export function RequestProPage({
               <Money amount={visitFee} style={styles.total} />
             </View>
 
-            {visitReason && <Text style={styles.note}>{visitReason}</Text>}
+            <Text style={styles.note}>
+              Es lo que cobra por desplazarse a ver el problema.
+            </Text>
 
             {/*
               "Se retiene" y no "se cobra", porque es literalmente lo que pasa.

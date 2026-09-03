@@ -1,70 +1,65 @@
 /**
- * La cuenta de lo que cuesta una visita.
+ * Quién da presupuestos, y por cuánto.
  *
  * Es un espejo de `visit-price.ts` del servidor, y por eso se prueba aquí
  * también con los mismos casos: si las dos cuentas discrepan, el cliente ve un
- * importe en el aviso y se le retiene otro. Los números de estos casos son los
- * mismos que los del test de allí, a propósito.
+ * importe en el aviso y se le retiene otro.
  */
 
-import { visitPriceOf, visitPriceReason } from './visitPrice'
+import { quotableTradeOf, visitPriceOf } from './visitPrice'
 
 describe('visitPriceOf', () => {
-  it('quien cobra por visita cobra su visita', () => {
-    expect(visitPriceOf({ visitFee: 30, hourlyRate: null })).toBe(30)
+  it('quien tiene tarifa de visita da presupuestos, y cuesta eso', () => {
+    expect(visitPriceOf({ visitFee: 30, hourlyRate: null })).toEqual({
+      kind: 'fee',
+      amount: 30,
+    })
   })
 
   /**
-   * La mitad del directorio no tiene `visitFee`: es excluyente con
-   * `hourlyRate`. Sin esta rama, pedirles presupuesto sería gratis.
+   * La corrección del 3 de septiembre de 2026. Se intentó calcularle una
+   * visita —`hourlyRate × minHours`— para que el camino cobrara; cobraba, pero
+   * vendía algo que en ese oficio nadie ofrece. Quien cobra por horas no da
+   * presupuestos: se le reservan las horas que hagan falta.
    */
-  it('quien cobra por horas cobra su suelo: la tarifa por el mínimo', () => {
-    expect(visitPriceOf({ hourlyRate: 14, minHours: 2 })).toBe(28)
+  it('quien cobra por horas no da presupuestos', () => {
+    expect(visitPriceOf({ visitFee: null, hourlyRate: 14 })).toEqual({ kind: 'hourly' })
   })
 
-  it('sin mínimo declarado, una hora', () => {
-    expect(visitPriceOf({ hourlyRate: 14, minHours: null })).toBe(14)
-  })
-
-  /** Un cero significa lo mismo que el nulo, y multiplicar por él sería gratis */
-  it('un mínimo a cero no deja la visita gratis', () => {
-    expect(visitPriceOf({ hourlyRate: 14, minHours: 0 })).toBe(14)
-  })
-
-  it('redondea al céntimo, que es dinero', () => {
-    expect(visitPriceOf({ hourlyRate: 13.33, minHours: 1.5 })).toBe(20)
-  })
-
-  it('sin ninguna tarifa no hay visita que vender', () => {
-    expect(visitPriceOf({ hourlyRate: null, visitFee: null })).toBeNull()
-    expect(visitPriceOf(undefined)).toBeNull()
-    expect(visitPriceOf(null)).toBeNull()
+  /**
+   * `hourly` y `none` acaban los dos en «no se puede pedir presupuesto», y aun
+   * así son dos: al primero se le puede contratar por horas y al segundo no se
+   * le puede contratar de ninguna forma. La ficha manda a cada uno a un sitio.
+   */
+  it('sin ninguna tarifa, no se le puede contratar por ese oficio', () => {
+    expect(visitPriceOf({ visitFee: null, hourlyRate: null })).toEqual({ kind: 'none' })
+    expect(visitPriceOf(undefined)).toEqual({ kind: 'none' })
+    expect(visitPriceOf(null)).toEqual({ kind: 'none' })
   })
 })
 
-/**
- * El porqué es lo que evita que la cifra parezca inventada: quien cobra 14 € la
- * hora con mínimo de dos no entiende «visita 28 €» hasta que se le dice que son
- * sus dos horas mínimas.
- */
-describe('visitPriceReason', () => {
-  it('en quien cobra por visita, es su tarifa de desplazarse', () => {
-    expect(visitPriceReason({ visitFee: 30 })).toMatch(/desplazarse/)
+describe('quotableTradeOf', () => {
+  const carta = { slug: 'cerrajeria', visitFee: 55 }
+  const horas = { slug: 'limpieza', hourlyRate: 14 }
+
+  it('prefiere el oficio que venía mirando, si presupuesta', () => {
+    expect(quotableTradeOf([horas, carta], carta)).toBe(carta)
   })
 
-  it('en quien cobra por horas, dice el mínimo con el que sale la cuenta', () => {
-    expect(visitPriceReason({ hourlyRate: 14, minHours: 2 })).toContain('2 horas')
+  /**
+   * Y si el que venía mirando cobra por horas, busca otro suyo que sí
+   * presupueste: el botón tiene que aparecer siempre que se le pueda pedir algo
+   * a esa persona, aunque no sea por el oficio que estaba abierto.
+   */
+  it('si el que venía mirando cobra por horas, busca otro que presupueste', () => {
+    expect(quotableTradeOf([horas, carta], horas)).toBe(carta)
   })
 
-  it('el mínimo de una hora se dice en singular', () => {
-    expect(visitPriceReason({ hourlyRate: 14, minHours: 1 })).toContain('1 hora')
+  it('sin ninguno que presupueste, no hay oficio', () => {
+    expect(quotableTradeOf([horas], horas)).toBeNull()
   })
 
-  it('sin mínimo, es una hora suya', () => {
-    expect(visitPriceReason({ hourlyRate: 14 })).toMatch(/una hora/)
-  })
-
-  it('sin precios no hay nada que explicar', () => {
-    expect(visitPriceReason({ hourlyRate: null, visitFee: null })).toBeNull()
+  it('sin preferencia, el primero que presupueste', () => {
+    expect(quotableTradeOf([horas, carta])).toBe(carta)
   })
 })

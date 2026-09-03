@@ -2349,25 +2349,37 @@ profesional cobra por presentarse y se cobra cuando acepta. Lo que se paga es el
 desplazamiento y el rato de mirarlo, **no el arreglo**, y por eso se cobra
 aunque el presupuesto no convenza: el viaje ya se hizo.
 
-**El precio hay que calcularlo, no leerlo.** `hourlyRate` y `visitFee` son
-excluyentes (`proTradeSchema`), así que la mitad del directorio no tiene ninguna
-tarifa de visita puesta. En quien cobra por horas, la visita es **su suelo**: la
-tarifa por el mínimo de horas que declaró en ese oficio, o una hora si no tiene
-mínimo. No es una cifra inventada — es lo que le pagaría quien le reservase el
-rato más corto que admite, y `minHours` existe literalmente para eso. Vive en
-`visitPriceOf` (`jobs/domain/visit-price.ts`) y en su espejo del móvil
-(`utils/visitPrice.ts`).
+**Y solo lo da quien tiene tarifa de visita** (corregido por Robin el mismo
+día). `visitFee` es literalmente lo que cobra por ir a ver la avería antes de
+dar un precio, así que quien la tiene es quien presupuesta.
+
+La primera versión se lo calculaba también a los oficios por hora —`hourlyRate ×
+minHours`, «su suelo»— para que el camino cobrara. **Cobraba, pero vendía algo
+que en ese oficio nadie ofrece**: quien cobra por horas no vende precios
+cerrados, vende ratos de su agenda, y a una limpiadora no se le pide
+presupuesto. `hourlyRate` y `visitFee` son excluyentes en el esquema, y esa
+exclusión son **dos modelos de negocio**, no un detalle de columnas.
+
+Así que `visitPriceOf` devuelve tres cosas y no un número: `fee` (presupuesta,
+y cuesta esto), `hourly` (no presupuesta, pero **sí se le puede contratar** por
+horas) y `none` (no se le puede contratar de ninguna forma). Los dos últimos
+acaban igual —no hay presupuesto— y llevan a sitios distintos, que es todo el
+motivo de distinguirlos.
 
 **Y el móvil avisa antes.** Un botón que hasta ayer era gratis y hoy cobra no
 puede llevar directo al formulario: eso es un cobro a traición, aunque el
 importe salga después en pantalla. El diálogo de la ficha dice las tres cosas
-que el cliente no puede deducir —que alguien va a ir a su casa, cuánto cuesta
-eso, y que se cobra aunque el presupuesto no le convenza— y **de dónde sale la
-cifra**, porque «visita 28 €» de alguien que cobra 14 €/h no se entiende hasta
-que se dice que son sus dos horas de mínimo.
+que el cliente no puede deducir: que alguien va a ir a su casa, cuánto cuesta
+eso, y que se cobra aunque el presupuesto no le convenza.
+
+Al que cobra por horas **no se le esconde el botón**: se le explica que no da
+presupuestos y se le lleva a su puerta, que es reservarle horas y también cobra.
+Un botón desaparecido deja al cliente buscándolo; uno que no explica nada, le
+deja pensando que no se puede contratar.
 
 El precio es **del oficio y no del profesional**, así que el oficio viaja a la
-pantalla y cambiarlo en el desplegable cambia el importe del botón.
+pantalla, y el desplegable del formulario solo trae los oficios suyos que
+presupuestan.
 
 ### 2. Las urgencias, enteras
 
