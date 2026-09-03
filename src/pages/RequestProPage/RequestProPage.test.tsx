@@ -18,7 +18,16 @@ import { RequestProPage } from './RequestProPage'
 const PRO = {
   id: 'pro-1',
   name: 'Robinson Rodriguez',
-  trades: [{ slug: 'electricidad', label: 'Electricidad', hourlyRate: 75, visitFee: null }],
+  /** Cobra por horas y sin minimo, asi que su visita es una hora: 75 € */
+  trades: [
+    {
+      slug: 'electricidad',
+      label: 'Electricidad',
+      hourlyRate: 75,
+      visitFee: null,
+      minHours: null,
+    },
+  ],
   employerName: null,
 }
 
@@ -36,9 +45,27 @@ jest.mock('@/hooks/domain/useRequestPro', () => ({
   }),
 }))
 
+/**
+ * Con tarjeta guardada. Desde el 3 de septiembre de 2026 pedir presupuesto
+ * retiene la visita, asi que sin tarjeta el boton estaria apagado por eso y
+ * estos casos no comprobarian lo que quieren comprobar.
+ */
+jest.mock('@/hooks/domain/usePaymentMethods', () => ({
+  usePaymentMethods: () => ({
+    data: [{ id: 'pm_1', brand: 'visa', last4: '4242', expMonth: 12, expYear: 2030 }],
+    isPending: false,
+    isError: false,
+  }),
+}))
+
 function abrir() {
   return render(
-    <RequestProPage proId="pro-1" type="INSTANT" onBack={() => {}} onSent={() => {}} />,
+    <RequestProPage
+      proId="pro-1"
+      onBack={() => {}}
+      onSent={() => {}}
+      onAddPaymentMethod={() => {}}
+    />,
   )
 }
 

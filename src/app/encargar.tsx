@@ -1,32 +1,35 @@
 /**
- * Encargar a un profesional: /encargar?proId=…&type=QUOTE|INSTANT
+ * Pedir presupuesto a un profesional: /encargar?proId=…&trade=…
  *
- * Se llega desde los dos botones de su ficha. El tipo viaja en la ruta y no
- * en dos pantallas distintas porque el formulario es el mismo: lo único que
- * cambia es si se pide precio o se reserva a la tarifa que ya está publicada.
+ * Se llega desde el botón «Presupuesto» de su ficha, después del aviso de que
+ * la visita se paga.
+ *
+ * **Ya no lleva `type`.** Llevaba `QUOTE|INSTANT` porque el formulario servía
+ * para las dos cosas, y el `INSTANT` de aquí era un encargo sin precio y sin
+ * cobro: la puerta de atrás de la regla «no hay camino que no cobra». Reservar
+ * a tarifa fija tiene sus dos pantallas propias, `/reservar-horas` y
+ * `/contratar-carta`, y las dos cobran.
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { RequestProPage, type RequestType } from '@/pages/RequestProPage'
+import { RequestProPage } from '@/pages/RequestProPage'
 
 export default function RequestProRoute() {
   const router = useRouter()
-  const { proId, type, trade } = useLocalSearchParams<{
+  const { proId, trade } = useLocalSearchParams<{
     proId?: string
-    type?: string
     trade?: string
   }>()
 
   return (
     <RequestProPage
       proId={proId}
-      // Cualquier otra cosa se trata como presupuesto: pedir precio no
-      // compromete a nada, y reservar sí.
-      type={type === 'INSTANT' ? 'INSTANT' : ('QUOTE' as RequestType)}
       {...(trade ? { initialTrade: trade } : {})}
       onBack={() => router.back()}
       // Al enviarlo, a Mis trabajos: es donde va a mirar si le han contestado
       onSent={() => router.navigate('/jobs')}
+      // Sin tarjeta no se puede contratar, y guardarla es cosa de Mis pagos
+      onAddPaymentMethod={() => router.navigate('/mis-pagos')}
     />
   )
 }

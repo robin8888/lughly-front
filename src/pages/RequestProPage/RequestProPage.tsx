@@ -1,14 +1,27 @@
 /**
  * RequestProPage
- * Encargar un trabajo a un profesional concreto del directorio.
+ * Pedirle presupuesto a un profesional concreto del directorio, que es
+ * **contratarle una visita**.
  *
- * Es la forma de contratar: el cliente ya ha elegido a alguien mirando su
- * ficha, así que el formulario es corto y lo importante es contar bien qué
- * hace falta.
+ * El cliente ya ha elegido a alguien mirando su ficha, así que el formulario es
+ * corto y lo importante es contar bien qué hace falta.
  *
  * Se avisa de quién va a responder. Si esa persona trabaja para una empresa,
  * el encargo lo recibe ella; decirlo antes evita que la respuesta a nombre de
  * otro parezca un cambiazo cuando llegue.
+ *
+ * ## Aquí se paga, y hasta el 3 de septiembre de 2026 no
+ *
+ * Esta pantalla servía para dos cosas —pedir precio y reservar a tarifa fija—
+ * y no cobraba ninguna de las dos. Era el camino gratis abierto a todo el
+ * directorio. Ahora es una sola cosa: se retiene lo que ese profesional cobra
+ * por presentarse, y se le paga cuando acepta. Reservar tiene sus pantallas,
+ * `BookHoursPage` y `HireCartaPage`, que también cobran.
+ *
+ * El desglose está arriba y no debajo del botón a propósito: es lo primero que
+ * hay que leer, no la letra pequeña de lo que ya has decidido. La ficha ya ha
+ * avisado con un diálogo antes de llegar; esto lo repite con la cifra
+ * definitiva del oficio que se elija, que puede no ser el de la ficha.
  */
 
 import { useState } from 'react'
@@ -28,11 +41,14 @@ import {
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { Money, formatAmount } from '@/components/atoms/Money'
 import { Picker } from '@/components/molecules/Picker'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { useProProfile } from '@/hooks/domain/useProProfile'
+import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { useRequestPro } from '@/hooks/domain/useRequestPro'
+import { visitPriceOf, visitPriceReason } from '@/utils/visitPrice'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import type { PickedImage } from '@/hooks/media/usePickImage'
@@ -44,27 +60,31 @@ import {
 import { theme } from '@/theme'
 import { styles } from './RequestProPage.styles'
 
-export type RequestType = 'QUOTE' | 'INSTANT'
-
 export interface RequestProPageProps {
   proId: string | undefined
-  type: RequestType
-  /** El oficio con el que venía filtrando el directorio, si venía con uno */
+  /** El oficio por el que se le pide, que es de quien sale el precio */
   initialTrade?: string
   onBack: () => void
   onSent: () => void
+  /** Sin tarjeta guardada no hay visita que retener */
+  onAddPaymentMethod: () => void
 }
 
 export function RequestProPage({
   proId,
-  type,
   initialTrade,
   onBack,
   onSent,
+  onAddPaymentMethod,
 }: RequestProPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
   const { data: pro, isPending, isError } = useProProfile(proId)
+  const {
+    data: methods,
+    isPending: isPendingMethods,
+    isError: isErrorMethods,
+  } = usePaymentMethods()
   const { request, isRequesting, fieldErrors, formError, reset } = useRequestPro(proId)
 
   const [trade, setTrade] = useState<string | null>(initialTrade ?? null)
@@ -81,29 +101,41 @@ export function RequestProPage({
   const [maxBudget, setMaxBudget] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
 
-  const isInstant = type === 'INSTANT'
-
   /**
    * Quien ejerce varios oficios cobra distinto por cada uno, así que hay que
    * decir para cuál se le contrata. Con uno solo no se pregunta: sería un
    * desplegable de una única opción.
+   *
+   * La etiqueta dice **lo que va a costar la visita** y no su tarifa: es lo
+   * que se paga aquí, y cambiar de oficio en el desplegable cambia el importe
+   * del botón. Poner «14 €/h» al lado de un botón que cobra 28 € sería el
+   * mejor sitio posible para un malentendido.
    */
   const tradeOptions =
-    pro?.trades.map((entry) => ({
-      value: entry.slug,
-      label: `${entry.label} · ${
-        entry.visitFee != null ? `Visita ${entry.visitFee} €` : `${entry.hourlyRate} €/h`
-      }`,
-    })) ?? []
+    pro?.trades.map((entry) => {
+      const visita = visitPriceOf(entry)
+
+      return {
+        value: entry.slug,
+        label:
+          visita === null
+            ? `${entry.label} · sin precio`
+            : `${entry.label} · visita ${formatAmount(visita)} €`,
+      }
+    }) ?? []
 
   const chosenTrade = trade ?? pro?.trades[0]?.slug ?? null
   const chosenTradeEntry = pro?.trades.find((entry) => entry.slug === chosenTrade)
-  /** "Visita X €" en modo visita, "X €/h" por hora — nunca `null €/h` */
-  const chosenRateLabel =
-    chosenTradeEntry &&
-    (chosenTradeEntry.visitFee != null
-      ? `Visita ${chosenTradeEntry.visitFee} €`
-      : `${chosenTradeEntry.hourlyRate} €/h`)
+
+  /**
+   * Lo que cuesta la visita de ESE oficio, con la misma cuenta que hace el
+   * servidor (`visitPrice`, espejo de `visit-price.ts`). Nulo es un oficio sin
+   * precios, con el que no se puede contratar.
+   */
+  const visitFee = visitPriceOf(chosenTradeEntry)
+  const visitReason = visitPriceReason(chosenTradeEntry)
+
+  const method = methods?.[0] ?? null
 
   /**
    * Lo que hace falta para poder enviar, en un solo sitio.
@@ -188,18 +220,26 @@ export function RequestProPage({
     address === null && 'la dirección (elígela de las sugerencias)',
     address !== null && detail.number.trim() === '' && 'el número de la calle',
     address !== null && !isPostcode(detail.postcode) && 'el código postal',
+    /*
+      Y la tarjeta, que es lo nuevo: la visita se retiene al pedirla. Va al
+      final de la lista porque es lo último que se resuelve y porque tiene su
+      propia tarjeta con su botón más arriba; aquí solo cierra la cuenta de por
+      qué el botón está apagado.
+    */
+    method === null && 'una tarjeta guardada',
+    chosenTradeEntry != null && visitFee === null && 'el precio de ese oficio (no lo tiene puesto)',
   ].filter((entrada): entrada is string => typeof entrada === 'string')
 
   const canSend = missing.length === 0 && !isRequesting
 
   const handleSend = async () => {
     reset()
-    if (!chosenTrade) return
+    if (!chosenTrade || !method) return
 
     const budget = Number(maxBudget.replace(',', '.'))
 
     const sent = await request({
-      type,
+      type: 'QUOTE',
       tradeSlug: chosenTrade,
       title: title.trim(),
       description: description.trim(),
@@ -220,6 +260,7 @@ export function RequestProPage({
       ...(maxBudget !== '' &&
         Number.isFinite(budget) &&
         budget > 0 && { maxBudget: budget }),
+      paymentMethodId: method.id,
     }, photos)
 
     if (!sent) return
@@ -231,11 +272,18 @@ export function RequestProPage({
         ? `${encargo.requestedProName} tiene 24 horas para responderte. Lo verás en Mis trabajos.`
         : `Responde ${encargo.respondedByName}, la empresa de ${encargo.requestedProName}, en un plazo de 24 horas. Si te proponen mandar a otra persona, decides tú.`
 
+    /*
+      El dinero, primero. Es lo que el cliente acaba de hacer y lo que no puede
+      quedarle en duda: se ha apartado un importe en su tarjeta y todavía no se
+      le ha cobrado nada.
+    */
+    const dinero = `Se han retenido ${formatAmount(encargo.amount)} € de la visita; solo se cobran si acepta.`
+
     Alert.alert(
-      'Encargo enviado',
+      'Visita pedida',
       photosFailed > 0
-        ? `${quien} ${photosFailed === 1 ? 'Una foto no se pudo enviar' : `${photosFailed} fotos no se pudieron enviar`}.`
-        : quien,
+        ? `${dinero} ${quien} ${photosFailed === 1 ? 'Una foto no se pudo enviar' : `${photosFailed} fotos no se pudieron enviar`}.`
+        : `${dinero} ${quien}`,
     )
     onSent()
   }
@@ -247,13 +295,11 @@ export function RequestProPage({
       <Pressable onPress={onBack} style={styles.back} accessibilityRole="button">
         <Text style={styles.backIcon}>←</Text>
       </Pressable>
-      <Text style={styles.title}>
-        {isInstant ? 'Reservar ahora' : 'Pedir presupuesto'}
-      </Text>
+      <Text style={styles.title}>Pedir presupuesto</Text>
     </View>
   )
 
-  if (isPending) {
+  if (isPending || isPendingMethods) {
     return (
       <View style={styles.screen} testID="request-pro-page">
         {header}
@@ -307,7 +353,70 @@ export function RequestProPage({
           </Text>
         </InfoCard>
 
+        {/**
+         * Lo que cuesta la visita, arriba y con su porqué.
+         *
+         * No es la letra pequeña de una decisión ya tomada: es la decisión. Un
+         * botón que dice «Pedir presupuesto por 28 €» sin nada que explique de
+         * dónde salen esos 28 € parece un cargo sorpresa, y quien cobra por
+         * horas no tiene ninguna «tarifa de visita» que el cliente pueda haber
+         * visto en la ficha — es su mínimo, y hay que decirlo.
+         */}
+        {visitFee !== null && (
+          <InfoCard testID="request-visit-summary">
+            <View style={styles.line}>
+              <Text style={styles.lineLabel}>
+                Visita para presupuesto{chosenTradeEntry ? ` · ${chosenTradeEntry.label}` : ''}
+              </Text>
+              <Money amount={visitFee} style={styles.total} />
+            </View>
+
+            {visitReason && <Text style={styles.note}>{visitReason}</Text>}
+
+            {/*
+              "Se retiene" y no "se cobra", porque es literalmente lo que pasa.
+              Y la última frase es la que evita el enfado de verdad: lo que se
+              paga es el viaje, no el arreglo, así que el presupuesto puede no
+              gustar y la visita se cobra igual.
+            */}
+            <Text style={styles.note}>
+              Se retiene ahora en tu tarjeta y solo se te cobra cuando{' '}
+              {pro.name.split(' ')[0]} lo acepte. Si no puede o no contesta a
+              tiempo, se suelta y no se te cobra nada.
+            </Text>
+
+            <Text style={styles.note}>
+              Lo que pagas es que vaya a verlo. El precio del arreglo te lo dirá
+              después y decides tú; la visita se cobra igual si no lo aceptas.
+            </Text>
+          </InfoCard>
+        )}
+
         {formError && <Text style={styles.formError}>{formError}</Text>}
+
+        {isErrorMethods || !method ? (
+          <InfoCard style={styles.paymentCard} testID="request-no-method">
+            <Text style={styles.paymentTitle}>Necesitas una tarjeta guardada</Text>
+            <Text style={styles.paymentBody}>
+              La visita se retiene al pedirla, así que hace falta un método de
+              pago guardado.
+            </Text>
+            <Button
+              variant="secondary"
+              onPress={onAddPaymentMethod}
+              testID="request-add-method"
+            >
+              Añadir tarjeta
+            </Button>
+          </InfoCard>
+        ) : (
+          <InfoCard style={styles.paymentCard} testID="request-method">
+            <Text style={styles.paymentTitle}>Se retendrá en</Text>
+            <Text style={styles.paymentBody}>
+              {method.brand} •••• {method.last4}
+            </Text>
+          </InfoCard>
+        )}
 
         {tradeOptions.length > 1 && (
           <FormField
@@ -345,11 +454,7 @@ export function RequestProPage({
 
         <FormField
           label="Cuéntalo con detalle"
-          hint={
-            isInstant
-              ? 'Cuanto mejor lo describas, menos sorpresas el día del trabajo.'
-              : 'Sin detalle no puede darte un precio y tendrá que ir a verlo antes.'
-          }
+          hint="Con detalle llega sabiendo lo que va a encontrarse, y la visita sirve para algo más que para mirar."
           error={descriptionError}
         >
           <Input
@@ -421,23 +526,28 @@ export function RequestProPage({
           />
         </FormField>
 
-        {!isInstant && (
-          <FormField
-            label="Presupuesto máximo"
-            hint="Opcional. Decirlo ahorra idas y venidas si hay un tope claro."
-            error={fieldErrors.maxBudget}
-          >
-            <Input
-              value={maxBudget}
-              onChangeText={(value) => setMaxBudget(value.replace(/[^0-9.,]/g, ''))}
-              placeholder="200"
-              suffix="€"
-              keyboardType="decimal-pad"
-              editable={!isRequesting}
-              testID="request-budget"
-            />
-          </FormField>
-        )}
+        {/*
+          El tope es del arreglo, no de la visita — la visita ya tiene su
+          precio arriba—. Sirve para que no le presupuesten algo que no se va a
+          poder pagar, y por eso el texto dice de qué habla: dejarlo en
+          «Presupuesto máximo» al lado de un importe que se retiene ahora
+          invita a leerlo como un tope de lo que se va a cobrar hoy.
+        */}
+        <FormField
+          label="Tope para el arreglo"
+          hint="Opcional. Decirlo ahorra idas y venidas si hay un límite claro."
+          error={fieldErrors.maxBudget}
+        >
+          <Input
+            value={maxBudget}
+            onChangeText={(value) => setMaxBudget(value.replace(/[^0-9.,]/g, ''))}
+            placeholder="200"
+            suffix="€"
+            keyboardType="decimal-pad"
+            editable={!isRequesting}
+            testID="request-budget"
+          />
+        </FormField>
 
         {/*
           En oficios se valora mirando, y un encargo directo sin fotos obliga
@@ -481,12 +591,6 @@ export function RequestProPage({
           recibe quien quede asignado al trabajo.
         </Text>
 
-        {isInstant && chosenRateLabel && (
-          <Text style={styles.rate}>
-            Tarifa: {chosenRateLabel}. Los recargos de fin de semana, festivo y
-            horario nocturno se aplican encima y los verás antes de confirmar.
-          </Text>
-        )}
 
         <Button
           fullWidth
@@ -496,7 +600,9 @@ export function RequestProPage({
           style={styles.send}
           testID="request-send"
         >
-          {isInstant ? 'Enviar la reserva' : 'Pedir presupuesto'}
+          {visitFee === null
+            ? 'Pedir presupuesto'
+            : `Pedir la visita por ${formatAmount(visitFee)} €`}
         </Button>
 
         {/**

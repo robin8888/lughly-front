@@ -102,6 +102,50 @@ export const styles = StyleSheet.create({
     opacity: 0.8,
     marginTop: 8,
   },
+
+  /** El desglose de la visita, igual que en la carta: es el mismo hecho */
+  line: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  lineLabel: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+    opacity: 0.85,
+    flexShrink: 1,
+    paddingRight: 12,
+  },
+  total: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.h5,
+    color: theme.colors.accent700,
+  },
+  note: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.65,
+    marginTop: 10,
+  },
+  paymentCard: {
+    gap: 4,
+    marginTop: 4,
+  },
+  paymentTitle: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  paymentBody: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+    opacity: 0.85,
+    marginBottom: 8,
+  },
   send: {
     marginTop: 16,
   },

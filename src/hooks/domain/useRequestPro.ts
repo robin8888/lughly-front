@@ -1,6 +1,8 @@
 /**
  * useRequestPro
- * El cliente encarga un trabajo a un profesional concreto del directorio.
+ * El cliente le pide presupuesto a un profesional concreto del directorio,
+ * que es **contratarle una visita**: se retiene lo que cobra por presentarse y
+ * se le paga cuando acepta.
  *
  * Al enviarlo se invalida la lista de trabajos: el encargo aparece ahí como
  * uno más, esperando respuesta, y es donde el cliente va a mirar si le han
@@ -10,6 +12,18 @@
  * encargo directo corto justo en lo que más decide: en oficios se valora
  * mirando, y el profesional que recibe un encargo sin fotos tiene que
  * preguntar por chat lo que se ve en un vistazo.
+ *
+ * **Con dinero** (3 Septiembre 2026). Era el camino gratis abierto a todo el
+ * directorio: creaba el encargo y nada más. Ahora pasa por el mismo sitio que
+ * la carta y las horas, con su retención y su 3D Secure
+ * (`useCardChallenge`).
+ *
+ * ## El orden importa: primero el dinero, después las fotos
+ *
+ * Las fotos se suben **una vez que el encargo existe** —necesitan su id— y por
+ * eso van después. Si una no llega, el encargo sigue en pie y se le dice
+ * cuántas faltan: perder una foto no puede deshacer una retención hecha, y
+ * volver a empezar le cobraría dos veces la misma visita.
  */
 
 import { useState } from 'react'
@@ -25,6 +39,7 @@ import {
 } from '@/api/assignments.api'
 import type { FieldErrors } from '@/utils/formErrors'
 import { useIdentityGate } from './useIdentityGate'
+import { CardAuthError, useCardChallenge } from './useCardChallenge'
 
 export interface RequestOutcome {
   request: ApiDirectRequest
@@ -37,10 +52,25 @@ export function useRequestPro(proId: string | undefined) {
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false)
 
   const identityGate = useIdentityGate()
+  const resolveCardChallenge = useCardChallenge()
 
   const mutation = useMutation({
-    mutationFn: (payload: RequestProPayload) =>
-      assignmentsApi.request(proId as string, payload),
+    mutationFn: async (payload: RequestProPayload): Promise<ApiDirectRequest> => {
+      const sent = await assignmentsApi.request(proId as string, payload)
+
+      if (sent.outcome === 'sent') return sent
+
+      /*
+        El banco pide autenticación. El encargo espera en borrador —no lo ve
+        nadie, ningún reloj corre— hasta que se resuelva el reto; el servidor
+        es quien dice si de verdad salió. Del resultado solo se toma el cobro:
+        los nombres y el oficio ya venían en la primera respuesta y son los
+        mismos.
+      */
+      const confirmed = await resolveCardChallenge(sent.id, sent.clientSecret)
+
+      return { ...sent, outcome: 'sent', charge: confirmed.charge, clientSecret: null }
+    },
 
     /*
      * Falta el documento: no es un fallo, es una puerta con salida. El aviso
@@ -69,8 +99,9 @@ export function useRequestPro(proId: string | undefined) {
         return null
       }
 
-      // A partir de aquí el encargo EXISTE: nada de lo que siga puede
-      // devolver null, sería mentirle al cliente sobre lo que ha pasado.
+      // A partir de aquí el encargo EXISTE y la visita está retenida: nada de
+      // lo que siga puede devolver null, sería mentirle al cliente sobre lo
+      // que ha pasado con su dinero.
       let photosFailed = 0
 
       if (photos.length > 0) {
@@ -105,12 +136,13 @@ export function useRequestPro(proId: string | undefined) {
         ? error.toFieldErrors<RequestProPayload>()
         : ({} as FieldErrors<RequestProPayload>),
     /**
-     * El mensaje suelto: un oficio que no ejerce o un profesional que ya no
-     * está no son errores de un campo del formulario, son motivos por los
+     * El mensaje suelto: un oficio que no ejerce, un profesional que ya no
+     * está, un oficio sin precios, la tarjeta rechazada o la autenticación que
+     * no salió no son errores de un campo del formulario, son motivos por los
      * que este encargo concreto no puede salir.
      */
     formError:
-      error instanceof NetworkError
+      error instanceof NetworkError || error instanceof CardAuthError
         ? error.message
         : error instanceof ApiError && error.details.length === 0
           ? error.message

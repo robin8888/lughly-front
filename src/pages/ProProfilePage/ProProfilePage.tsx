@@ -33,6 +33,7 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { Avatar } from '@/components/atoms/Avatar'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
+import { Dialog } from '@/components/organisms/Dialog'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
@@ -41,6 +42,7 @@ import { surchargesSummary } from '@/utils/surcharges'
 import { ApiError, API_BASE_URL } from '@/api'
 import { formatDate, parseIsoDate } from '@/utils/dates'
 import { toWeekSchedule } from '@/utils/schedule'
+import { visitPriceOf, visitPriceReason } from '@/utils/visitPrice'
 import { theme } from '@/theme'
 import { AVATAR_SIZE, styles } from './ProProfilePage.styles'
 
@@ -73,16 +75,14 @@ function formatAbsentUntil(lastDayOut: string): string {
 export interface ProProfilePageProps {
   id: string | undefined
   onBack: () => void
-  /**
-   * Reservar sin precio: el encargo genérico, con su título y su descripción.
-   * Es la salida de quien no cobra ni por horas ni por visita, que hoy no
-   * debería existir —el alta obliga a uno de los dos— pero puede llegar de
-   * una ficha vieja.
-   */
-  onBook: () => void
   /** Reservar horas suyas: se elige el hueco y se paga por adelantado */
   onBookHours: (tradeSlug: string) => void
-  onQuote: () => void
+  /**
+   * Pedir presupuesto, que es **contratar una visita**: se avisa antes con un
+   * diálogo y se le pasa el oficio por el que se le va a pedir, porque el
+   * precio de la visita es de ese oficio y no del profesional.
+   */
+  onQuote: (tradeSlug: string) => void
   onReport: () => void
   /** Contratar la carta de un oficio: la visita, más lo que haya marcado */
   onHireCarta: (tradeSlug: string, serviceIds: string[]) => void
@@ -97,7 +97,6 @@ export interface ProProfilePageProps {
 export function ProProfilePage({
   id,
   onBack,
-  onBook,
   onBookHours,
   onQuote,
   onReport,
@@ -151,6 +150,15 @@ export function ProProfilePage({
   const [selectedServices, setSelectedServices] = useState<Record<string, string[]>>(
     initialSelection ? { [initialSelection.tradeSlug]: initialSelection.serviceIds } : {},
   )
+
+  /**
+   * Qué hay que avisar antes de contratar, si hay algo. `null` es nada abierto.
+   *
+   * Aquí arriba con el resto de hooks por lo mismo que `viewing`: más abajo hay
+   * dos salidas —cargando y error— y un hook detrás de un `return` no se
+   * ejecuta en esos renders.
+   */
+  const [warning, setWarning] = useState<'quote' | 'no-price' | null>(null)
 
   const toggleService = (tradeSlug: string, serviceId: string) => {
     setSelectedServices((current) => {
@@ -325,9 +333,11 @@ export function ProProfilePage({
    * adivine el modelo de negocio de otro.
    *
    * Se prefiere el oficio con el que venía mirando; si no traía ninguno, el
-   * primero que tenga. Y si no cobra de ninguna de las dos formas queda el
-   * encargo genérico, que **no cobra nada**: es la puerta de atrás que este
-   * botón tenía para todo el mundo hasta el 2 de septiembre de 2026.
+   * primero que tenga. Y si no cobra de ninguna de las dos formas **no se le
+   * puede contratar**: hasta el 3 de septiembre de 2026 quedaba el encargo
+   * genérico, que era la puerta de atrás por la que se contrataba gratis. Ya
+   * no existe; se dice con un aviso, que es la verdad —le faltan precios— y
+   * tiene salida: el chat.
    */
   const preferredTrade = pro.trades.find(
     (entry) => entry.slug === initialSelection?.tradeSlug,
@@ -346,7 +356,26 @@ export function ProProfilePage({
     if (visitTrade) {
       return onHireCarta(visitTrade.slug, selectedServices[visitTrade.slug] ?? [])
     }
-    return onBook()
+    return setWarning('no-price')
+  }
+
+  /**
+   * El oficio por el que se le va a pedir presupuesto, y lo que cuesta su
+   * visita.
+   *
+   * El precio es **del oficio**, no del profesional: quien pone bombines y
+   * además hace mudanzas no cobra lo mismo por ir a ver una cosa que la otra.
+   * Se prefiere el que el cliente venía mirando, y si no traía ninguno, el
+   * principal —que es el que la ficha está enseñando—.
+   */
+  const quoteTrade = preferredTrade ?? pro.trades[0]
+  const quoteVisitFee = visitPriceOf(quoteTrade)
+  const quoteVisitReason = visitPriceReason(quoteTrade)
+
+  const handleQuote = () => {
+    // Sin precio de visita tampoco hay presupuesto que pedirle
+    if (!quoteTrade || quoteVisitFee === null) return setWarning('no-price')
+    return setWarning('quote')
   }
 
   return (
@@ -740,7 +769,7 @@ export function ProProfilePage({
           </Button>
           <Button
             variant="secondary"
-            onPress={onQuote}
+            onPress={handleQuote}
             style={styles.actionButton}
             testID="pro-quote"
           >
@@ -762,6 +791,64 @@ export function ProProfilePage({
         openAt={viewing}
         onClose={() => setViewing(null)}
         testID="pro-photo-viewer"
+      />
+
+      {/**
+        * Pedir presupuesto cuesta dinero, y hay que decirlo **antes**.
+        *
+        * Es un botón que hasta ahora era gratis y ya no lo es, así que el
+        * diálogo no está de adorno: dice las tres cosas que el cliente no puede
+        * deducir —que alguien va a ir a su casa, cuánto cuesta eso, y que se
+        * paga aunque el presupuesto no le convenza—. Sin la tercera, el primer
+        * presupuesto caro se lee como un cobro a traición.
+        *
+        * Y dice de dónde sale la cifra: quien cobra 14 €/h con mínimo de dos no
+        * entiende «visita 28 €» hasta que se le cuenta que son sus dos horas.
+        */}
+      <Dialog
+        visible={warning === 'quote'}
+        title={`La visita cuesta ${formatAmount(quoteVisitFee ?? 0)} €`}
+        message={`Para darte un presupuesto, ${pro.name.split(' ')[0]} tiene que ir a tu dirección y verlo. ${quoteVisitReason ?? ''} Se retiene ahora y se cobra cuando acepte; si no puede o no contesta a tiempo, no se te cobra nada.
+
+El presupuesto del arreglo llega después, y decides tú. La visita se paga igual, también si al final no lo aceptas: el viaje ya se hizo.`}
+        actions={[
+          {
+            label: `Pedirlo por ${formatAmount(quoteVisitFee ?? 0)} €`,
+            onPress: () => {
+              setWarning(null)
+              if (quoteTrade) onQuote(quoteTrade.slug)
+            },
+            testID: 'pro-quote-confirm',
+          },
+          {
+            label: 'Ahora no',
+            variant: 'secondary',
+            onPress: () => setWarning(null),
+            testID: 'pro-quote-cancel',
+          },
+        ]}
+        onDismiss={() => setWarning(null)}
+        testID="pro-quote-dialog"
+      />
+
+      {/**
+        * Y el caso raro: un oficio sin ninguna tarifa. No debería existir —el
+        * alta exige una de las dos— pero llega de fichas viejas, y antes caía
+        * en el encargo genérico que no cobraba. Se dice lo que pasa de verdad.
+        */}
+      <Dialog
+        visible={warning === 'no-price'}
+        title="Todavía no tiene precios"
+        message={`${pro.name.split(' ')[0]} no ha puesto todavía lo que cobra por este oficio, así que no podemos contratarle por él. Puedes escribirle y pedirle que los ponga, o buscar a otra persona del directorio.`}
+        actions={[
+          {
+            label: 'Entendido',
+            onPress: () => setWarning(null),
+            testID: 'pro-no-price-ok',
+          },
+        ]}
+        onDismiss={() => setWarning(null)}
+        testID="pro-no-price-dialog"
       />
     </View>
   )

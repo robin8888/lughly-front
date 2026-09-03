@@ -12,8 +12,13 @@ import type { ApiAppointmentStatus, ApiJobStatus, ApiJobType } from './jobs.api'
 import type { ApiHoursQuote } from './pros.api'
 
 export interface RequestProPayload {
-  /** Presupuesto directo o reserva; una urgencia no pasa por aquí */
-  type: 'QUOTE' | 'INSTANT'
+  /**
+   * Solo presupuesto. Tenía también `INSTANT`, y ese era un encargo sin precio
+   * y sin cobro: el hueco que cierra la regla «no hay camino que no cobra».
+   * Reservar a tarifa fija va por `bookHours` o `bookServices`, y una urgencia
+   * no pasa por aquí.
+   */
+  type: 'QUOTE'
   tradeSlug: string
   title: string
   description: string
@@ -24,7 +29,17 @@ export interface RequestProPayload {
    */
   addressLine: string
   preferredDate?: string
+  /** Tope orientativo del cliente, **no un precio pactado** */
   maxBudget?: number
+  /**
+   * La tarjeta guardada en la que se retiene la visita
+   * (`paymentsApi.methods()`).
+   *
+   * Pedir presupuesto es contratar un desplazamiento: alguien va a ir a la
+   * dirección del cliente a mirarlo, y eso se paga aunque el presupuesto no
+   * convenza. Antes era gratis.
+   */
+  paymentMethodId: string
 }
 
 /** Cuerpo de POST /v1/pros/:id/book-services */
@@ -115,8 +130,21 @@ export interface ApiDirectRequest {
    * cliente para que no le extrañe recibir respuesta a nombre de otro.
    */
   respondedByName: string
+  /** Vacío mientras la tarjeta no haya contestado: el reloj no ha empezado */
   respondByAt: string
   createdAt: string
+  /** Lo que cuesta la visita, retenido al pedirla */
+  amount: number
+  /**
+   * `sent`: la visita está retenida y el encargo ya le ha llegado.
+   * `requires_action`: **la tarjeta pide autenticación** (3D Secure, que en
+   * España salta a menudo). El encargo espera en borrador sin que lo vea nadie,
+   * y hay que abrir el reto con `clientSecret` y después llamar a
+   * `confirmPayment`. Lo hace `useRequestPro`, igual que `useBookServices`.
+   */
+  outcome: 'sent' | 'requires_action'
+  charge: ApiChargeView | null
+  clientSecret: string | null
 }
 
 /** Un encargo pendiente de responder, en la bandeja de quien lo recibió. */
@@ -270,7 +298,12 @@ export const assignmentsApi = {
   assignments: () =>
     apiRequest<{ items: ApiAssignedJob[] }>('/v1/pro/assignments', { auth: true }),
 
-  /** El cliente encarga a alguien concreto del directorio */
+  /**
+   * El cliente le pide presupuesto a alguien concreto del directorio, que es
+   * **contratarle una visita**: se retiene lo que cobra por presentarse y se le
+   * paga cuando acepta. Si rechaza o se le pasa el plazo, la retención se
+   * suelta y el cliente nunca ve un cargo.
+   */
   request: (proId: string, payload: RequestProPayload) =>
     apiRequest<ApiDirectRequest>(`/v1/pros/${proId}/requests`, {
       method: 'POST',
