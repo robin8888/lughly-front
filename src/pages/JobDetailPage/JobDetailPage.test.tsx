@@ -24,6 +24,8 @@ jest.mock('@/hooks/domain/useJob', () => {
     finished: [] as string[],
     completed: [] as string[],
     startApproved: [] as string[],
+    /** Los reparos: por qué el cliente no da por bueno */
+    held: [] as { jobId: string; reason: string }[],
   }
 
   return {
@@ -65,15 +67,30 @@ jest.mock('@/hooks/domain/useJob', () => {
       },
       isApproving: false,
     }),
+    useHoldJob: () => ({
+      hold: (jobId: string, reason: string) => {
+        soporte.held.push({ jobId, reason })
+        return Promise.resolve({ ok: true, result: null, error: null })
+      },
+      isHolding: false,
+    }),
   }
 })
 
 jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefined }))
 jest.mock('@/hooks/ui/useTabBarClearance', () => ({ useTabBarClearance: () => 0 }))
 
+/*
+  La tarjeta, sin sus estilos pero **con su `testID`**: se lo comía, y eso hace
+  invisible para los tests todo lo que se envuelva en ella.
+*/
 jest.mock('@/components/molecules/InfoCard', () => {
   const { View } = require('react-native')
-  return { InfoCard: ({ children }: { children: ReactNode }) => <View>{children}</View> }
+  return {
+    InfoCard: ({ children, testID }: { children: ReactNode; testID?: string }) => (
+      <View testID={testID}>{children}</View>
+    ),
+  }
 })
 
 const { soporte } = jest.requireMock('@/hooks/domain/useJob')
@@ -111,6 +128,8 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     clientPhone: null,
     photoCount: 0,
     photos: [],
+    resultPhotos: [],
+    holdReason: null,
     createdAt: '2026-08-29T09:00:00.000Z',
     serviceLines: [],
     ...cambios,
@@ -123,6 +142,7 @@ beforeEach(() => {
   soporte.completed.length = 0
   // Faltaba, y el fallo solo sale en conjunto: un test veía lo que confirmó otro
   soporte.startApproved.length = 0
+  soporte.held.length = 0
 })
 
 describe('JobDetailPage: terminar y cobrar', () => {
@@ -303,5 +323,94 @@ describe('JobDetailPage: terminar y cobrar', () => {
     // Ni empezar ni terminar: eso es de quien va a la casa
     expect(queryByTestId('job-detail-start')).toBeNull()
     expect(queryByTestId('job-detail-finish')).toBeNull()
+  })
+})
+
+/**
+ * El visto bueno deja de darse a ciegas.
+ *
+ * Es el botón que paga, y hasta ahora el cliente lo pulsaba sin ver nada de lo
+ * que estaba dando por bueno — o callaba, y callar se trataba igual que decir
+ * que sí: a las 24 horas se cerraba y se pagaba. Así que quien no estaba
+ * conforme solo podía no responder, y el reloj le corría igual.
+ */
+describe('JobDetailPage: el visto bueno, con lo que hay que ver', () => {
+  const terminado = {
+    viewer: 'client' as const,
+    status: 'IN_PROGRESS' as const,
+    appointmentStatus: 'DONE' as const,
+    workFinishedAt: '2026-09-03T12:00:00.000Z',
+    confirmByAt: '2026-09-04T12:00:00.000Z',
+    assignedPro: {
+      id: 'pro-1',
+      name: 'Tomás Cerrajero',
+      workerName: null,
+      avatarUrl: null,
+      rating: 4.8,
+      reviewCount: 21,
+      phone: null,
+    },
+  }
+
+  it('enseña las fotos de cómo ha quedado antes de pedir el visto bueno', () => {
+    soporte.job = ficha({
+      ...terminado,
+      resultPhotos: [{ url: '/v1/media/a', fullUrl: '/v1/media/a-full' }],
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-result-photos')).toBeTruthy()
+    expect(getByTestId('job-detail-result-photo-0')).toBeTruthy()
+  })
+
+  /** La salida que faltaba: no estar conforme y poder decirlo */
+  it('«Falta algo» abre el motivo, y el motivo se manda', () => {
+    soporte.job = ficha(terminado)
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-complete-hold'))
+    fireEvent.changeText(
+      getByTestId('job-detail-hold-reason'),
+      'El grifo sigue goteando por la junta de abajo',
+    )
+    fireEvent.press(getByTestId('job-detail-hold-confirm'))
+
+    expect(soporte.held).toEqual([
+      { jobId: 'job-1', reason: 'El grifo sigue goteando por la junta de abajo' },
+    ])
+    // Y no se ha cerrado ni pagado nada
+    expect(soporte.completed).toEqual([])
+  })
+
+  /**
+   * «Mal» no le dice a nadie a qué tiene que volver, y quien lee esto va a
+   * coger la furgoneta. Diez caracteres, como al romper un contrato.
+   */
+  it('un motivo de dos palabras no se puede enviar', () => {
+    soporte.job = ficha(terminado)
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-complete-hold'))
+    fireEvent.changeText(getByTestId('job-detail-hold-reason'), 'mal')
+
+    expect(getByTestId('job-detail-hold-confirm')).toBeDisabled()
+
+    fireEvent.press(getByTestId('job-detail-hold-confirm'))
+    expect(soporte.held).toEqual([])
+  })
+
+  /** Y el reparo ya puesto se le enseña: a los tres días no se acuerda */
+  it('el reparo puesto se ve en la ficha', () => {
+    soporte.job = ficha({
+      ...terminado,
+      holdReason: 'El grifo sigue goteando',
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-hold')).toHaveTextContent(/sigue goteando/)
   })
 })

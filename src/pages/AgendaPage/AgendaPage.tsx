@@ -28,7 +28,9 @@ import { API_BASE_URL } from '@/api'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { WorkTimer } from '@/components/molecules/WorkTimer'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
+import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
+import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
 import { useJobProgress } from '@/hooks/domain/useJob'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -47,6 +49,14 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
   const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch, isFetching } = useAssignedJobs()
   const { start, finish, isStarting, isFinishing } = useJobProgress()
+
+  /**
+   * Las fotos de cómo ha quedado, por trabajo.
+   *
+   * Por trabajo y no una sola lista porque la agenda enseña varios a la vez:
+   * con un solo estado, elegir fotos en uno se las pondría al de al lado.
+   */
+  const [resultPhotos, setResultPhotos] = useState<Record<string, PickedImage[]>>({})
 
   const jobs = data?.items ?? []
 
@@ -170,6 +180,20 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                       </Text>
                       <Tag variant={status.variant}>{status.label}</Tag>
                     </View>
+
+                    {/**
+                      * El reparo del cliente, lo primero y en rojo.
+                      *
+                      * Es lo único de esta pantalla que dice **que hay que
+                      * volver**, y a qué. Debajo del todo se leería cuando ya
+                      * se ha decidido que ese trabajo estaba hecho.
+                      */}
+                    {job.holdReason ? (
+                      <View style={styles.hold} testID={`assigned-${job.id}-hold`}>
+                        <Text style={styles.holdTitle}>El cliente pide una corrección</Text>
+                        <Text style={styles.holdReason}>{job.holdReason}</Text>
+                      </View>
+                    ) : null}
 
                     {showTimer && (
                       <WorkTimer
@@ -318,6 +342,36 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                         </Text>
                       )}
 
+                    {/**
+                      * Cómo ha quedado, antes de darlo por terminado.
+                      *
+                      * El cliente da el visto bueno sobre esto, y el visto
+                      * bueno es lo que suelta el dinero: sin fotos tiene que
+                      * fiarse o bajar a mirar. Opcionales —hay trabajos que no
+                      * se ven, y obligar a fotografiar una reparación dentro de
+                      * una pared sería pedir por pedir— pero puestas delante,
+                      * que es distinto de escondidas en un menú.
+                      */}
+                    {job.status === 'IN_PROGRESS' &&
+                      job.appointmentStatus === 'STARTED' &&
+                      !job.workFinishedAt && (
+                        <View style={styles.resultPhotos}>
+                          <Text style={styles.blockLabel}>Cómo ha quedado</Text>
+                          <Text style={styles.resultPhotosHint}>
+                            Se las enseñamos al cliente para que lo dé por bueno.
+                            Opcional, pero ahorra idas y venidas.
+                          </Text>
+                          <PhotoPicker
+                            value={resultPhotos[job.id] ?? []}
+                            onChange={(fotos) =>
+                              setResultPhotos((antes) => ({ ...antes, [job.id]: fotos }))
+                            }
+                            disabled={isFinishing}
+                            testID={`assigned-${job.id}-result-photos`}
+                          />
+                        </View>
+                      )}
+
                     {job.status === 'IN_PROGRESS' &&
                       job.appointmentStatus === 'STARTED' &&
                       !job.workFinishedAt && (
@@ -325,7 +379,10 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                           fullWidth
                           onPress={() => {
                             void (async () => {
-                              const { ok, error } = await finish(job.id)
+                              const { ok, error, photosFailed } = await finish(
+                                job.id,
+                                resultPhotos[job.id] ?? [],
+                              )
 
                               if (!ok) {
                                 Alert.alert(
@@ -335,9 +392,13 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                                 return
                               }
 
+                              setResultPhotos((antes) => ({ ...antes, [job.id]: [] }))
+
                               Alert.alert(
                                 'Terminado',
-                                'Se lo hemos dicho al cliente. Si no dice lo contrario en 24 horas, se da por bueno y se te paga.',
+                                photosFailed > 0
+                                  ? `Se lo hemos dicho al cliente. ${photosFailed === 1 ? 'Una foto no se pudo enviar' : `${photosFailed} fotos no se pudieron enviar`}; puedes añadirlas mientras no lo dé por bueno. Si no dice lo contrario en 24 horas, se da por bueno y se te paga.`
+                                  : 'Se lo hemos dicho al cliente. Si no dice lo contrario en 24 horas, se da por bueno y se te paga.',
                               )
                             })()
                           }}

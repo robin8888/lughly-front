@@ -257,6 +257,19 @@ export interface ApiJobDetail {
   photoCount: number
   /** Las del cliente: `url` es la reducida y `fullUrl` la original */
   photos: { url: string; fullUrl: string }[]
+  /**
+   * Cómo ha quedado, según quien lo ha hecho. Las sube al terminar y son
+   * sobre las que el cliente da el visto bueno — que es lo que suelta el
+   * dinero, así que no son una galería: son la prueba.
+   */
+  resultPhotos: { url: string; fullUrl: string }[]
+  /**
+   * Por qué el cliente no lo da por bueno todavía, si ha dicho algo.
+   *
+   * Con esto puesto el cierre automático por silencio está apagado: quien ha
+   * hablado no está callando, y el trabajo espera a que se arregle.
+   */
+  holdReason: string | null
   createdAt: string
   /**
    * Los servicios de la carta que se contrataron, copiados al pedirlo: si el
@@ -335,6 +348,25 @@ export const jobsApi = {
    * las horas eran de aquel hueco y los servicios de aquella lista. La salida
    * es contratar al nuevo desde su ficha.
    */
+  /**
+   * «No lo doy por bueno todavía, y esto es lo que falta.»
+   *
+   * Apaga el cierre por silencio —el que a las 24 horas cierra y paga— y le
+   * manda el motivo al profesional, al móvil y a su agenda. No cierra ninguna
+   * puerta: dar por bueno sigue disponible en todo momento.
+   */
+  hold: (jobId: string, reason: string) =>
+    apiRequest<{
+      jobId: string
+      status: ApiJobStatus
+      reason: string
+      holdAt: string
+    }>(`/v1/jobs/${jobId}/hold`, {
+      method: 'POST',
+      auth: true,
+      body: { reason },
+    }),
+
   reassign: (jobId: string, proId: string, paymentMethodId: string) =>
     apiRequest<{
       jobId: string

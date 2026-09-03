@@ -279,6 +279,15 @@ export interface ApiAssignedJob {
    * diga una cosa es peor que no tenerlo.
    */
   startedAt: string | null
+  /**
+   * Por qué el cliente no lo da por bueno todavía.
+   *
+   * Va en la agenda y no solo en la ficha porque es lo único que dice **que
+   * hay que volver**, y a qué. Enterrarlo dentro del trabajo sería pedirle que
+   * abra uno por uno los que ya dio por terminados para descubrir cuál le han
+   * devuelto.
+   */
+  holdReason: string | null
   title: string
   description: string
   trade: string

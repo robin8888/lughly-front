@@ -257,6 +257,48 @@ export const styles = StyleSheet.create({
   action: {
     marginTop: 12,
   },
+  /**
+   * El reparo del cliente, arriba del todo y con el rojo de aviso.
+   *
+   * No es un error de la app ni una reprimenda: es un encargo. Va en el rojo
+   * apagado de «ahora no» y no en el de error, y con su propio recuadro,
+   * porque entre el resto de datos de la tarjeta —dirección, teléfono, hora—
+   * una línea más de texto pasaría desapercibida.
+   */
+  hold: {
+    borderRadius: theme.radius.card,
+    backgroundColor: 'rgba(209, 84, 74, 0.10)',
+    borderWidth: 1,
+    borderColor: theme.colors.unavailable,
+    padding: 12,
+    marginBottom: 12,
+    gap: 4,
+  },
+  holdTitle: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.urgency,
+  },
+  holdReason: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.4,
+    color: theme.colors.cardText,
+  },
+
+  /** Las fotos de cómo ha quedado, antes de dar por terminado */
+  resultPhotos: {
+    marginTop: 14,
+    gap: 6,
+  },
+  resultPhotosHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.textSoft,
+    marginBottom: 4,
+  },
+
   /** Por qué no se puede empezar todavía: debajo del botón apagado */
   blocked: {
     fontFamily: theme.typography.fonts.body,

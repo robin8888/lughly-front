@@ -51,9 +51,17 @@ jest.mock('@/hooks/domain/useJob', () => {
 jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefined }))
 jest.mock('@/hooks/ui/useTabBarClearance', () => ({ useTabBarClearance: () => 0 }))
 
+/*
+  La tarjeta, sin sus estilos pero **con su `testID`**: se lo comía, y eso hace
+  invisible para los tests todo lo que se envuelva en ella.
+*/
 jest.mock('@/components/molecules/InfoCard', () => {
   const { View } = require('react-native')
-  return { InfoCard: ({ children }: { children: ReactNode }) => <View>{children}</View> }
+  return {
+    InfoCard: ({ children, testID }: { children: ReactNode; testID?: string }) => (
+      <View testID={testID}>{children}</View>
+    ),
+  }
 })
 
 const { soporte } = jest.requireMock('@/hooks/domain/useInbox')
@@ -68,6 +76,7 @@ function trabajo(cambios: Partial<ApiAssignedJob>): ApiAssignedJob {
     appointmentStatus: 'CONFIRMED',
     workFinishedAt: null,
     startedAt: null,
+    holdReason: null,
     title: 'Cambiar un grifo',
     description: 'Gotea',
     trade: 'fontaneria',

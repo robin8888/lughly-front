@@ -145,6 +145,24 @@ export const uploadApi = {
     uploadMultipart<JobPhotoResponse>(`/v1/jobs/${jobId}/photos`, file, accessToken),
 
   /**
+   * Una foto de **cómo ha quedado**, que sube el profesional al terminar.
+   *
+   * Ruta distinta de `jobPhoto` porque son otra cosa: aquellas las pone el
+   * cliente al encargar, para contar qué le pasa, y solo mientras el encargo
+   * está abierto. Estas son la prueba del trabajo hecho, y es sobre ellas sobre
+   * lo que el cliente da el visto bueno — que es lo que suelta el dinero.
+   *
+   * Cuatro por trabajo, con su propia cuenta: las del cliente no le quitan
+   * sitio a las del profesional.
+   */
+  jobResultPhoto: (jobId: string, file: UploadFile, accessToken: string) =>
+    uploadMultipart<JobPhotoResponse>(
+      `/v1/jobs/${jobId}/result-photos`,
+      file,
+      accessToken,
+    ),
+
+  /**
    * Una foto de su trabajo, con el oficio al que pertenece.
    *
    * El servidor admite cinco POR OFICIO y las numera por orden de llegada, así

@@ -28,6 +28,8 @@ import { Avatar } from '@/components/atoms/Avatar'
 import { formatAmount } from '@/components/atoms/Money'
 import { Countdown } from '@/components/atoms/Countdown'
 import { WorkTimer } from '@/components/molecules/WorkTimer'
+import { RemotePhoto } from '@/components/molecules/RemotePhoto'
+import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import {
@@ -37,6 +39,7 @@ import {
   useJobProgress,
   useApproveStart,
   useCompleteJob,
+  useHoldJob,
 } from '@/hooks/domain/useJob'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
@@ -184,6 +187,12 @@ export function JobDetailPage({
   const { start, finish, isStarting, isFinishing } = useJobProgress()
   const { complete, isCompleting } = useCompleteJob()
   const { approveStart, isApproving } = useApproveStart()
+  const { hold, isHolding } = useHoldJob()
+
+  /** Qué foto del resultado se está mirando a pantalla completa. `null` es ninguna */
+  const [viewingResult, setViewingResult] = useState<number | null>(null)
+  /** El motivo que escribe el cliente cuando algo no ha quedado bien */
+  const [holdReason, setHoldReason] = useState('')
 
   /**
    * El diálogo de romper un contrato, con su motivo.
@@ -392,6 +401,9 @@ export function JobDetailPage({
     complete: false,
   })
 
+  /** Si está escribiendo el motivo de que algo no haya quedado bien */
+  const [holding, setHolding] = useState(false)
+
   const closeAsk = (which: 'start' | 'complete') =>
     setAsked((antes) => ({ ...antes, [which]: true }))
 
@@ -419,6 +431,34 @@ export function JobDetailPage({
   const doApproveStart = (id: string) => {
     closeAsk('start')
     void approveStart(id)
+  }
+
+  /**
+   * «Falta algo.» Apaga el cierre por silencio y le manda el motivo a quien
+   * tiene que volver. No cierra ninguna puerta: dar por bueno sigue estando ahí
+   * en cuanto se arregle.
+   */
+  const doHold = (id: string) => {
+    const motivo = holdReason.trim()
+    if (motivo.length < 10) return
+
+    setHolding(false)
+    closeAsk('complete')
+
+    void (async () => {
+      const { ok, error } = await hold(id, motivo)
+
+      if (!ok) {
+        Alert.alert('No se ha podido enviar', error ?? 'Inténtalo de nuevo en un momento.')
+        return
+      }
+
+      setHoldReason('')
+      Alert.alert(
+        'Se lo hemos dicho',
+        'Le llega ahora mismo, con lo que has escrito. Mientras tanto el trabajo no se cierra ni se le paga; cuando lo arregle, podrás darlo por bueno.',
+      )
+    })()
   }
 
   /** Diez caracteres, lo mismo que exige el servidor */
@@ -658,6 +698,51 @@ export function JobDetailPage({
           </Button>
         )}
 
+        {/**
+          * Cómo ha quedado, según quien lo ha hecho.
+          *
+          * No es una galería: es la prueba sobre la que el cliente da el visto
+          * bueno, y el visto bueno suelta el dinero. Por eso va **antes** del
+          * botón que paga y no al final de la ficha: la decisión se toma
+          * mirando esto.
+          */}
+        {job.resultPhotos.length > 0 && (
+          <InfoCard style={styles.block} testID="job-detail-result-photos">
+            <Text style={styles.blockTitle}>Cómo ha quedado</Text>
+
+            <View style={styles.photos}>
+              {job.resultPhotos.map((photo, index) => (
+                <Pressable
+                  key={photo.url}
+                  onPress={() => setViewingResult(index)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver la foto ${index + 1} de cómo ha quedado`}
+                  style={styles.photo}
+                  testID={`job-detail-result-photo-${index}`}
+                >
+                  <RemotePhoto
+                    uri={`${API_BASE_URL}${photo.url}`}
+                    style={styles.photoImage}
+                    fallback="No carga"
+                  />
+                </Pressable>
+              ))}
+            </View>
+          </InfoCard>
+        )}
+
+        {/* Y lo que el propio cliente dijo que faltaba, para que no se le olvide */}
+        {job.holdReason ? (
+          <View style={styles.hold} testID="job-detail-hold">
+            <Text style={styles.holdTitle}>
+              {job.viewer === 'client'
+                ? 'Dijiste que faltaba esto'
+                : 'El cliente pide una corrección'}
+            </Text>
+            <Text style={styles.holdReason}>{job.holdReason}</Text>
+          </View>
+        ) : null}
+
         {/*
           Y el botón que paga. Con el plazo a la vista: es lo que convierte
           "confirma" en una decisión con fecha, y lo que explica que no hacer
@@ -882,6 +967,13 @@ export function JobDetailPage({
         />
       </Dialog>
 
+      <PhotoViewer
+        photos={job.resultPhotos.map((photo) => `${API_BASE_URL}${photo.fullUrl}`)}
+        openAt={viewingResult}
+        onClose={() => setViewingResult(null)}
+        testID="job-detail-result-viewer"
+      />
+
       {/**
         * «Han empezado». Se abre solo al entrar, que es a donde lleva el aviso
         * del móvil.
@@ -941,6 +1033,15 @@ Si algo no ha ido bien, cierra esto y escríbenos antes de confirmar. Y si no di
             testID: 'job-detail-complete-confirm',
           },
           {
+            label: 'Falta algo',
+            variant: 'secondary',
+            onPress: () => {
+              closeAsk('complete')
+              setHolding(true)
+            },
+            testID: 'job-detail-complete-hold',
+          },
+          {
             label: 'Ahora no',
             variant: 'secondary',
             onPress: () => closeAsk('complete'),
@@ -950,6 +1051,55 @@ Si algo no ha ido bien, cierra esto y escríbenos antes de confirmar. Y si no di
         onDismiss={() => closeAsk('complete')}
         testID="job-detail-complete-dialog"
       />
+
+      {/**
+        * «Falta algo»: por qué no lo da por bueno.
+        *
+        * Es la salida que faltaba. Antes de esto, un cliente al que el trabajo
+        * no le convencía solo podía **callar**, y callar se trataba igual que
+        * decir que sí: a las 24 horas se cerraba y se pagaba. Así que la única
+        * forma de que no se cerrara era no responder —y el reloj corría igual—.
+        *
+        * Con esto puesto se apaga ese reloj y el motivo le llega a quien tiene
+        * que volver, al móvil y a su agenda. No es una disputa ni un castigo:
+        * dar por bueno sigue estando ahí en cuanto se arregle.
+        *
+        * Diez caracteres mínimo, como al romper un contrato: «mal» no le dice
+        * a nadie a qué tiene que volver, y quien lee esto va a coger la
+        * furgoneta.
+        */}
+      <Dialog
+        visible={holding}
+        tone="danger"
+        title="¿Qué falta?"
+        message={`Se lo mandamos a ${job.assignedPro?.name.split(' ')[0] ?? 'quien lo ha hecho'} tal cual lo escribas, y mientras tanto el trabajo no se cierra ni se le paga. Cuéntale qué tiene que revisar.`}
+        actions={[
+          {
+            label: isHolding ? 'Enviando…' : 'Enviárselo',
+            onPress: () => doHold(job.id),
+            disabled: isHolding || holdReason.trim().length < 10,
+            testID: 'job-detail-hold-confirm',
+          },
+          {
+            label: 'Volver',
+            variant: 'secondary',
+            onPress: () => setHolding(false),
+            testID: 'job-detail-hold-cancel',
+          },
+        ]}
+        onDismiss={() => setHolding(false)}
+        testID="job-detail-hold-dialog"
+      >
+        <Input
+          value={holdReason}
+          onChangeText={setHoldReason}
+          placeholder="Ej. El grifo sigue goteando por la junta de abajo"
+          multiline
+          numberOfLines={3}
+          editable={!isHolding}
+          testID="job-detail-hold-reason"
+        />
+      </Dialog>
     </View>
   )
 }

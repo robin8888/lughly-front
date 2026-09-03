@@ -10,6 +10,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { jobsApi, type ApiJobDetail } from '@/api/jobs.api'
 import { assignmentsApi } from '@/api/assignments.api'
+import { uploadApi } from '@/api/upload.api'
+import type { PickedImage } from '@/hooks/media/usePickImage'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 export function jobQueryKey(jobId: string) {
   return ['jobs', 'detail', jobId] as const
@@ -202,15 +205,94 @@ export function useJobProgress() {
         return { ok: false as const, result: null, error: mensajeDe(error) }
       }
     },
-    finish: async (jobId: string) => {
+    /**
+     * Terminar, con las fotos de cómo ha quedado si las hay.
+     *
+     * **Las fotos primero.** El cliente recibe el aviso de "ha terminado" en el
+     * momento en que se llama a `finish`, y lo que hace con él es abrir el
+     * trabajo a mirar cómo quedó: si las fotos fueran después, se encontraría
+     * una galería vacía y tendría que volver.
+     *
+     * Y si alguna no sube, se termina igual. Perder una foto no puede impedir
+     * cerrar un trabajo hecho —quien está en un portal con mala cobertura no
+     * puede quedarse sin poder marcar que ha acabado—; se dice cuántas
+     * faltaron y se pueden añadir mientras el cliente no lo dé por bueno.
+     */
+    finish: async (jobId: string, photos: PickedImage[] = []) => {
+      let photosFailed = 0
+
+      if (photos.length > 0) {
+        const accessToken = useAuthStore.getState().accessToken
+
+        if (accessToken) {
+          /*
+            En serie: el servidor las numera por orden de llegada, y en paralelo
+            el orden que ve el cliente no sería el que eligió quien las hizo.
+          */
+          for (const photo of photos) {
+            try {
+              await uploadApi.jobResultPhoto(jobId, photo, accessToken)
+            } catch {
+              photosFailed += 1
+            }
+          }
+        } else {
+          photosFailed = photos.length
+        }
+      }
+
       try {
-        return { ok: true as const, error: null, result: await finish.mutateAsync(jobId) }
+        return {
+          ok: true as const,
+          error: null,
+          result: await finish.mutateAsync(jobId),
+          photosFailed,
+        }
       } catch (error) {
-        return { ok: false as const, result: null, error: mensajeDe(error) }
+        return {
+          ok: false as const,
+          result: null,
+          error: mensajeDe(error),
+          photosFailed,
+        }
       }
     },
     isStarting: start.isPending,
     isFinishing: finish.isPending,
+  }
+}
+
+/**
+ * El cliente dice **por qué no** da por bueno un trabajo terminado.
+ *
+ * Apaga el cierre por silencio —el que a las 24 horas cierra y paga— y le
+ * manda el motivo al profesional. No cierra ninguna puerta: dar por bueno sigue
+ * disponible en todo momento, y en cuanto se pulse el dinero sale.
+ */
+export function useHoldJob() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ jobId, reason }: { jobId: string; reason: string }) =>
+      jobsApi.hold(jobId, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    hold: async (jobId: string, reason: string) => {
+      try {
+        return {
+          ok: true as const,
+          error: null,
+          result: await mutation.mutateAsync({ jobId, reason }),
+        }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isHolding: mutation.isPending,
   }
 }
 

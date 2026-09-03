@@ -88,6 +88,51 @@ export const styles = StyleSheet.create({
     opacity: 0.9,
   },
 
+  /** La tira de fotos de cómo ha quedado */
+  photos: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
+  },
+  photo: {
+    width: 84,
+    height: 84,
+    borderRadius: theme.radius.photo,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  /**
+   * El reparo puesto, para el cliente: lo que él mismo dijo que faltaba.
+   *
+   * Se le enseña porque si no, un trabajo que se quedó esperando no dice por
+   * qué —y a los tres días ya no se acuerda de lo que escribió—.
+   */
+  hold: {
+    borderRadius: theme.radius.card,
+    backgroundColor: 'rgba(209, 84, 74, 0.10)',
+    borderWidth: 1,
+    borderColor: theme.colors.unavailable,
+    padding: 12,
+    marginTop: 12,
+    gap: 4,
+  },
+  holdTitle: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.urgency,
+  },
+  holdReason: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.4,
+    color: theme.colors.cardText,
+  },
+
   block: {
     marginTop: 14,
   },
