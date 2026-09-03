@@ -30,24 +30,38 @@ export function useUrgencyPros(
   })
 }
 
-/** Pedirle la urgencia a uno concreto */
+/**
+ * Pedirle la urgencia a uno concreto, **retiniendo la salida**.
+ *
+ * Lo retenido es una hora al precio de urgencia que el cliente acaba de ver en
+ * la lista, y `result.amount` lo dice. Se cobra cuando el profesional acepta;
+ * si no contesta en sus cinco minutos o dice que no, se suelta y el cliente no
+ * ve ningún cargo.
+ */
 export function useAskUrgency() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: ({ jobId, proId }: { jobId: string; proId: string }) =>
-      jobsApi.askUrgency(jobId, proId),
+    mutationFn: ({
+      jobId,
+      proId,
+      paymentMethodId,
+    }: {
+      jobId: string
+      proId: string
+      paymentMethodId: string
+    }) => jobsApi.askUrgency(jobId, proId, paymentMethodId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['jobs'] })
     },
   })
 
   return {
-    ask: async (jobId: string, proId: string) => {
+    ask: async (jobId: string, proId: string, paymentMethodId: string) => {
       try {
         return {
           ok: true as const,
-          result: await mutation.mutateAsync({ jobId, proId }),
+          result: await mutation.mutateAsync({ jobId, proId, paymentMethodId }),
           error: null,
         }
       } catch (error) {

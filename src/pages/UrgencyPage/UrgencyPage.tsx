@@ -409,6 +409,17 @@ export function UrgencyPage({
             con el recargo ya dentro. Los verás todos en la lista antes de
             elegir a nadie.
           </Text>
+          {/*
+            Y cuándo se pone el dinero. Publicar la urgencia no cuesta nada
+            —hasta aquí no hay ni precio ni persona—, pero al elegir a alguien
+            se aparta la salida en la tarjeta, así que hace falta tenerla. Vale
+            más decirlo ahora que dejar que lo descubra con la avería delante.
+          */}
+          <Text style={styles.surchargeBody}>
+            Publicarla no cuesta nada. Al avisar a quien elijas se aparta una
+            hora suya —la salida— en tu tarjeta, y solo se cobra si acepta: ten
+            una guardada en Mis pagos.
+          </Text>
         </View>
 
         {missing.length > 0 && !isBusy && (

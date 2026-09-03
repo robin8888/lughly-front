@@ -112,26 +112,43 @@ export function useCancelContract() {
 }
 
 /**
- * Volver a encargar un trabajo a otro profesional.
+ * Volver a encargar un trabajo a otro profesional, **retiniendo su visita**.
  *
  * Cambia su ficha y su sitio en la lista —vuelve a estar esperando respuesta—,
  * así que se refresca todo lo de trabajos.
+ *
+ * La tarjeta es obligatoria desde el 3 de septiembre de 2026: el precio de una
+ * visita es de quien la hace, así que al cambiar de profesional se suelta lo
+ * del anterior y se retiene lo del nuevo. `result.amount` dice cuánto ha sido,
+ * y es lo que hay que enseñarle al cliente: no tiene por qué ser lo mismo que
+ * pagó la primera vez.
  */
 export function useReassignJob() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: ({ jobId, proId }: { jobId: string; proId: string }) =>
-      jobsApi.reassign(jobId, proId),
+    mutationFn: ({
+      jobId,
+      proId,
+      paymentMethodId,
+    }: {
+      jobId: string
+      proId: string
+      paymentMethodId: string
+    }) => jobsApi.reassign(jobId, proId, paymentMethodId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['jobs'] })
     },
   })
 
   return {
-    reassign: async (jobId: string, proId: string) => {
+    reassign: async (jobId: string, proId: string, paymentMethodId: string) => {
       try {
-        return { ok: true as const, result: await mutation.mutateAsync({ jobId, proId }), error: null }
+        return {
+          ok: true as const,
+          result: await mutation.mutateAsync({ jobId, proId, paymentMethodId }),
+          error: null,
+        }
       } catch (error) {
         return {
           ok: false as const,

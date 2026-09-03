@@ -8,8 +8,10 @@
 
 import { Alert } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { formatAmount } from '@/components/atoms/Money'
 import { DirectoryPage } from '@/pages/DirectoryPage'
 import { useReassignJob } from '@/hooks/domain/useJob'
+import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { useAuthStore } from '@/stores/useAuthStore'
 
 export default function ProsRoute() {
@@ -26,6 +28,8 @@ export default function ProsRoute() {
   }>()
 
   const { reassign: sendReassign } = useReassignJob()
+  const { data: methods } = usePaymentMethods()
+  const method = methods?.[0] ?? null
 
   /**
    * Su dirección del alta, que es el respaldo cuando no llega posición del
@@ -36,18 +40,36 @@ export default function ProsRoute() {
   /**
    * Se pregunta antes de encargárselo: se llega aquí desde una lista y un
    * toque en la ficha equivocada mandaría el trabajo a quien no era.
+   *
+   * **Y el precio es del nuevo, no del que se cayó.** Cada profesional cobra
+   * lo suyo por presentarse, así que al cambiar se suelta lo retenido del
+   * anterior y se retiene lo de este; el importe exacto lo dice el servidor y
+   * se enseña al volver. Antes de esto reasignar no cobraba nada: el nuevo
+   * hacía el trabajo gratis y nadie se enteraba.
    */
   const choose = (jobId: string, proId: string, proName: string) => {
+    if (!method) {
+      Alert.alert(
+        'Necesitas una tarjeta guardada',
+        'La visita del nuevo profesional se retiene al encargárselo, y solo se cobra si acepta. Guárdala en Mis pagos y vuelve.',
+        [
+          { text: 'Volver', style: 'cancel' },
+          { text: 'Guardar tarjeta', onPress: () => router.navigate('/mis-pagos') },
+        ],
+      )
+      return
+    }
+
     Alert.alert(
       `¿Se lo encargas a ${proName}?`,
-      'Tendrá 24 horas para responder. Si trabaja para una empresa, responde ella.',
+      'Tendrá 24 horas para responder. Se retiene su visita —la suya, que puede no ser la misma que la del anterior— y solo se cobra si acepta. Si trabaja para una empresa, responde ella.',
       [
         { text: 'Volver', style: 'cancel' },
         {
           text: 'Encargárselo',
           onPress: () => {
             void (async () => {
-              const { ok, result, error } = await sendReassign(jobId, proId)
+              const { ok, result, error } = await sendReassign(jobId, proId, method.id)
 
               if (!ok) {
                 Alert.alert(
@@ -58,8 +80,8 @@ export default function ProsRoute() {
               }
 
               Alert.alert(
-                'Encargo enviado',
-                `${result.respondedByName} tiene 24 horas para responderte.`,
+                'Visita pedida',
+                `Se han retenido ${formatAmount(result.amount)} €. ${result.respondedByName} tiene 24 horas para responderte.`,
               )
               router.navigate({ pathname: '/trabajo/[id]', params: { id: jobId } })
             })()

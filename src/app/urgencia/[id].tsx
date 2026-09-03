@@ -41,6 +41,11 @@ export default function UrgencyProsRoute() {
           params: { ...(job?.trade ? { trade: job.trade } : {}) },
         })
       }
+      /*
+        Sin tarjeta no hay salida que retener. La urgencia se queda esperando
+        aquí: guardar la tarjeta no la cancela, así que al volver sigue en pie.
+      */
+      onAddPaymentMethod={() => router.navigate('/mis-pagos')}
       onBack={() => router.navigate('/jobs')}
     />
   )

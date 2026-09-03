@@ -118,13 +118,16 @@ export interface ApiJob {
 
 export interface CreateJobPayload {
   /**
-   * `QUOTE` no está: un presupuesto directo se pide a un profesional
-   * concreto desde su ficha, no se publica al aire. Hoy solo `URGENT` llega
-   * por aquí (`UrgencyPage`); `INSTANT` sigue en el contrato porque el
-   * servidor lo admite, aunque la app no lo use desde que se retiró
-   * `PublishPage` (22 Ago 2026).
+   * Solo `URGENT`.
+   *
+   * `QUOTE` nunca estuvo: un presupuesto se pide a un profesional concreto
+   * desde su ficha. Y `INSTANT` se retiró el 3 de septiembre de 2026, del
+   * contrato y del servidor: publicar al aire creaba un trabajo sin precio y
+   * sin nadie a quien pedírselo —la subasta que tenía que recogerlo no
+   * existe—, y lo único que sabía hacer con él era llegar a `COMPLETED`
+   * gratis. Volverá con la subasta y con su cobro puesto.
    */
-  type: 'INSTANT' | 'URGENT'
+  type: 'URGENT'
   tradeSlug: string
   title: string
   description: string
@@ -281,17 +284,33 @@ export const jobsApi = {
       { auth: true },
     ),
 
-  /** Pedirle la urgencia a uno concreto. Tiene cinco minutos para contestar */
-  askUrgency: (jobId: string, proId: string) =>
+  /**
+   * Pedirle la urgencia a uno concreto. Tiene cinco minutos para contestar.
+   *
+   * **Aquí se pone el dinero** (3 Septiembre 2026): se retiene la salida —una
+   * hora al precio de urgencia que el cliente acaba de ver en la lista— y se
+   * cobra cuando acepta. Si no contesta o dice que no, se suelta y no se le
+   * cobra nada.
+   *
+   * Se retiene al pedirla y no al aceptarla porque es el único momento con el
+   * cliente delante: a las tres de la madrugada el profesional acepta desde su
+   * móvil, y si el banco pidiera autenticar la tarjeta no habría nadie a quien
+   * pedírsela.
+   */
+  askUrgency: (jobId: string, proId: string, paymentMethodId: string) =>
     apiRequest<{
       jobId: string
       status: ApiJobStatus
       requestedProName: string
+      /** €/h de urgencia, el que vio en la lista */
+      urgencyRate: number | null
+      /** La salida retenida: una hora a ese precio */
+      amount: number
       respondByAt: string
     }>(`/v1/jobs/${jobId}/urgency-request`, {
       method: 'POST',
       auth: true,
-      body: { proId },
+      body: { proId, paymentMethodId },
     }),
 
   /** La ficha completa de un trabajo, para quien tiene algo que ver con él */
@@ -305,18 +324,30 @@ export const jobsApi = {
   /**
    * Volver a encargar un trabajo que se quedó sin nadie. Es el mismo trabajo:
    * cambia a quién se le pide y se le reabre el plazo.
+   *
+   * **Y con tarjeta** (3 Septiembre 2026). El precio de una visita es de quien
+   * la hace, así que al cambiar de profesional se suelta lo retenido del
+   * anterior y se retiene lo del nuevo. Sin esto, reasignar era la forma más
+   * silenciosa de dejar de cobrar: el cobro del primero se anulaba al rechazar
+   * y el segundo hacía el trabajo gratis.
+   *
+   * El servidor rechaza reasignar lo que se contrató por horas o de la carta:
+   * las horas eran de aquel hueco y los servicios de aquella lista. La salida
+   * es contratar al nuevo desde su ficha.
    */
-  reassign: (jobId: string, proId: string) =>
+  reassign: (jobId: string, proId: string, paymentMethodId: string) =>
     apiRequest<{
       jobId: string
       status: ApiJobStatus
       requestedProName: string
       respondedByName: string
       respondByAt: string
+      /** Lo que se retiene ahora: la visita del nuevo, no la del que se cayó */
+      amount: number
     }>(`/v1/jobs/${jobId}/reassign`, {
       method: 'POST',
       auth: true,
-      body: { proId },
+      body: { proId, paymentMethodId },
     }),
 
   /**

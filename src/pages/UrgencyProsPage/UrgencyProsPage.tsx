@@ -25,6 +25,8 @@ import { Avatar } from '@/components/atoms/Avatar'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { API_BASE_URL } from '@/api'
+import { formatAmount } from '@/components/atoms/Money'
+import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { useUrgencyPros, useAskUrgency } from '@/hooks/domain/useUrgencyPros'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
@@ -49,6 +51,8 @@ export interface UrgencyProsPageProps {
   onAsked: (jobId: string) => void
   /** Buscar en el directorio, cuando no hay nadie de guardia */
   onSeeDirectory: () => void
+  /** Sin tarjeta guardada no hay salida que retener */
+  onAddPaymentMethod: () => void
   onBack: () => void
 }
 
@@ -59,32 +63,60 @@ export function UrgencyProsPage({
   declinedProId,
   onAsked,
   onSeeDirectory,
+  onAddPaymentMethod,
   onBack,
 }: UrgencyProsPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch } = useUrgencyPros(tradeSlug, point)
+  const { data: methods, isPending: isPendingMethods } = usePaymentMethods()
   const { ask, isAsking } = useAskUrgency()
 
   const pros = data?.items ?? []
+  const method = methods?.[0] ?? null
 
   /**
    * Se pregunta antes: se llega aquí con prisa y desde una lista, y un toque
    * en la ficha equivocada manda a alguien a tu casa a un precio que no era.
+   *
+   * **Y ahora se dice el dinero**, que hasta el 3 de septiembre de 2026 no
+   * existía: la urgencia era el camino más caro de la app y el único gratis de
+   * punta a punta. Lo que se aparta es la salida —una hora a su precio—, y la
+   * primera hora va dentro: quien abre una puerta en veinte minutos cobra la
+   * salida entera, porque lo que ha vendido es venir a las tres de la mañana.
    */
   const choose = (proId: string, name: string, rate: number) => {
     if (!jobId) return
 
+    /*
+      Sin tarjeta no se puede avisar a nadie, y decirlo aquí —no al pulsar
+      enviar— es lo único honesto: con una avería delante, descubrir el muro
+      después de elegir persona es perder minutos que cuestan.
+    */
+    if (!method) {
+      Alert.alert(
+        'Necesitas una tarjeta guardada',
+        'La salida se aparta en tu tarjeta al avisarle, y solo se cobra si acepta. Guárdala en Mis pagos y vuelve: la urgencia se queda esperando.',
+        [
+          { text: 'Volver', style: 'cancel' },
+          { text: 'Guardar tarjeta', onPress: onAddPaymentMethod },
+        ],
+      )
+      return
+    }
+
     Alert.alert(
       `¿Llamamos a ${name}?`,
-      `Cobra ${rate} €/h por la urgencia. Tiene cinco minutos para contestar; si no lo hace, podrás elegir a otro.`,
+      `Cobra ${rate} €/h. Se apartan ${formatAmount(rate)} € de salida —la primera hora va incluida— y solo se cobran si acepta. Si tarda más de una hora, el rato de más se cobra al cerrar.
+
+Tiene cinco minutos para contestar; si no lo hace, se suelta el dinero y podrás elegir a otro.`,
       [
         { text: 'Volver', style: 'cancel' },
         {
           text: 'Sí, avisarle',
           onPress: () => {
             void (async () => {
-              const { ok, error } = await ask(jobId, proId)
+              const { ok, error } = await ask(jobId, proId, method.id)
 
               if (!ok) {
                 Alert.alert(
@@ -114,7 +146,7 @@ export function UrgencyProsPage({
     </View>
   )
 
-  if (isPending) {
+  if (isPending || isPendingMethods) {
     return (
       <View style={styles.screen} testID="urgency-pros-page">
         {header}
@@ -191,8 +223,9 @@ export function UrgencyProsPage({
           </Text>
 
           <Text style={styles.note}>
-            El precio es por hora e incluye el recargo de urgencia. Quien elijas
-            tiene cinco minutos para contestar.
+            El precio es por hora e incluye el recargo de urgencia. Al avisar se
+            aparta una hora en tu tarjeta —la salida— y solo se cobra si acepta.
+            Quien elijas tiene cinco minutos para contestar.
           </Text>
         </InfoCard>
 
