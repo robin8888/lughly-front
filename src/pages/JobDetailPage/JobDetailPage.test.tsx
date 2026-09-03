@@ -121,6 +121,8 @@ beforeEach(() => {
   soporte.started.length = 0
   soporte.finished.length = 0
   soporte.completed.length = 0
+  // Faltaba, y el fallo solo sale en conjunto: un test veía lo que confirmó otro
+  soporte.startApproved.length = 0
 })
 
 describe('JobDetailPage: terminar y cobrar', () => {
@@ -190,7 +192,34 @@ describe('JobDetailPage: terminar y cobrar', () => {
     expect(getByTestId('job-detail-timer')).toBeTruthy()
   })
 
-  it('y para el cliente también, con su botón de confirmar el inicio', () => {
+  /**
+   * Al cliente **no**, hasta que lo reconozca.
+   *
+   * Es la línea entre el reloj que cuenta y el reloj que se ve: el primero
+   * corre desde que el profesional pulsó Empezar y no lo mueve nadie —si lo
+   * moviera esto, un cliente con el móvil en silencio dejaría a alguien
+   * trabajando sin horas contadas—; el segundo espera a que dé por cierto que
+   * ha llegado. Pintarle un contador corriendo de algo que aún no ha
+   * confirmado es enseñarle una factura en marcha sin haber abierto la puerta.
+   */
+  it('al cliente no se le pinta el reloj hasta que reconoce que ha llegado', () => {
+    soporte.job = ficha({
+      viewer: 'client',
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      startedAt: '2026-08-29T12:00:00.000Z',
+    })
+
+    const { queryByTestId, getByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-timer')).toBeNull()
+    // Y se le pregunta nada más entrar, que es a donde lleva el aviso
+    expect(getByTestId('job-detail-approve-start-dialog')).toBeTruthy()
+  })
+
+  it('y al confirmarlo desde el modal, se avisa al servidor', () => {
     soporte.job = ficha({
       viewer: 'client',
       status: 'IN_PROGRESS',
@@ -200,11 +229,33 @@ describe('JobDetailPage: terminar y cobrar', () => {
 
     const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
-    expect(getByTestId('job-detail-timer')).toBeTruthy()
-
-    fireEvent.press(getByTestId('job-detail-approve-start'))
+    fireEvent.press(getByTestId('job-detail-approve-start-confirm'))
 
     expect(soporte.startApproved).toEqual(['job-1'])
+  })
+
+  /**
+   * Cerrarlo sin responder es válido —quien abre la app para otra cosa tiene
+   * derecho a hacerla— y entonces no vuelve a saltar: lo que quedó pendiente
+   * sigue en su botón, más abajo.
+   */
+  it('si lo cierra sin responder, queda el botón y no se repregunta', () => {
+    soporte.job = ficha({
+      viewer: 'client',
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      startedAt: '2026-08-29T12:00:00.000Z',
+    })
+
+    const { getByTestId, queryByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    fireEvent.press(getByTestId('job-detail-approve-start-later'))
+
+    expect(queryByTestId('job-detail-approve-start-dialog')).toBeNull()
+    expect(getByTestId('job-detail-approve-start')).toBeTruthy()
+    expect(soporte.startApproved).toEqual([])
   })
 
   it('ya confirmado, el botón desaparece pero el reloj sigue', () => {

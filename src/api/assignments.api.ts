@@ -271,6 +271,14 @@ export interface ApiAssignedJob {
    */
   appointmentStatus: ApiAppointmentStatus | null
   workFinishedAt: string | null
+  /**
+   * Cuándo empezó de verdad: de ahí cuenta el contador de la tarjeta.
+   *
+   * Viene del servidor y no se apunta en el móvil por lo mismo que en la
+   * ficha: dos relojes de pared no coinciden, y un contador que a cada lado le
+   * diga una cosa es peor que no tenerlo.
+   */
+  startedAt: string | null
   title: string
   description: string
   trade: string

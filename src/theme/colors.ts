@@ -122,6 +122,18 @@ export const colors = {
    */
   availableText: '#2f6b43',
   /**
+   * Y el mismo verde como **fondo**, muy aclarado.
+   *
+   * Le faltaba a la familia: `pending` ya tenía los tres tonos que pide un
+   * estado —contorno, fondo y letra— y el verde solo tenía dos, así que
+   * cualquier sitio que necesitara "esto está en marcha" de fondo se lo
+   * inventaba. Lo usa la tarjeta del trabajo en curso en la agenda.
+   *
+   * Tan claro a propósito: es el fondo de una tarjeta entera, no de una
+   * etiqueta. `availableText` encima da 5,9:1, por encima del 4,5:1 de la WCAG.
+   */
+  availableSoft: '#e9f5ed',
+  /**
    * Y el mismo verde otra vez, esta vez **aclarado**, para escribir con él
    * sobre cristal oscuro.
    *

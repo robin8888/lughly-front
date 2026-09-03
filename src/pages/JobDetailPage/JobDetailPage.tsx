@@ -25,6 +25,7 @@ import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Dialog } from '@/components/organisms/Dialog'
 import { Avatar } from '@/components/atoms/Avatar'
+import { formatAmount } from '@/components/atoms/Money'
 import { Countdown } from '@/components/atoms/Countdown'
 import { WorkTimer } from '@/components/molecules/WorkTimer'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -338,11 +339,26 @@ export function JobDetailPage({
     job.viewer === 'client' && job.status === 'IN_PROGRESS' && Boolean(job.workFinishedAt)
 
   /**
-   * El reloj se enseña en cuanto hay hora de inicio, a los dos por igual, y
-   * sigue ahí cuando el trabajo acaba: entonces deja de contar y se queda con
-   * el total, que es el dato que importa cuando se paga por horas.
+   * El reloj: al profesional desde que empieza, al cliente **desde que lo
+   * reconoce**.
+   *
+   * Los dos ven el mismo número —cuenta desde `startedAt`, la hora del
+   * servidor— pero no en el mismo momento. Al cliente le llega el aviso y un
+   * modal preguntándole si ha llegado; hasta que conteste no se le pinta un
+   * contador corriendo de algo que todavía no ha dado por cierto. Al confirmar
+   * aparece **con el tiempo ya corrido**, que es lo honesto: el trabajo empezó
+   * cuando empezó, no cuando él abrió la app.
+   *
+   * Es la línea que separa las dos cosas que se confundían: el reloj que
+   * **cuenta** —del servidor, y no lo mueve nadie— y el reloj que **se ve**.
+   * Atarlos dejaría a alguien trabajando sin horas contadas cada vez que un
+   * cliente tuviera el móvil en silencio.
    */
-  const showTimer = Boolean(job.startedAt)
+  const showTimer =
+    Boolean(job.startedAt) &&
+    (job.viewer === 'pro' ||
+      Boolean(job.startApprovedAt) ||
+      Boolean(job.workFinishedAt))
 
   /**
    * Y el cliente puede reconocer que ha empezado, mientras no lo haya hecho ya
@@ -358,38 +374,51 @@ export function JobDetailPage({
     !job.startApprovedAt &&
     !job.workFinishedAt
 
-  /** Se pregunta antes: dar por bueno paga, y pagar no se deshace con otro toque. */
-  const confirmComplete = (id: string) => {
-    Alert.alert(
-      '¿Todo correcto?',
-      'Daremos el trabajo por terminado y se le pagará al profesional. Si algo no ha ido bien, escríbenos antes.',
-      [
-        { text: 'Volver', style: 'cancel' },
-        {
-          text: 'Sí, todo bien',
-          onPress: () => {
-            void (async () => {
-              const { ok, result, error } = await complete(id)
+  /**
+   * Lo que hay que preguntarle al cliente nada más abrir, si hay algo.
+   *
+   * Los dos avisos que le llegan al móvil —«han empezado» y «han terminado»—
+   * le traen aquí a contestar algo, y lo que se encontraba era un botón más
+   * entre otros en mitad de una ficha larga. El modal es lo que convierte el
+   * aviso en una pregunta: se abre solo al llegar, cuenta qué ha pasado y qué
+   * significa responder.
+   *
+   * Cerrarlo sin responder es válido —quien abre la app para otra cosa tiene
+   * derecho a hacerla— y por eso no vuelve a saltar en esta visita: lo que
+   * quedó pendiente sigue en su botón, más abajo.
+   */
+  const [asked, setAsked] = useState<Record<'start' | 'complete', boolean>>({
+    start: false,
+    complete: false,
+  })
 
-              if (!ok) {
-                Alert.alert(
-                  'No se ha podido cerrar',
-                  error ?? 'Inténtalo de nuevo en un momento.',
-                )
-                return
-              }
+  const closeAsk = (which: 'start' | 'complete') =>
+    setAsked((antes) => ({ ...antes, [which]: true }))
 
-              Alert.alert(
-                'Trabajo cerrado',
-                result.released > 0
-                  ? `Gracias. Se le han pagado ${result.released.toFixed(2)} € al profesional.`
-                  : 'Gracias. Queda cerrado.',
-              )
-            })()
-          },
-        },
-      ],
-    )
+  /** Dar por bueno paga, y pagar no se deshace con otro toque. */
+  const doComplete = (id: string) => {
+    closeAsk('complete')
+
+    void (async () => {
+      const { ok, result, error } = await complete(id)
+
+      if (!ok) {
+        Alert.alert('No se ha podido cerrar', error ?? 'Inténtalo de nuevo en un momento.')
+        return
+      }
+
+      Alert.alert(
+        'Trabajo cerrado',
+        result.released > 0
+          ? `Gracias. Se le han pagado ${formatAmount(result.released)} € al profesional.`
+          : 'Gracias. Queda cerrado.',
+      )
+    })()
+  }
+
+  const doApproveStart = (id: string) => {
+    closeAsk('start')
+    void approveStart(id)
   }
 
   /** Diez caracteres, lo mismo que exige el servidor */
@@ -655,7 +684,7 @@ export function JobDetailPage({
           <Button
             fullWidth
             variant="secondary"
-            onPress={() => void approveStart(job.id)}
+            onPress={() => doApproveStart(job.id)}
             disabled={isApproving}
             style={styles.bids}
             testID="job-detail-approve-start"
@@ -668,7 +697,7 @@ export function JobDetailPage({
           <>
             <Button
               fullWidth
-              onPress={() => confirmComplete(job.id)}
+              onPress={() => doComplete(job.id)}
               disabled={isCompleting}
               style={styles.bids}
               testID="job-detail-complete"
@@ -852,6 +881,75 @@ export function JobDetailPage({
           testID="job-detail-break-reason"
         />
       </Dialog>
+
+      {/**
+        * «Han empezado». Se abre solo al entrar, que es a donde lleva el aviso
+        * del móvil.
+        *
+        * No autoriza nada —el tiempo corre desde que el profesional pulsó
+        * Empezar, y eso no lo mueve nadie—: sirve para dos cosas que sí valen.
+        * Le dice a quien acaba de entrar en casa de un desconocido que del otro
+        * lado se han enterado, y deja las dos versiones de la hora por si un
+        * día alguien la discute.
+        *
+        * Y es lo que le destapa el contador al cliente: hasta que no da por
+        * cierto que ha llegado, no se le pinta un reloj corriendo.
+        */}
+      <Dialog
+        visible={canApproveStart && !asked.start}
+        title={`¿Ha llegado ${job.assignedPro?.name.split(' ')[0] ?? 'el profesional'}?`}
+        message={`${job.assignedPro?.name ?? 'El profesional'} nos ha dicho que ha empezado con "${job.title}". Confírmanoslo y verás el tiempo que lleva trabajando.
+
+El reloj ya corre desde que él lo marcó, así que no pierdes nada por confirmarlo más tarde: solo dejas de verlo hasta entonces.`}
+        actions={[
+          {
+            label: 'Sí, ha llegado',
+            onPress: () => doApproveStart(job.id),
+            disabled: isApproving,
+            testID: 'job-detail-approve-start-confirm',
+          },
+          {
+            label: 'Todavía no',
+            variant: 'secondary',
+            onPress: () => closeAsk('start'),
+            testID: 'job-detail-approve-start-later',
+          },
+        ]}
+        onDismiss={() => closeAsk('start')}
+        testID="job-detail-approve-start-dialog"
+      />
+
+      {/**
+        * «Han terminado». Mismo sitio, misma razón — y aquí además **paga**.
+        *
+        * Por eso dice lo que significa contestar que sí antes de que se pulse:
+        * el dinero retenido sale hacia el profesional y eso no se deshace con
+        * otro toque. Y dice también qué pasa si no se contesta, porque callar
+        * es una respuesta con fecha: a las 24 horas se da por bueno solo.
+        */}
+      <Dialog
+        visible={canComplete && !asked.complete}
+        title="¿Ha quedado todo bien?"
+        message={`${job.assignedPro?.name ?? 'El profesional'} ha dado por terminado "${job.title}". Si lo das por bueno cerramos el trabajo y se le paga lo que teníamos retenido.
+
+Si algo no ha ido bien, cierra esto y escríbenos antes de confirmar. Y si no dices nada, a las 24 horas se da por bueno solo.`}
+        actions={[
+          {
+            label: 'Sí, todo bien',
+            onPress: () => doComplete(job.id),
+            disabled: isCompleting,
+            testID: 'job-detail-complete-confirm',
+          },
+          {
+            label: 'Ahora no',
+            variant: 'secondary',
+            onPress: () => closeAsk('complete'),
+            testID: 'job-detail-complete-later',
+          },
+        ]}
+        onDismiss={() => closeAsk('complete')}
+        testID="job-detail-complete-dialog"
+      />
     </View>
   )
 }

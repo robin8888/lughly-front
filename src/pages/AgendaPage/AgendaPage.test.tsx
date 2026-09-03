@@ -67,6 +67,7 @@ function trabajo(cambios: Partial<ApiAssignedJob>): ApiAssignedJob {
     status: 'CONTRACTED',
     appointmentStatus: 'CONFIRMED',
     workFinishedAt: null,
+    startedAt: null,
     title: 'Cambiar un grifo',
     description: 'Gotea',
     trade: 'fontaneria',
@@ -113,6 +114,75 @@ describe('AgendaPage: el día del trabajo', () => {
 
     expect(hechos.finished).toEqual(['job-1'])
     expect(queryByTestId('assigned-job-1-start')).toBeNull()
+  })
+
+  /**
+   * Uno cada vez. Nadie está en dos casas a la vez, y el reloj lo delata: dos
+   * trabajos corriendo cuentan las mismas horas dos veces. La regla la impone
+   * el servidor; aquí se apaga el botón y se dice por qué, que es la
+   * diferencia entre una norma y un topetazo.
+   */
+  it('con otro en curso, no se puede empezar el siguiente', () => {
+    soporte.jobs = [
+      trabajo({
+        id: 'job-9',
+        status: 'IN_PROGRESS',
+        appointmentStatus: 'STARTED',
+        startedAt: '2026-08-29T12:00:00.000Z',
+        title: 'Fuga en el baño',
+      }),
+      trabajo({ id: 'job-1' }),
+    ]
+
+    const { getByTestId } = render(<AgendaPage onBack={() => {}} />)
+
+    expect(getByTestId('assigned-job-1-start')).toBeDisabled()
+    expect(getByTestId('assigned-job-1-blocked')).toHaveTextContent(/Fuga en el baño/)
+
+    fireEvent.press(getByTestId('assigned-job-1-start'))
+    expect(hechos.started).toEqual([])
+  })
+
+  /** Y el que está en curso no se bloquea a sí mismo */
+  it('el que está en curso sigue pudiendo terminarse', () => {
+    soporte.jobs = [
+      trabajo({
+        status: 'IN_PROGRESS',
+        appointmentStatus: 'STARTED',
+        startedAt: '2026-08-29T12:00:00.000Z',
+      }),
+    ]
+
+    const { getByTestId, queryByTestId } = render(<AgendaPage onBack={() => {}} />)
+
+    expect(queryByTestId('assigned-job-1-blocked')).toBeNull()
+    expect(getByTestId('assigned-job-1-finish')).toBeTruthy()
+  })
+
+  /**
+   * Y el contador en la propia tarjeta: quien está dentro de una casa
+   * trabajando no debería tener que abrir la ficha para ver cuánto lleva.
+   */
+  it('el trabajo en curso enseña su contador en la agenda', () => {
+    soporte.jobs = [
+      trabajo({
+        status: 'IN_PROGRESS',
+        appointmentStatus: 'STARTED',
+        startedAt: '2026-08-29T12:00:00.000Z',
+      }),
+    ]
+
+    const { getByTestId } = render(<AgendaPage onBack={() => {}} />)
+
+    expect(getByTestId('assigned-job-1-timer')).toBeTruthy()
+  })
+
+  it('y el que aún no ha empezado, no', () => {
+    soporte.jobs = [trabajo({})]
+
+    const { queryByTestId } = render(<AgendaPage onBack={() => {}} />)
+
+    expect(queryByTestId('assigned-job-1-timer')).toBeNull()
   })
 
   it('terminado, ni un botón más: se dice a qué se espera', () => {

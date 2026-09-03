@@ -26,6 +26,7 @@ import { Tag } from '@/components/atoms/Tag'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { API_BASE_URL } from '@/api'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { WorkTimer } from '@/components/molecules/WorkTimer'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
@@ -117,15 +118,67 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
             </Text>
 
             <View style={styles.list}>
+              {/*
+                Uno cada vez: con otro en marcha no se puede empezar el
+                siguiente. Lo decide el servidor —ahí está la regla— pero el
+                botón se apaga aquí y dice por qué: dejarle pulsar para
+                devolverle un error es hacerle descubrir la norma a base de
+                topetazos, y encima de pie en un portal.
+              */}
               {jobs.map((job) => {
                 const status = jobStatusLook(job.status)
 
+                const enCurso = jobs.find(
+                  (otro) => otro.status === 'IN_PROGRESS' && !otro.workFinishedAt,
+                )
+                const bloqueadoPor =
+                  enCurso && enCurso.id !== job.id ? enCurso : null
+
+                /**
+                 * El fondo, por el punto en que está. Del mismo color que su
+                 * etiqueta: el color no dice nada nuevo, subraya lo que ya
+                 * pone. Ver `cardContracted` y sus hermanos.
+                 */
+                const tint =
+                  job.status === 'IN_PROGRESS'
+                    ? styles.cardInProgress
+                    : job.status === 'COMPLETED'
+                      ? styles.cardCompleted
+                      : styles.cardContracted
+
+                /*
+                  El contador va en la tarjeta y no solo en la ficha: quien
+                  está dentro de una casa trabajando no debería tener que
+                  abrir un trabajo para ver cuánto lleva. Se para solo cuando
+                  marca "He terminado" —`workFinishedAt`—, aunque el cliente
+                  aún no lo haya dado por bueno: el reloj mide el trabajo, no
+                  el papeleo.
+                */
+                const showTimer =
+                  job.startedAt !== null && job.status === 'IN_PROGRESS'
+
                 return (
-                  <InfoCard key={job.id} testID={`assigned-${job.id}`}>
+                  <InfoCard key={job.id} style={tint} testID={`assigned-${job.id}`}>
                     <View style={styles.cardHead}>
-                      <Text style={styles.jobTitle}>{job.title}</Text>
+                      <Text
+                        style={[
+                          styles.jobTitle,
+                          job.status === 'COMPLETED' && styles.jobTitleDone,
+                        ]}
+                      >
+                        {job.title}
+                      </Text>
                       <Tag variant={status.variant}>{status.label}</Tag>
                     </View>
+
+                    {showTimer && (
+                      <WorkTimer
+                        startedAt={job.startedAt!}
+                        finishedAt={job.workFinishedAt}
+                        label={job.workFinishedAt ? 'Duró' : 'Llevas trabajando'}
+                        testID={`assigned-${job.id}-timer`}
+                      />
+                    )}
 
                     <Text style={styles.meta}>
                       {job.tradeLabel} · {jobTypeLabel(job.type)}
@@ -244,12 +297,25 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                               }
                             })()
                           }}
-                          disabled={isStarting}
+                          disabled={isStarting || bloqueadoPor !== null}
                           style={styles.action}
                           testID={`assigned-${job.id}-start`}
                         >
                           {isStarting ? 'Un momento…' : 'He llegado, empiezo'}
                         </Button>
+                      )}
+
+                    {/* Y por qué está apagado, que si no parece que la app falla */}
+                    {job.status === 'CONTRACTED' &&
+                      job.appointmentStatus === 'CONFIRMED' &&
+                      bloqueadoPor !== null && (
+                        <Text
+                          style={styles.blocked}
+                          testID={`assigned-${job.id}-blocked`}
+                        >
+                          Tienes «{bloqueadoPor.title}» en curso. Termina ese antes de
+                          empezar este: el tiempo no puede correr en dos a la vez.
+                        </Text>
                       )}
 
                     {job.status === 'IN_PROGRESS' &&

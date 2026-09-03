@@ -34,6 +34,8 @@ export interface WorkTimerProps {
   finishedAt?: string | null
   /** Se enseña encima del número: «Lleva trabajando», «Duró»… */
   label?: string
+  /** Debajo del número, si hace falta matizar algo */
+  hint?: string
   testID?: string
 }
 
@@ -51,7 +53,13 @@ export function formatElapsed(ms: number): string {
     : `${minutes}:${pad(seconds)}`
 }
 
-export function WorkTimer({ startedAt, finishedAt, label, testID }: WorkTimerProps) {
+export function WorkTimer({
+  startedAt,
+  finishedAt,
+  label,
+  hint,
+  testID,
+}: WorkTimerProps) {
   const started = new Date(startedAt).getTime()
   const finished = finishedAt ? new Date(finishedAt).getTime() : null
   const running = finished === null
@@ -75,7 +83,9 @@ export function WorkTimer({ startedAt, finishedAt, label, testID }: WorkTimerPro
 
   return (
     <View style={[styles.container, running && styles.running]} testID={testID}>
-      {label !== undefined && <Text style={styles.label}>{label}</Text>}
+      {label !== undefined && (
+        <Text style={[styles.label, running && styles.labelRunning]}>{label}</Text>
+      )}
 
       <Text
         style={[styles.time, running && styles.timeRunning]}
@@ -88,6 +98,8 @@ export function WorkTimer({ startedAt, finishedAt, label, testID }: WorkTimerPro
       >
         {formatElapsed(elapsed)}
       </Text>
+
+      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
     </View>
   )
 }
