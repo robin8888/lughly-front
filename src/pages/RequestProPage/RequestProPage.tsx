@@ -275,21 +275,24 @@ export function RequestProPage({
 
     const quien =
       encargo.respondedByName === encargo.requestedProName
-        ? `${encargo.requestedProName} tiene 24 horas para responderte. Lo verás en Mis trabajos.`
-        : `Responde ${encargo.respondedByName}, la empresa de ${encargo.requestedProName}, en un plazo de 24 horas. Si te proponen mandar a otra persona, decides tú.`
+        ? `${encargo.requestedProName} dispone de 24 horas para responderte, y podrás seguirlo en Mis trabajos.`
+        : `Responde ${encargo.respondedByName}, la empresa de ${encargo.requestedProName}, en un plazo de 24 horas. Si te proponen enviar a otra persona, la decisión es tuya.`
 
     /*
       El dinero, primero. Es lo que el cliente acaba de hacer y lo que no puede
       quedarle en duda: se ha apartado un importe en su tarjeta y todavía no se
       le ha cobrado nada.
     */
-    const dinero = `Se han retenido ${formatAmount(encargo.amount)} € de la visita; solo se cobran si acepta.`
+    const dinero = `Hemos retenido ${formatAmount(encargo.amount)} € en tu tarjeta; solo se le abonan cuando acepte la visita.`
+
+    const fotos =
+      photosFailed === 1
+        ? ' No hemos podido enviar una de las fotos.'
+        : ` No hemos podido enviar ${photosFailed} de las fotos.`
 
     Alert.alert(
-      'Visita pedida',
-      photosFailed > 0
-        ? `${dinero} ${quien} ${photosFailed === 1 ? 'Una foto no se pudo enviar' : `${photosFailed} fotos no se pudieron enviar`}.`
-        : `${dinero} ${quien}`,
+      'Visita solicitada',
+      `${dinero} ${quien}${photosFailed > 0 ? fotos : ''}`,
     )
     onSent()
   }
@@ -343,8 +346,8 @@ export function RequestProPage({
       <View style={styles.screen} testID="request-pro-page">
         {header}
         <EmptyState
-          title="No da presupuestos"
-          message={`${pro.name.split(' ')[0]} cobra por horas, así que no presupuesta: se le reservan las horas que necesites desde su ficha.`}
+          title="No trabaja con presupuestos"
+          message={`${pro.name.split(' ')[0]} trabaja por horas y no da presupuestos cerrados. En su ficha puedes reservarle las horas que necesites, eligiendo el día y el rato que mejor te venga.`}
           actions={[{ label: 'Volver a su ficha', onPress: onBack, testID: 'request-pro-back' }]}
           testID="request-pro-no-quote"
         />
@@ -400,7 +403,7 @@ export function RequestProPage({
             </View>
 
             <Text style={styles.note}>
-              Es lo que cobra por desplazarse a ver el problema.
+              Es su tarifa por desplazarse a ver el trabajo en persona.
             </Text>
 
             {/*
@@ -410,14 +413,16 @@ export function RequestProPage({
               gustar y la visita se cobra igual.
             */}
             <Text style={styles.note}>
-              Se retiene ahora en tu tarjeta y solo se te cobra cuando{' '}
-              {pro.name.split(' ')[0]} lo acepte. Si no puede o no contesta a
-              tiempo, se suelta y no se te cobra nada.
+              El importe se retiene ahora en tu tarjeta y solo se le abona
+              cuando {pro.name.split(' ')[0]} acepte la visita. Si no puede
+              atenderte o no responde a tiempo, la retención se libera y no se
+              te cobra nada.
             </Text>
 
             <Text style={styles.note}>
-              Lo que pagas es que vaya a verlo. El precio del arreglo te lo dirá
-              después y decides tú; la visita se cobra igual si no lo aceptas.
+              Cuando haya visto el trabajo te pasará el presupuesto del arreglo
+              y decides con calma. Ten en cuenta que la visita se paga igual
+              aunque no lo aceptes: el desplazamiento ya se habrá hecho.
             </Text>
           </InfoCard>
         )}
@@ -428,8 +433,9 @@ export function RequestProPage({
           <InfoCard style={styles.paymentCard} testID="request-no-method">
             <Text style={styles.paymentTitle}>Necesitas una tarjeta guardada</Text>
             <Text style={styles.paymentBody}>
-              La visita se retiene al pedirla, así que hace falta un método de
-              pago guardado.
+              La visita se retiene en el momento de pedirla, así que necesitamos
+              tener un método de pago guardado. Puedes añadirlo ahora y volver
+              aquí; no perderás lo que hayas escrito.
             </Text>
             <Button
               variant="secondary"
@@ -441,7 +447,7 @@ export function RequestProPage({
           </InfoCard>
         ) : (
           <InfoCard style={styles.paymentCard} testID="request-method">
-            <Text style={styles.paymentTitle}>Se retendrá en</Text>
+            <Text style={styles.paymentTitle}>Se retendrá en esta tarjeta</Text>
             <Text style={styles.paymentBody}>
               {method.brand} •••• {method.last4}
             </Text>
@@ -484,7 +490,7 @@ export function RequestProPage({
 
         <FormField
           label="Cuéntalo con detalle"
-          hint="Con detalle llega sabiendo lo que va a encontrarse, y la visita sirve para algo más que para mirar."
+          hint="Cuanto mejor lo describas, mejor podrá prepararse antes de ir a verlo."
           error={descriptionError}
         >
           <Input
@@ -632,7 +638,7 @@ export function RequestProPage({
         >
           {visitFee === null
             ? 'Pedir presupuesto'
-            : `Pedir la visita por ${formatAmount(visitFee)} €`}
+            : `Pedir la visita · ${formatAmount(visitFee)} €`}
         </Button>
 
         {/**
