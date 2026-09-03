@@ -110,10 +110,10 @@ describe('ProProfilePage: el aviso de que la visita se paga', () => {
     abrir()
     fireEvent.press(screen.getByTestId('pro-quote'))
 
-    expect(screen.getByText(/La visita cuesta 30,00 €/)).toBeTruthy()
-    expect(screen.getByText(/tiene que ir a tu dirección/)).toBeTruthy()
+    expect(screen.getByText(/La visita son 30,00 €/)).toBeTruthy()
+    expect(screen.getByText(/acercarse a tu dirección/)).toBeTruthy()
     // La que evita el enfado de verdad: el viaje se paga aunque no aceptes
-    expect(screen.getByText(/también si al final no lo aceptas/)).toBeTruthy()
+    expect(screen.getByText(/aunque no lo aceptes/)).toBeTruthy()
   })
 
   /**
@@ -135,7 +135,7 @@ describe('ProProfilePage: el aviso de que la visita se paga', () => {
 
     expect(onQuote).not.toHaveBeenCalled()
     expect(screen.getByTestId('pro-hourly-dialog')).toBeTruthy()
-    expect(screen.getByText(/no da presupuestos de limpieza/)).toBeTruthy()
+    expect(screen.getByText(/no se trabaja con presupuestos cerrados/)).toBeTruthy()
 
     fireEvent.press(screen.getByTestId('pro-hourly-book'))
     expect(onBookHours).toHaveBeenCalledWith('limpieza')
@@ -154,7 +154,7 @@ describe('ProProfilePage: el aviso de que la visita se paga', () => {
     abrir()
     fireEvent.press(screen.getByTestId('pro-quote'))
 
-    expect(screen.getByText(/La visita cuesta 30,00 €/)).toBeTruthy()
+    expect(screen.getByText(/La visita son 30,00 €/)).toBeTruthy()
 
     fireEvent.press(screen.getByTestId('pro-quote-confirm'))
     expect(onQuote).toHaveBeenCalledWith('fontaneria')
@@ -209,7 +209,7 @@ describe('ProProfilePage: el aviso de que la visita se paga', () => {
 
     fireEvent.press(screen.getByTestId('pro-quote'))
 
-    expect(screen.getByText(/La visita cuesta 55,00 €/)).toBeTruthy()
+    expect(screen.getByText(/La visita son 55,00 €/)).toBeTruthy()
 
     fireEvent.press(screen.getByTestId('pro-quote-confirm'))
     expect(onQuote).toHaveBeenCalledWith('cerrajeria')

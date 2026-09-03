@@ -821,13 +821,15 @@ export function ProProfilePage({
         */}
       <Dialog
         visible={warning === 'quote'}
-        title={`La visita cuesta ${formatAmount(quoteVisitFee ?? 0)} €`}
-        message={`Para darte un presupuesto de ${(quoteTrade?.label ?? '').toLowerCase()}, ${pro.name.split(' ')[0]} tiene que ir a tu dirección y verlo. Es su tarifa por desplazarse: se retiene ahora y se cobra cuando acepte; si no puede o no contesta a tiempo, no se te cobra nada.
+        title={`La visita son ${formatAmount(quoteVisitFee ?? 0)} €`}
+        message={`Para poder darte un presupuesto ajustado, ${pro.name.split(' ')[0]} necesita acercarse a tu dirección y ver el trabajo en persona. Esa cantidad es su tarifa por el desplazamiento${quoteTrade ? ` en ${quoteTrade.label.toLowerCase()}` : ''}.
 
-El presupuesto del arreglo llega después, y decides tú. La visita se paga igual, también si al final no lo aceptas: el viaje ya se hizo.`}
+El importe se retiene ahora en tu tarjeta y solo se le abona cuando acepte la visita. Si no puede atenderte o no responde a tiempo, la retención se libera y no se te cobra nada.
+
+Cuando haya visto el trabajo te pasará el presupuesto del arreglo y decides con calma. Ten en cuenta que la visita se paga igual aunque no lo aceptes: el desplazamiento ya se habrá hecho.`}
         actions={[
           {
-            label: `Pedirlo por ${formatAmount(quoteVisitFee ?? 0)} €`,
+            label: `Pedir la visita · ${formatAmount(quoteVisitFee ?? 0)} €`,
             onPress: () => {
               setWarning(null)
               if (quoteTrade) onQuote(quoteTrade.slug)
@@ -835,7 +837,7 @@ El presupuesto del arreglo llega después, y decides tú. La visita se paga igua
             testID: 'pro-quote-confirm',
           },
           {
-            label: 'Ahora no',
+            label: 'Ahora no, gracias',
             variant: 'secondary',
             onPress: () => setWarning(null),
             testID: 'pro-quote-cancel',
@@ -854,11 +856,13 @@ El presupuesto del arreglo llega después, y decides tú. La visita se paga igua
         */}
       <Dialog
         visible={warning === 'hourly-no-quote'}
-        title="Cobra por horas"
-        message={`${pro.name.split(' ')[0]} no da presupuestos${hourTrade ? ` de ${hourTrade.label.toLowerCase()}` : ''}: cobra ${formatAmount(hourTrade?.hourlyRate ?? 0)} € la hora y se le reservan las horas que necesites. Eliges el día y el rato, y ves el total antes de pagar.`}
+        title={`${pro.name.split(' ')[0]} trabaja por horas`}
+        message={`En este oficio${hourTrade ? ` —${hourTrade.label.toLowerCase()}—` : ''} no se trabaja con presupuestos cerrados: la tarifa es de ${formatAmount(hourTrade?.hourlyRate ?? 0)} € la hora y se le reservan las horas que necesites.
+
+Puedes elegir el día y el rato que mejor te venga, y verás el total antes de confirmar nada.`}
         actions={[
           {
-            label: 'Reservar horas',
+            label: 'Ver sus horas libres',
             onPress: () => {
               setWarning(null)
               if (hourTrade) onBookHours(hourTrade.slug)
@@ -866,7 +870,7 @@ El presupuesto del arreglo llega después, y decides tú. La visita se paga igua
             testID: 'pro-hourly-book',
           },
           {
-            label: 'Ahora no',
+            label: 'Ahora no, gracias',
             variant: 'secondary',
             onPress: () => setWarning(null),
             testID: 'pro-hourly-cancel',
@@ -883,11 +887,13 @@ El presupuesto del arreglo llega después, y decides tú. La visita se paga igua
         */}
       <Dialog
         visible={warning === 'no-price'}
-        title="Todavía no tiene precios"
-        message={`${pro.name.split(' ')[0]} no ha puesto todavía lo que cobra por este oficio, así que no podemos contratarle por él. Puedes escribirle y pedirle que los ponga, o buscar a otra persona del directorio.`}
+        title="Aún no ha publicado sus precios"
+        message={`${pro.name.split(' ')[0]} todavía no ha indicado lo que cobra por este oficio, así que de momento no podemos tramitar la contratación.
+
+Sentimos las molestias. Puedes volver a intentarlo más adelante o buscar a otro profesional en el directorio.`}
         actions={[
           {
-            label: 'Entendido',
+            label: 'De acuerdo',
             onPress: () => setWarning(null),
             testID: 'pro-no-price-ok',
           },
