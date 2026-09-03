@@ -7,19 +7,17 @@
  * el encargo aparece ahí esperando respuesta, con la diferencia de que este ya
  * tiene el dinero apartado.
  *
- * ## El 3D Secure vive aquí
+ * ## El 3D Secure vive dentro de `book()`
  *
- * El cobro se confirma en el servidor con la tarjeta guardada, pero el banco
- * puede pedir autenticación —en España, a menudo—. Entonces el servidor
- * devuelve `requires_action` con un `clientSecret`, la app abre el reto con
- * `handleNextAction`, y una segunda llamada cierra la contratación. Las tres
- * cosas pasan dentro de `book()` a propósito: para la pantalla es la misma
- * llamada de siempre que tarda un poco más, y así no hay dos caminos de
- * contratación que mantener en paralelo.
+ * El banco puede pedir autenticación —en España, a menudo—, y resolverlo son
+ * tres pasos: abrir el reto, cerrarlo y preguntarle al servidor si de verdad
+ * salió. Los tres pasan dentro de `book()` a propósito: para la pantalla es la
+ * misma llamada de siempre que tarda un poco más, y así no hay dos caminos de
+ * contratación que mantener en paralelo. Los pasos en sí viven en
+ * `useCardChallenge`, que es la misma pieza que usan las horas y la visita.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useStripe } from '@stripe/stripe-react-native'
 import { ApiError, NetworkError } from '@/api'
 import {
   assignmentsApi,
@@ -27,18 +25,13 @@ import {
   type BookServicesPayload,
 } from '@/api/assignments.api'
 import type { FieldErrors } from '@/utils/formErrors'
+import { CardAuthError, useCardChallenge } from './useCardChallenge'
 
-/**
- * La autenticación de la tarjeta no ha salido adelante: la cerró el cliente,
- * el banco dijo que no, o se quedó a medias. Es un error suyo que se puede
- * leer y arreglar —cambiar de tarjeta, reintentar—, no un fallo interno, y por
- * eso se enseña tal cual en el formulario.
- */
-export class CardAuthError extends Error {}
+export { CardAuthError }
 
 export function useBookServices(proId: string | undefined) {
   const queryClient = useQueryClient()
-  const { handleNextAction } = useStripe()
+  const resolveCardChallenge = useCardChallenge()
 
   const mutation = useMutation({
     mutationFn: async (payload: BookServicesPayload): Promise<ApiBookedServices> => {
@@ -46,40 +39,7 @@ export function useBookServices(proId: string | undefined) {
 
       if (booking.status === 'booked') return booking
 
-      if (!booking.clientSecret) {
-        throw new CardAuthError(
-          'Tu banco pide confirmar el pago y no hemos podido abrir la confirmación. Inténtalo de nuevo.',
-        )
-      }
-
-      /*
-        El reto del banco. Cerrarlo sin terminar devuelve `error`, igual que un
-        rechazo: para el cliente son lo mismo —no ha contratado— y el encargo
-        se queda en borrador hasta que el servidor lo suelte solo.
-      */
-      const { error } = await handleNextAction(booking.clientSecret)
-
-      if (error) {
-        throw new CardAuthError(
-          error.message ??
-            'No se ha podido confirmar el pago con tu banco. No se te ha cobrado nada.',
-        )
-      }
-
-      /*
-        Y quien dice si de verdad salió bien es el servidor, que se lo pregunta
-        a Stripe. Que aquí no haya `error` significa que el reto se cerró, no
-        que el banco haya aceptado.
-      */
-      const confirmed = await assignmentsApi.confirmPayment(booking.jobId)
-
-      if (confirmed.status !== 'booked') {
-        throw new CardAuthError(
-          'Tu banco todavía no ha confirmado el pago. Espera un momento y vuelve a intentarlo.',
-        )
-      }
-
-      return confirmed
+      return resolveCardChallenge(booking.jobId, booking.clientSecret)
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['jobs'] })

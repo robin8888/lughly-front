@@ -12,12 +12,11 @@
  * - **Vuelve el desglose cobrado**, para poder enseñar en la confirmación lo
  *   mismo que se vio antes de pagar sin volver a pedirlo.
  *
- * El 3D Secure se resuelve aquí dentro, igual que en la carta: para la
- * pantalla es una sola llamada que a veces tarda más.
+ * El 3D Secure se resuelve aquí dentro con `useCardChallenge`, igual que en la
+ * carta: para la pantalla es una sola llamada que a veces tarda más.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useStripe } from '@stripe/stripe-react-native'
 import { ApiError, NetworkError } from '@/api'
 import {
   assignmentsApi,
@@ -25,11 +24,11 @@ import {
   type BookHoursPayload,
 } from '@/api/assignments.api'
 import type { FieldErrors } from '@/utils/formErrors'
-import { CardAuthError } from './useBookServices'
+import { CardAuthError, useCardChallenge } from './useCardChallenge'
 
 export function useBookHours(proId: string | undefined) {
   const queryClient = useQueryClient()
-  const { handleNextAction } = useStripe()
+  const resolveCardChallenge = useCardChallenge()
 
   const mutation = useMutation({
     mutationFn: async (payload: BookHoursPayload): Promise<ApiBookedHours> => {
@@ -37,35 +36,12 @@ export function useBookHours(proId: string | undefined) {
 
       if (booking.status === 'booked') return booking
 
-      if (!booking.clientSecret) {
-        throw new CardAuthError(
-          'Tu banco pide confirmar el pago y no hemos podido abrir la confirmación. Inténtalo de nuevo.',
-        )
-      }
-
-      const { error } = await handleNextAction(booking.clientSecret)
-
-      if (error) {
-        throw new CardAuthError(
-          error.message ??
-            'No se ha podido confirmar el pago con tu banco. No se te ha cobrado nada.',
-        )
-      }
-
       /*
-        Quien dice si salió bien es el servidor, que se lo pregunta a Stripe:
-        que aquí no haya `error` significa que el reto se cerró, no que el
-        banco haya aceptado. La segunda llamada devuelve la reserva sin el
-        desglose —es la de la carta—, así que se conserva el que ya traía la
-        primera: es el mismo precio, y lo ha cobrado el servidor.
+        La confirmación del servidor devuelve la reserva **sin el desglose** —es
+        la respuesta de la carta—, así que se conserva el que ya traía la
+        primera llamada: es el mismo precio, y lo ha cobrado el servidor.
       */
-      const confirmed = await assignmentsApi.confirmPayment(booking.jobId)
-
-      if (confirmed.status !== 'booked') {
-        throw new CardAuthError(
-          'Tu banco todavía no ha confirmado el pago. Espera un momento y vuelve a intentarlo.',
-        )
-      }
+      const confirmed = await resolveCardChallenge(booking.jobId, booking.clientSecret)
 
       return { ...confirmed, price: booking.price }
     },
