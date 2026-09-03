@@ -15,7 +15,7 @@ import { Money } from '@/components/atoms/Money'
 import { Avatar } from '@/components/atoms/Avatar'
 import { API_BASE_URL } from '@/api'
 import type { ApiJob } from '@/api/jobs.api'
-import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
+import { jobStatusLook, jobTypeLabel, jobTint } from '@/utils/jobStatus'
 import { getTradeImage } from '@/utils/trades'
 import { styles } from './JobCard.styles'
 
@@ -84,6 +84,21 @@ export function JobCard({
 
   const waiting = needsYou || pickPro
 
+  /**
+   * El fondo por estado. Lo que te espera manda sobre todo lo demás: un
+   * trabajo que se quedó sin nadie es naranja aunque su estado fuera otro,
+   * porque es lo único de la lista que está parado esperando a quien mira.
+   */
+  const tint = waiting
+    ? styles.needsYou
+    : jobTint(job.status) === 'contracted'
+      ? styles.tintContracted
+      : jobTint(job.status) === 'inProgress'
+        ? styles.tintInProgress
+        : jobTint(job.status) === 'done'
+          ? styles.tintDone
+          : undefined
+
   return (
     <Pressable
       onPress={onPress}
@@ -91,7 +106,7 @@ export function JobCard({
       accessibilityRole={onPress ? 'button' : undefined}
       testID={testID}
     >
-      <InfoCard style={waiting ? styles.needsYou : undefined}>
+      <InfoCard style={tint}>
         {waiting && (
           <View style={styles.needsYouBlock}>
             <Text style={styles.needsYouNote}>

@@ -760,21 +760,36 @@ export function JobDetailPage({
           "confirma" en una decisión con fecha, y lo que explica que no hacer
           nada también sea una respuesta.
         */}
+        {/**
+          * El contador, suelto y a lo ancho.
+          *
+          * Iba dentro de `deadline`, que es una fila con línea encima —la caja
+          * de «Queda: 3 h»— y ahí el reloj no se podía centrar: una fila mide
+          * lo que miden sus hijos, así que el `alignSelf: 'stretch'` del propio
+          * componente no tenía a qué estirarse y el número quedaba pegado a la
+          * izquierda. Fuera de ella ocupa el ancho y cae en el centro, que es
+          * donde tiene que estar lo que se mira de reojo.
+          */}
         {showTimer && job.startedAt && (
-          <View style={styles.deadline}>
-            <WorkTimer
-              startedAt={job.startedAt}
-              finishedAt={job.workFinishedAt}
-              label={
-                job.workFinishedAt
-                  ? 'Tiempo trabajado'
-                  : job.viewer === 'pro'
-                    ? 'Llevas trabajando'
-                    : 'Lleva trabajando'
-              }
-              testID="job-detail-timer"
-            />
-          </View>
+          <WorkTimer
+            startedAt={job.startedAt}
+            finishedAt={job.workFinishedAt}
+            label={
+              job.workFinishedAt
+                ? 'Tiempo trabajado'
+                : job.viewer === 'pro'
+                  ? 'Llevas trabajando'
+                  : 'Lleva trabajando'
+            }
+            hint={
+              job.workFinishedAt
+                ? undefined
+                : job.viewer === 'client'
+                  ? 'Corre desde que dijo que empezaba'
+                  : undefined
+            }
+            testID="job-detail-timer"
+          />
         )}
 
         {canApproveStart && (

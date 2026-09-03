@@ -98,6 +98,45 @@ export function jobStatusLook(
   return STATUS[status]
 }
 
+/**
+ * De qué color va el **fondo** de la tarjeta de un trabajo.
+ *
+ * Es lo que convierte una lista de diez tarjetas blancas en algo que se lee de
+ * un vistazo: sin esto hay que leer la etiqueta de cada una para saber cuál es
+ * la de ahora. El color no dice nada nuevo —subraya la etiqueta que ya lleva
+ * la tarjeta— y por eso vive aquí, al lado de `jobStatusLook`: si un estado
+ * cambia de familia, cambia en un sitio.
+ *
+ * Cuatro señales y no una por estado. Un color por cada uno de los trece
+ * estados no sería una señal, sería un arcoíris: lo que hay que distinguir de
+ * lejos es **si esto pide algo, si está pasando ahora, o si ya no hay nada que
+ * hacer**.
+ *
+ * - `waiting`: te espera a ti. Lo pinta quien lo llama, porque depende de más
+ *   cosas que el estado —una urgencia abierta espera a que elijas—.
+ * - `contracted`: cerrado y por delante.
+ * - `inProgress`: está pasando ahora mismo.
+ * - `done`: terminado, cancelado o cerrado sin trato. No pide nada.
+ * - `none`: esperando a otro. Se queda en blanco a propósito, que es el
+ *   estado de reposo: si todo llevara color, ninguno destacaría.
+ */
+export type JobTint = 'contracted' | 'inProgress' | 'done' | 'none'
+
+export function jobTint(status: ApiJobStatus): JobTint {
+  switch (status) {
+    case 'CONTRACTED':
+      return 'contracted'
+    case 'IN_PROGRESS':
+      return 'inProgress'
+    case 'COMPLETED':
+    case 'CANCELLED':
+    case 'CLOSED':
+      return 'done'
+    default:
+      return 'none'
+  }
+}
+
 const TYPE_LABEL: Record<ApiJobType, string> = {
   QUOTE: 'Presupuesto directo',
   INSTANT: 'Reserva instantánea',

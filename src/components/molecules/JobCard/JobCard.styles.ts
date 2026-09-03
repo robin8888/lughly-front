@@ -179,6 +179,37 @@ export const styles = StyleSheet.create({
   needsYou: {
     borderWidth: 1.5,
     borderColor: theme.colors.pending,
+    /*
+      Y con fondo, no solo con borde. Un contorno de linea y media se pierde
+      entre diez tarjetas; el fondo es lo que se ve sin leer.
+    */
+    backgroundColor: theme.colors.pendingSoft,
+  },
+
+  /**
+   * El fondo por estado, con la misma regla que la agenda del profesional: el
+   * tono suave de la familia que ya lleva su etiqueta. Qué estado va en cada
+   * uno lo decide `jobTint`, en un solo sitio para las dos pantallas.
+   */
+  tintContracted: {
+    backgroundColor: theme.colors.accent2100,
+    borderWidth: 1,
+    borderColor: theme.colors.accent2300,
+  },
+  tintInProgress: {
+    backgroundColor: theme.colors.availableSoft,
+    borderWidth: 1,
+    borderColor: theme.colors.available,
+  },
+  /**
+   * Lo que ya no pide nada, apagado. Tiene que pesar menos que lo que está por
+   * hacer, o una lista de tres meses se convierte en una pared de colores donde
+   * no se distingue lo de hoy.
+   */
+  tintDone: {
+    backgroundColor: theme.colors.neutral200,
+    borderWidth: 1,
+    borderColor: theme.colors.neutral400,
   },
   needsYouBlock: {
     marginBottom: 10,

@@ -33,6 +33,7 @@ import { setupSessionBridge } from '@/api/sessionBridge'
 import { useResetCacheOnAccountChange } from '@/hooks/auth/useResetCacheOnAccountChange'
 import { usePushRegistration } from '@/hooks/push/usePushRegistration'
 import { usePushInvalidation } from '@/hooks/push/usePushInvalidation'
+import { usePushNavigation } from '@/hooks/push/usePushNavigation'
 import { LIVE_QUERY_KEYS } from '@/hooks/push/pushInvalidation'
 import { useRefreshOnForeground } from '@/hooks/ui/useRefreshOnForeground'
 import { BottomTabBar } from '@/components/organisms/BottomTabBar'
@@ -72,6 +73,13 @@ function LiveUpdates() {
   const isAuthenticated = useIsAuthenticated()
 
   usePushInvalidation()
+  /*
+    Y llevar al usuario a donde habla el aviso. Va aquí dentro por lo mismo que
+    lo de arriba —necesita el `QueryClient` de sus vecinos y el router del
+    layout—, y separado de la invalidación porque son dos decisiones: refrescar
+    vale siempre, mover a alguien solo cuando ha tocado el aviso.
+  */
+  usePushNavigation()
   useRefreshOnForeground(LIVE_QUERY_KEYS, isAuthenticated)
 
   return null

@@ -36,7 +36,7 @@ import { useJobProgress } from '@/hooks/domain/useJob'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
-import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
+import { jobStatusLook, jobTint, jobTypeLabel } from '@/utils/jobStatus'
 import { theme } from '@/theme'
 import { styles } from './AgendaPage.styles'
 
@@ -147,12 +147,15 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                 /**
                  * El fondo, por el punto en que está. Del mismo color que su
                  * etiqueta: el color no dice nada nuevo, subraya lo que ya
-                 * pone. Ver `cardContracted` y sus hermanos.
+                 * pone. Qué estado va en cada tono lo decide `jobTint`, que es
+                 * el mismo que usa la lista del cliente — dos tablas del mismo
+                 * color acaban discrepando el día que se añade un estado.
                  */
+                const tinte = jobTint(job.status)
                 const tint =
-                  job.status === 'IN_PROGRESS'
+                  tinte === 'inProgress'
                     ? styles.cardInProgress
-                    : job.status === 'COMPLETED'
+                    : tinte === 'done'
                       ? styles.cardCompleted
                       : styles.cardContracted
 
