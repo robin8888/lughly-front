@@ -2479,6 +2479,113 @@ más, y el número no pasa nunca por aquí.
 
 ---
 
+## ✅ El ciclo del trabajo, de punta a punta (3 Septiembre 2026, tarde)
+
+Todo lo que pasa entre que el profesional llega y el cliente paga. Estaba
+construido a medias: los avisos existían, los botones existían, y entre unos y
+otros faltaba lo que convierte eso en un recorrido.
+
+### La agenda del profesional
+
+- **El fondo dice en qué punto está cada trabajo**, con el tono suave de la
+  familia que ya lleva su etiqueta. Sin esto son diez tarjetas blancas y hay
+  que leer la etiqueta de cada una para saber cuál es la de ahora. Lo terminado
+  va en gris y con el título apagado: lo hecho tiene que pesar menos que lo que
+  está por hacer.
+- **Ordenada por lo último aceptado.** Estaba por la fecha en que hay que ir,
+  con el argumento de que una agenda ordena por lo que toca antes; lo que trae
+  aquí al profesional no es planificar la semana sino lo que acaba de pasar.
+- **El contador, en la propia tarjeta.** Quien está dentro de una casa
+  trabajando no debería abrir una ficha para ver cuánto lleva.
+- **Un trabajo cada vez.** No se empieza teniendo otro en marcha: dos relojes
+  corriendo cuentan las mismas horas dos veces, y en dos trabajos por horas eso
+  son dos facturas por el mismo rato. Se mira sobre el adjudicado y no sobre
+  quien pulsa, y cuenta también la urgencia que tenga entre manos.
+- **Y a su hora.** No se empieza más de diez minutos antes de la acordada.
+  Tarde sí, siempre; sin hora acordada no se comprueba nada.
+
+### Los dos avisos que el cliente tiene que contestar
+
+Le llegaban al móvil y le traían a una ficha larga donde el botón que
+correspondía era uno más entre otros. Ahora se abre un diálogo al entrar, que
+cuenta qué ha pasado y qué significa responder. Cerrarlo sin contestar es
+válido y no vuelve a saltar en esa visita.
+
+### El reloj: el que cuenta y el que se ve
+
+Son dos cosas y se confundían. El que **cuenta** corre desde que el profesional
+pulsa Empezar y no lo mueve nadie — si lo moviera la confirmación del cliente,
+un móvil en silencio dejaría a alguien trabajando sin horas contadas, y en un
+trabajo por horas sin que se las paguen. El que **se ve** espera: al cliente no
+se le pinta un contador de algo que no ha dado por cierto, y al confirmar
+aparece ya con el tiempo corrido.
+
+### El visto bueno deja de darse a ciegas
+
+Es el botón que paga, y el cliente lo pulsaba sin ver nada de lo que estaba
+dando por bueno. O callaba — y callar se trataba igual que decir que sí.
+
+- **Fotos de cómo ha quedado.** El profesional las adjunta antes de marcar «He
+  terminado» y el cliente las ve **encima** del botón que paga: la decisión se
+  toma mirando eso. Van en la misma tabla que las del cliente con un `kind`, y
+  los dos límites de cuatro son independientes.
+- **«Falta algo».** La salida que no existía. Apaga el cierre por silencio y le
+  manda el motivo a quien tiene que volver, al móvil y a su agenda. No es una
+  disputa: es el paso de antes, el que casi siempre se arregla con que vuelva.
+- **Un toque a la hora.** El aviso de «he terminado» se ve de pasada, así que a
+  los sesenta minutos se le vuelve a tocar al cliente. **Recordar no es
+  vencer**: el plazo real sigue siendo el de `confirmByAt`.
+
+### Los avisos llevan a donde hablan
+
+Tocar una notificación abría la app por donde se hubiera quedado. Ahora cada
+`screen` tiene su destino (`pushRoutes`), y lo que no se reconoce no mueve a
+nadie — abrir una pantalla al azar es peor que abrir por donde estabas. Va con
+`useLastNotificationResponse` porque el caso que más importa es el que un
+listener no ve: la app cerrada del todo.
+
+### El chat se cierra con el trabajo
+
+Terminado, cancelado, caducado o rechazado no tienen conversación pendiente.
+Se decide en `chatWith`, que es lo que mira la app, así que se apaga en la ficha
+y en la lista a la vez.
+
+## 🐛 Tres fallos que solo se veían usándolo
+
+**Las fotos no se veían en Android.** En el iPhone sí. La ruta exigía sesión y
+`RemotePhoto` le metía la cabecera al `<Image>`; eso lo respeta iOS y no
+Android, donde las carga Fresco y con la New Architecture no propaga esas
+cabeceras. El permiso se mudó de la cabecera a la URL: `MediaSignerService`
+firma cada clave con un vencimiento y la ruta pasa a `@Public()` exigiendo esa
+firma. **No es el token de sesión** —ese no puede ir en una URL— y el
+vencimiento va por tramos de una hora para que la caché de imágenes del móvil
+siga acertando.
+
+**Hooks detrás de un `return`.** La ficha reventaba al abrirla con «Rendered
+more hooks than during the previous render»: el estado de los diálogos se puso
+junto a lo que lo usa, y eso está después de las salidas de cargando y error. Y
+**los quince tests pasaban**, porque el doble de `useJob` decía `isPending:
+false` siempre — se renderizaba con la ficha ya puesta, que es como no se entra
+nunca.
+
+**El `.gitignore` se comía el módulo de almacenamiento.** `storage/` sin barra
+delante casa con cualquier carpeta llamada así a cualquier profundidad, y se
+llevaba `src/infrastructure/storage/` entera: siete ficheros que **nunca han
+estado en el repositorio**. Lo clonado no compilaba. Se descubrió al añadir uno
+nuevo ahí y ver que `git commit` decía «nothing to commit».
+
+### Lo que queda de esto
+
+- [ ] **El contador de «se cierra en» debajo del botón de dar por bueno**:
+      Robin dice que ahí no debe aparecer. Pendiente de decidir si se quita solo
+      de ahí o si el plazo pasa a ser de una hora en vez de veinticuatro.
+- [ ] **`BlurView` en Android** sigue avisando de que le falta `blurTarget`.
+- [ ] El barrido no reabre el plazo cuando un profesional vuelve a terminar
+      tras un reparo: hoy `finish-job` exige la cita `STARTED`, así que hay que
+      empezar otra vez. Sin probar en el móvil.
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
