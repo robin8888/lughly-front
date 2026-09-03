@@ -189,10 +189,43 @@ export function JobDetailPage({
   const { approveStart, isApproving } = useApproveStart()
   const { hold, isHolding } = useHoldJob()
 
+  /**
+   * Todo el estado va **aquí arriba, con el resto de hooks**, y no junto a lo
+   * que lo usa.
+   *
+   * Más abajo hay dos salidas —cargando y error— y un hook detrás de un
+   * `return` no se ejecuta en esos renders. React cuenta los hooks, y en cuanto
+   * el número baila la pantalla revienta entera con «Rendered more hooks than
+   * during the previous render». Pasó el 3 de septiembre de 2026 al añadir los
+   * diálogos: se veían bien al abrir un trabajo ya cargado y tumbaban la ficha
+   * al entrar desde cero, que es como se entra de verdad.
+   */
+
   /** Qué foto del resultado se está mirando a pantalla completa. `null` es ninguna */
   const [viewingResult, setViewingResult] = useState<number | null>(null)
   /** El motivo que escribe el cliente cuando algo no ha quedado bien */
   const [holdReason, setHoldReason] = useState('')
+
+  /**
+   * Lo que ya se le ha preguntado al cliente en esta visita, si hay algo.
+   *
+   * Los dos avisos que le llegan al móvil —«han empezado» y «han terminado»—
+   * le traen aquí a contestar algo, y lo que se encontraba era un botón más
+   * entre otros en mitad de una ficha larga. El diálogo lo convierte en una
+   * pregunta: se abre solo al llegar, cuenta qué ha pasado y qué significa
+   * responder.
+   *
+   * Cerrarlo sin responder es válido —quien abre la app para otra cosa tiene
+   * derecho a hacerla— y por eso no vuelve a saltar: lo que quedó pendiente
+   * sigue en su botón, más abajo.
+   */
+  const [asked, setAsked] = useState<Record<'start' | 'complete', boolean>>({
+    start: false,
+    complete: false,
+  })
+
+  /** Si está escribiendo el motivo de que algo no haya quedado bien */
+  const [holding, setHolding] = useState(false)
 
   /**
    * El diálogo de romper un contrato, con su motivo.
@@ -382,27 +415,6 @@ export function JobDetailPage({
     Boolean(job.startedAt) &&
     !job.startApprovedAt &&
     !job.workFinishedAt
-
-  /**
-   * Lo que hay que preguntarle al cliente nada más abrir, si hay algo.
-   *
-   * Los dos avisos que le llegan al móvil —«han empezado» y «han terminado»—
-   * le traen aquí a contestar algo, y lo que se encontraba era un botón más
-   * entre otros en mitad de una ficha larga. El modal es lo que convierte el
-   * aviso en una pregunta: se abre solo al llegar, cuenta qué ha pasado y qué
-   * significa responder.
-   *
-   * Cerrarlo sin responder es válido —quien abre la app para otra cosa tiene
-   * derecho a hacerla— y por eso no vuelve a saltar en esta visita: lo que
-   * quedó pendiente sigue en su botón, más abajo.
-   */
-  const [asked, setAsked] = useState<Record<'start' | 'complete', boolean>>({
-    start: false,
-    complete: false,
-  })
-
-  /** Si está escribiendo el motivo de que algo no haya quedado bien */
-  const [holding, setHolding] = useState(false)
 
   const closeAsk = (which: 'start' | 'complete') =>
     setAsked((antes) => ({ ...antes, [which]: true }))

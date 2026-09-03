@@ -20,6 +20,8 @@ jest.mock('@/hooks/domain/useJob', () => {
    */
   const soporte = {
     job: null as unknown,
+    /** Si la ficha todavía está cargando: es el primer render de verdad */
+    pending: false,
     started: [] as string[],
     finished: [] as string[],
     completed: [] as string[],
@@ -31,8 +33,8 @@ jest.mock('@/hooks/domain/useJob', () => {
   return {
     soporte,
     useJob: () => ({
-      data: soporte.job,
-      isPending: false,
+      data: soporte.pending ? undefined : soporte.job,
+      isPending: soporte.pending,
       isError: false,
       refetch: () => {},
     }),
@@ -143,6 +145,7 @@ beforeEach(() => {
   // Faltaba, y el fallo solo sale en conjunto: un test veía lo que confirmó otro
   soporte.startApproved.length = 0
   soporte.held.length = 0
+  soporte.pending = false
 })
 
 describe('JobDetailPage: terminar y cobrar', () => {
@@ -412,5 +415,36 @@ describe('JobDetailPage: el visto bueno, con lo que hay que ver', () => {
     const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
     expect(getByTestId('job-detail-hold')).toHaveTextContent(/sigue goteando/)
+  })
+})
+
+/**
+ * Un hook detrás de un `return` no se ejecuta en ese render, y React cuenta los
+ * hooks: en cuanto el número baila, la pantalla revienta entera con «Rendered
+ * more hooks than during the previous render».
+ *
+ * Pasó el 3 de septiembre de 2026 al añadir los diálogos: el estado se puso
+ * junto a lo que lo usa, que está después de las salidas de cargando y error.
+ * **Todos los tests pasaban**, porque ninguno pasaba por «cargando»: se
+ * renderizaba siempre con la ficha ya puesta, que es como no se entra nunca.
+ */
+describe('JobDetailPage: los hooks, por encima de las salidas', () => {
+  it('sobrevive a pasar de cargando a cargado, que es como se entra', () => {
+    soporte.pending = true
+    soporte.job = null
+
+    const { rerender, getByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-loading')).toBeTruthy()
+
+    soporte.pending = false
+    soporte.job = ficha({})
+
+    // Si un hook viviera tras un `return`, este render tumbaría la pantalla
+    rerender(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-start')).toBeTruthy()
   })
 })
