@@ -2309,17 +2309,161 @@ creando un `Charge`. Hoy solo lo hacen **dos** casos de uso: `book-hours` y
 `book-services`. Cualquier otro camino que llegue a `COMPLETED` es un agujero,
 aunque nadie se haya quejado.
 
-### Lo que queda abierto, verificado el 2 de septiembre
+### Lo que quedaba abierto ✅ (cerrado el 3 Septiembre 2026)
 
-- [ ] **`request-pro`** — el encargo directo, `INSTANT` y `QUOTE`. Ya no es el
-      destino de «Reservar ahora», pero sigue existiendo y sigue sin cobrar.
-- [ ] **`create-job`** — publicar un trabajo y la subasta.
-- [ ] **Las urgencias enteras** — `request-urgency`, `accept-urgency`,
-      `finish-urgency`. Ninguna crea cobro, y es el camino donde más se cobra
-      en el sector: una salida de madrugada es lo que más se paga y lo único
-      que hoy sale gratis.
+- [x] **`request-pro`** — el encargo directo. Era el hueco abierto a todo el
+      directorio: el botón «Presupuesto» de cualquier ficha. Ahora pedir
+      presupuesto es contratar una visita, y `INSTANT` se ha ido de esa ruta.
+- [x] **`create-job`** — solo admite `URGENT`. Publicar al aire a tarifa fija
+      creaba un trabajo sin precio y sin nadie a quien pedírselo, porque la
+      subasta que tenía que recogerlo **no existe** (no hay modelo `Bid` ni
+      endpoint para pujar). Volverá con la subasta y con su cobro puesto.
+- [x] **Las urgencias enteras** — se retiene la salida al pedirla, se captura
+      al aceptar, y el rato que pasa de la primera hora se cobra al cerrar.
+- [x] **Reasignar**, que no estaba en la lista y era el más silencioso de los
+      cuatro. Ver abajo.
 
-**Es lo primero del día 3**, por encima de lo demás que hay apuntado.
+Detalle entero en la sección de abajo. **La regla sigue en pie**: el próximo
+camino de contratación que se construya nace con su cobro puesto, y antes de dar
+por bueno cualquier flujo se mira si termina creando un `Charge`.
+
+---
+
+## ✅ Ningún camino sin cobro: los cuatro, cerrados (3 Septiembre 2026)
+
+Tres caminos llegaban a `COMPLETED` sin crear un solo `Charge`. Buscándolos
+apareció un cuarto que no estaba en ninguna lista, y era el peor de los cuatro
+porque no se ve desde ninguna pantalla.
+
+Hoy **los seis casos de uso que cobran** son: `book-hours`, `book-services`,
+`request-pro`, `reassign-job`, `request-urgency` y `finish-urgency`.
+
+### 1. Pedir presupuesto: la visita se paga
+
+`request-pro` creaba un `Job` y nada más. Ni cobro, ni precio pactado, ni forma
+de que nadie cobrara nunca — y era el botón «Presupuesto» de **cualquier ficha
+del directorio**, así que el hueco estaba abierto para todo el mundo.
+
+Ahora pedir presupuesto es contratar una visita: se retiene lo que ese
+profesional cobra por presentarse y se cobra cuando acepta. Lo que se paga es el
+desplazamiento y el rato de mirarlo, **no el arreglo**, y por eso se cobra
+aunque el presupuesto no convenza: el viaje ya se hizo.
+
+**El precio hay que calcularlo, no leerlo.** `hourlyRate` y `visitFee` son
+excluyentes (`proTradeSchema`), así que la mitad del directorio no tiene ninguna
+tarifa de visita puesta. En quien cobra por horas, la visita es **su suelo**: la
+tarifa por el mínimo de horas que declaró en ese oficio, o una hora si no tiene
+mínimo. No es una cifra inventada — es lo que le pagaría quien le reservase el
+rato más corto que admite, y `minHours` existe literalmente para eso. Vive en
+`visitPriceOf` (`jobs/domain/visit-price.ts`) y en su espejo del móvil
+(`utils/visitPrice.ts`).
+
+**Y el móvil avisa antes.** Un botón que hasta ayer era gratis y hoy cobra no
+puede llevar directo al formulario: eso es un cobro a traición, aunque el
+importe salga después en pantalla. El diálogo de la ficha dice las tres cosas
+que el cliente no puede deducir —que alguien va a ir a su casa, cuánto cuesta
+eso, y que se cobra aunque el presupuesto no le convenza— y **de dónde sale la
+cifra**, porque «visita 28 €» de alguien que cobra 14 €/h no se entiende hasta
+que se dice que son sus dos horas de mínimo.
+
+El precio es **del oficio y no del profesional**, así que el oficio viaja a la
+pantalla y cambiarlo en el desplegable cambia el importe del botón.
+
+### 2. Las urgencias, enteras
+
+El camino más caro y el único gratis de punta a punta.
+
+- **Al pedirla** (`request-urgency`) se retiene la **salida**: una hora al
+  precio de urgencia que el cliente acaba de ver en la lista. Y se congela el
+  precio en el `Job` (`mode: URGENT`, `agreedCalloutFee`, `agreedHourlyRate`),
+  que es §0.2 de `CICLOS` —«la tarifa de urgencia que vio el cliente no se
+  guarda»— por fin resuelto.
+- **Al aceptar** (`accept-urgency`) se captura, que es el mismo sitio que en los
+  otros tres caminos: donde un trabajo pasa a `CONTRACTED`.
+- **Al terminar** (`finish-urgency`) se cobra el rato que pasó de la primera
+  hora, en bloques de cuarto de hora redondeando arriba. Es la cuenta del §D4:
+  una hora y cuarenta minutos son cuarenta de más, que se facturan como tres
+  cuartos de hora.
+
+**Se retiene al pedirla y no al aceptar**, aunque el §D3 lo contara al revés, y
+es a propósito: con el cliente delante se puede resolver un 3D Secure, y a las
+tres de la mañana el profesional acepta desde su móvil sin que haya nadie a
+quien pedirle que autentique una tarjeta. Una autorización anulada no cuesta
+nada, así que pedir el dinero antes de que nadie conteste no le cuesta al
+cliente un céntimo si dicen que no.
+
+### 3. `finish-urgency` deja de cerrar solo
+
+Era el **único camino de la app que se cerraba por fuera de
+`CompleteJobUseCase`**: ponía `COMPLETED` directamente. Dos consecuencias, y la
+segunda solo aparece en cuanto hay dinero:
+
+- El trabajo lo daba por bueno quien lo cobra, sin que el cliente dijera nada
+  (§0.7).
+- El cobro capturado se habría quedado retenido en la plataforma **para
+  siempre**, porque quien libera es el cierre.
+
+Ahora hace lo mismo que `FinishJobUseCase`: deja el trabajo `IN_PROGRESS` con la
+hora de fin y 24 horas para el cliente. Al profesional se le suelta igual **en
+el acto** — quien acaba de abrir una puerta de madrugada vuelve a estar de
+guardia al salir del portal, no al día siguiente.
+
+### 4. Reasignar, el que no estaba apuntado
+
+**Era la forma más silenciosa de dejar de cobrar, y no se ve desde ninguna
+pantalla.** El cobro del primero se anula al rechazar —y bien—, pero
+`reassign-job` no creaba ninguno para el segundo. El nuevo aceptaba,
+`CaptureJobChargesUseCase` no encontraba nada que capturar (devuelve cero, no
+falla), hacía el trabajo, y el cierre liberaba 0 €. Todo verde: avisos, estados,
+chat, cierre. Y nadie cobrando.
+
+Ahora se suelta lo del anterior y se retiene **la visita del nuevo**, que es la
+suya y puede no ser la misma. Y lo que se contrató con la agenda o la carta del
+primero **ya no se reasigna**: las horas eran de aquel hueco y los servicios de
+aquella lista, con aquellos precios. Se responde con salida —contratar al nuevo
+desde su ficha— en vez de cobrarle al cliente el precio de uno por el trabajo de
+otro.
+
+### Lo que se arregló de camino
+
+- **`complete-job` captura antes de liberar.** Liberar solo mueve cobros en
+  `PAID`, así que una retención que llegara al cierre sin capturar no habría
+  salido nunca: se habría quedado en la tarjeta del cliente hasta caducar a los
+  siete días. Pasa con las horas de más de una urgencia, que nacen retenidas
+  para que el cliente tenga sus 24 horas antes de que ese dinero se mueva.
+- **El barrido de los cinco minutos suelta lo retenido.** Era la única de las
+  tres ramas de caducidad que no lo hacía. Sin esto, una urgencia pedida a
+  cuatro personas seguidas habría dejado cuatro retenciones vivas en la tarjeta
+  del cliente.
+- **El importe de los avisos, con coma.** Salía «42.00 €» con punto, de
+  `toFixed(2)`. Lo escribe `formatEuros` (`common/money`), sin
+  `Intl.NumberFormat`: según cómo se haya compilado Node el `es-ES` puede no
+  estar, y volvería a salir con punto sin que nadie se enterara. El test de la
+  reserva por horas **comprobaba el fallo** —«42.00 €» en un `expect`—, que es
+  la forma más segura de que un fallo no se arregle nunca.
+- **El reto del banco, en una pieza** (`useCardChallenge`). Estaba escrito dos
+  veces y con la visita iba a ser la tercera; son cuatro mensajes y un orden de
+  pasos donde el paso que se salta es el que decide si alguien trabaja gratis.
+
+### Lo único que hizo falta en la base
+
+`Job.paymentMethodRef`. El segundo cobro de una urgencia —las horas de más—
+nace al terminar, de madrugada y sin el cliente delante, así que sin recordar la
+tarjeta con la que autorizó la salida no habría con qué cobrarlo. Es el `pm_…`
+de Stripe, pegado al `Customer` de ese cliente: no sirve para cobrar a nadie
+más, y el número no pasa nunca por aquí.
+
+### Lo que sigue abierto, y a la vista
+
+- **La subasta no existe**: ni modelo `Bid`, ni endpoint para pujar, ni pantalla.
+  Cuando llegue, nace con su cobro.
+- **El presupuesto en sí tampoco**: `QUOTE` congela y cobra la visita, pero no
+  hay modelo `Quote` ni forma de que el profesional diga cuánto cuesta el
+  arreglo. Hoy el cliente paga la visita y el precio del arreglo se acuerda
+  fuera. Es §C5 de `CICLOS`, y es el siguiente hueco de dinero — no un camino
+  gratis, pero sí medio camino.
+- **Las urgencias viejas** (pedidas antes de hoy) no tienen precio congelado ni
+  tarjeta: al cerrarse no cobran las horas de más y lo dicen en el log.
 
 ---
 

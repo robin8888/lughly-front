@@ -108,6 +108,37 @@ Sigue sin hacerse todo lo demás del cobro por horas: el desglose con
 `minHours` y recargos, y `book-hours` (que ya solo tendría que reusar lo de
 arriba).
 
+### Y ningún camino sin cobro (3 Septiembre 2026)
+
+Los puntos **1, 2 y 7** de la lista de arriba quedan cerrados, y con ellos los
+tres caminos que llegaban a `COMPLETED` sin crear un `Charge` — más un cuarto
+que no estaba en ninguna lista.
+
+- **§0.1, `INSTANT` se inventaba el importe.** Ya no existe por esa ruta.
+  Pedir presupuesto (`request-pro`) congela y cobra **la visita**, y reservar a
+  tarifa fija va por `book-hours` o `book-services`, que ya cobraban. Publicar
+  al aire (`create-job`) solo admite `URGENT`.
+- **§0.2, la tarifa de urgencia no se guardaba.** Ahora se congela al pedirla:
+  `mode: URGENT`, `agreedCalloutFee` (la salida, con su primera hora dentro) y
+  `agreedHourlyRate` (lo que vale cada hora de más).
+- **§0.7, `finish-urgency` cerraba solo.** Ahora deja 24 h al cliente y cierra
+  `CompleteJobUseCase`, como cualquier trabajo. Al profesional se le suelta
+  igual en el acto.
+- **Y reasignar** (`reassign-job`), que no estaba apuntado: anulaba el cobro del
+  primero y no creaba ninguno para el segundo, así que el nuevo trabajaba
+  gratis con todo lo demás en verde.
+
+**Dos desvíos deliberados respecto a lo que este documento decía**, los dos
+marcados abajo donde toca: en §C2b y §D3 la visita y la salida se **retienen**
+en vez de cobrarse, que es la decisión del 29 de agosto aplicada a los caminos
+nuevos; y en §D3 la retención pasa al **momento de pedir** la urgencia, no al de
+aceptarla.
+
+Sigue sin existir el **presupuesto en sí** (§C5): no hay modelo `Quote` ni forma
+de que el profesional diga cuánto cuesta el arreglo. Hoy el cliente paga la
+visita y el precio del arreglo se acuerda fuera. No es un camino gratis, pero es
+medio camino, y es el siguiente hueco de dinero.
+
 ---
 
 ## Común: el alta
@@ -247,12 +278,26 @@ de la app.
 
 ```
 Visita para presupuesto             30,00 €
-Se cobra ahora; se le paga a Sergio cuando la visita se haga.
-Si aceptas el presupuesto, se descuenta. Si no, se cobra igual.
-Cancelación gratis hasta 4 h antes.
+Se retiene ahora; se cobra cuando Sergio acepte.
+Si no puede o no contesta a tiempo, se suelta y no se cobra nada.
+Se cobra aunque el presupuesto no te convenza: el viaje ya se hizo.
 ```
 
-`Job(QUOTE, agreedVisitFee 30)`, `Appointment(VISIT)`, `Charge(VISIT, 30, PAID)`.
+`Job(QUOTE, agreedVisitFee 30)` y `Charge(VISIT, 30, AUTHORIZED)`.
+
+**Construido el 3 Septiembre 2026, con dos diferencias respecto a lo de
+arriba.** El cobro nace `AUTHORIZED` y no `PAID` —es la decisión del 29 de
+agosto: un reembolso no recupera la comisión de Stripe y una autorización
+anulada no cuesta nada—, y no hay `Appointment(VISIT)` todavía: hoy solo hay una
+cita en juego por trabajo y la crea el reparto (`assign-job`), como en cualquier
+encargo. El descuento de la visita al aceptar el presupuesto tampoco: vive en
+§C5, que no existe.
+
+**Y quien cobra por horas también tiene visita.** `visitFee` es excluyente con
+`hourlyRate`, así que la mitad del directorio no tiene ninguna puesta; en ellos
+la visita es **su suelo**, la tarifa por el `minHours` que declaró, o una hora
+si no tiene mínimo (`visitPriceOf`). Sin esa rama, pedirles presupuesto seguiría
+siendo gratis.
 
 **C3. Sergio acepta.** *Hoy*: `AWARDED` + dirección. *Cambio*: `Job CONTRACTED`,
 `Appointment CONFIRMED`, y **la dirección llega aquí** (`get-job` cambia:
@@ -317,7 +362,20 @@ dirección y teléfono en los dos sentidos. Bien, y se conserva.
 instante, congela el precio en el `Job` —aquí la línea «apertura 110» como
 `JobServiceLine`; en la otra vía, `agreedCalloutFee 90` y `agreedHourlyRate
 60`— y **crea el `Charge(URGENT_SERVICE, 110, PAID)` ahora**, con el método
-guardado. Si nadie acepta, no hay cobro que anular. `Job CONTRACTED`,
+guardado. Si nadie acepta, no hay cobro que anular.
+
+**Construido el 3 Septiembre 2026, y el dinero se movió de sitio.** Se retiene
+al **pedir** la urgencia (`request-urgency`) y se captura al aceptar, no se
+cobra al aceptar. El motivo es el 3D Secure: pedir es el único momento con el
+cliente delante, y a las tres de la mañana el profesional acepta desde su móvil
+sin que haya nadie a quien pedirle que autentique una tarjeta. Con captura
+manual eso no cuesta nada — si dice que no, la autorización se suelta.
+
+Congelar el precio también se adelanta a `request-urgency`, por lo mismo: es
+donde se sabe qué vio el cliente. Y en la vía sin carta —la única que hay hoy,
+porque los dos precios por servicio de §D1 no existen— la salida es **una hora
+al precio de urgencia**, así que `agreedCalloutFee` y `agreedHourlyRate` salen
+iguales: la salida vale una hora y cada hora de más vale lo mismo. `Job CONTRACTED`,
 `Appointment(WORK, ahora, CONFIRMED)`. En D4, con servicio de carta **no hay
 parte de horas**: Tomás abre, marca Terminar, y son 110 tarde lo que tarde.
 
@@ -328,6 +386,14 @@ parte de horas**: Tomás abre, marca Terminar, y son 110 tarde lo que tarde.
 Laura confirme. 25 min, dentro de la hora: total 90. Laura confirma o calla
 24 h → `COMPLETED`, `RELEASED`. Si hubiera tardado 1 h 40: `Charge(URGENT_HOURS,
 45, PAID)` que Laura aprueba antes de que se cobre.
+
+**Construido el 3 Septiembre 2026.** El cierre por silencio a las 24 h es el de
+`FinishJobUseCase` y ya existía; lo que faltaba era que la urgencia pasara por
+él. Las horas de más nacen `AUTHORIZED` y las captura el cierre, así que Laura
+tiene sus 24 horas **antes de que ese dinero se mueva**: es la aprobación de
+este párrafo resuelta con el plazo que ya había, en vez de con un botón nuevo.
+Los cuarenta minutos se facturan como tres cuartos de hora —bloques de cuarto,
+redondeando arriba—, que es de donde salen los 45 €.
 
 **D5. La cerradura está rota.** *Hoy*: de palabra en el rellano. *Cambio*:
 Tomás añade de su carta «bombín 140 €» → Laura acepta con la cerradura
