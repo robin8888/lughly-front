@@ -177,9 +177,23 @@ export function AddressInput({
         */}
         {showList && (
           <View style={styles.suggestions} testID={testID ? `${testID}-list` : undefined}>
-            {matches.map((match) => (
+            {matches.map((match, index) => (
               <Pressable
-                key={`${match.lat},${match.lng}`}
+                /*
+                  Con el índice delante, y no solo con las coordenadas.
+
+                  Photon devuelve a veces dos resultados **en el mismo punto**
+                  —el portal y el comercio que hay en él, o la misma calle como
+                  dos objetos distintos de OSM—, y entonces dos hijos comparten
+                  `key`: React lo grita por consola en cada pintada y se queda
+                  sin forma de emparejar las filas si la lista cambia debajo.
+                  El servidor ya no debería mandar repetidos, pero un
+                  desplegable no es el sitio donde castigar que lo haga.
+
+                  El índice aquí no tiene el problema de siempre: la lista se
+                  rehace entera en cada búsqueda y ninguna fila guarda estado.
+                */
+                key={`${index}-${match.lat},${match.lng}`}
                 onPress={() => choose(match)}
                 accessibilityRole="button"
                 testID={testID ? `${testID}-match-${match.lat},${match.lng}` : undefined}

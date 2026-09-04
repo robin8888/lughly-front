@@ -2623,6 +2623,27 @@ una migración y una escritura en cada lectura de la ficha.
 
 ---
 
+## 🐛 Dos sugerencias en el mismo punto (4 Septiembre 2026)
+
+Escribiendo la dirección de una urgencia en un Android, la consola sacaba el
+mismo error en cada pintada de la lista, señalando el `<Pressable>` de
+`AddressInput`. No era del componente: **Photon devuelve el mismo portal dos
+veces** —el número y el comercio que hay en él, o la misma calle como dos
+objetos de OSM—, y las dos filas salían con la misma `key`. React lo grita, y
+se queda sin forma de emparejar las filas si la lista cambia debajo.
+
+Se arregla en los dos lados, que es lo que corresponde:
+
+- **Servidor** (`GeocodeUseCase.dedupe`): lo repetido no sale. Se descarta por
+  punto y por texto —dos coordenadas iguales son el mismo sitio, y dos
+  etiquetas iguales son indistinguibles para quien elige—, quedándose con la
+  primera, que es la más relevante para el proveedor. Dos portales distintos de
+  la misma calle siguen saliendo los dos.
+- **Móvil**: la `key` lleva el índice delante. El desplegable no es el sitio
+  donde castigar que el servidor mande un repetido.
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio

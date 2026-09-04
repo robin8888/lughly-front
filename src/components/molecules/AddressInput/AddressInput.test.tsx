@@ -121,6 +121,40 @@ describe('AddressInput', () => {
     expect(screen.queryByTestId('address-chosen')).toBeNull()
   })
 
+  /**
+   * Dos sugerencias en el mismo punto no pueden reventar la lista.
+   *
+   * Pasó en un Android el 4 de septiembre de 2026, escribiendo la dirección de
+   * una urgencia: Photon devolvió el mismo portal dos veces —el número y el
+   * comercio que hay en él— y las dos filas salían con la misma `key`. React
+   * lo grita por consola en cada pintada y se queda sin forma de emparejar las
+   * filas si la lista cambia debajo.
+   *
+   * El servidor ya no las manda repetidas (`GeocodeUseCase.dedupe`), pero eso
+   * es allí: aquí lo que se ata es que llegar repetidas no rompa nada.
+   */
+  it('aguanta dos sugerencias en el mismo punto sin repetir claves', async () => {
+    const gritos = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    // El portal y el bar que hay en él: mismas coordenadas
+    const BAR = { ...PUIG, label: 'Bar Pepe, Calle Virgen del Puig 4, Valencia' }
+    mockSearch.mockResolvedValue({ matches: [PUIG, BAR] })
+
+    render(<Campo />)
+    fireEvent.changeText(screen.getByTestId('address'), 'Calle Virgen del')
+
+    expect(await screen.findByTestId('address-list')).toBeTruthy()
+    // Las dos se ven, que es lo que el servidor mandó
+    expect(screen.getByText(PUIG.label)).toBeTruthy()
+    expect(screen.getByText(BAR.label)).toBeTruthy()
+
+    expect(
+      gritos.mock.calls.some((args) => String(args[0]).includes('same key')),
+    ).toBe(false)
+
+    gritos.mockRestore()
+  })
+
   it('dice que no encuentra la dirección en vez de dejar el hueco vacío', async () => {
     mockSearch.mockResolvedValue({ matches: [] })
     render(<Campo />)
