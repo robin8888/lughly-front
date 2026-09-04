@@ -163,6 +163,55 @@ export const styles = StyleSheet.create({
     opacity: 0.8,
     marginTop: 2,
   },
+  /**
+   * El plazo de revisión, a la derecha de la cara y del nombre.
+   *
+   * En grande porque es lo que decide si hay prisa, y con rótulo arriba y
+   * consecuencia abajo porque una cuenta atrás a secas no dice de qué.
+   */
+  confirmBox: {
+    alignItems: 'flex-end',
+    maxWidth: 132,
+  },
+  confirmLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+  },
+  confirmValue: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: 22,
+    color: theme.colors.accent700,
+    marginTop: 2,
+  },
+  confirmHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.35,
+    color: theme.colors.cardText,
+    opacity: 0.7,
+    textAlign: 'right',
+    marginTop: 2,
+  },
+
+  /**
+   * «Falta algo», en rojo y relleno: es la respuesta que para el dinero, y
+   * tiene que verse tanto como la que lo suelta.
+   *
+   * Quien pinta el fondo a mano tiene que decir también cómo se ve hundido:
+   * sin `holdButtonPressed`, este `backgroundColor` tapa el color de pulsado
+   * de la variante y el botón se queda sin respuesta al tacto.
+   */
+  holdButton: {
+    backgroundColor: theme.colors.urgency,
+  },
+  holdButtonPressed: {
+    backgroundColor: '#8d3b31',
+  },
+  holdButtonText: {
+    color: '#ffffff',
+  },
+
   proRating: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

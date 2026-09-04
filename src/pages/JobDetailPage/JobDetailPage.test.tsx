@@ -298,19 +298,38 @@ describe('JobDetailPage: terminar y cobrar', () => {
     expect(getByTestId('job-detail-timer')).toBeTruthy()
   })
 
-  it('al cliente le sale el botón que paga, con su plazo', () => {
+  it('al cliente le salen las dos respuestas, y el plazo con su nombre', () => {
     soporte.job = ficha({
       viewer: 'client',
       status: 'IN_PROGRESS',
       appointmentStatus: 'DONE',
       workFinishedAt: '2026-08-29T12:00:00.000Z',
       confirmByAt: '2026-08-30T12:00:00.000Z',
+      assignedPro: {
+        id: 'pro-1',
+        name: 'Tomás Cerrajero',
+        workerName: null,
+        avatarUrl: null,
+        rating: 4.8,
+        reviewCount: 21,
+        phone: null,
+      },
     })
 
-    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
 
     expect(getByTestId('job-detail-complete')).toBeTruthy()
+    expect(getByTestId('job-detail-hold-open')).toBeTruthy()
+
+    /*
+      Y la cuenta atrás dice de qué es. Suelta entre los botones era un
+      número en medio de la pantalla que nadie sabía leer.
+    */
     expect(getByTestId('job-detail-confirm-countdown')).toBeTruthy()
+    expect(getByText('Para revisarlo')).toBeTruthy()
+    expect(getByText('Si no dices nada, se da por bueno y se le paga')).toBeTruthy()
   })
 
   it('mientras nadie ha terminado, el cliente no tiene nada que dar por bueno', () => {
@@ -367,13 +386,42 @@ describe('JobDetailPage: el visto bueno, con lo que hay que ver', () => {
     expect(getByTestId('job-detail-result-photo-0')).toBeTruthy()
   })
 
+  /**
+   * El diálogo tapa lo único que hay que mirar, así que no puede pedir la
+   * decisión: avisa, y las dos respuestas están en la ficha, con las fotos.
+   */
+  it('el aviso de que ha terminado no trae la decisión dentro', () => {
+    soporte.job = ficha({
+      ...terminado,
+      resultPhotos: [{ url: '/v1/media/a', fullUrl: '/v1/media/a-full' }],
+    })
+
+    const { getByTestId, queryByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-complete-dialog')).toBeTruthy()
+    expect(queryByTestId('job-detail-complete-confirm')).toBeNull()
+    expect(queryByTestId('job-detail-complete-hold')).toBeNull()
+
+    // Y lo que hace su único botón es quitarse de en medio
+    fireEvent.press(getByTestId('job-detail-complete-review'))
+
+    expect(queryByTestId('job-detail-complete-dialog')).toBeNull()
+    expect(getByTestId('job-detail-result-photo-0')).toBeTruthy()
+    expect(getByTestId('job-detail-complete')).toBeTruthy()
+    expect(getByTestId('job-detail-hold-open')).toBeTruthy()
+    // Nada se ha cerrado por abrir el aviso
+    expect(soporte.completed).toEqual([])
+  })
+
   /** La salida que faltaba: no estar conforme y poder decirlo */
   it('«Falta algo» abre el motivo, y el motivo se manda', () => {
     soporte.job = ficha(terminado)
 
     const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
-    fireEvent.press(getByTestId('job-detail-complete-hold'))
+    fireEvent.press(getByTestId('job-detail-hold-open'))
     fireEvent.changeText(
       getByTestId('job-detail-hold-reason'),
       'El grifo sigue goteando por la junta de abajo',
@@ -396,7 +444,7 @@ describe('JobDetailPage: el visto bueno, con lo que hay que ver', () => {
 
     const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
-    fireEvent.press(getByTestId('job-detail-complete-hold'))
+    fireEvent.press(getByTestId('job-detail-hold-open'))
     fireEvent.changeText(getByTestId('job-detail-hold-reason'), 'mal')
 
     expect(getByTestId('job-detail-hold-confirm')).toBeDisabled()

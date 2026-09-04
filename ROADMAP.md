@@ -2535,6 +2535,15 @@ dando por bueno. O callaba — y callar se trataba igual que decir que sí.
 - **Un toque a la hora.** El aviso de «he terminado» se ve de pasada, así que a
   los sesenta minutos se le vuelve a tocar al cliente. **Recordar no es
   vencer**: el plazo real sigue siendo el de `confirmByAt`.
+- **El diálogo avisa, no decide.** Preguntaba «¿ha quedado todo bien?» con el
+  sí y el no dentro, y la respuesta a esa pregunta **no estaba en el diálogo**:
+  está en las fotos que hay debajo, y el diálogo las tapa. Ahora dice que las
+  mire y se quita; las dos respuestas —«Todo bien, dalo por bueno» y «Falta
+  algo», ésta en rojo— viven en la ficha, pegadas a lo que hay que mirar.
+- **El plazo, con su nombre y al lado de quien lo ha hecho.** Estaba suelto
+  entre los dos botones del final: un «23h 05m» en medio de la pantalla que no
+  decía de qué era. Va en la tarjeta de «Quién lo hace», en grande, con rótulo
+  arriba y la consecuencia debajo. Siguen siendo 24 horas.
 
 ### Los avisos llevan a donde hablan
 
@@ -2576,9 +2585,9 @@ nuevo ahí y ver que `git commit` decía «nothing to commit».
 
 ### Lo que queda de esto
 
-- [ ] **El contador de «se cierra en» debajo del botón de dar por bueno**:
-      Robin dice que ahí no debe aparecer. Pendiente de decidir si se quita solo
-      de ahí o si el plazo pasa a ser de una hora en vez de veinticuatro.
+- [x] **El contador de «se cierra en» debajo del botón de dar por bueno**: se
+      muda a la tarjeta de quien hace el trabajo, en grande y diciendo qué
+      cuenta. El plazo no cambia: siguen siendo 24 horas.
 - [ ] **`BlurView` en Android** sigue avisando de que le falta `blurTarget`.
 - [ ] El barrido no reabre el plazo cuando un profesional vuelve a terminar
       tras un reparo: hoy `finish-job` exige la cita `STARTED`, así que hay que

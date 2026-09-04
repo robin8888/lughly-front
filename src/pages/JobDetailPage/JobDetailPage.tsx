@@ -567,6 +567,30 @@ export function JobDetailPage({
                   </Text>
                 )}
               </View>
+
+              {/*
+                El plazo para revisar, al lado de quien lo ha hecho.
+
+                Estaba suelto entre los dos botones del final, y allí era un
+                número sin nombre: se veía "23h 05m" en medio de la pantalla y
+                no había forma de saber qué contaba. Aquí va en grande, con su
+                rótulo y con lo que pasa al llegar a cero, en la tarjeta que se
+                mira para saber quién ha estado en casa.
+              */}
+              {canComplete && job.confirmByAt && (
+                <View style={styles.confirmBox}>
+                  <Text style={styles.confirmLabel}>Para revisarlo</Text>
+                  <Countdown
+                    target={job.confirmByAt}
+                    expiredLabel="Se acabó"
+                    style={styles.confirmValue}
+                    testID="job-detail-confirm-countdown"
+                  />
+                  <Text style={styles.confirmHint}>
+                    Si no dices nada, se da por bueno y se le paga
+                  </Text>
+                </View>
+              )}
             </View>
 
             <Text style={styles.proRating}>
@@ -817,16 +841,26 @@ export function JobDetailPage({
               {isCompleting ? 'Cerrando…' : 'Todo bien, dalo por bueno'}
             </Button>
 
-            {job.confirmByAt && (
-              <View style={styles.deadline}>
-                <Text style={styles.deadlineLabel}>Si no dices nada, se cierra en</Text>
-                <Countdown
-                  target={job.confirmByAt}
-                  expiredLabel="Dado por bueno"
-                  testID="job-detail-confirm-countdown"
-                />
-              </View>
-            )}
+            {/*
+              Y la otra respuesta, aquí y no en el diálogo: se dice que falta
+              algo mirando lo que falta.
+
+              En contorno porque la que se espera es la de arriba, pero en la
+              misma columna y del mismo tamaño: no estar conforme no es una
+              salida de emergencia escondida al pie de la ficha.
+            */}
+            <Button
+              fullWidth
+              onPress={() => setHolding(true)}
+              disabled={isCompleting || isHolding}
+              style={[styles.bids, styles.holdButton]}
+              pressedStyle={styles.holdButtonPressed}
+              textStyle={styles.holdButtonText}
+              testID="job-detail-hold-open"
+            >
+              Falta algo
+            </Button>
+
           </>
         )}
 
@@ -1039,40 +1073,36 @@ El reloj ya corre desde que él lo marcó, así que no pierdes nada por confirma
       />
 
       {/**
-        * «Han terminado». Mismo sitio, misma razón — y aquí además **paga**.
+        * «Han terminado». Mismo sitio y misma razón que el de arriba: es a
+        * donde lleva el aviso del móvil.
         *
-        * Por eso dice lo que significa contestar que sí antes de que se pulse:
-        * el dinero retenido sale hacia el profesional y eso no se deshace con
-        * otro toque. Y dice también qué pasa si no se contesta, porque callar
-        * es una respuesta con fecha: a las 24 horas se da por bueno solo.
+        * **Aquí no se decide.** Antes preguntaba «¿ha quedado todo bien?» con
+        * el sí y el no dentro, y la respuesta a esa pregunta no está en el
+        * diálogo: está en las fotos que ha mandado el profesional, y el
+        * diálogo las tapa. Se daba el visto bueno —que paga y no se deshace—
+        * a ciegas, con lo único que hay que mirar debajo.
+        *
+        * Así que esto avisa y manda a mirar. Los dos botones que responden
+        * viven en la ficha, pegados a las fotos, que es el sitio donde se
+        * puede contestar sabiendo qué se contesta.
         */}
       <Dialog
         visible={canComplete && !asked.complete}
-        title="¿Ha quedado todo bien?"
-        message={`${job.assignedPro?.name ?? 'El profesional'} ha dado por terminado "${job.title}". Si lo das por bueno cerramos el trabajo y se le paga lo que teníamos retenido.
+        title={`${job.assignedPro?.name.split(' ')[0] ?? 'El profesional'} ha terminado`}
+        message={`${job.assignedPro?.name ?? 'El profesional'} ha dado por terminado "${job.title}".
 
-Si algo no ha ido bien, cierra esto y escríbenos antes de confirmar. Y si no dices nada, a las 24 horas se da por bueno solo.`}
+${
+  job.resultPhotos.length > 0
+    ? 'Mira antes las fotos de cómo ha quedado: están en la ficha, y justo debajo tienes las dos respuestas.'
+    : 'En la ficha tienes las dos respuestas.'
+} Darlo por bueno cierra el trabajo y le paga lo que teníamos retenido; si algo falta, se lo dices y no se cierra ni se le paga.
+
+Y si no dices nada, a las 24 horas se da por bueno solo.`}
         actions={[
           {
-            label: 'Sí, todo bien',
-            onPress: () => doComplete(job.id),
-            disabled: isCompleting,
-            testID: 'job-detail-complete-confirm',
-          },
-          {
-            label: 'Falta algo',
-            variant: 'secondary',
-            onPress: () => {
-              closeAsk('complete')
-              setHolding(true)
-            },
-            testID: 'job-detail-complete-hold',
-          },
-          {
-            label: 'Ahora no',
-            variant: 'secondary',
+            label: job.resultPhotos.length > 0 ? 'Ver cómo ha quedado' : 'Ver el trabajo',
             onPress: () => closeAsk('complete'),
-            testID: 'job-detail-complete-later',
+            testID: 'job-detail-complete-review',
           },
         ]}
         onDismiss={() => closeAsk('complete')}
