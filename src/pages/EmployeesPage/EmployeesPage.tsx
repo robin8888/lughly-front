@@ -40,7 +40,7 @@ import {
   useRequestOnboardingLink,
 } from '@/hooks/domain/usePaymentAccount'
 import type { LegalForm } from '@/api/employees.api'
-import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
+import { getTradeLabel } from '@/utils/trades'
 import { theme } from '@/theme'
 import { styles } from './EmployeesPage.styles'
 import { useUser } from '@/stores/useAuthStore'
