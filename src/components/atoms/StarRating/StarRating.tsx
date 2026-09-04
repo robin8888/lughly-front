@@ -45,6 +45,15 @@ export function StarRating({
               key={star}
               onPress={() => handlePress(star)}
               disabled={!interactive}
+              /*
+                Cada estrella se puede señalar cuando se puede tocar: sin esto,
+                lo único que se puede probar de una valoración es que se pinta.
+              */
+              {...(interactive && {
+                accessibilityRole: 'button' as const,
+                accessibilityLabel: `${star} ${star === 1 ? 'estrella' : 'estrellas'}`,
+                ...(testID && { testID: `${testID}-star-${star}` }),
+              })}
               style={styles.starWrapper}
             >
               <Text

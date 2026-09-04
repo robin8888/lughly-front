@@ -447,4 +447,25 @@ export const jobsApi = {
       auth: true,
       body: { reason },
     }),
+
+  /**
+   * La valoración del trabajo, al darlo por bueno.
+   *
+   * Una nota de 1 a 5 y, si quiere, lo que tenga que contar. **Una por
+   * trabajo**: el servidor la ata al trabajo con un índice único, que es lo que
+   * separa una valoración de un comentario en internet.
+   *
+   * Devuelve la media del profesional ya recalculada.
+   */
+  review: (jobId: string, rating: number, comment: string | null) =>
+    apiRequest<{
+      reviewId: string
+      rating: number
+      proRating: number
+      proReviewCount: number
+    }>(`/v1/jobs/${jobId}/review`, {
+      method: 'POST',
+      auth: true,
+      body: { rating, comment },
+    }),
 }

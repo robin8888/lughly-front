@@ -194,9 +194,13 @@ export interface ApiReview {
   id: string
   /** Firma congelada al valorar ("Miguel A."); sobrevive a la baja del autor */
   authorLabel: string
-  /** Media de los ocho criterios */
+  /** La nota: la media de los ocho criterios, o la nota a secas */
   average: number
-  criteria: ApiReviewCriteria
+  /**
+   * Las ocho notas, **o `null`**: la valoración que se deja al dar por bueno un
+   * trabajo pregunta una nota y un comentario, no ocho. Nulo es "no lo dijo".
+   */
+  criteria: ApiReviewCriteria | null
   comment: string | null
   recommends: boolean
   /** Respuesta pública del profesional */

@@ -297,6 +297,51 @@ export function useHoldJob() {
 }
 
 /**
+ * El cliente valora el trabajo que acaba de dar por bueno.
+ *
+ * Se pide justo ahí y no en otra pantalla porque es el único momento en que
+ * alguien se acuerda de cómo fue: al día siguiente ya nadie entra a valorar,
+ * y un profesional sin valoraciones no se distingue de uno malo en el
+ * directorio.
+ *
+ * Al terminar se invalida también la ficha del profesional: su media y su
+ * número de valoraciones acaban de cambiar.
+ */
+export function useReviewJob() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({
+      jobId,
+      rating,
+      comment,
+    }: {
+      jobId: string
+      rating: number
+      comment: string | null
+    }) => jobsApi.review(jobId, rating, comment),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['pros'] })
+    },
+  })
+
+  return {
+    review: async (jobId: string, rating: number, comment: string | null) => {
+      try {
+        return {
+          ok: true as const,
+          error: null,
+          result: await mutation.mutateAsync({ jobId, rating, comment }),
+        }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isReviewing: mutation.isPending,
+  }
+}
+
+/**
  * El cliente da por bueno un trabajo terminado.
  *
  * Es lo que suelta el dinero: lo contratado desde la carta se retiene al

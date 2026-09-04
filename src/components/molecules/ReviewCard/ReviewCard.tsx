@@ -27,6 +27,13 @@ export interface ReviewCardProps {
 export function ReviewCard({ review, testID }: ReviewCardProps) {
   const [showCriteria, setShowCriteria] = useState(false)
 
+  /*
+    En una constante y no leyéndolo dentro del map: TypeScript pierde ahí que
+    ya se ha comprobado que no es nulo, porque el map recibe una función y
+    nadie le garantiza cuándo se llama.
+  */
+  const criteria = review.criteria
+
   return (
     <InfoCard style={styles.card} testID={testID}>
       <View style={styles.head}>
@@ -48,18 +55,25 @@ export function ReviewCard({ review, testID }: ReviewCardProps) {
 
       {review.comment && <Text style={styles.comment}>{review.comment}</Text>}
 
-      <Pressable
-        onPress={() => setShowCriteria((open) => !open)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: showCriteria }}
-        testID={`${testID ?? 'review'}-toggle`}
-      >
-        <Text style={styles.toggle}>
-          {showCriteria ? 'Ocultar las notas' : 'Ver las 8 notas'}
-        </Text>
-      </Pressable>
+      {/*
+        Las ocho notas solo si las hay. Una valoración dejada al dar por bueno
+        el trabajo trae una nota y un comentario, así que ofrecer "ver las 8
+        notas" para abrir ocho huecos vacíos sería prometer lo que no hay.
+      */}
+      {review.criteria && (
+        <Pressable
+          onPress={() => setShowCriteria((open) => !open)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showCriteria }}
+          testID={`${testID ?? 'review'}-toggle`}
+        >
+          <Text style={styles.toggle}>
+            {showCriteria ? 'Ocultar las notas' : 'Ver las 8 notas'}
+          </Text>
+        </Pressable>
+      )}
 
-      {showCriteria && (
+      {showCriteria && criteria && (
         <View style={styles.criteria} testID={`${testID ?? 'review'}-criteria`}>
           {REVIEW_CRITERIA.map((criterion) => (
             <View key={criterion.key} style={styles.criterion}>
@@ -67,7 +81,7 @@ export function ReviewCard({ review, testID }: ReviewCardProps) {
                 <Text style={styles.criterionLabel}>{criterion.label}</Text>
                 <Text style={styles.criterionHint}>{criterion.hint}</Text>
               </View>
-              <StarRating rating={review.criteria[criterion.key]} size={11} />
+              <StarRating rating={criteria[criterion.key]} size={11} />
             </View>
           ))}
         </View>

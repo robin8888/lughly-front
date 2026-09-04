@@ -40,7 +40,9 @@ import {
   useApproveStart,
   useCompleteJob,
   useHoldJob,
+  useReviewJob,
 } from '@/hooks/domain/useJob'
+import { StarRating } from '@/components/atoms/StarRating'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
@@ -190,6 +192,7 @@ export function JobDetailPage({
   const { complete, isCompleting } = useCompleteJob()
   const { approveStart, isApproving } = useApproveStart()
   const { hold, isHolding } = useHoldJob()
+  const { review, isReviewing } = useReviewJob()
 
   /**
    * Todo el estado va **aquí arriba, con el resto de hooks**, y no junto a lo
@@ -228,6 +231,24 @@ export function JobDetailPage({
 
   /** Si está escribiendo el motivo de que algo no haya quedado bien */
   const [holding, setHolding] = useState(false)
+
+  /**
+   * La valoración, que se pide **justo al dar por bueno el trabajo**.
+   *
+   * Es el único momento en que alguien se acuerda de cómo fue: al día
+   * siguiente ya no entra nadie a valorar, y un profesional sin valoraciones
+   * no se distingue en el directorio de uno malo.
+   *
+   * Se puede cerrar sin contestar —igual que los otros dos diálogos—, y por
+   * eso el trabajo se cierra y se paga **antes** de preguntar: valorar no es
+   * una condición para nada, es lo último que se le pide a alguien que ya ha
+   * terminado con esto.
+   */
+  const [reviewing, setReviewing] = useState(false)
+  const [rating, setRating] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  /** Lo que se le acaba de pagar, para decirlo dentro del mismo diálogo */
+  const [paidNote, setPaidNote] = useState('')
 
   /**
    * Abrir la ficha es mirarlo: se apunta en qué estado se ha visto.
@@ -451,11 +472,40 @@ export function JobDetailPage({
         return
       }
 
-      Alert.alert(
-        'Trabajo cerrado',
+      /*
+        Y en vez del aviso de "cerrado", el mismo dato dentro del diálogo que
+        pide la valoración: dos ventanas seguidas se cierran de un manotazo sin
+        leer ninguna, y la segunda es la que trae la pregunta.
+      */
+      setPaidNote(
         result.released > 0
-          ? `Gracias. Se le han pagado ${formatAmount(result.released)} € al profesional.`
-          : 'Gracias. Queda cerrado.',
+          ? `Cerrado. Se le han pagado ${formatAmount(result.released)} €.`
+          : 'Cerrado.',
+      )
+      setReviewing(true)
+    })()
+  }
+
+  /**
+   * Y la valoración se manda. La nota es obligatoria —es lo que se pinta en su
+   * ficha— y el comentario no: quien tiene algo que contar lo escribe sin que
+   * se lo exijan, y exigirlo solo produce un "bien" de relleno.
+   */
+  const doReview = (id: string) => {
+    if (rating === 0) return
+
+    void (async () => {
+      const { ok, error } = await review(id, rating, reviewComment.trim() || null)
+
+      if (!ok) {
+        Alert.alert('No se ha podido enviar', error ?? 'Inténtalo de nuevo en un momento.')
+        return
+      }
+
+      setReviewing(false)
+      Alert.alert(
+        'Gracias',
+        'Tu valoración ya está en su ficha. Es lo que mira el siguiente cliente para decidir.',
       )
     })()
   }
@@ -1128,6 +1178,63 @@ Y si no dices nada, a las 24 horas se da por bueno solo.`}
         onDismiss={() => closeAsk('complete')}
         testID="job-detail-complete-dialog"
       />
+
+      {/**
+        * «¿Cómo ha ido?»: la valoración, nada más dar por bueno el trabajo.
+        *
+        * Sale aquí porque es el único momento en que alguien se acuerda de
+        * cómo fue. Una nota y, si quiere, lo que tenga que contar; y se dice
+        * dónde va a salir, que es lo que hace que valga la pena escribirla.
+        *
+        * **Una nota y no las ocho del desglose.** Ocho preguntas en un modal
+        * que sale sin avisar no las contesta nadie: se empieza la primera, se
+        * abandona, y no queda ninguna.
+        *
+        * Se puede cerrar sin valorar: el trabajo ya está cerrado y pagado, y
+        * esto no es una condición de nada.
+        */}
+      <Dialog
+        visible={reviewing}
+        title="¿Cómo ha ido?"
+        message={`${paidNote} Ponle una nota a ${job.assignedPro?.name.split(' ')[0] ?? 'quien lo ha hecho'} y, si quieres, cuenta cómo fue.
+
+Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el siguiente cliente para decidir.`}
+        actions={[
+          {
+            label: isReviewing ? 'Enviando…' : 'Enviar valoración',
+            onPress: () => doReview(job.id),
+            disabled: rating === 0 || isReviewing,
+            testID: 'job-detail-review-send',
+          },
+          {
+            label: 'Ahora no',
+            variant: 'secondary',
+            onPress: () => setReviewing(false),
+            testID: 'job-detail-review-later',
+          },
+        ]}
+        onDismiss={() => setReviewing(false)}
+        testID="job-detail-review-dialog"
+      >
+        <StarRating
+          rating={rating}
+          interactive
+          onChange={setRating}
+          size={32}
+          testID="job-detail-review-stars"
+        />
+
+        <Input
+          value={reviewComment}
+          onChangeText={setReviewComment}
+          placeholder="Si quieres, cuenta cómo fue (opcional)"
+          multiline
+          numberOfLines={3}
+          maxLength={1000}
+          editable={!isReviewing}
+          testID="job-detail-review-comment"
+        />
+      </Dialog>
 
       {/**
         * «Falta algo»: por qué no lo da por bueno.

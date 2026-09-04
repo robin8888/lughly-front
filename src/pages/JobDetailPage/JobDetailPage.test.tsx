@@ -8,7 +8,7 @@
  * al cliente y solo después de que el otro haya terminado.
  */
 
-import { fireEvent, render } from '@testing-library/react-native'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import type { ApiJobDetail } from '@/api/jobs.api'
 import { useAuthStore, type User } from '@/stores/useAuthStore'
@@ -30,6 +30,8 @@ jest.mock('@/hooks/domain/useJob', () => {
     startApproved: [] as string[],
     /** Los reparos: por qué el cliente no da por bueno */
     held: [] as { jobId: string; reason: string }[],
+    /** Las valoraciones que se mandan al cerrar */
+    reviewed: [] as { jobId: string; rating: number; comment: string | null }[],
   }
 
   return {
@@ -77,6 +79,13 @@ jest.mock('@/hooks/domain/useJob', () => {
         return Promise.resolve({ ok: true, result: null, error: null })
       },
       isHolding: false,
+    }),
+    useReviewJob: () => ({
+      review: (jobId: string, rating: number, comment: string | null) => {
+        soporte.reviewed.push({ jobId, rating, comment })
+        return Promise.resolve({ ok: true, result: null, error: null })
+      },
+      isReviewing: false,
     }),
   }
 })
@@ -536,5 +545,113 @@ describe('JobDetailPage: abrirla cuenta como haberlo visto', () => {
     render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
     expect(useSeenJobStatesStore.getState().states['cli-1']).toBeUndefined()
+  })
+})
+
+/**
+ * La valoración, nada más dar por bueno el trabajo.
+ *
+ * Es el único momento en que alguien se acuerda de cómo fue: al día siguiente
+ * no entra nadie a valorar, y un profesional sin valoraciones no se distingue
+ * en el directorio de uno malo.
+ *
+ * Lo que se ata aquí es que **el trabajo se cierra y se paga igual**: valorar
+ * no es una condición de nada, y por eso se puede cerrar el diálogo sin
+ * contestar.
+ */
+describe('JobDetailPage: valorar al dar por bueno', () => {
+  const terminado = {
+    viewer: 'client' as const,
+    status: 'IN_PROGRESS' as const,
+    appointmentStatus: 'DONE' as const,
+    workFinishedAt: '2026-09-03T12:00:00.000Z',
+    confirmByAt: '2026-09-04T12:00:00.000Z',
+    assignedPro: {
+      id: 'pro-1',
+      name: 'Tomás Cerrajero',
+      workerName: null,
+      avatarUrl: null,
+      rating: 4.8,
+      reviewCount: 21,
+      phone: null,
+    },
+  }
+
+  beforeEach(() => {
+    soporte.completed = []
+    soporte.reviewed = []
+  })
+
+  it('al darlo por bueno se pregunta cómo ha ido', async () => {
+    soporte.job = ficha(terminado)
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(screen.getByTestId('job-detail-complete'))
+
+    // Primero se cierra y se paga, que es lo que no puede quedarse a medias
+    await waitFor(() => expect(soporte.completed).toEqual(['job-1']))
+
+    expect(await screen.findByTestId('job-detail-review-dialog')).toBeTruthy()
+    expect(screen.getByTestId('job-detail-review-stars')).toBeTruthy()
+  })
+
+  it('sin estrellas no se puede enviar; con ellas, se manda', async () => {
+    soporte.job = ficha(terminado)
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(screen.getByTestId('job-detail-complete'))
+    await screen.findByTestId('job-detail-review-dialog')
+
+    expect(screen.getByTestId('job-detail-review-send')).toBeDisabled()
+
+    fireEvent.press(screen.getByTestId('job-detail-review-stars-star-5'))
+    fireEvent.changeText(
+      screen.getByTestId('job-detail-review-comment'),
+      'Puntual y lo dejó todo limpio',
+    )
+    fireEvent.press(screen.getByTestId('job-detail-review-send'))
+
+    await waitFor(() =>
+      expect(soporte.reviewed).toEqual([
+        { jobId: 'job-1', rating: 5, comment: 'Puntual y lo dejó todo limpio' },
+      ]),
+    )
+  })
+
+  /** El comentario es opcional: exigirlo solo produce un "bien" de relleno */
+  it('la nota sola vale, sin comentario', async () => {
+    soporte.job = ficha(terminado)
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(screen.getByTestId('job-detail-complete'))
+    await screen.findByTestId('job-detail-review-dialog')
+
+    fireEvent.press(screen.getByTestId('job-detail-review-stars-star-4'))
+    fireEvent.press(screen.getByTestId('job-detail-review-send'))
+
+    await waitFor(() =>
+      expect(soporte.reviewed).toEqual([
+        { jobId: 'job-1', rating: 4, comment: null },
+      ]),
+    )
+  })
+
+  /** Y quien no quiera valorar se va: el trabajo ya está cerrado y pagado */
+  it('se puede cerrar sin valorar', async () => {
+    soporte.job = ficha(terminado)
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(screen.getByTestId('job-detail-complete'))
+    await screen.findByTestId('job-detail-review-dialog')
+
+    fireEvent.press(screen.getByTestId('job-detail-review-later'))
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('job-detail-review-dialog')).toBeNull(),
+    )
+    expect(soporte.reviewed).toEqual([])
+    // Cerrado y pagado igual
+    expect(soporte.completed).toEqual(['job-1'])
   })
 })

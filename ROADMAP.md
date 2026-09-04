@@ -2644,6 +2644,78 @@ Se arregla en los dos lados, que es lo que corresponde:
 
 ---
 
+## ✅ La valoración, y lo que se ve de un trabajador (4 Septiembre 2026)
+
+### Se valora al dar por bueno, y no en otro sitio
+
+Es el único momento en que alguien se acuerda de cómo fue: al día siguiente no
+entra nadie a valorar, y un profesional sin valoraciones no se distingue en el
+directorio de uno malo. Al cerrar el trabajo —después de cerrarlo y pagarlo, que
+es lo que no puede quedarse a medias— sale el diálogo con las estrellas y un
+comentario opcional.
+
+- **Cuelga del trabajo.** `Review.jobId`, único: de cada trabajo sale una y solo
+  una, y solo la escribe quien lo contrató y solo con el trabajo `COMPLETED`.
+  Sin eso, la media de alguien la decidiría quien más ganas tuviera de escribir.
+- **Una nota, no ocho.** Los ocho criterios pasan a poder faltar. En un modal
+  que sale sin avisar, ocho preguntas no las contesta nadie: se empieza la
+  primera, se abandona, y no queda ninguna. Las medias por criterio se saltan
+  las que no las traen —contarlas como cero le hundiría la media a quien
+  valoraron rápido y bien— y la tarjeta no ofrece «ver las 8 notas» cuando no
+  las hay.
+- **Recomendar sale de la nota**: cuatro o cinco sí, tres o menos no. Una
+  casilla más en el mismo modal se contesta sin leer, y es decir dos veces lo
+  mismo.
+- **La media del perfil se recalcula en la misma transacción.** Vive copiada en
+  `ProProfile` porque el directorio ordena por ella; copiada y sin actualizar es
+  un número que envejece solo.
+- **El comentario es opcional.** Exigirlo convierte la valoración en un trámite
+  y lo que se consigue es un «bien» de relleno.
+
+### Un trabajador se configura como un profesional
+
+- **El alta lleva el mismo campo que «Mis oficios»**: por hora o por visita para
+  presupuestar, oficio a oficio. Antes solo sabía poner precios por hora, así
+  que una empresa de reformas no podía dar de alta a los suyos como lo que son.
+  Y se manda entero: el mínimo de horas y la tarifa de urgencia se pedían en
+  pantalla y **se caían al enviar**.
+- **En rojo lo que le falta, en verde lo que ya está.** La ficha de un
+  trabajador se veía igual de completa con todo puesto que con nada, y así un
+  trabajador dado de alta y olvidado no aparece en ninguna búsqueda sin que
+  nadie se entere. La lista trae ahora un `setup` con hechos —cuántas franjas,
+  si tiene punto en el mapa, si tiene código postal— y la pantalla decide el
+  color. Los recargos y los días fuera no se colorean: nacen resueltos, y en
+  rojo serían dos casillas que no se pueden completar nunca.
+- **Y se dice con palabras**, no solo con color: cada botón lleva «· falta» o
+  «· listo». Uno de cada doce hombres no distingue el rojo del verde.
+- **Lo que se descubrió de camino**: un trabajador recién dado de alta **no
+  tiene ni punto en el mapa ni código postal** —el formulario no los pide—, así
+  que hasta que la empresa le entra a «Zona de trabajo» no sale en ninguna
+  búsqueda por cercanía ni en ninguna urgencia.
+
+### Y unas cuantas de leer y tocar
+
+- **Los oficios de los desplegables, por orden alfabético.** Eran diecinueve
+  nombres en el orden del carrusel de la home. Se ordena `TRADE_OPTIONS` y no
+  `TRADES`, que sigue mandando en la portada y en el `sortOrder` del seed.
+- **«Añadir otro oficio» se dice una vez y va al final del formulario**, después
+  de la ciudad: entre los oficios y la ciudad se leía como un campo más del
+  último oficio rellenado.
+- **«Mi agenda», en azul y a media caja.** Iba hueca y a lo ancho, y se leía
+  como un separador más de la ficha del profesional.
+- **Dar de alta trabajadores, en tarjeta blanca con contorno naranja** y un
+  botón «Añadir trabajador» del mismo tamaño. Era un bloque azul entero pulsable
+  con una flecha, o sea que lo que había que hacer quedaba a que alguien
+  adivinara que el bloque se toca. El naranja de relleno es nuevo
+  (`pendingStrong`): el `pending` de siempre con letra blanca encima se queda en
+  3,5:1.
+- **Fuera «Trabajo de».** En el directorio, la ficha, pedir presupuesto y
+  reservar horas, quien trabaja para alguien sale con el nombre de su empresa
+  arriba y el suyo debajo, a secas: arriba a quien se contrata, debajo quien
+  llama al timbre.
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
