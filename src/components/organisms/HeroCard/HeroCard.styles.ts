@@ -15,7 +15,7 @@
  * en vez de dos hojas de estilos que habría que mantener en paralelo.
  */
 
-import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
+import { StyleSheet, type TextStyle } from 'react-native'
 import { theme } from '@/theme'
 
 export type HeroVariant = 'dark' | 'light'
@@ -116,13 +116,19 @@ export const styles = StyleSheet.create({
    * pequeño que un botón normal, para que los textos largos no partieran en
    * dos líneas. Al quedarse uno solo, esa estrechez ya no la pide nadie.
    */
-  actionSecondary: {
-    backgroundColor: 'transparent',
+  /**
+   * El de la agenda del profesional: la mitad de la caja y centrado.
+   *
+   * `width` en porcentaje y no un número: la cabecera se estira con la
+   * pantalla, y media tarjeta tiene que seguir siendo media en un móvil
+   * pequeño y en una tableta. `alignSelf` porque sin `fullWidth` el botón se
+   * estira igual —la tarjeta es una columna— y quedaría a la izquierda.
+   */
+  actionHalf: {
+    width: '50%',
+    alignSelf: 'center',
   },
   actionText: {
-    fontSize: 14,
-  },
-  actionSecondaryText: {
     fontSize: 14,
   },
   urgent: {
@@ -137,14 +143,17 @@ export const styles = StyleSheet.create({
  * sobre las dos paletas—, y `tag`, `tagText` y `title`, cuyos elementos
  * desaparecieron de la tarjeta.
  *
+ * Y se fueron también `actionSecondary` y `actionSecondaryText`, que vestían
+ * el botón hueco del profesional: desde el 4 de septiembre de 2026 lleva el
+ * mismo relleno azul que el del cliente, y ese color no depende de la paleta
+ * —es el `primary` del botón, que se lee igual sobre las dos—.
+ *
  * `body` se queda aunque ya no haya párrafo: es el color apagado de la
  * paleta, y lo usan el oficio y la valoración del profesional.
  */
 interface HeroPalette {
   userName: TextStyle
   body: TextStyle
-  actionSecondary: ViewStyle
-  actionSecondaryText: TextStyle
 }
 
 export const palettes: Record<HeroVariant, HeroPalette> = {
@@ -156,15 +165,11 @@ export const palettes: Record<HeroVariant, HeroPalette> = {
      */
     userName: { color: theme.colors.accent300 },
     body: { color: 'rgba(255, 255, 255, 0.75)' },
-    actionSecondary: { borderColor: 'rgba(255, 255, 255, 0.4)' },
-    actionSecondaryText: { color: theme.colors.cardBg },
   },
   light: {
     /** Sobre claro es el 700 el que contrasta, igual que el resto de rótulos */
     userName: { color: theme.colors.accent700 },
     // 0.8 y no 0.75: sobre claro el mismo porcentaje se lee más lavado.
     body: { color: 'rgba(28, 43, 51, 0.8)' },
-    actionSecondary: { borderColor: theme.colors.accent600 },
-    actionSecondaryText: { color: theme.colors.accent700 },
   },
 }

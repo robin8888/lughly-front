@@ -207,8 +207,12 @@ describe('HeroCard — por dónde seguir (cliente)', () => {
     expect(boton.backgroundColor).not.toBe(theme.colors.accent)
   })
 
-  it('el del profesional sigue hueco', () => {
-    // Debajo no tiene nada que destaque más; sólido pesaría de más
+  /**
+   * El del profesional iba hueco y a lo ancho, y así se leía como un separador
+   * más de la ficha: es su agenda, lo que abre todos los días, y tenía menos
+   * presencia que cualquier fila de debajo.
+   */
+  it('el del profesional va relleno de azul y a media caja', () => {
     const { getByTestId } = render(
       <HeroCard role="pro" variant="light" onSecondary={noop} />
     )
@@ -217,7 +221,10 @@ describe('HeroCard — por dónde seguir (cliente)', () => {
       getByTestId('hero-secondary').props.style as never
     ) as ViewStyle
 
-    expect(boton.backgroundColor).toBe('transparent')
+    expect(boton.backgroundColor).toBe(theme.colors.accent700)
+    expect(boton.width).toBe('50%')
+    // Centrado: sin esto media caja se queda pegada a la izquierda
+    expect(boton.alignSelf).toBe('center')
   })
 
   it('lleva el buscador de oficios y la salida de urgencia', () => {

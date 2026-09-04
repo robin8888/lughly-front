@@ -190,10 +190,15 @@ export function HeroCard({
       )}
 
       {/*
-        Los dos roles no llevan el mismo botón. Al cliente le va relleno: es
-        lo único que le queda ahí y no compite con nada. Al profesional le va
-        hueco, porque debajo no hay nada que destaque más y un botón sólido en
-        mitad de su ficha pesaría de más.
+        Los dos roles no llevan el mismo botón, pero los dos van en el azul de
+        la app con el texto en blanco. Al cliente, a todo lo ancho: es lo único
+        que le queda ahí y no compite con nada.
+
+        Al profesional, **a media caja y centrado**. Iba hueco y a lo ancho, y
+        ahí un contorno se leía como un separador más de la ficha: es su
+        agenda, lo que abre todos los días, y tenía menos presencia que
+        cualquier fila de debajo. Relleno se ve, y a la mitad no se come la
+        cabecera.
       */}
       {isClient ? (
         <Button
@@ -207,11 +212,10 @@ export function HeroCard({
         </Button>
       ) : (
         <Button
-          variant="secondary"
-          fullWidth
+          variant="primary"
           onPress={onSecondary}
-          style={[styles.actionSecondary, palette.actionSecondary]}
-          textStyle={[styles.actionSecondaryText, palette.actionSecondaryText]}
+          style={styles.actionHalf}
+          textStyle={styles.actionText}
           testID="hero-secondary"
         >
           {COPY.pro.secondary}
