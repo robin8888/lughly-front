@@ -94,10 +94,29 @@ export interface CreateEmployeePayload {
   email: string
   phone: string
   nationalId: string
-  /** Sus oficios, con la tarifa que cobra la empresa por cada uno */
+  /**
+   * Sus oficios, con lo que cobra la empresa por cada uno.
+   *
+   * Mismo trato que los de un profesional por su cuenta: **o por hora o por
+   * visita, nunca los dos ni ninguno** —lo exige `proTradeSchema` en el
+   * servidor, que es el mismo esquema que valida el registro—.
+   *
+   * La tarifa de urgencia se guarda con el oficio, igual que la de cualquier
+   * profesional. **Lo que se le cobra al cliente por una urgencia suya sale
+   * hoy de su franja de guardia** —ahí el número ya lleva dentro el recargo de
+   * esa noche o ese festivo (`urgencyRateOf`, `CICLOS` §D6)—, así que ésta es
+   * la tarifa del oficio y no el precio de la salida.
+   */
   trades: {
     slug: string
-    hourlyRate: number
+    /** €/h en los oficios por hora. Null si cobra por visita */
+    hourlyRate: number | null
+    /** Lo que cobra por presentarse a presupuestar. Null si cobra por hora */
+    visitFee: number | null
+    /** Horas mínimas por trabajo. Null es sin mínimo, y solo con `hourlyRate` */
+    minHours?: number | null
+    /** Null significa que no atiende urgencias de ese oficio */
+    urgencyHourlyRate?: number | null
     /** Qué hace en ese oficio: es lo que lee el cliente en su ficha */
     description?: string | null
   }[]

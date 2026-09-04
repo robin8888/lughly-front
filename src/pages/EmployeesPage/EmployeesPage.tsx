@@ -40,7 +40,7 @@ import {
   useRequestOnboardingLink,
 } from '@/hooks/domain/usePaymentAccount'
 import type { LegalForm } from '@/api/employees.api'
-import { TRADE_OPTIONS } from '@/utils/trades'
+import { TRADE_OPTIONS, getTradeLabel } from '@/utils/trades'
 import { theme } from '@/theme'
 import { styles } from './EmployeesPage.styles'
 import { useUser } from '@/stores/useAuthStore'
@@ -415,9 +415,75 @@ export function EmployeesPage({
     form.phone.trim() !== '' &&
     form.nationalId.trim() !== '' &&
     trades.length > 0 &&
-    trades.every((trade) => rateOf(trade.hourlyRate) > 0) &&
+    /*
+      Cada oficio con el precio de SU modo: por hora o por visita. Antes se
+      exigía siempre la hora, así que al elegir "visita y presupuesto" el botón
+      no se habilitaba nunca y el alta no tenía salida.
+    */
+    trades.every((trade) =>
+      trade.pricingMode === 'VISIT'
+        ? rateOf(trade.visitFee) > 0
+        : rateOf(trade.hourlyRate) > 0,
+    ) &&
+    /* El mínimo puede ir vacío —significa sin mínimo— pero no a medio escribir */
+    trades.every(
+      (trade) => trade.minHours.trim() === '' || rateOf(trade.minHours) > 0,
+    ) &&
+    /* Y la de urgencia igual: vacía es "no las atiende", un cero no vale */
+    trades.every(
+      (trade) => trade.urgencyRate.trim() === '' || rateOf(trade.urgencyRate) > 0,
+    ) &&
     form.city.trim().length >= 2 &&
     !isCreating
+
+  /**
+   * Qué falta para poder dar de alta.
+   *
+   * Mismo arreglo que el alta como empleador, y por lo mismo: el botón se
+   * apagaba sin decir por qué, y aquí hay cinco datos personales más una
+   * lista de oficios con su precio. Lo que más se atasca es justo lo que no
+   * parece un campo obligatorio —el precio de un oficio recién añadido, que
+   * nace vacío— y queda arriba, fuera de vista mientras se teclea la ciudad.
+   *
+   * Se dice lo mismo que decide `canSubmit`, en el mismo orden que el
+   * formulario. Que sean dos listas y no una es a propósito: la de arriba
+   * decide y ésta explica.
+   */
+  const faltan: string[] = []
+
+  if (form.name.trim().length < 3) faltan.push('Escribe su nombre completo.')
+  if (form.email.trim() === '') faltan.push('Escribe su correo: ahí le llega el acceso.')
+  if (form.phone.trim() === '') faltan.push('Escribe su teléfono.')
+  if (form.nationalId.trim() === '') faltan.push('Escribe su DNI, NIE o pasaporte.')
+
+  if (trades.length === 0) {
+    faltan.push('Añade al menos un oficio: es por donde le busca el cliente.')
+  }
+
+  for (const trade of trades) {
+    const oficio = getTradeLabel(trade.slug).toLowerCase()
+
+    if (trade.pricingMode === 'VISIT') {
+      if (!(rateOf(trade.visitFee) > 0)) {
+        faltan.push(`Pon la tarifa de visita de ${oficio}.`)
+      }
+    } else if (!(rateOf(trade.hourlyRate) > 0)) {
+      faltan.push(`Pon el precio por hora de ${oficio}.`)
+    }
+
+    /* Los dos que pueden ir vacíos, pero no a medias */
+    if (trade.minHours.trim() !== '' && !(rateOf(trade.minHours) > 0)) {
+      faltan.push(`El mínimo de ${oficio} tiene que ser mayor que 0, o déjalo vacío.`)
+    }
+
+    if (trade.urgencyRate.trim() !== '' && !(rateOf(trade.urgencyRate) > 0)) {
+      faltan.push(
+        `La tarifa de urgencia de ${oficio} tiene que ser mayor que 0, o déjala vacía.`,
+      )
+    }
+  }
+
+  if (form.city.trim().length < 2) faltan.push('Escribe la ciudad donde trabaja.')
 
   const handleCreate = async () => {
     reset()
@@ -429,7 +495,19 @@ export function EmployeesPage({
       nationalId: form.nationalId.trim(),
       trades: trades.map((trade) => ({
         slug: trade.slug,
-        hourlyRate: rateOf(trade.hourlyRate),
+        hourlyRate: trade.pricingMode === 'VISIT' ? null : rateOf(trade.hourlyRate),
+        visitFee: trade.pricingMode === 'VISIT' ? rateOf(trade.visitFee) : null,
+        /*
+          Solo en los de hora: en visita el suelo es la propia visita, y el
+          servidor lo rechaza con razón.
+        */
+        minHours:
+          trade.pricingMode === 'VISIT' || trade.minHours.trim() === ''
+            ? null
+            : rateOf(trade.minHours),
+        /* Vacía significa que no atiende urgencias de ese oficio */
+        urgencyHourlyRate:
+          trade.urgencyRate.trim() === '' ? null : rateOf(trade.urgencyRate),
         /* Lo que el cliente leerá en su ficha, por oficio */
         description: trade.description.trim(),
       })),
@@ -830,13 +908,22 @@ export function EmployeesPage({
 
                 <FormField
                   label="Oficios y tarifas"
-                  hint="La tarifa es la tuya, no su sueldo: es lo que cobras por su hora de trabajo. Él no la verá."
+                  hint="La tarifa es la tuya, no su sueldo: es lo que cobras por su trabajo. Él no la verá."
                   error={fieldErrors.trades}
                 >
+                  {/*
+                    El mismo campo y las mismas reglas que "Mis oficios": por
+                    hora o por visita para presupuestar, oficio a oficio, con
+                    su mínimo y su tarifa de urgencia. Es el mismo dato en la
+                    misma tabla —lo que cambia es quién lo escribe—, y sin el
+                    selector la empresa solo podía poner por horas a su gente
+                    aunque el oficio se cobre yendo a ver.
+                  */}
                   <TradeRatesField
                     value={trades}
                     onChange={setTrades}
                     disabled={isCreating}
+                    allowVisitMode
                     testID="employee-trades"
                   />
                 </FormField>
@@ -855,6 +942,22 @@ export function EmployeesPage({
                   Al darle de alta confirmas que respondes de esta persona ante
                   los clientes de Lughly.
                 </Text>
+
+                {/*
+                  Lo que falta, pegado al botón. Los avisos de cada campo
+                  siguen donde estaban; la diferencia es que esto se ve sin
+                  subir a buscarlo, que es lo que se hace cuando el botón no
+                  responde.
+                */}
+                {faltan.length > 0 && (
+                  <View style={styles.missing} testID="employee-missing">
+                    {faltan.map((falta) => (
+                      <Text key={falta} style={styles.missingText}>
+                        {falta}
+                      </Text>
+                    ))}
+                  </View>
+                )}
 
                 <Button
                   fullWidth
