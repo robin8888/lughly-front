@@ -123,6 +123,26 @@ beforeEach(() => {
 })
 
 describe('EmployeesPage: el oficio de un trabajador', () => {
+  /**
+   * Un trabajador puede tener el mismo oficio que su empresa, incluido uno
+   * regulado: aquí no se filtra nada. Lo único que desaparece del desplegable
+   * es lo que esa persona ya tiene puesto, para no añadirlo dos veces.
+   */
+  it('ofrece todos los oficios, electricidad incluida', () => {
+    abrirFormulario()
+
+    fireEvent.press(screen.getByTestId('trade-add'))
+
+    expect(screen.getByTestId('trade-add-option-electricidad')).toBeTruthy()
+    expect(screen.getByText('Electricidad')).toBeTruthy()
+
+    // Y una vez puesto, deja de ofrecerse: ya lo tiene
+    fireEvent.press(screen.getByTestId('trade-add-option-electricidad'))
+    fireEvent.press(screen.getByTestId('trade-add'))
+
+    expect(screen.queryByTestId('trade-add-option-electricidad')).toBeNull()
+  })
+
   it('deja elegir cómo se cobra ese oficio, como en Mis oficios', () => {
     abrirFormulario()
     añadirFontaneria()

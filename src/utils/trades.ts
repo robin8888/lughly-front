@@ -50,11 +50,31 @@ export const TRADES: readonly Trade[] = [
   { slug: 'otros', label: 'Otros oficios', regulated: false, visitEligible: true },
 ] as const
 
-/** Opciones listas para <Picker /> */
+/**
+ * Opciones listas para `<Picker />`, **por orden alfabético**.
+ *
+ * No es el orden de `TRADES`, y es a propósito: aquél es el del carrusel de la
+ * home —una fila de dibujos que se mira, donde manda lo que más se busca— y
+ * éste es una lista de diecinueve nombres que se lee. En una lista larga, el
+ * único orden que deja encontrar algo es el del abecedario: quien busca
+ * "electricidad" la busca por la E, no por el sitio que ocupe en la portada.
+ *
+ * `otros` se queda el último aunque le toque por la O: no es un oficio, es
+ * la salida para quien no encuentra el suyo, y en medio de la lista se elige
+ * por error.
+ *
+ * Con `localeCompare` en español, que es quien sabe dónde va la ñ y qué hacer
+ * con los acentos.
+ */
 export const TRADE_OPTIONS = TRADES.map(({ slug, label }) => ({
   value: slug,
   label,
-}))
+})).sort((a, b) => {
+  if (a.value === 'otros') return 1
+  if (b.value === 'otros') return -1
+
+  return a.label.localeCompare(b.label, 'es')
+})
 
 export function getTrade(slug: string): Trade | undefined {
   return TRADES.find((trade) => trade.slug === slug)
