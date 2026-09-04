@@ -10,7 +10,7 @@
  * formulario y se caían al enviar.
  */
 
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, within } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import { EmployeesPage } from './EmployeesPage'
 
@@ -154,6 +154,20 @@ describe('EmployeesPage: el oficio de un trabajador', () => {
 
     expect(screen.getAllByText('Añadir otro oficio')).toHaveLength(1)
     expect(screen.getByText('Elige un oficio')).toBeTruthy()
+  })
+
+  /**
+   * Añadir otro oficio va al final del formulario, no pegado a la lista.
+   *
+   * Entre los oficios y la ciudad quedaba en medio del camino y se leía como
+   * un campo más del último oficio rellenado.
+   */
+  it('el desplegable de añadir vive fuera del bloque de oficios', () => {
+    abrirFormulario()
+    añadirFontaneria()
+
+    expect(within(screen.getByTestId('employee-trades')).queryByTestId('trade-add')).toBeNull()
+    expect(screen.getByTestId('trade-add')).toBeTruthy()
   })
 
   it('deja elegir cómo se cobra ese oficio, como en Mis oficios', () => {

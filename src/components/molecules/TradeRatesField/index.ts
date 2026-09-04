@@ -1,2 +1,6 @@
-export { TradeRatesField } from './TradeRatesField'
-export type { TradeRatesFieldProps, TradeRate } from './TradeRatesField'
+export { TradeRatesField, TradeAddPicker } from './TradeRatesField'
+export type {
+  TradeRatesFieldProps,
+  TradeAddPickerProps,
+  TradeRate,
+} from './TradeRatesField'

@@ -99,26 +99,52 @@ export interface TradeRatesFieldProps {
    * oficio estoy" tendría que reconstruir la lista de oficios por su cuenta.
    */
   renderExtra?: (trade: TradeRate) => ReactNode
+  /**
+   * Deja fuera el desplegable de añadir oficio, para poder ponerlo en otro
+   * sitio de la pantalla con `<TradeAddPicker />`.
+   *
+   * Lo usa el alta de un trabajador: allí la lista de oficios va en medio del
+   * formulario y "añadir otro" tiene que quedar al final del todo, después de
+   * la ciudad. Pegado a los oficios, con un campo debajo, se leía como parte
+   * del último oficio rellenado.
+   */
+  hideAdd?: boolean
   testID?: string
 }
 
-export function TradeRatesField({
+export interface TradeAddPickerProps {
+  value: TradeRate[]
+  onChange: (trades: TradeRate[]) => void
+  disabled?: boolean
+  testID?: string
+}
+
+/**
+ * Añadir un oficio a la lista.
+ *
+ * Vive aparte de `TradeRatesField` —que lo pinta al final salvo que le digan
+ * lo contrario— porque hay una pantalla donde no puede ir pegado a la lista:
+ * ver `hideAdd`.
+ *
+ * Desaparece cuando no queda ninguno por añadir: un desplegable vacío no es
+ * una opción, es un callejón.
+ */
+export function TradeAddPicker({
   value,
   onChange,
   disabled = false,
-  hideRates = false,
-  allowVisitMode = false,
-  renderExtra,
-  testID,
-}: TradeRatesFieldProps) {
+  testID = 'trade-add',
+}: TradeAddPickerProps) {
   /**
-   * El desplegable de añadir se reinicia solo tras cada elección. Sin esto
-   * conservaría el último oficio elegido y parecería que ya está puesto.
+   * El desplegable se reinicia solo tras cada elección. Sin esto conservaría
+   * el último oficio elegido y parecería que ya está puesto.
    */
   const [pickerKey, setPickerKey] = useState(0)
 
   const chosen = new Set(value.map((trade) => trade.slug))
   const available = TRADE_OPTIONS.filter((option) => !chosen.has(option.value))
+
+  if (available.length === 0) return null
 
   const add = (slug: string) => {
     onChange([
@@ -136,6 +162,41 @@ export function TradeRatesField({
     setPickerKey((key) => key + 1)
   }
 
+  /*
+    Dicho una sola vez: el rótulo dice qué es esto y el desplegable dice qué
+    hacer con él. Los dos con la misma frase —"Añadir oficio" encima de
+    "Añadir otro oficio"— se leían como dos sitios distintos donde añadir.
+  */
+  const titulo = value.length === 0 ? 'Añadir oficio' : 'Añadir otro oficio'
+
+  return (
+    <View style={styles.add}>
+      <Text style={styles.addLabel}>{titulo}</Text>
+
+      <Picker
+        key={pickerKey}
+        options={available}
+        value={null}
+        onChange={add}
+        placeholder="Elige un oficio"
+        title={titulo}
+        disabled={disabled}
+        testID={testID}
+      />
+    </View>
+  )
+}
+
+export function TradeRatesField({
+  value,
+  onChange,
+  disabled = false,
+  hideRates = false,
+  allowVisitMode = false,
+  renderExtra,
+  hideAdd = false,
+  testID,
+}: TradeRatesFieldProps) {
   const remove = (slug: string) => {
     onChange(value.filter((trade) => trade.slug !== slug))
   }
@@ -428,32 +489,13 @@ export function TradeRatesField({
         </View>
       ))}
 
-      {available.length > 0 && (
-        /*
-          Añadir otro, **fuera** del oficio de arriba: con su línea y su aire,
-          para que no se lea como un campo más del que se acaba de rellenar.
-
-          Y dicho una sola vez. El rótulo decía "Añadir oficio" y el
-          desplegable, justo debajo, "Añadir otro oficio": la misma frase dos
-          veces seguidas se lee como dos sitios distintos donde añadir. El
-          rótulo dice qué es esto y el desplegable dice qué hacer con él.
-        */
-        <View style={styles.add}>
-          <Text style={styles.addLabel}>
-            {value.length === 0 ? 'Añadir oficio' : 'Añadir otro oficio'}
-          </Text>
-
-          <Picker
-            key={pickerKey}
-            options={available}
-            value={null}
-            onChange={add}
-            placeholder="Elige un oficio"
-            title={value.length === 0 ? 'Añadir oficio' : 'Añadir otro oficio'}
-            disabled={disabled}
-            testID="trade-add"
-          />
-        </View>
+      {/*
+        Añadir otro, con su línea y su aire para que no se lea como un campo
+        más del oficio de arriba. Salvo donde la pantalla lo coloca por su
+        cuenta —ver `hideAdd`—, que entonces no se pinta aquí.
+      */}
+      {!hideAdd && (
+        <TradeAddPicker value={value} onChange={onChange} disabled={disabled} />
       )}
 
       {value.length === 0 && (

@@ -26,7 +26,11 @@ import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { Picker } from '@/components/molecules/Picker'
-import { TradeRatesField, type TradeRate } from '@/components/molecules/TradeRatesField'
+import {
+  TradeRatesField,
+  TradeAddPicker,
+  type TradeRate,
+} from '@/components/molecules/TradeRatesField'
 import {
   useEmployees,
   useEmployer,
@@ -924,6 +928,7 @@ export function EmployeesPage({
                     onChange={setTrades}
                     disabled={isCreating}
                     allowVisitMode
+                    hideAdd
                     testID="employee-trades"
                   />
                 </FormField>
@@ -937,6 +942,22 @@ export function EmployeesPage({
                     testID="employee-city"
                   />
                 </FormField>
+
+                {/*
+                  Y añadir otro oficio, al final del todo.
+
+                  Va aquí y no pegado a la lista de arriba por lo que se ve en
+                  pantalla: entre los oficios y la ciudad, el desplegable queda
+                  en medio del formulario y se lee como un campo más del último
+                  oficio rellenado. Al final es lo que es —volver a empezar con
+                  otro— y quien solo va a poner uno no se lo encuentra en medio
+                  del camino.
+                */}
+                <TradeAddPicker
+                  value={trades}
+                  onChange={setTrades}
+                  disabled={isCreating}
+                />
 
                 <Text style={styles.responsibility}>
                   Al darle de alta confirmas que respondes de esta persona ante
