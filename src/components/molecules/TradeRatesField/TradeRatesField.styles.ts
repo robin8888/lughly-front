@@ -16,6 +16,16 @@ export const styles = StyleSheet.create({
     marginBottom: 14,
   },
   /*
+   * El último, sin línea: la de abajo separa un oficio del siguiente, y
+   * después del último no hay ninguno. Dejada ahí, colgaba de él lo que viene
+   * después —añadir otro— como si fuera un campo suyo más.
+   */
+  tradeLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    marginBottom: 0,
+  },
+  /*
    * El nombre del oficio y la cruz de quitarlo. Sin línea propia: la del
    * bloque ya separa un oficio del siguiente, y con tres partes dentro una
    * raya en medio parecía el final de algo.
@@ -105,8 +115,17 @@ export const styles = StyleSheet.create({
     color: theme.colors.text,
     opacity: 0.55,
   },
+  /**
+   * Añadir otro oficio: fuera del bloque de arriba y con su propia línea.
+   *
+   * Pegado a él con diez píxeles se leía como el último campo del oficio que
+   * se acababa de rellenar, y no como la puerta para poner el siguiente.
+   */
   add: {
-    marginTop: 10,
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.hairline,
   },
   addLabel: {
     fontFamily: theme.typography.fonts.bodySemiBold,

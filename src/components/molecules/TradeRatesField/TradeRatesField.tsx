@@ -185,7 +185,12 @@ export function TradeRatesField({
       {value.map((trade, index) => (
         <View
           key={trade.slug}
-          style={styles.trade}
+          /*
+            La línea de abajo separa un oficio del siguiente, así que el último
+            no la lleva: ahí no separa nada y hace que lo que viene después
+            —añadir otro— parezca parte de ese oficio.
+          */
+          style={[styles.trade, index === value.length - 1 && styles.tradeLast]}
           testID={`trade-row-${trade.slug}`}
         >
           <View style={styles.head}>
@@ -424,21 +429,27 @@ export function TradeRatesField({
       ))}
 
       {available.length > 0 && (
+        /*
+          Añadir otro, **fuera** del oficio de arriba: con su línea y su aire,
+          para que no se lea como un campo más del que se acaba de rellenar.
+
+          Y dicho una sola vez. El rótulo decía "Añadir oficio" y el
+          desplegable, justo debajo, "Añadir otro oficio": la misma frase dos
+          veces seguidas se lee como dos sitios distintos donde añadir. El
+          rótulo dice qué es esto y el desplegable dice qué hacer con él.
+        */
         <View style={styles.add}>
-          {/*
-            Con rótulo propio. El desplegable solo, al final de una lista de
-            oficios, se leía como parte del último en vez de como la forma de
-            añadir otro —que es lo que casi todo el mundo viene a hacer aquí.
-          */}
-          <Text style={styles.addLabel}>Añadir oficio</Text>
+          <Text style={styles.addLabel}>
+            {value.length === 0 ? 'Añadir oficio' : 'Añadir otro oficio'}
+          </Text>
 
           <Picker
             key={pickerKey}
             options={available}
             value={null}
             onChange={add}
-            placeholder={value.length === 0 ? 'Elige tu oficio' : 'Añadir otro oficio'}
-            title="Añadir oficio"
+            placeholder="Elige un oficio"
+            title={value.length === 0 ? 'Añadir oficio' : 'Añadir otro oficio'}
             disabled={disabled}
             testID="trade-add"
           />

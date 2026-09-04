@@ -143,6 +143,19 @@ describe('EmployeesPage: el oficio de un trabajador', () => {
     expect(screen.queryByTestId('trade-add-option-electricidad')).toBeNull()
   })
 
+  /**
+   * Y se dice una sola vez. El rótulo ponía "Añadir oficio" y el desplegable,
+   * justo debajo, "Añadir otro oficio": la misma frase dos veces seguidas se
+   * lee como dos sitios distintos donde añadir.
+   */
+  it('no repite «añadir oficio» encima del desplegable', () => {
+    abrirFormulario()
+    añadirFontaneria()
+
+    expect(screen.getAllByText('Añadir otro oficio')).toHaveLength(1)
+    expect(screen.getByText('Elige un oficio')).toBeTruthy()
+  })
+
   it('deja elegir cómo se cobra ese oficio, como en Mis oficios', () => {
     abrirFormulario()
     añadirFontaneria()
