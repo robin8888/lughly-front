@@ -100,10 +100,25 @@ export const styles = StyleSheet.create({
     paddingRight: 16,
   },
   tab: {
+    /* En fila: el rótulo y, si hay algo nuevo, su punto */
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surfaceSoft,
+  },
+  /** El punto de "aquí dentro hay algo que no has visto" */
+  tabDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.urgency,
+  },
+  /** Sobre la píldora roja de las urgencias, el mismo punto en blanco */
+  tabDotOnUrgent: {
+    backgroundColor: '#ffffff',
   },
   tabOpen: {
     /* El azul oscuro, que es el que sostiene texto blanco encima */

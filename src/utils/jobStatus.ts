@@ -156,3 +156,29 @@ export function jobTypeLabel(type: ApiJobType): string {
  * cada segundo. Lo resuelve `useCountdown` cambiando el ritmo según lo que
  * quede: cada minuto mientras faltan horas, cada segundo en la última.
  */
+
+/**
+ * En qué punto está un trabajo, resumido en una cadena que se puede guardar y
+ * comparar. Es la firma con la que se sabe si algo **ha cambiado** desde la
+ * última vez que el cliente lo miró (`useSeenJobStatesStore`).
+ *
+ * Son tres cosas y no una, porque el estado a secas se queda corto en el paso
+ * que más importa: cuando el profesional dice que ha terminado, el trabajo
+ * sigue `IN_PROGRESS` y lo único que se mueve es `workFinishedAt`. Igual con
+ * la cita: que la empresa proponga a otra persona no cambia el estado del
+ * trabajo y es justo lo que el cliente tiene que contestar.
+ *
+ * Lo que **no** entra: nada que escriba el propio cliente —el reparo, por
+ * ejemplo—. Marcarle como novedad lo que acaba de hacer él es ruido.
+ */
+export function jobStateSignature(job: {
+  status: ApiJobStatus
+  appointmentStatus: ApiAppointmentStatus | null
+  workFinishedAt: string | null
+}): string {
+  return [
+    job.status,
+    job.appointmentStatus ?? '-',
+    job.workFinishedAt ? 'fin' : '-',
+  ].join('|')
+}

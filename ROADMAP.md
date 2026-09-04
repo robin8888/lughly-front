@@ -2595,6 +2595,34 @@ nuevo ahí y ver que `git commit` decía «nothing to commit».
 
 ---
 
+## ✅ Qué se ha movido, sin leerlo todo (4 Septiembre 2026)
+
+Mis trabajos separa por forma de contratar —Presupuesto directo, Reserva
+instantánea, Urgencia— y hasta ahora la pestaña cerrada no contaba nada de lo
+suyo salvo cuántos había. El aviso al móvil llega una vez y se pierde con el
+teléfono en silencio, así que **para saber si algo se había movido había que
+entrar en las dos pestañas y leerlas enteras**.
+
+- **Un punto rojo en la pestaña** donde hay algo nuevo, y **otro en la esquina
+  del trabajo** que ha cambiado: cuál, sin leer ninguna tarjeta.
+- **Qué cuenta como novedad**: la firma `estado|cita|terminado`
+  (`jobStateSignature`). Son tres cosas y no una porque el paso que más importa
+  —«ha terminado»— no mueve el estado: sigue `IN_PROGRESS` y lo único que
+  cambia es `workFinishedAt`. Igual el sustituto propuesto, que es de la cita.
+- **Se apaga al abrir la ficha**, no al ver la lista: en la lista se ve el
+  rótulo, no lo que ha pasado.
+- **Lo que se ve por primera vez no lleva punto.** De un trabajo que no
+  habíamos visto nunca no se sabe qué cambió, y una lista entera de puntos
+  rojos no señala nada.
+
+Vive en el móvil (`useSeenJobStatesStore`, AsyncStorage y por cuenta, como
+`useSeenAnswersStore`) y no en el servidor: «lo he mirado» es de este teléfono.
+**Lo que cuesta**: quien use dos móviles verá el punto en los dos y tendrá que
+quitarlo en los dos. Se acepta a sabiendas; llevarlo al servidor es una columna,
+una migración y una escritura en cada lectura de la ficha.
+
+---
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio

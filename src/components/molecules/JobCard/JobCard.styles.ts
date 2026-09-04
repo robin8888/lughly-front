@@ -9,6 +9,26 @@ import { theme } from '@/theme'
 const THUMB = 56
 
 export const styles = StyleSheet.create({
+  /**
+   * El punto de novedad, mordiendo la esquina de la tarjeta.
+   *
+   * Rojo del de las urgencias, que es el que ya significa "mira esto" en el
+   * resto de la app, y con aro blanco para que se recorte igual sobre la
+   * tarjeta que sobre el fondo. `zIndex` porque va antes que la tarjeta en el
+   * árbol y sin él lo taparía la sombra de ésta.
+   */
+  news: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: theme.colors.urgency,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    zIndex: 2,
+  },
   row: {
     flexDirection: 'row',
     gap: 10,

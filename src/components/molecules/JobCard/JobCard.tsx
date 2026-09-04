@@ -34,6 +34,12 @@ export interface JobCardProps {
    */
   onReassign?: () => void
   isRespondingSubstitute?: boolean
+  /**
+   * Algo ha cambiado en este trabajo desde la última vez que se abrió. Lo
+   * decide `useJobNews`, que compara el estado de ahora con el que se guardó
+   * al mirarlo.
+   */
+  hasNews?: boolean
   testID?: string
 }
 
@@ -43,6 +49,7 @@ export function JobCard({
   onRespondSubstitute,
   onReassign,
   isRespondingSubstitute = false,
+  hasNews = false,
   testID,
 }: JobCardProps) {
   const status = jobStatusLook(job.status, job.appointmentStatus, job.workFinishedAt)
@@ -106,6 +113,24 @@ export function JobCard({
       accessibilityRole={onPress ? 'button' : undefined}
       testID={testID}
     >
+      {/*
+        El punto de "esto se ha movido", en la esquina de arriba a la
+        izquierda y **fuera** de la tarjeta.
+
+        Fuera porque dentro competiría con lo que la tarjeta ya dice —el
+        rótulo del estado, la cuenta atrás— y lo que hace falta es lo
+        contrario: encontrar la tarjeta sin leer ninguna. Con el aro blanco se
+        ve igual sobre la tarjeta que sobre el fondo de la página.
+      */}
+      {hasNews && (
+        <View
+          style={styles.news}
+          accessible
+          accessibilityLabel="Ha cambiado algo desde la última vez que lo miraste"
+          testID={testID ? `${testID}-news` : undefined}
+        />
+      )}
+
       <InfoCard style={tint}>
         {waiting && (
           <View style={styles.needsYouBlock}>

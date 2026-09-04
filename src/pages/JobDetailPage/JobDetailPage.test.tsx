@@ -11,6 +11,8 @@
 import { fireEvent, render } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import type { ApiJobDetail } from '@/api/jobs.api'
+import { useAuthStore, type User } from '@/stores/useAuthStore'
+import { useSeenJobStatesStore } from '@/stores/useSeenJobStatesStore'
 import { JobDetailPage } from './JobDetailPage'
 
 jest.mock('@/hooks/domain/useJob', () => {
@@ -494,5 +496,45 @@ describe('JobDetailPage: los hooks, por encima de las salidas', () => {
     rerender(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
     expect(getByTestId('job-detail-start')).toBeTruthy()
+  })
+})
+
+/**
+ * Mirar la ficha es enterarse, y eso apaga el punto rojo de Mis trabajos.
+ *
+ * Se apunta aquí y no en la lista a propósito: en la lista se ve el rótulo del
+ * estado, no lo que ha pasado. Dar por leído lo que solo se ha rozado deja al
+ * cliente sin la única señal que le decía dónde mirar.
+ */
+describe('JobDetailPage: abrirla cuenta como haberlo visto', () => {
+  const CLIENTE = { id: 'cli-1', name: 'Ana' } as unknown as User
+
+  beforeEach(() => {
+    useSeenJobStatesStore.setState({ states: {} })
+    useAuthStore.setState({ user: CLIENTE })
+  })
+
+  it('apunta en qué estado se vio el trabajo', () => {
+    soporte.job = ficha({
+      viewer: 'client',
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'DONE',
+      workFinishedAt: '2026-09-03T12:00:00.000Z',
+    })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(useSeenJobStatesStore.getState().states['cli-1']).toEqual({
+      'job-1': 'IN_PROGRESS|DONE|fin',
+    })
+  })
+
+  /** La lista de los puntos es la del cliente; el profesional tiene su agenda */
+  it('del lado del profesional no se apunta nada', () => {
+    soporte.job = ficha({ viewer: 'pro', status: 'IN_PROGRESS' })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(useSeenJobStatesStore.getState().states['cli-1']).toBeUndefined()
   })
 })

@@ -20,7 +20,7 @@
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { FormScrollView } from '@/components/templates/FormScrollView'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Dialog } from '@/components/organisms/Dialog'
@@ -46,7 +46,9 @@ import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
-import { jobStatusLook, jobTypeLabel } from '@/utils/jobStatus'
+import { jobStatusLook, jobTypeLabel, jobStateSignature } from '@/utils/jobStatus'
+import { useUser } from '@/stores/useAuthStore'
+import { useMarkJobStateSeen } from '@/stores/useSeenJobStatesStore'
 import { theme } from '@/theme'
 import { styles } from './JobDetailPage.styles'
 
@@ -226,6 +228,24 @@ export function JobDetailPage({
 
   /** Si está escribiendo el motivo de que algo no haya quedado bien */
   const [holding, setHolding] = useState(false)
+
+  /**
+   * Abrir la ficha es mirarlo: se apunta en qué estado se ha visto.
+   *
+   * Es lo que apaga el punto rojo de «esto se ha movido» en Mis trabajos. Va
+   * aquí y no en la lista porque mirar la lista no es enterarse: se ve el
+   * rótulo, no lo que ha pasado.
+   *
+   * Solo del lado del cliente, que es de quien es esa lista. Y arriba con el
+   * resto de hooks, por lo que dice el apunte de más arriba.
+   */
+  const user = useUser()
+  const markSeen = useMarkJobStateSeen()
+
+  useEffect(() => {
+    if (!user || !job || job.viewer !== 'client') return
+    markSeen(user.id, job.id, jobStateSignature(job))
+  }, [user, job, markSeen])
 
   /**
    * El diálogo de romper un contrato, con su motivo.

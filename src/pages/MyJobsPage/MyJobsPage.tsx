@@ -28,6 +28,7 @@ import { EmptyState } from '@/components/molecules/EmptyState'
 import { jobTypeLabel } from '@/utils/jobStatus'
 import { JobCard } from '@/components/molecules/JobCard'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
+import { useJobNews } from '@/hooks/domain/useJobNews'
 import { useRespondSubstitute } from '@/hooks/domain/useInbox'
 import type { ApiJob, ApiJobType } from '@/api/jobs.api'
 import { theme } from '@/theme'
@@ -77,6 +78,15 @@ export function MyJobsPage({
   const jobs = data?.items ?? []
 
   /**
+   * Cuáles se han movido desde que se miraron.
+   *
+   * Es lo que la lista no decía: los trabajos están repartidos en pestañas y
+   * el aviso al móvil llega una vez, así que para saber si había algo nuevo
+   * había que entrar en las dos y leerlas enteras.
+   */
+  const hasNews = useJobNews(jobs)
+
+  /**
    * Los trabajos, agrupados por cómo se contrata.
    *
    * Son formas distintas de esperar y se siguen distinto: una reserva espera
@@ -101,6 +111,7 @@ export function MyJobsPage({
       label: jobTypeLabel(type),
       jobs: jobs.filter((job) => job.type === type),
     }))
+    .map((group) => ({ ...group, news: group.jobs.some(hasNews) }))
     .filter((group) => group.jobs.length > 0)
 
   /**
@@ -263,6 +274,27 @@ export function MyJobsPage({
                       >
                         {group.label} · {group.jobs.length}
                       </Text>
+
+                      {/*
+                        Y el punto que dice en cuál hay algo nuevo. Sin él,
+                        saber si se ha movido algo obliga a abrir las dos
+                        pestañas y leerlas: la pestaña cerrada no cuenta nada
+                        de lo suyo salvo cuántos hay.
+
+                        Blanco sobre el rojo de urgencias, que es la única
+                        píldora donde un punto rojo no se vería.
+                      */}
+                      {group.news && (
+                        <View
+                          style={[
+                            styles.tabDot,
+                            isUrgent && isOpen && styles.tabDotOnUrgent,
+                          ]}
+                          accessible
+                          accessibilityLabel="Hay novedades"
+                          testID={`my-jobs-tab-${group.type}-news`}
+                        />
+                      )}
                     </Pressable>
                   )
                 })}
@@ -289,6 +321,7 @@ export function MyJobsPage({
                         onReassign: () =>
                           onReassign(job.id, job.trade, job.proId, job.type),
                       })}
+                      hasNews={hasNews(job)}
                       onRespondSubstitute={(accept) => decideSubstitute(job, accept)}
                       isRespondingSubstitute={isResponding}
                       testID={`job-${job.id}`}
