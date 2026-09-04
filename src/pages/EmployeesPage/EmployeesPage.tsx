@@ -43,7 +43,7 @@ import {
   useRefreshAccountStatusOnForeground,
   useRequestOnboardingLink,
 } from '@/hooks/domain/usePaymentAccount'
-import type { LegalForm } from '@/api/employees.api'
+import type { ApiEmployee, LegalForm } from '@/api/employees.api'
 import { getTradeLabel } from '@/utils/trades'
 import { theme } from '@/theme'
 import { styles } from './EmployeesPage.styles'
@@ -354,6 +354,79 @@ function EmployerForm({ onBack }: { onBack: () => void }) {
         <Text style={styles.cancel}>Ahora no</Text>
       </Pressable>
     </InfoCard>
+  )
+}
+
+/**
+ * Uno de los ajustes que la empresa le lleva a un trabajador.
+ *
+ * `done` es lo que le da color: **rojo si falta, verde si ya está**. Sin él el
+ * botón se queda como estaba, en el azul de siempre, y eso es para los dos que
+ * no se pueden completar —los recargos vienen con los de la ley y no tener
+ * días fuera es lo normal—: un rojo que no se puede apagar deja de significar
+ * nada a la tercera vez que se ve.
+ *
+ * El color no va solo: el rótulo dice "falta" o "listo" al lado del nombre.
+ * Quien no distingue el rojo del verde —uno de cada doce hombres— vería seis
+ * botones iguales.
+ */
+function Ajuste({
+  label,
+  done,
+  onPress,
+  disabled,
+  testID,
+}: {
+  label: string
+  /** Sin definir: no se colorea, porque no hay nada que completar */
+  done?: boolean
+  onPress: () => void
+  disabled?: boolean
+  testID: string
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={
+        done === undefined ? label : `${label}: ${done ? 'listo' : 'falta ponerlo'}`
+      }
+      style={[
+        styles.setting,
+        done === true && styles.settingDone,
+        done === false && styles.settingMissing,
+      ]}
+      testID={testID}
+    >
+      <Text
+        style={[
+          styles.settingText,
+          done === true && styles.settingTextDone,
+          done === false && styles.settingTextMissing,
+        ]}
+      >
+        {label}
+        {done === undefined ? '' : done ? ' · listo' : ' · falta'}
+      </Text>
+    </Pressable>
+  )
+}
+
+/**
+ * Si a ese trabajador no le falta nada de lo que **sí** se puede completar.
+ *
+ * Las cuatro que cuentan son las que le impiden trabajar como es debido: sin
+ * guardias no atiende urgencias, sin horario no se le puede reservar, sin
+ * punto en el mapa no sale en ninguna búsqueda por cercanía y sin código
+ * postal no hay festivos que aplicarle.
+ */
+function listo(employee: ApiEmployee): boolean {
+  return (
+    employee.setup.urgencyWindows > 0 &&
+    employee.setup.availabilityWindows > 0 &&
+    employee.setup.hasLocation &&
+    employee.setup.hasPostcode
   )
 }
 
@@ -711,111 +784,133 @@ export function EmployeesPage({
                         {employee.phone && ` · ${employee.phone}`}
                       </Text>
 
+                      {/*
+                        Los dos avisos, en rojo. No son informativos: mientras
+                        estén ahí, esa persona no está entera —una no ha
+                        llegado a entrar en su cuenta y la otra no puede
+                        aceptar urgencias—, y en gris se leían como una nota al
+                        pie de su ficha.
+                      */}
                       {employee.pendingFirstLogin && (
-                        <Text style={styles.pending}>
-                          Todavía no ha entrado. Sigue con la contraseña
-                          temporal que le enviamos por correo.
+                        <Text
+                          style={styles.pending}
+                          testID={`employee-pending-login-${employee.id}`}
+                        >
+                          Todavía no ha entrado ni ha validado su correo. Sigue
+                          con la contraseña temporal que le enviamos.
                         </Text>
                       )}
 
                       {!employee.identityVerified && (
-                        <Text style={styles.unverified}>
+                        <Text
+                          style={styles.unverified}
+                          testID={`employee-unverified-${employee.id}`}
+                        >
                           Hasta que suba su DNI aparece como acreditado por ti
                           y no puede aceptar urgencias.
                         </Text>
                       )}
 
                       {/**
-                       * Dentro de estas horas el cliente le asigna urgencias
-                       * directamente, sin pasar por el empleador. Va en su
-                       * ficha porque es un ajuste de esa persona, no de la
-                       * empresa: cada uno tiene el suyo.
+                       * Lo que la empresa le lleva, con forma de botón y con
+                       * color: **rojo lo que falta, verde lo que ya está**.
+                       *
+                       * Un trabajador dado de alta y dejado así no aparece en
+                       * ninguna búsqueda —sin punto en el mapa no entra en
+                       * ninguna lista por cercanía— y nadie se entera: la
+                       * ficha se veía igual de completa con todo puesto que
+                       * con nada. El color lo dice sin abrir seis pantallas.
+                       *
+                       * Los dos últimos no llevan color a propósito, y no es
+                       * un olvido: los recargos vienen con los de la ley
+                       * puestos y no tener días fuera es lo normal. En rojo
+                       * serían dos casillas que nunca se pueden completar.
+                       *
+                       * El de urgencias va el primero porque es el único que
+                       * decide si un cliente puede llamar a su puerta sin
+                       * pasar por la empresa.
                        */}
-                      {/*
-                        Los cuatro ajustes que le lleva la empresa, con forma de
-                        botón. Eran cuatro líneas de texto seguidas y se leían
-                        como un párrafo con flechas, no como cuatro cosas que se
-                        pueden tocar.
+                      <Text
+                        style={styles.settingsIntro}
+                        testID={`employee-settings-intro-${employee.id}`}
+                      >
+                        {listo(employee)
+                          ? 'Ya lo tienes configurado. Desde aquí puedes cambiarle lo que necesites.'
+                          : 'Te falta configurarle esto para que pueda trabajar: en rojo lo que aún no has puesto. Hasta que lo pongas, el cliente no sabe cuándo está disponible ni puede contar con él para una urgencia.'}
+                      </Text>
 
-                        El de urgencias va el primero porque es el único que
-                        decide si un cliente puede llamar a su puerta sin pasar
-                        por la empresa.
-                      */}
                       <View style={styles.settings}>
-                        <Pressable
+                        <Ajuste
+                          label="Horario de urgencias"
+                          done={employee.setup.urgencyWindows > 0}
                           onPress={() => onUrgencySchedule(employee.id, employee.name)}
                           disabled={isRemoving}
-                          accessibilityRole="button"
-                          style={styles.setting}
                           testID={`employee-schedule-${employee.id}`}
-                        >
-                          <Text style={styles.settingText}>Horario de urgencias</Text>
-                        </Pressable>
+                        />
 
-                        <Pressable
+                        <Ajuste
+                          label="Horario de trabajo"
+                          done={employee.setup.availabilityWindows > 0}
                           onPress={() =>
                             onEmployeeSetting('horario', employee.id, employee.name)
                           }
                           disabled={isRemoving}
-                          accessibilityRole="button"
-                          style={styles.setting}
                           testID={`employee-availability-${employee.id}`}
-                        >
-                          <Text style={styles.settingText}>Horario de trabajo</Text>
-                        </Pressable>
+                        />
 
-                        <Pressable
+                        <Ajuste
+                          label="Zona de trabajo"
+                          done={employee.setup.hasLocation}
                           onPress={() =>
                             onEmployeeSetting('zona', employee.id, employee.name)
                           }
                           disabled={isRemoving}
-                          accessibilityRole="button"
-                          style={styles.setting}
                           testID={`employee-coverage-${employee.id}`}
-                        >
-                          <Text style={styles.settingText}>Zona de trabajo</Text>
-                        </Pressable>
+                        />
 
-                        <Pressable
+                        <Ajuste
+                          label="Días que no está"
                           onPress={() =>
                             onEmployeeSetting('ausencias', employee.id, employee.name)
                           }
                           disabled={isRemoving}
-                          accessibilityRole="button"
-                          style={styles.setting}
                           testID={`employee-absences-${employee.id}`}
-                        >
-                          <Text style={styles.settingText}>Días que no está</Text>
-                        </Pressable>
+                        />
 
                         {/*
                           Los recargos y los festivos, al final: son lo único
                           de esta lista que habla de dinero, y quien entra aquí
                           casi siempre viene a mover horarios.
+
+                          Los recargos, sin color: nacen con los de la ley
+                          puestos —el +75% de domingos y festivos, el +25%
+                          nocturno—, así que nunca están "sin poner". El botón
+                          es para cambiarlos.
                         */}
-                        <Pressable
+                        <Ajuste
+                          label="Recargos"
                           onPress={() =>
                             onEmployeeSetting('recargos', employee.id, employee.name)
                           }
                           disabled={isRemoving}
-                          accessibilityRole="button"
-                          style={styles.setting}
                           testID={`employee-surcharges-${employee.id}`}
-                        >
-                          <Text style={styles.settingText}>Recargos</Text>
-                        </Pressable>
+                        />
 
-                        <Pressable
+                        {/*
+                          Los festivos sí: salen de la comunidad, y la comunidad
+                          sale del código postal de su base. Sin código postal
+                          no hay calendario que aplicarle, y eso son días que
+                          se cobran distinto.
+                        */}
+                        <Ajuste
+                          label="Festivos"
+                          done={employee.setup.hasPostcode}
                           onPress={() =>
                             onEmployeeSetting('festivos', employee.id, employee.name)
                           }
                           disabled={isRemoving}
-                          accessibilityRole="button"
-                          style={styles.setting}
                           testID={`employee-holidays-${employee.id}`}
-                        >
-                          <Text style={styles.settingText}>Festivos</Text>
-                        </Pressable>
+                        />
                       </View>
 
                       {/*

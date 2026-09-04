@@ -161,19 +161,26 @@ export const styles = StyleSheet.create({
     opacity: 0.55,
     marginTop: 2,
   },
+  /**
+   * Los dos avisos de que esa persona no está entera: no ha entrado todavía, o
+   * no ha subido su DNI.
+   *
+   * En rojo los dos. Iban uno en azul y otro en gris al 70%, y así se leían
+   * como una nota al pie —cuando lo que dicen es que no puede aceptar
+   * urgencias y que sigue con una contraseña temporal—.
+   */
   pending: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: theme.colors.accent700,
+    color: theme.colors.urgency,
     marginTop: 8,
   },
   unverified: {
-    fontFamily: theme.typography.fonts.body,
+    fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: theme.colors.cardText,
-    opacity: 0.7,
+    color: theme.colors.urgency,
     marginTop: 6,
   },
 
@@ -194,6 +201,21 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.cardDivider,
   },
+  /**
+   * El texto que dice para qué son estos botones.
+   *
+   * Sin él, seis botones de colores son un semáforo sin instrucciones: el
+   * empleador no tiene por qué saber que sin horario nadie puede reservarle
+   * una hora a su trabajador.
+   */
+  settingsIntro: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.85,
+    marginTop: 12,
+  },
   setting: {
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -202,11 +224,36 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.accent,
     backgroundColor: 'transparent',
   },
+  /**
+   * Lo que falta y lo que ya está.
+   *
+   * Con fondo tenue y no solo con el borde: una línea de un píxel y medio se
+   * pierde en una lista de seis, y lo que se busca aquí es ver de un vistazo
+   * cuáles están rojos sin leer ninguno.
+   *
+   * El rojo es el `urgency` de la casa y el verde el `available` del anillo de
+   * disponibilidad, que ya significan "esto pide algo" y "esto está resuelto"
+   * en el resto de la app.
+   */
+  settingMissing: {
+    borderColor: theme.colors.urgency,
+    backgroundColor: 'rgba(163, 69, 58, 0.08)',
+  },
+  settingDone: {
+    borderColor: theme.colors.available,
+    backgroundColor: 'rgba(63, 143, 90, 0.08)',
+  },
   settingText: {
     fontFamily: theme.typography.fonts.bodySemiBold,
     fontSize: theme.typography.sizes.small,
     color: theme.colors.accent700,
     textAlign: 'center',
+  },
+  settingTextMissing: {
+    color: theme.colors.urgency,
+  },
+  settingTextDone: {
+    color: theme.colors.availableText,
   },
 
   /**

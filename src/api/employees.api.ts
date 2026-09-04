@@ -53,7 +53,29 @@ export interface ApiEmployee {
   identityVerified: boolean
   /** Sigue con la contraseña temporal: no ha llegado a entrar */
   pendingFirstLogin: boolean
+  /** Qué le tiene puesto su empresa de lo que le toca poner */
+  setup: ApiEmployeeSetup
   createdAt: string
+}
+
+/**
+ * Lo que la empresa le lleva a un trabajador, en hechos.
+ *
+ * Son números y síes, no "está listo": qué significa cada cosa lo decide la
+ * pantalla, que es la que pinta el rojo y el verde. Llega dentro de la propia
+ * lista de trabajadores para no pedir seis cosas por persona.
+ */
+export interface ApiEmployeeSetup {
+  /** Franjas de guardia. Sin ninguna no atiende urgencias */
+  urgencyWindows: number
+  /** Franjas de horario normal. Sin ninguna no se le puede reservar */
+  availabilityWindows: number
+  /** Punto en el mapa. Sin él no sale en ninguna búsqueda por cercanía */
+  hasLocation: boolean
+  /** Código postal: de él sale el calendario de festivos de su comunidad */
+  hasPostcode: boolean
+  /** Días fuera apuntados. Cero es lo normal, no una falta */
+  absences: number
 }
 
 export interface BecomeEmployerPayload {
