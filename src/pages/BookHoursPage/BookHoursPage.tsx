@@ -403,7 +403,7 @@ export function BookHoursPage({
                 {tradeEntry.minHours
                   ? ` · mín. ${formatDuration(tradeEntry.minHours * 60)}`
                   : ''}
-                {pro.employerName ? ` · trabajo de ${pro.name}` : ''}
+                {pro.employerName ? ` · ${pro.name}` : ''}
               </Text>
             </View>
 

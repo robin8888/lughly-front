@@ -369,7 +369,7 @@ export function RequestProPage({
         <InfoCard style={styles.who}>
           <Text style={styles.whoName}>{pro.employerName ?? pro.name}</Text>
           {pro.employerName && (
-            <Text style={styles.whoWorker}>Trabajo de {pro.name}</Text>
+            <Text style={styles.whoWorker}>{pro.name}</Text>
           )}
 
           {/**
