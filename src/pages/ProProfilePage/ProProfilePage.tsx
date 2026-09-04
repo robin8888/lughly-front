@@ -439,7 +439,7 @@ export function ProProfilePage({
           </Text>
           {pro.employerName && (
             <Text style={styles.worker} numberOfLines={1}>
-              Trabajo de {pro.name}
+              {pro.name}
             </Text>
           )}
           <Text style={styles.trade} numberOfLines={1}>

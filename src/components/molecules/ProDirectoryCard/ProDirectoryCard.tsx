@@ -215,8 +215,15 @@ export function ProDirectoryCard({
                 <Text style={styles.name} numberOfLines={1}>
                   {pro.employerName}
                 </Text>
+                {/*
+                  Debajo, quien va a ir. Solo su nombre: iba con un "Trabajo de"
+                  delante y esas dos palabras no dicen nada que la propia
+                  disposición no diga ya —arriba a quien se contrata, debajo
+                  quien llama al timbre—, y se comían la mitad del ancho de una
+                  línea que ya se corta con los nombres largos.
+                */}
                 <Text style={styles.worker} numberOfLines={1}>
-                  Trabajo de {pro.name}
+                  {pro.name}
                 </Text>
               </>
             ) : (
