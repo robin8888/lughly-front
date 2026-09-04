@@ -324,7 +324,7 @@ export function HomePagePro({
             accessibilityRole="button"
             testID="home-pro-to-confirm"
           >
-            <View style={styles.employeesText}>
+            <View style={styles.inboxText}>
               <Text style={styles.inboxTitle}>
                 {toConfirm.length === 1
                   ? 'Tienes un trabajo por confirmar'
@@ -346,7 +346,7 @@ export function HomePagePro({
             accessibilityRole="button"
             testID="home-pro-inbox"
           >
-            <View style={styles.employeesText}>
+            <View style={styles.inboxText}>
               <Text style={styles.inboxTitle}>
                 {pendingCount === 1
                   ? 'Tienes un encargo sin responder'
@@ -367,29 +367,38 @@ export function HomePagePro({
          * escondido en Mi cuenta: es lo primero que necesita hacer.
          */}
         {employer && (
-          <Pressable
-            onPress={onManageEmployees}
-            style={({ pressed }) => [
-              styles.employees,
-              pressed && styles.employeesPressed,
-            ]}
-            accessibilityRole="button"
-            testID="home-pro-employees"
-          >
-            <View style={styles.employeesText}>
-              <Text style={styles.employeesTitle}>
-                {employer.employeeCount === 0
-                  ? 'Añade a tus trabajadores'
-                  : 'Mis trabajadores'}
-              </Text>
-              <Text style={styles.employeesBody}>
-                {employer.employeeCount === 0
-                  ? `${employer.legalName} todavía no tiene a nadie dado de alta. Sin trabajadores no apareces en ningún oficio.`
-                  : `${employer.employeeCount} ${employer.employeeCount === 1 ? 'trabajador' : 'trabajadores'} · ${employer.trades.length} ${employer.trades.length === 1 ? 'oficio' : 'oficios'}`}
-              </Text>
-            </View>
-            <Text style={styles.employeesArrow}>→</Text>
-          </Pressable>
+          <InfoCard style={styles.employees} testID="home-pro-employees">
+            <Text style={styles.employeesTitle}>
+              {employer.employeeCount === 0
+                ? 'Añade a tus trabajadores'
+                : 'Mis trabajadores'}
+            </Text>
+            <Text style={styles.employeesBody}>
+              {employer.employeeCount === 0
+                ? `${employer.legalName} todavía no tiene a nadie dado de alta. Sin trabajadores no apareces en ningún oficio.`
+                : `${employer.employeeCount} ${employer.employeeCount === 1 ? 'trabajador' : 'trabajadores'} · ${employer.trades.length} ${employer.trades.length === 1 ? 'oficio' : 'oficios'}`}
+            </Text>
+
+            {/*
+              La tarjeta entera era el botón, con una flecha al final. Eso deja
+              lo que hay que hacer a que alguien adivine que el bloque se
+              pulsa; ahora lo dice un botón con su nombre, y la tarjeta vuelve
+              a ser lo que es: blanca y de leer.
+
+              Naranja y no azul porque en una pantalla donde ya hay botones
+              azules éste es de otra cosa, y a media caja como el de la agenda:
+              los dos son la misma clase de salida.
+            */}
+            <Button
+              onPress={onManageEmployees}
+              style={styles.employeesAction}
+              pressedStyle={styles.employeesActionPressed}
+              textStyle={styles.employeesActionText}
+              testID="home-pro-employees-add"
+            >
+              Añadir trabajador
+            </Button>
+          </InfoCard>
         )}
 
         {isPending ? (

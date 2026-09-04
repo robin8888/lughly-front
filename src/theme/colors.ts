@@ -177,6 +177,21 @@ export const colors = {
   pendingSoft: '#fceedd',
   pendingText: '#8a4d0a',
   /**
+   * El cuarto de la familia: el naranja **con blanco encima**.
+   *
+   * `pending` no vale para eso —blanco sobre él se queda en 3,5:1, como dice
+   * el apunte de arriba—, así que un botón naranja relleno necesita bajar el
+   * tono hasta que la letra se lea: éste da 5,2:1 y sigue siendo naranja.
+   *
+   * Lo estrena el botón de dar de alta trabajadores en la home del
+   * profesional (4 Septiembre 2026): es lo primero que necesita hacer quien
+   * tiene gente a cargo, y en una tarjeta blanca el azul de la app lo
+   * confundía con el resto de botones de la pantalla.
+   */
+  pendingStrong: '#a8560f',
+  /** Un escalón más abajo, para cuando está pulsado */
+  pendingStrongPressed: '#8f4a0d',
+  /**
    * El mismo naranja de la familia de arriba, aclarado para escribir con él
    * sobre el cristal navy del bocadillo de la home. Ahí nombra **el oficio**
    * —"Hay 7 profesionales de *carpintería*"—, así que aquí no significa "hay

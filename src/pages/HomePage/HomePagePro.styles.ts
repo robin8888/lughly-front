@@ -104,40 +104,61 @@ export const styles = StyleSheet.create({
    * el 700 sube a 6,48:1. Es además el mismo azul que rellena los botones
    * primarios desde que se corrigió el contraste, así que ahora pegan.
    */
+  /**
+   * Dar de alta a los suyos, en tarjeta blanca.
+   *
+   * Era un bloque azul entero pulsable, con una flecha al final. Blanca se lee
+   * como lo que es —una nota con lo que le falta— y lo que hay que hacer lo
+   * dice el botón, en vez de dejarlo a que se adivine que el bloque se toca.
+   */
   employees: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 13,
     marginTop: 12,
-    borderRadius: theme.radius.card,
-    backgroundColor: theme.colors.accent700,
+    /*
+      Y con el contorno naranja de "esto espera por ti", el mismo de los
+      encargos sin responder y de un trabajo que se quedó sin nadie: entre
+      tarjetas blancas es lo que la separa del resto sin gritar. Línea y media
+      como allí, y `pending` —3,5:1 sobre blanco— que es el que la WCAG pide
+      para delimitar (1.4.11 pide 3:1).
+    */
+    borderWidth: 1.5,
+    borderColor: theme.colors.pending,
   },
-  /** Un escalón más de la rampa al pulsarlo, como hace `Button` */
-  employeesPressed: {
-    backgroundColor: theme.colors.accent800,
-  },
-  employeesText: {
+  inboxText: {
     flex: 1,
   },
   employeesTitle: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
-    color: '#ffffff',
+    color: theme.colors.cardText,
   },
   employeesBody: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,
     lineHeight: theme.typography.sizes.tiny * 1.5,
-    color: '#ffffff',
-    // Blanco al 80% sobre el 700 da 4,83:1: se apaga sin dejar de cumplir
-    opacity: 0.8,
+    color: theme.colors.cardText,
+    // Apagado sobre blanco, que sigue pasando de sobra el 4,5:1
+    opacity: 0.75,
     marginTop: 3,
   },
-  employeesArrow: {
-    fontFamily: theme.typography.fonts.bodyBold,
-    fontSize: theme.typography.sizes.h5,
+  /**
+   * El botón de dar de alta: naranja y a media caja, como el de la agenda en
+   * la cabecera. `pendingStrong` y no `pending`, que con letra blanca encima
+   * se queda en 3,5:1; éste da 5,2:1.
+   */
+  employeesAction: {
+    width: '50%',
+    alignSelf: 'center',
+    marginTop: 12,
+    backgroundColor: theme.colors.pendingStrong,
+    borderColor: theme.colors.pendingStrong,
+  },
+  /* Quien pinta el fondo a mano dice también cómo se ve hundido */
+  employeesActionPressed: {
+    backgroundColor: theme.colors.pendingStrongPressed,
+  },
+  employeesActionText: {
     color: '#ffffff',
+    fontSize: 14,
   },
   section: {
     marginTop: 20,
