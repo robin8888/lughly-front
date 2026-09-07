@@ -126,6 +126,17 @@ export const styles = StyleSheet.create({
   inboxText: {
     flex: 1,
   },
+  /**
+   * El aviso de que no está en el mapa. Mismo contorno naranja que la tarjeta
+   * de trabajadores y que los encargos sin responder: es la misma clase de
+   * cosa —algo que espera por él y le está costando trabajos—, y dos avisos
+   * de la misma clase con dos colores distintos se leen como dos gravedades.
+   */
+  zone: {
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: theme.colors.pending,
+  },
   employeesTitle: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.small,
@@ -159,6 +170,17 @@ export const styles = StyleSheet.create({
   employeesActionText: {
     color: '#ffffff',
     fontSize: 14,
+  },
+  /* El de a mano, debajo del naranja: es la salida, no lo que se propone */
+  zoneManual: {
+    marginTop: 10,
+    alignSelf: 'center',
+  },
+  zoneManualText: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.accent700,
+    textDecorationLine: 'underline',
   },
   section: {
     marginTop: 20,

@@ -31,6 +31,9 @@ import { useUnreadCount } from '@/hooks/domain/useChat'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
 import { Dialog } from '@/components/organisms/Dialog'
+import { LocationAsk } from '@/components/organisms/LocationAsk'
+import { useLocateMyBase } from '@/hooks/domain/useLocateMyBase'
+import { useLocationGate } from '@/hooks/ui/useLocationGate'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { useAvailableNow } from '@/hooks/domain/useAvailableNow'
@@ -54,6 +57,8 @@ export interface HomePageProProps {
   onInbox: () => void
   /** A la pantalla de urgencias, donde se contestan */
   onUrgencies: () => void
+  /** A Mi zona de trabajo, para quien prefiera escribir su dirección */
+  onZone: () => void
   /** Al botón flotante de Mensajes. Vivía como fila de Mi cuenta hasta el 22 Ago 2026 */
   onMessages: () => void
 }
@@ -64,6 +69,7 @@ export function HomePagePro({
   onManageEmployees,
   onInbox,
   onUrgencies,
+  onZone,
   onMessages,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
@@ -75,6 +81,16 @@ export function HomePagePro({
    */
   const unread = useUnreadCount()
   const user = useUser()
+
+  /**
+   * Si está en el mapa, y el botón para ponerse de un toque.
+   *
+   * `hasBase` es `null` mientras no se sabe: la tarjeta no sale hasta que hay
+   * respuesta, porque un aviso que aparece medio segundo después de abrir y
+   * empuja todo hacia abajo se lee como un fallo de la app.
+   */
+  const { status: locateStatus, hasBase, locate } = useLocateMyBase()
+  const zoneGate = useLocationGate(locate)
 
   /**
    * Las valoraciones empiezan plegadas. Quien abre su propia home viene a ver
@@ -359,6 +375,61 @@ export function HomePagePro({
             </View>
             <Text style={styles.inboxArrow}>→</Text>
           </Pressable>
+        )}
+
+        {/**
+         * Sin punto en el mapa no le encuentra nadie por cercanía, y va aquí
+         * arriba porque es lo único de esta pantalla que le está costando
+         * trabajos ahora mismo.
+         *
+         * Le pasa **siempre** al que entra dado de alta por su empresa: ese
+         * formulario no pide dirección. Al autónomo casi nunca, porque su base
+         * queda puesta al registrarse con la dirección que da.
+         *
+         * **No se puede cerrar**, y es a propósito. Los otros avisos de esta
+         * home sí —son cosas que pasan una vez y se resuelven—; éste dura lo
+         * que dure el problema, y cerrarlo sería esconder justo lo que hace
+         * que no le llegue trabajo. Se va solo en cuanto tiene base.
+         */}
+        {hasBase === false && (
+          <InfoCard style={styles.zone} testID="home-pro-zone">
+            <Text style={styles.employeesTitle}>No sales en las búsquedas</Text>
+            <Text style={styles.employeesBody}>
+              Los clientes buscan por cercanía y tú todavía no estás en el mapa,
+              así que no apareces —ni aunque el trabajo sea en tu calle—.
+              Tampoco te llegan urgencias, que se reparten por distancia.
+            </Text>
+
+            <Button
+              onPress={() => void zoneGate.start()}
+              loading={locateStatus === 'locating' || locateStatus === 'saving'}
+              style={styles.employeesAction}
+              pressedStyle={styles.employeesActionPressed}
+              textStyle={styles.employeesActionText}
+              testID="home-pro-zone-locate"
+            >
+              Usar mi ubicación
+            </Button>
+
+            {/*
+              Y la salida para quien no quiere dar el permiso, o ya lo ha
+              denegado: la pantalla de siempre, donde se busca la dirección a
+              mano. Un aviso cuya única salida fuera ceder el GPS no sería un
+              aviso.
+            */}
+            <Pressable
+              onPress={onZone}
+              accessibilityRole="button"
+              style={styles.zoneManual}
+              testID="home-pro-zone-manual"
+            >
+              <Text style={styles.zoneManualText}>
+                {locateStatus === 'denied'
+                  ? 'Sin ubicación: buscar mi dirección'
+                  : 'Prefiero escribir mi dirección'}
+              </Text>
+            </Pressable>
+          </InfoCard>
         )}
 
         {/**
@@ -658,6 +729,20 @@ export function HomePagePro({
         onPress={onMessages}
         unread={unread.data?.total ?? 0}
         testID="home-pro-messages-fab"
+      />
+
+      {/*
+        Para qué se le pide la ubicación, antes de que el sistema pregunte. Si
+        el permiso ya estaba dado esto no llega a verse: `useLocationGate` va
+        derecho a situarle.
+      */}
+      <LocationAsk
+        visible={zoneGate.visible}
+        reason="be-found"
+        busy={zoneGate.busy}
+        onAccept={() => void zoneGate.accept()}
+        onDismiss={zoneGate.dismiss}
+        testID="home-pro-zone-ask"
       />
     </SafeAreaView>
   )

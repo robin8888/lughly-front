@@ -2691,7 +2691,9 @@ comentario opcional.
 - **Lo que se descubrió de camino**: un trabajador recién dado de alta **no
   tiene ni punto en el mapa ni código postal** —el formulario no los pide—, así
   que hasta que la empresa le entra a «Zona de trabajo» no sale en ninguna
-  búsqueda por cercanía ni en ninguna urgencia.
+  búsqueda por cercanía ni en ninguna urgencia. **Resuelto el 7 de septiembre**,
+  y no pidiendo la dirección en el alta: la zona pasó a ser suya y se pone con
+  la ubicación de su propio móvil.
 
 ### Y unas cuantas de leer y tocar
 
@@ -2715,6 +2717,48 @@ comentario opcional.
   llama al timbre.
 
 ---
+
+## ✅ La ubicación, pedida diciendo para qué (7 Septiembre 2026)
+
+Dos personas se quedaban fuera del mapa por el mismo motivo —nadie les había
+preguntado dónde están— y la app tenía el GPS a mano sin usarlo.
+
+### La zona de trabajo es de quien se desplaza
+
+- **Un empleado ya pone la suya.** El servidor lo rechazaba con un 403
+  (`EmployeeCannotSetCoverageError`): era de su empresa, como los oficios y el
+  horario. Salía caro al revés de lo que parecía —el alta de un trabajador no
+  pide dirección, así que entraba sin punto en el mapa y solo su empresa podía
+  sacarle de ahí, entrando una por una a la pantalla de cada uno—.
+- **Y el radio con el punto**: hasta dónde se desplaza uno depende de si tiene
+  furgoneta o va en metro, y eso lo sabe él.
+- **A la empresa se le retira**, no se le deja de adorno: fuera el
+  `PUT /v1/employees/:id/coverage` y su botón en la lista. Lo que necesita
+  saber —si ya está en el mapa— viaja en `setup.hasLocation` y se dice con
+  palabras debajo de los ajustes. Los festivos dejan de colorearse por lo
+  mismo: cuelgan del código postal de esa base, y **un rojo que quien lo ve no
+  puede apagar deja de significar nada** —la misma regla del 4 de septiembre—.
+
+### Y se pide diciendo para qué
+
+- **`LocationAsk` va delante del diálogo del sistema.** El del sistema es una
+  frase seca, sale **una vez en la vida de la instalación** y no se puede
+  volver a sacar: quien lo deniega por reflejo se queda sin cercanía para
+  siempre, y sin haber leído nunca qué ganaba.
+- **Dos motivos, dos textos.** Al cliente se le usa para ordenar la lista y no
+  se guarda; al profesional para ponerle en el mapa y sí se guarda —es su
+  base—. Decirle que no se guarda sería mentirle.
+- **No se explica lo que ya está concedido** (`useLocationGate` +
+  `useUserLocation.check`): ahí no hay ninguna pregunta que preparar y el
+  diálogo sería un paso de más.
+- **Al profesional sin base se le avisa en su home**, con el botón de un toque
+  y la salida de escribir la dirección a mano. Ese aviso **no se puede
+  cerrar**: dura lo que dure el problema, porque cerrarlo sería esconder justo
+  lo que hace que no le llegue trabajo.
+- **Al cliente sin punto se le ofrece en el directorio.** El orden por cercanía
+  ya caía a la dirección del alta, pero quien no tiene ninguna de las dos
+  —cuentas de antes de que se pidiera— veía la lista entera sin ordenar y
+  nada lo decía.
 
 ## 🆘 Si te Bloqueas
 
@@ -2740,4 +2784,4 @@ comentario opcional.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: la cuenta de cobro del profesional — 2 Septiembre 2026_
+_Última actualización: la ubicación, pedida diciendo para qué — 7 Septiembre 2026_

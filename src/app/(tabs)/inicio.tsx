@@ -24,6 +24,8 @@ export default function InicioRoute() {
         onManageEmployees={() => router.navigate('/empleados')}
         onInbox={() => router.navigate('/encargos')}
         onUrgencies={() => router.navigate('/urgent')}
+        /* Fuera de las pestañas: se apila y se vuelve, como el resto de Mi cuenta */
+        onZone={() => router.push('/mi-zona')}
         onMessages={() => router.push('/mensajes')}
       />
     )
