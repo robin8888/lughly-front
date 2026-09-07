@@ -408,3 +408,82 @@ export function useApproveStart() {
 function mensajeDe(error: unknown): string | null {
   return error instanceof NetworkError || error instanceof ApiError ? error.message : null
 }
+
+/**
+ * El profesional emite el presupuesto tras ver el trabajo (`CICLOS` §C5).
+ *
+ * Cada emisión es una versión nueva y la anterior queda marcada: reemitir
+ * después de un rechazo es el camino normal, no un caso raro. Por eso el hook
+ * no distingue "crear" de "corregir" — el servidor lleva la cuenta.
+ *
+ * Se invalida todo lo de trabajos: el estado pasa a `QUOTED` y eso cambia la
+ * tarjeta de Mis trabajos, la bandeja y la ficha a la vez.
+ */
+export function useCreateQuote() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({
+      jobId,
+      payload,
+    }: {
+      jobId: string
+      payload: Parameters<typeof jobsApi.createQuote>[1]
+    }) => jobsApi.createQuote(jobId, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    createQuote: async (
+      jobId: string,
+      payload: Parameters<typeof jobsApi.createQuote>[1],
+    ) => {
+      try {
+        return {
+          ok: true as const,
+          error: null,
+          result: await mutation.mutateAsync({ jobId, payload }),
+        }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isQuoting: mutation.isPending,
+  }
+}
+
+/**
+ * El cliente dice que no, con el motivo.
+ *
+ * **No cierra el trabajo**: queda esperando otra versión quince días. Y el
+ * motivo se exige, porque es lo único que le dice al profesional qué cambiar
+ * —un "no" a secas convierte reemitir en adivinar—.
+ */
+export function useRejectQuote() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ jobId, reason }: { jobId: string; reason: string }) =>
+      jobsApi.rejectQuote(jobId, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    rejectQuote: async (jobId: string, reason: string) => {
+      try {
+        return {
+          ok: true as const,
+          error: null,
+          result: await mutation.mutateAsync({ jobId, reason }),
+        }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isRejecting: mutation.isPending,
+  }
+}

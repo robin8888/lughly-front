@@ -201,6 +201,7 @@ export default function RootLayout() {
               <Stack.Screen name="mis-ausencias" />
               <Stack.Screen name="mis-recargos" />
               <Stack.Screen name="mis-festivos" />
+              <Stack.Screen name="presupuestar" />
               <Stack.Screen name="trabajo/[id]" />
               {/*
                 A quién llamar para una urgencia. Va declarada como las demás:

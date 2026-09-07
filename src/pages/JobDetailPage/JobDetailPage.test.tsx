@@ -32,6 +32,8 @@ jest.mock('@/hooks/domain/useJob', () => {
     held: [] as { jobId: string; reason: string }[],
     /** Las valoraciones que se mandan al cerrar */
     reviewed: [] as { jobId: string; rating: number; comment: string | null }[],
+    /** Los presupuestos rechazados, con el motivo (`CICLOS` §C5) */
+    rejectedQuotes: [] as { jobId: string; reason: string }[],
   }
 
   return {
@@ -86,6 +88,13 @@ jest.mock('@/hooks/domain/useJob', () => {
         return Promise.resolve({ ok: true, result: null, error: null })
       },
       isReviewing: false,
+    }),
+    useRejectQuote: () => ({
+      rejectQuote: (jobId: string, reason: string) => {
+        soporte.rejectedQuotes.push({ jobId, reason })
+        return Promise.resolve({ ok: true, result: null, error: null })
+      },
+      isRejecting: false,
     }),
   }
 })
@@ -145,6 +154,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     holdReason: null,
     createdAt: '2026-08-29T09:00:00.000Z',
     serviceLines: [],
+    quotes: [],
     ...cambios,
   }
 }
@@ -156,6 +166,8 @@ beforeEach(() => {
   // Faltaba, y el fallo solo sale en conjunto: un test veía lo que confirmó otro
   soporte.startApproved.length = 0
   soporte.held.length = 0
+  soporte.reviewed.length = 0
+  soporte.rejectedQuotes.length = 0
   soporte.pending = false
 })
 
@@ -653,5 +665,165 @@ describe('JobDetailPage: valorar al dar por bueno', () => {
     expect(soporte.reviewed).toEqual([])
     // Cerrado y pagado igual
     expect(soporte.completed).toEqual(['job-1'])
+  })
+})
+
+/**
+ * El presupuesto en la ficha (`CICLOS` §C5).
+ *
+ * Es el paso que faltaba del ciclo de la visita: hasta ahora el precio del
+ * arreglo se daba fuera de la app, y todo lo que viene detrás —aceptarlo,
+ * pagarlo, discutir un extra— colgaba de una cifra que no estaba en ninguna
+ * parte.
+ *
+ * Lo que se ata aquí es que **los dos lados vean el mismo papel** y que el
+ * motivo del rechazo llegue entero: es lo único que le dice al profesional
+ * qué cambiar en la versión siguiente.
+ */
+describe('JobDetailPage: el presupuesto', () => {
+  const presupuesto = (cambios: Record<string, unknown> = {}) => ({
+    id: 'quote-1',
+    version: 1,
+    status: 'SENT' as const,
+    lines: [
+      {
+        kind: 'LABOUR' as const,
+        concept: 'Cambiar pastillas',
+        quantity: 2,
+        unitPrice: 45,
+        amount: 90,
+      },
+      {
+        kind: 'MATERIALS' as const,
+        concept: 'Juego de pastillas',
+        quantity: 1,
+        unitPrice: 138,
+        amount: 138,
+      },
+    ],
+    linesTotal: 228,
+    visitCredit: 30,
+    total: 198,
+    validUntil: '2099-01-01T00:00:00.000Z',
+    materialsUpfront: false,
+    rejectionReason: null,
+    rejectedAt: null,
+    acceptedAt: null,
+    createdAt: '2026-09-07T10:00:00.000Z',
+    ...cambios,
+  })
+
+  const visita = {
+    type: 'QUOTE' as const,
+    status: 'QUOTED' as const,
+    viewer: 'client' as const,
+  }
+
+  it('el cliente ve las líneas, el descuento de la visita y el total', () => {
+    soporte.job = ficha({ ...visita, quotes: [presupuesto()] })
+
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-quote-1')).toBeTruthy()
+    expect(getByText('Cambiar pastillas')).toBeTruthy()
+    // El descuento se dice: si no, el total no cuadra con la columna
+    expect(getByText('Visita ya pagada')).toBeTruthy()
+    expect(getByText('198,00 €')).toBeTruthy()
+  })
+
+  it('rechazarlo manda el motivo, que es lo que permite la v2', async () => {
+    soporte.job = ficha({ ...visita, quotes: [presupuesto()] })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(screen.getByTestId('job-detail-quote-reject'))
+    await screen.findByTestId('job-detail-quote-reject-dialog')
+
+    fireEvent.changeText(
+      screen.getByTestId('job-detail-quote-reject-reason'),
+      'El material me parece caro',
+    )
+    fireEvent.press(screen.getByTestId('job-detail-quote-reject-confirm'))
+
+    await waitFor(() =>
+      expect(soporte.rejectedQuotes).toEqual([
+        { jobId: 'job-1', reason: 'El material me parece caro' },
+      ]),
+    )
+  })
+
+  it('sin motivo no se manda: un "no" a secas no dice qué cambiar', async () => {
+    soporte.job = ficha({ ...visita, quotes: [presupuesto()] })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(screen.getByTestId('job-detail-quote-reject'))
+    await screen.findByTestId('job-detail-quote-reject-dialog')
+
+    fireEvent.press(screen.getByTestId('job-detail-quote-reject-confirm'))
+
+    expect(soporte.rejectedQuotes).toEqual([])
+  })
+
+  it('uno caducado ya no se contesta: no decidía nada', () => {
+    soporte.job = ficha({
+      ...visita,
+      quotes: [presupuesto({ validUntil: '2020-01-01T00:00:00.000Z' })],
+    })
+
+    const { queryByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-quote-reject')).toBeNull()
+  })
+
+  it('al profesional se le ofrece hacerlo, y al cliente no', () => {
+    soporte.job = ficha({
+      type: 'QUOTE',
+      status: 'CONTRACTED',
+      viewer: 'pro',
+      quotes: [],
+    })
+
+    const conPro = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} onQuote={() => {}} />,
+    )
+    expect(conPro.getByTestId('job-detail-quote')).toBeTruthy()
+    conPro.unmount()
+
+    soporte.job = ficha({ type: 'QUOTE', status: 'CONTRACTED', viewer: 'client' })
+    const conCliente = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    expect(conCliente.queryByTestId('job-detail-quote')).toBeNull()
+  })
+
+  it('después de un rechazo, el botón invita a mandar otro', () => {
+    soporte.job = ficha({
+      type: 'QUOTE',
+      status: 'QUOTE_REJECTED',
+      viewer: 'pro',
+      quotes: [
+        presupuesto({ status: 'REJECTED', rejectionReason: 'Es mucho para lo que es' }),
+      ],
+    })
+
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} onQuote={() => {}} />,
+    )
+
+    expect(getByText('Mandarle otro presupuesto')).toBeTruthy()
+    // Y el motivo del cliente, con sus palabras: es lo que dice qué cambiar
+    expect(getByTestId('job-detail-quote-1-reason')).toBeTruthy()
+  })
+
+  it('una reserva por horas no se presupuesta', () => {
+    // Su precio se pactó antes de que nadie se moviera
+    soporte.job = ficha({ type: 'INSTANT', status: 'CONTRACTED', viewer: 'pro' })
+
+    const { queryByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} onQuote={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-quote')).toBeNull()
   })
 })

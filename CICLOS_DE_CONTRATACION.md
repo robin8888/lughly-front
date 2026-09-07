@@ -322,6 +322,31 @@ se aplica a un trabajo con cobros liberados.
 `QUOTED`. Si `validUntil` vence → `CLOSED` (no `EXPIRED`). Si `QUOTE_REJECTED`
 pasa 15 días sin reemisión → `CLOSED`.
 
+**Construido el 7 Septiembre 2026**, con estas decisiones encima de lo de
+arriba:
+
+- **El descuento de la visita se congela en el presupuesto** (`visitCredit`).
+  Es lo que el cliente pagó, no lo que el profesional cobra hoy por ir: subir
+  la tarifa entre la visita y el presupuesto no puede cambiar lo que se resta.
+- **Y no deja el total en negativo.** Si el arreglo sale por menos que la
+  visita, el total es cero: la visita no se devuelve —el viaje se hizo, §C2b—
+  pero tampoco se le debe dinero a nadie.
+- **Cada línea se redondea antes de sumar**, no al revés. Es la única forma de
+  que el total cuadre con la columna que el cliente suma a mano.
+- **El motivo del rechazo se exige** (cinco caracteres). Un "no" a secas
+  convierte reemitir en adivinar, y lo que sigue a un presupuesto rechazado sin
+  motivo es casi siempre nada.
+- **Reemitir con uno vivo encima de la mesa también vale**: la anterior queda
+  `SUPERSEDED`, que no es un "no". Corregir una cifra mal puesta antes de que
+  el cliente conteste es mejor que pedirle que rechace primero.
+- **Un rechazado conserva su `REJECTED` y su motivo** al llegar la v2: es lo
+  que explica por qué hay una segunda.
+- `materialsUpfront` se guarda ya, pero **el cobro del material por adelantado
+  es de §C6**, que no está.
+
+**Lo que falta de aquí: aceptarlo.** Mueve dinero —`Charge(QUOTE, PAID)`, la
+`Appointment(WORK)` nueva y el `MATERIALS_ADVANCE`— y es §C6 entero.
+
 **C6. Pablo acepta v2 (198 €).** `Job CONTRACTED` otra vez —es el mismo hecho,
 hay acuerdo y dinero— con una **nueva `Appointment(WORK)`** sobre el horario de
 Sergio. `Charge(QUOTE, 198, PAID)` con su comisión congelada. Si Sergio

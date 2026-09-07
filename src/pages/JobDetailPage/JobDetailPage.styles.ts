@@ -245,6 +245,10 @@ export const styles = StyleSheet.create({
     marginTop: 12,
     gap: 8,
   },
+  /* Los botones del presupuesto: separados de la tarjeta que los explica */
+  quoteAction: {
+    marginTop: 16,
+  },
   fact: {
     flexDirection: 'row',
     alignItems: 'flex-start',

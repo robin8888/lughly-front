@@ -2802,6 +2802,64 @@ puede arreglar.
   no tiene ni `Employer`, y el servidor responde 403. Es justo el que más
   necesita el aviso.
 
+## ✅ El presupuesto en sí (7 Septiembre 2026)
+
+Faltaba el paso central del ciclo de la visita (`CICLOS` §C5). El cliente
+pagaba por que fueran a mirarlo, iban, y **el presupuesto se daba fuera de la
+app**: por WhatsApp, en un papel o de palabra. Todo lo que viene detrás
+—aceptarlo, pagarlo, discutir un extra, cancelar con el material ya
+comprado— colgaba de una cifra que la plataforma no tenía.
+
+Los estados que lo necesitaban (`QUOTED`, `QUOTE_REJECTED`, `CLOSED`) y los
+tipos de cobro (`QUOTE`, `QUOTE_EXTRA`, `MATERIALS_ADVANCE`) llevaban
+declarados desde el 22 de agosto, esperando justo a esto.
+
+### Es una tabla porque hay versiones
+
+- Migración `20260907190000_el_presupuesto_en_si`: `Quote` + `QuoteLine`, con
+  `QuoteStatus` y `QuoteLineKind`.
+- **La anterior no se machaca.** Al reemitir queda `SUPERSEDED` si seguía viva,
+  y **`REJECTED` con su motivo** si el cliente ya había dicho que no: la
+  aceptada es el contrato y la rechazada explica por qué hubo una segunda.
+- **Líneas tipadas** y no texto libre con un número al lado: el material es lo
+  único que se puede cobrar por adelantado y lo único que no se devuelve si el
+  cliente cancela después de comprado (§C8).
+
+### Las cuentas, en `domain/quote.ts` y probadas solas
+
+- **Cada línea se redondea antes de sumar.** Al revés da un total que no cuadra
+  con la columna que el cliente suma a mano, y eso no es un céntimo: es una
+  llamada preguntando qué le cobran de más.
+- **La visita se descuenta y se congela** (`visitCredit`): es lo que se pagó, no
+  lo que el profesional cobra hoy por ir.
+- **Y nunca deja el total en negativo.** La visita no se devuelve —el viaje se
+  hizo— pero tampoco se le debe dinero a nadie.
+
+### Rechazar no cierra el trabajo
+
+- Queda en `QUOTE_REJECTED` quince días esperando otra versión. Cerrarlo en el
+  momento del rechazo obligaría a empezar de cero —otra visita, otro cobro—
+  por haber pedido una rebaja.
+- **El motivo se exige**: es lo único que le dice al profesional qué cambiar, y
+  viaja dentro del aviso al móvil para que se lea sin abrir nada.
+- El barrido (`expire-overdue`) cierra las dos vías: presupuesto vencido y
+  rechazado sin reemitir. A `CLOSED` y no a `EXPIRED`, que es lo honrado —aquí
+  hubo visita, hubo presupuesto y se cobró el desplazamiento—.
+
+### En el móvil
+
+- **`QuotePage`** (`/presupuestar`): línea a línea, con el importe de cada una
+  según se teclea y el total con la visita ya restada. Quién presupuesta sin
+  ver el total manda un número que no era el que pensaba.
+- **`QuoteCard`**, la misma para los dos lados: un presupuesto es un documento
+  entre dos, y dos versiones del mismo papel es justo la discusión que esto
+  evita.
+- En la ficha del trabajo salen **todos**, del más nuevo al más viejo, con el
+  motivo del rechazo dentro de su tarjeta.
+
+**Falta aceptarlo**, que es §C6 entero: mueve dinero —`Charge(QUOTE, PAID)`, la
+`Appointment(WORK)` nueva y el pago a cuenta del material—.
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
@@ -2826,4 +2884,4 @@ puede arreglar.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: la cuenta de cobro, pedida a tiempo — 7 Septiembre 2026_
+_Última actualización: el presupuesto en sí — 7 Septiembre 2026_

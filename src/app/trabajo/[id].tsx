@@ -35,6 +35,12 @@ export default function JobDetailRoute() {
               },
             })
       }
+      /*
+       * Escribir el presupuesto, en pantalla aparte: son varias líneas con su
+       * cantidad y su precio, y meterlas aquí convertiría una pantalla de leer
+       * en un formulario largo que hay que recorrer para llegar a lo demás.
+       */
+      onQuote={(id) => router.push({ pathname: '/presupuestar', params: { id } })}
       onOpenChat={(jobId, title, otherName, otherAvatarUrl) =>
         router.push({
           pathname: '/mensajes/trabajo/[id]',

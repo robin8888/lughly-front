@@ -32,6 +32,7 @@ import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { QuoteCard } from '@/components/organisms/QuoteCard'
 import {
   useJob,
   useCancelJob,
@@ -41,6 +42,7 @@ import {
   useCompleteJob,
   useHoldJob,
   useReviewJob,
+  useRejectQuote,
 } from '@/hooks/domain/useJob'
 import { StarRating } from '@/components/atoms/StarRating'
 import { API_BASE_URL } from '@/api'
@@ -175,6 +177,14 @@ export interface JobDetailPageProps {
     otherName: string,
     otherAvatarUrl: string | null,
   ) => void
+  /**
+   * Escribir el presupuesto, del lado profesional (`CICLOS` §C5).
+   *
+   * En pantalla aparte y no aquí dentro: son varias líneas con su cantidad y
+   * su precio, y meterlas en la ficha convertiría una pantalla de leer en un
+   * formulario largo que hay que recorrer para llegar a lo demás.
+   */
+  onQuote?: (jobId: string) => void
 }
 
 export function JobDetailPage({
@@ -182,6 +192,7 @@ export function JobDetailPage({
   onBack,
   onReassign,
   onOpenChat,
+  onQuote,
 }: JobDetailPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
@@ -193,6 +204,7 @@ export function JobDetailPage({
   const { approveStart, isApproving } = useApproveStart()
   const { hold, isHolding } = useHoldJob()
   const { review, isReviewing } = useReviewJob()
+  const { rejectQuote, isRejecting } = useRejectQuote()
 
   /**
    * Todo el estado va **aquí arriba, con el resto de hooks**, y no junto a lo
@@ -210,6 +222,9 @@ export function JobDetailPage({
   const [viewingResult, setViewingResult] = useState<number | null>(null)
   /** El motivo que escribe el cliente cuando algo no ha quedado bien */
   const [holdReason, setHoldReason] = useState('')
+  /** Y el de por qué no le vale el presupuesto (`CICLOS` §C5) */
+  const [rejecting, setRejecting] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
 
   /**
    * Lo que ya se le ha preguntado al cliente en esta visita, si hay algo.
@@ -456,6 +471,63 @@ export function JobDetailPage({
     Boolean(job.startedAt) &&
     !job.startApprovedAt &&
     !job.workFinishedAt
+
+  /**
+   * El presupuesto vigente: el primero de la lista, que viene del más nuevo al
+   * más viejo. `null` en cualquier trabajo que no sea del ciclo de la visita.
+   */
+  const quote = job.quotes[0] ?? null
+
+  /**
+   * Presupuestar, del lado profesional (§C5).
+   *
+   * Se ofrece con el trabajo contratado o en marcha —ha ido o está yendo— y
+   * también después de un rechazo, que es de donde sale la v2: volver con otra
+   * versión más ajustada es el camino normal, no una excepción.
+   *
+   * Y con uno suyo encima de la mesa, para corregir una cifra mal puesta antes
+   * de que el cliente conteste. Son las mismas condiciones que comprueba el
+   * servidor, escritas aquí para que el botón no salga cuando pulsarlo daría
+   * error.
+   */
+  const canQuote =
+    job.viewer === 'pro' &&
+    job.type === 'QUOTE' &&
+    onQuote !== undefined &&
+    ['CONTRACTED', 'IN_PROGRESS', 'QUOTED', 'QUOTE_REJECTED'].includes(job.status)
+
+  /**
+   * Y contestarlo, del lado del cliente.
+   *
+   * Solo al que está pendiente y sin caducar: uno vencido ya no es un precio
+   * —el trabajo se cierra solo— y rechazarlo a posteriori pondría un motivo
+   * en un documento que ya no decidía nada.
+   */
+  const canAnswerQuote =
+    job.viewer === 'client' &&
+    quote !== null &&
+    quote.status === 'SENT' &&
+    new Date(quote.validUntil) > new Date()
+
+  const doRejectQuote = (id: string) => {
+    const motivo = rejectReason.trim()
+    if (motivo.length < 5) return
+
+    void (async () => {
+      const { ok, error } = await rejectQuote(id, motivo)
+
+      if (!ok) {
+        Alert.alert(
+          'No se ha podido enviar',
+          error ?? 'Inténtalo de nuevo en un momento.',
+        )
+        return
+      }
+
+      setRejecting(false)
+      setRejectReason('')
+    })()
+  }
 
   const closeAsk = (which: 'start' | 'complete') =>
     setAsked((antes) => ({ ...antes, [which]: true }))
@@ -743,6 +815,59 @@ export function JobDetailPage({
             </View>
           )}
         </InfoCard>
+
+        {/*
+          El presupuesto, o los que haya (§C5).
+
+          **Todos y no solo el vigente**: el rechazado lleva el motivo, y ese
+          motivo es la mitad de la conversación —sin él, la v2 aparece de la
+          nada y nadie recuerda por qué la v1 no valía—. Del más nuevo al más
+          viejo, que es el orden en que se pregunta por ellos.
+        */}
+        {job.quotes.map((entry, index) => (
+          <QuoteCard
+            key={entry.id}
+            quote={entry}
+            testID={`job-detail-quote-${entry.version}`}
+          >
+            {/*
+              Contestar, solo bajo el vigente. Aceptar todavía no está: mueve
+              dinero y va con el paso siguiente (§C6). Rechazar sí, porque es
+              lo que desbloquea la v2 y no cuesta nada.
+            */}
+            {index === 0 && canAnswerQuote && (
+              <Button
+                variant="secondary"
+                fullWidth
+                onPress={() => setRejecting(true)}
+                style={styles.quoteAction}
+                testID="job-detail-quote-reject"
+              >
+                No me vale, dile por qué
+              </Button>
+            )}
+          </QuoteCard>
+        ))}
+
+        {/*
+          Y el botón de hacerlo, del lado del profesional. El texto cambia
+          según haya algo ya: "otro" después de un rechazo dice, sin explicarlo,
+          que reemitir es lo que toca.
+        */}
+        {canQuote && (
+          <Button
+            fullWidth
+            onPress={() => onQuote?.(job.id)}
+            style={styles.quoteAction}
+            testID="job-detail-quote"
+          >
+            {job.quotes.length === 0
+              ? 'Hacer el presupuesto'
+              : job.status === 'QUOTE_REJECTED'
+                ? 'Mandarle otro presupuesto'
+                : 'Cambiar el presupuesto'}
+          </Button>
+        )}
 
         {/*
           El día del trabajo, arriba de las demás acciones: cuando toca, es lo
@@ -1282,6 +1407,49 @@ Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el s
           numberOfLines={3}
           editable={!isHolding}
           testID="job-detail-hold-reason"
+        />
+      </Dialog>
+
+      {/**
+        * Decir que no al presupuesto, con el motivo.
+        *
+        * **El motivo se exige**, y no por burocracia: es lo único que le dice
+        * al profesional qué cambiar en la versión siguiente. Un "no" a secas
+        * convierte reemitir en adivinar, y lo que sigue a un presupuesto
+        * rechazado sin motivo es casi siempre nada.
+        *
+        * Y se dice lo que **no** pasa al rechazar, que es lo que la gente teme:
+        * el trabajo no se cierra, y sigue pudiendo llegar otro precio.
+        */}
+      <Dialog
+        visible={rejecting}
+        title="¿Qué no te encaja?"
+        message="Se lo mandamos tal cual lo escribas. El trabajo no se cierra: puede mandarte otro presupuesto con lo que le digas. La visita que ya pagaste no se devuelve —el viaje se hizo—, pero se descuenta igual del próximo."
+        actions={[
+          {
+            label: isRejecting ? 'Enviando…' : 'Enviárselo',
+            onPress: () => doRejectQuote(job.id),
+            disabled: isRejecting || rejectReason.trim().length < 5,
+            testID: 'job-detail-quote-reject-confirm',
+          },
+          {
+            label: 'Volver',
+            variant: 'secondary',
+            onPress: () => setRejecting(false),
+            testID: 'job-detail-quote-reject-cancel',
+          },
+        ]}
+        onDismiss={() => setRejecting(false)}
+        testID="job-detail-quote-reject-dialog"
+      >
+        <Input
+          value={rejectReason}
+          onChangeText={setRejectReason}
+          placeholder="Ej. El material me parece caro, ¿hay otra marca?"
+          multiline
+          numberOfLines={3}
+          editable={!isRejecting}
+          testID="job-detail-quote-reject-reason"
         />
       </Dialog>
     </View>

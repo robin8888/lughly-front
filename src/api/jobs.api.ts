@@ -24,9 +24,8 @@ export type ApiJobStatus =
   | 'CONTRACTED'
   /**
    * Se contrató una visita y el profesional ya emitió presupuesto; falta que
-   * el cliente lo acepte o lo rechace. Todavía no sale en ningún trabajo real
-   * —hace falta `Quote`, que es de una fase posterior—, pero el tipo ya
-   * contempla el valor para no tener que tocarlo dos veces.
+   * el cliente lo acepte o lo rechace. Real desde el 7 de septiembre de 2026,
+   * cuando se construyó `Quote` (§C5).
    */
   | 'QUOTED'
   /** El cliente rechazó el presupuesto. Igual que `QUOTED`, inalcanzable hoy */
@@ -277,6 +276,82 @@ export interface ApiJobDetail {
    * y se pagó. Vacío en cualquier trabajo que no nació de la carta.
    */
   serviceLines: { name: string; price: number }[]
+  /**
+   * Los presupuestos del trabajo, del más nuevo al más viejo
+   * (`CICLOS_DE_CONTRATACION.md` §C5).
+   *
+   * **Todos, no solo el vigente**, y los ven los dos lados: el rechazado lleva
+   * el motivo, y ese motivo es la mitad de la conversación —sin él la v2
+   * aparece de la nada—.
+   *
+   * Vacío en cualquier trabajo que no sea del ciclo de la visita: una reserva
+   * por horas o una urgencia tienen el precio pactado antes de moverse.
+   */
+  quotes: ApiJobQuote[]
+}
+
+/** De qué es una línea. El tipo decide dinero, no es una etiqueta. */
+export type ApiQuoteLineKind =
+  /** Mano de obra: horas, desplazamientos, la faena */
+  | 'LABOUR'
+  /**
+   * Piezas y materiales. **El único tipo que se puede cobrar por adelantado**
+   * y el único que no se devuelve si el cliente cancela después de comprado.
+   */
+  | 'MATERIALS'
+  /** Lo demás: residuos, alquiler de maquinaria, permisos */
+  | 'OTHER'
+
+export type ApiQuoteStatus =
+  /** Emitido y esperando respuesta del cliente */
+  | 'SENT'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  /** Se le pasó la validez sin respuesta */
+  | 'EXPIRED'
+  /** Llegó una versión posterior: deja de estar sobre la mesa, sin ser un "no" */
+  | 'SUPERSEDED'
+
+export interface ApiQuoteLine {
+  kind: ApiQuoteLineKind
+  concept: string
+  /** Se guardan los tres: «3 × 12,50 €» se entiende, «37,50 €» hay que creérselo */
+  quantity: number
+  unitPrice: number
+  amount: number
+}
+
+export interface ApiJobQuote {
+  id: string
+  /** v1, v2… Sube al reemitir después de un rechazo */
+  version: number
+  status: ApiQuoteStatus
+  lines: ApiQuoteLine[]
+  /** Suma de las líneas, antes de descontar la visita */
+  linesTotal: number
+  /**
+   * Lo que se descuenta por la visita ya pagada. Cero si no hubo.
+   * Congelado: es lo que el cliente pagó, no lo que el profesional cobra hoy.
+   */
+  visitCredit: number
+  /** Lo que el cliente paga al aceptar */
+  total: number
+  validUntil: string
+  /** Si el material se cobra al aceptar, antes de empezar */
+  materialsUpfront: boolean
+  /** Por qué dijo que no. Solo en los rechazados */
+  rejectionReason: string | null
+  rejectedAt: string | null
+  acceptedAt: string | null
+  createdAt: string
+}
+
+/** Una línea tal y como se escribe en el formulario, sin importe todavía */
+export interface QuoteLinePayload {
+  kind: ApiQuoteLineKind
+  concept: string
+  quantity: number
+  unitPrice: number
 }
 
 export const jobsApi = {
@@ -457,6 +532,48 @@ export const jobsApi = {
    *
    * Devuelve la media del profesional ya recalculada.
    */
+  /**
+   * Emitir el presupuesto del trabajo (§C5). Lo llama el lado profesional.
+   *
+   * Cada emisión es una versión nueva y la anterior queda marcada: reemitir
+   * después de un rechazo es el camino normal, no un caso raro.
+   */
+  createQuote: (
+    jobId: string,
+    payload: {
+      lines: QuoteLinePayload[]
+      /** Cuántos días vale. Sin poner, quince */
+      validDays?: number
+      /** Si el material se cobra al aceptar, antes de empezar */
+      materialsUpfront?: boolean
+    },
+  ) =>
+    apiRequest<{
+      quoteId: string
+      jobId: string
+      version: number
+      total: number
+      validUntil: string
+    }>(`/v1/jobs/${jobId}/quotes`, { method: 'POST', auth: true, body: payload }),
+
+  /**
+   * Rechazarlo, con el motivo.
+   *
+   * **No cierra el trabajo**: queda esperando otra versión quince días. El
+   * motivo se exige porque es lo único que le dice al profesional qué cambiar.
+   */
+  rejectQuote: (jobId: string, reason: string) =>
+    apiRequest<{
+      quoteId: string
+      jobId: string
+      status: ApiJobStatus
+      reissueByAt: string
+    }>(`/v1/jobs/${jobId}/quotes/reject`, {
+      method: 'POST',
+      auth: true,
+      body: { reason },
+    }),
+
   review: (jobId: string, rating: number, comment: string | null) =>
     apiRequest<{
       reviewId: string
