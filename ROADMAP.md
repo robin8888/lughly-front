@@ -2886,6 +2886,66 @@ estar y se retiró el mismo día: `materialsUpfront` se guarda, pero prometerle
 al cliente una retención que nadie puede liberar —falta el «material
 comprado» con justificante— es peor que no ofrecerla.
 
+## ✅ El contrato fijo (7 Septiembre 2026)
+
+Lo último de §F, y lo que más trabajo le quita a quien contrata: «los lunes,
+miércoles y viernes de 10 a 13» son hoy **tres encargos nuevos cada semana**
+—buscar, rellenar, elegir hueco, pagar—. Ciento cuarenta veces al año para un
+acuerdo que se toma una vez.
+
+`check-recurrence` y su dominio ya estaban hechos desde el 31 de agosto. Lo que
+entró ahora es la serie.
+
+### Una regla, y nada más en el esquema
+
+- Migración `20260907210000_el_contrato_fijo`: `JobRecurrence` —días, hora,
+  duración, desde cuándo, hasta dónde hay sesiones creadas—.
+- **La sesión es un `Appointment(SESSION)` de los que ya había**, y su hora vive
+  en `scheduledAt` como la de cualquier cita. Eso es lo que deja mover un día
+  suelto sin caso especial: un 6 de octubre a las 14:00 dentro de una serie de
+  las diez es una cita con otra hora y ya.
+
+### Un sí por acuerdo, no uno por día
+
+- **Aceptar no es un caso de uso nuevo.** `assign-job` confirma las N sesiones
+  de golpe cuando el trabajo tiene serie: en su bandeja le llegó un encargo, no
+  veinticuatro, así que responder es el camino de siempre.
+
+### El dinero, por sesión
+
+- **No se cobra al contratar**, y no es una concesión: una autorización de
+  Stripe caduca a los siete días, así que ocho semanas de retención no existen.
+  Se guarda la tarjeta y cada sesión se retiene **24 h antes** —el mismo momento
+  en que cancelarla deja de ser gratis, que es lo único que hace legitima la
+  retención—.
+- Si la tarjeta falla se cae ese día **con un día de margen** para arreglarlo, y
+  tres fallos seguidos cortan el contrato. El contador vuelve a cero en cuanto
+  una retención sale: lo que corta son tres **seguidos**.
+
+### Sin fecha de fin, con ventana móvil
+
+- Ocho semanas de sesiones creadas, y `extend-recurrences` estira a diario
+  **comprobando la agenda de ese momento**, no la de hace dos meses. Un día que
+  no quepa no se crea y se dice.
+
+### Y el repaso, que es la parte que importa
+
+`RecurringBookingPage` elige y repasa en la misma pantalla. Lo que se protege
+es la única regla de §F0: **en ningún momento se le dice al cliente que tiene
+un día que el profesional no tiene**.
+
+- **Un día que choca no se tira: se ofrece otra hora de ese mismo día.** Que
+  esté pillado a las diez no quiere decir que ese día no pueda.
+- **Y uno de vacaciones no ofrece nada**, porque no hay nada que ofrecer. Los
+  dos avisos no se enseñan igual: con la misma cara, el cliente buscaría una
+  salida donde no existe.
+- El motivo, en sus palabras y sin destapar la agenda de nadie: «ya tiene otro
+  trabajo», no con quién ni dónde.
+
+**Lo que falta de §F**: cancelar una sesión suelta y cancelar el contrato (§F7),
+y el aviso de §F6 —al marcar unas vacaciones, decirle al profesional qué
+sesiones fijas se lleva por delante—.
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
@@ -2910,4 +2970,4 @@ comprado» con justificante— es peor que no ofrecerla.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: el presupuesto, emitido y aceptado — 7 Septiembre 2026_
+_Última actualización: el contrato fijo — 7 Septiembre 2026_

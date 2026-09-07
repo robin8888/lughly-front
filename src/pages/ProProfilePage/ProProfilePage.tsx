@@ -78,6 +78,15 @@ export interface ProProfilePageProps {
   /** Reservar horas suyas: se elige el hueco y se paga por adelantado */
   onBookHours: (tradeSlug: string) => void
   /**
+   * Contratarle **fijo cada semana** (`CICLOS` §F).
+   *
+   * Solo tiene sentido con quien cobra por horas: un fijo es «los lunes de 10 a
+   * 13», y eso sobre una tarifa de visita no significa nada —quien cobra por ir
+   * a mirar vende otra cosa—. Sin él, «Reservar ahora» sigue llevando derecho a
+   * reservar una vez.
+   */
+  onBookRecurring?: (tradeSlug: string) => void
+  /**
    * Pedir presupuesto, que es **contratar una visita**: se avisa antes con un
    * diálogo y se le pasa el oficio por el que se le va a pedir, porque el
    * precio de la visita es de ese oficio y no del profesional.
@@ -98,6 +107,7 @@ export function ProProfilePage({
   id,
   onBack,
   onBookHours,
+  onBookRecurring,
   onQuote,
   onReport,
   onHireCarta,
@@ -158,6 +168,8 @@ export function ProProfilePage({
    * dos salidas —cargando y error— y un hook detrás de un `return` no se
    * ejecuta en esos renders.
    */
+  /** Si se le está preguntando cómo lo quiere: una vez o fijo cada semana */
+  const [asking, setAsking] = useState(false)
   const [warning, setWarning] = useState<
     'quote' | 'hourly-no-quote' | 'no-price' | null
   >(null)
@@ -354,7 +366,14 @@ export function ProProfilePage({
       : pro.trades.find((entry) => entry.visitFee != null)
 
   const handleBook = () => {
-    if (hourTrade) return onBookHours(hourTrade.slug)
+    /*
+      Con las dos respuestas disponibles se pregunta; si no, se va derecho a
+      reservar una vez. Enseñarle la pregunta a quien no puede contratar un
+      fijo sería ofrecerle un camino cerrado.
+    */
+    if (hourTrade) {
+      return onBookRecurring ? setAsking(true) : onBookHours(hourTrade.slug)
+    }
     if (visitTrade) {
       return onHireCarta(visitTrade.slug, selectedServices[visitTrade.slug] ?? [])
     }
@@ -925,6 +944,42 @@ Sentimos las molestias. Puedes volver a intentarlo más adelante o buscar a otro
         ]}
         onDismiss={() => setWarning(null)}
         testID="pro-no-price-dialog"
+      />
+
+      {/**
+        * Cómo lo quiere (`CICLOS` §F1).
+        *
+        * Un fijo no es una reserva repetida: es **un contrato con muchas
+        * sesiones**, con un solo acuerdo, un solo precio pactado y un solo sí
+        * del profesional. Preguntarlo aquí —y no con dos botones sueltos— es
+        * lo que evita que quien quiere limpieza tres días a la semana acabe
+        * reservando el lunes y volviendo el martes a reservar el miércoles.
+        */}
+      <Dialog
+        visible={asking}
+        title="¿Cómo lo quieres?"
+        message="Un fijo son los mismos días todas las semanas, sin fecha de fin: se acuerda una vez y las sesiones caen solas. Solo pagas los días que se trabajan, y cancelas uno suelto o el contrato entero cuando quieras."
+        actions={[
+          {
+            label: 'Fijo cada semana',
+            onPress: () => {
+              setAsking(false)
+              if (hourTrade) onBookRecurring?.(hourTrade.slug)
+            },
+            testID: 'pro-book-recurring',
+          },
+          {
+            label: 'Una vez',
+            variant: 'secondary',
+            onPress: () => {
+              setAsking(false)
+              if (hourTrade) onBookHours(hourTrade.slug)
+            },
+            testID: 'pro-book-once',
+          },
+        ]}
+        onDismiss={() => setAsking(false)}
+        testID="pro-book-how"
       />
     </View>
   )

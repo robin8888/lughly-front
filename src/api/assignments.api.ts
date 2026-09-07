@@ -310,6 +310,40 @@ export interface ApiAssignedJob {
   photos: { url: string; fullUrl: string }[]
 }
 
+export interface BookRecurringPayload {
+  tradeSlug: string
+  /** 0 domingo … 6 sábado */
+  weekdays: number[]
+  /** Hora local por defecto, "HH:MM" */
+  from: string
+  durationMin: number
+  /** "AAAA-MM-DD" */
+  startsOn: string
+  /**
+   * Los días movidos de hora, y los apartados a mano (`from` en null).
+   *
+   * Una hora solo se acepta si es **una de las que el servidor ofreció**: si
+   * no, bastaría con mandar otra para colar una sesión encima de un trabajo
+   * que ya tiene.
+   */
+  moves?: { date: string; from: string | null }[]
+  addressLine: string
+  city: string
+  note?: string
+  paymentMethodId: string
+}
+
+export interface ApiBookedRecurring {
+  jobId: string
+  /** Cuántas sesiones han quedado creadas */
+  sessions: number
+  /** Cuántos días se han caído, con su motivo ya dicho en el repaso */
+  skipped: number
+  pricePerSession: number | null
+  /** Hasta qué día hay sesiones. El barrido estira desde ahí */
+  generatedUntil: string
+}
+
 export const assignmentsApi = {
   /** Su agenda: lo que tiene adjudicado y por delante */
   assignments: () =>
@@ -353,6 +387,23 @@ export const assignmentsApi = {
    */
   bookHours: (proId: string, payload: BookHoursPayload) =>
     apiRequest<ApiBookedHours>(`/v1/pros/${proId}/book-hours`, {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
+  /**
+   * Contratar de forma fija (`CICLOS` §F3).
+   *
+   * **No cobra nada**: se guarda la tarjeta y cada sesión se retiene 24 h
+   * antes. Una autorización de Stripe caduca a los siete días, así que ocho
+   * semanas de retención no existen; y cobrar por adelantado sería pedir tres
+   * meses de limpieza el día uno.
+   *
+   * Por eso no hay camino de 3D Secure aquí: no hay pago que autenticar.
+   */
+  bookRecurring: (proId: string, payload: BookRecurringPayload) =>
+    apiRequest<ApiBookedRecurring>(`/v1/pros/${proId}/book-recurring`, {
       method: 'POST',
       auth: true,
       body: payload,

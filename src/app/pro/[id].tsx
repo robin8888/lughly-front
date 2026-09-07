@@ -56,6 +56,18 @@ export default function ProProfileRoute() {
         })
       }
       /*
+        Y el fijo (`CICLOS` §F): los mismos días todas las semanas. Es la otra
+        respuesta a «¿cómo lo quieres?», y solo se le pregunta a quien cobra
+        por horas —sobre una tarifa de visita, «los lunes de 10 a 13» no
+        significa nada—.
+      */
+      onBookRecurring={(trade) =>
+        router.navigate({
+          pathname: '/fijo',
+          params: { proId: id ?? '', trade },
+        })
+      }
+      /*
         El oficio viaja, y no es un detalle: lo que se contrata aquí es la
         visita, y su precio es del oficio y no del profesional. Quien pone
         bombines y además hace mudanzas no cobra lo mismo por ir a ver una cosa

@@ -923,6 +923,29 @@ igual que en una reserva suelta.
 Los tres primeros dejan algo usable aunque lo recurrente no llegue: un cliente
 que ve huecos y reserva por horas.
 
+**Construido el 7 Septiembre 2026: los pasos 1 a 4.** `book-hours` y
+`check-recurrence` ya estaban; ese día entraron la serie entera y su barrido:
+
+- `JobRecurrence` (migración `20260907210000_el_contrato_fijo`) y **nada más en
+  el esquema**, como decía §F10. La sesión es un `Appointment(SESSION)` de los
+  que ya había.
+- `book-recurring`, que crea el contrato saltando lo que no cabe y respetando
+  las horas movidas. **Una hora solo se acepta si es una de las que el servidor
+  ofreció**: si no, bastaría con mandar otra para colar una sesión encima de un
+  trabajo que ya tiene.
+- **Aceptar no es un caso de uso nuevo**: `assign-job` confirma las N sesiones
+  de golpe cuando el trabajo tiene serie. En su bandeja le llega un encargo, no
+  veinticuatro, así que el camino de responder es el de siempre.
+- `session-charges` (retener 24 h antes, cancelar la sesión si la tarjeta
+  falla, cortar el contrato a los tres fallos) y `extend-recurrences` (estirar
+  la ventana comprobando la agenda de ese momento), los dos en `expire-overdue`.
+- En el móvil, `RecurringBookingPage`: elegir y repasar en la misma pantalla,
+  con los días que no caben y sus alternativas.
+
+**Lo que falta (paso 5)**: cancelar una sesión suelta y cancelar el contrato
+(§F7), y el aviso de §F6 al marcar unas vacaciones que se llevan sesiones por
+delante. Hoy el contrato se corta por la vía del impago y nada más.
+
 ---
 
 ## §Z. Cambios por pieza

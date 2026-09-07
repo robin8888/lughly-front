@@ -250,6 +250,60 @@ export interface AvailabilityState {
   city: string
 }
 
+/** Por qué no cabe un día de la serie (`CICLOS` §F2) */
+export type ApiRecurrenceMiss =
+  /** Ya tiene otro trabajo a esa hora. **Tiene arreglo**: otras horas de ese día */
+  | 'busy'
+  /** Ese día trabaja, pero no a esa hora. También tiene arreglo */
+  | 'outside'
+  /** Está de vacaciones o de baja */
+  | 'away'
+  /** Ese día no trabaja */
+  | 'closed'
+  /** Cae dentro de la antelación mínima */
+  | 'notice'
+
+export interface ApiRecurrenceAlternative {
+  /** Hora local, "HH:MM" */
+  from: string
+  to: string
+  endsNextDay: boolean
+  startsNextDay: boolean
+}
+
+export interface ApiRecurrenceDay {
+  /** "AAAA-MM-DD" */
+  date: string
+  /** 0 domingo … 6 sábado */
+  weekday: number
+  fits: boolean
+  miss: ApiRecurrenceMiss | null
+  /**
+   * Otras horas de **ese mismo día** donde sí cabe.
+   *
+   * Vacío no es lo mismo que "no se ha mirado": `miss` dice cuál de las dos
+   * cosas es. Que esté pillado a las diez no quiere decir que ese día no pueda,
+   * quiere decir que no puede **a esa hora**.
+   */
+  alternatives: ApiRecurrenceAlternative[]
+}
+
+export interface ApiRecurrenceCheck {
+  weeks: number
+  durationMin: number
+  /** Lo que costaría cada sesión con la tarifa de hoy */
+  pricePerSession: number | null
+  hourlyRate: number | null
+  minHours: number | null
+  days: ApiRecurrenceDay[]
+  /** Cuántos caben tal cual */
+  fitting: number
+  /** Cuántos no caben pero tienen otra hora que ofrecer */
+  movable: number
+  /** Cuántos se caen sin remedio */
+  skipped: number
+}
+
 export interface ProsFilters {
   trade?: string
   availableNow?: boolean
@@ -804,6 +858,36 @@ export const prosApi = {
     }),
 
   /** Su zona de cobertura, para editarla */
+  /**
+   * Si una serie le cabe, día a día (`CICLOS` §F2).
+   *
+   * **No reserva nada**: es para elegir. Entre ver esto y pagar pasan minutos y
+   * la agenda es de otro, así que el servidor lo vuelve a comprobar al
+   * contratar.
+   *
+   * Va por POST y no por GET aunque no cree nada: los días de la semana son una
+   * lista, y meterla en la dirección obliga a inventarse un formato que hay que
+   * partir a mano.
+   */
+  recurrenceCheck: (
+    proId: string,
+    payload: {
+      /** 0 domingo … 6 sábado */
+      weekdays: number[]
+      /** Hora local, "HH:MM" */
+      from: string
+      durationMin: number
+      /** "AAAA-MM-DD" */
+      startsOn: string
+      weeks: number
+    },
+  ) =>
+    apiRequest<ApiRecurrenceCheck>(`/v1/pros/${proId}/recurrence-check`, {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
   myCoverage: () =>
     apiRequest<ApiCoverageSettings>('/v1/pro/coverage', { auth: true }),
 
