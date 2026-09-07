@@ -21,6 +21,11 @@ import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { Input } from '@/components/atoms/Input'
 import { Picker } from '@/components/molecules/Picker'
 import { EmptyState } from '@/components/molecules/EmptyState'
+import { InfoCard } from '@/components/molecules/InfoCard'
+import { Button } from '@/components/atoms/Button'
+import { LocationAsk } from '@/components/organisms/LocationAsk'
+import { useUserLocation } from '@/hooks/ui/useUserLocation'
+import { useLocationGate } from '@/hooks/ui/useLocationGate'
 import { ProDirectoryCard, type CartaSelection } from '@/components/molecules/ProDirectoryCard'
 import { TradeBanner } from '@/components/molecules/TradeBanner'
 import { useEffectiveRole } from '@/hooks/auth/useEffectiveRole'
@@ -102,6 +107,28 @@ export function DirectoryPage({
   const [query, setQuery] = useState('')
 
   /**
+   * Desde dónde se busca, cuando se ha pedido **aquí**.
+   *
+   * La ubicación sigue llegando de la home en el camino normal —ahí se
+   * preguntó para contar cuántos había cerca—, y quien no pasa por la home
+   * trae la dirección que dio al registrarse. Pero hay un tercer caso, y es
+   * el peor de todos: **el que no tiene ninguna de las dos**. Se registró
+   * antes de que se pidiera la dirección, entra por la pestaña, y ve el
+   * directorio entero sin ordenar, con gente a doscientos kilómetros por
+   * delante de la de su calle. A ese se le ofrece aquí, que es donde se ve
+   * el problema.
+   */
+  const [aqui, setAqui] = useState<LatLng | null>(null)
+  const { request } = useUserLocation()
+  const gate = useLocationGate(async () => {
+    const position = await request()
+    if (position) setAqui(position)
+  })
+
+  /** El de la home manda: es dónde estaba cuando contó los que hay cerca */
+  const desde = point ?? aqui
+
+  /**
    * La pestaña no se desmonta al salir de ella, así que el valor inicial solo
    * se leería la primera vez. Sin esto, tocar Fontanería y luego Pintura en
    * el carrusel mostraría siempre el primer oficio elegido.
@@ -132,7 +159,7 @@ export function DirectoryPage({
   const { data, isPending, isError, refetch, isFetching } = usePros({
     trade: trade || undefined,
     availableNow: availableNow || undefined,
-    ...(point && { lat: point.lat, lng: point.lng, nearby: true }),
+    ...(desde && { lat: desde.lat, lng: desde.lng, nearby: true }),
   })
 
   const pros = data?.items ?? []
@@ -151,7 +178,7 @@ export function DirectoryPage({
               ve menos gente aquí que en la pestaña Profesionales y no hay
               nada que lo explique.
             */}
-            {point ? ' · cerca de ti' : ''}
+            {desde ? ' · cerca de ti' : ''}
           </Text>
         )}
       </View>
@@ -276,6 +303,35 @@ export function DirectoryPage({
           </View>
         )}
 
+        {/*
+          Sin punto no hay orden por cercanía, y eso no se ve: la lista sale
+          igual de llena, solo que el primero puede estar a doscientos
+          kilómetros. Por eso se dice, y se dice aquí y no en un ajuste.
+
+          Solo cuando de verdad no hay ninguno: a quien llega con la ubicación
+          de la home o con la dirección de su alta no se le ofrece nada, que ya
+          está ordenada.
+        */}
+        {!desde && !reassign && (
+          <InfoCard style={styles.nearby} testID="directory-nearby">
+            <Text style={styles.nearbyTitle}>Esta lista no está ordenada</Text>
+            <Text style={styles.nearbyBody}>
+              No sabemos dónde estás, así que te enseñamos profesionales de toda
+              España y el primero puede estar lejísimos. Con tu ubicación te
+              ponemos delante a los que llegan hasta ti, con la distancia a la
+              que está cada uno.
+            </Text>
+            <Button
+              onPress={() => void gate.start()}
+              loading={gate.busy}
+              style={styles.nearbyAction}
+              testID="directory-nearby-locate"
+            >
+              Buscar cerca de mí
+            </Button>
+          </InfoCard>
+        )}
+
         {isPending ? (
           <View style={styles.state} testID="directory-loading">
             <ActivityIndicator size="large" color={theme.colors.accent} />
@@ -371,6 +427,19 @@ export function DirectoryPage({
           </>
         )}
       </FormScrollView>
+
+      {/*
+        Para qué se pide, antes de que pregunte el sistema. Quien ya dio el
+        permiso no llega a verlo: `useLocationGate` va derecho a situarle.
+      */}
+      <LocationAsk
+        visible={gate.visible}
+        reason="find-pros"
+        busy={gate.busy}
+        onAccept={() => void gate.accept()}
+        onDismiss={gate.dismiss}
+        testID="directory-location-ask"
+      />
     </View>
   )
 }

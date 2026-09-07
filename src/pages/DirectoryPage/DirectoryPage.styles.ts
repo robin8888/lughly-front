@@ -176,6 +176,29 @@ export const styles = StyleSheet.create({
   list: {
     gap: 10,
   },
+  /**
+   * La tarjeta que ofrece buscar por cercanía. Blanca y sin contorno de
+   * aviso: no es que algo vaya mal, es que se puede hacer mejor.
+   */
+  nearby: {
+    marginTop: 16,
+  },
+  nearbyTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  nearbyBody: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.75,
+    marginTop: 3,
+  },
+  nearbyAction: {
+    marginTop: 12,
+  },
   state: {
     alignItems: 'center',
     paddingVertical: 48,

@@ -58,6 +58,8 @@ import { ReceptionStage } from '@/components/organisms/ReceptionStage'
 import { useMyJobs } from '@/hooks/domain/useMyJobs'
 import { usePros } from '@/hooks/domain/usePros'
 import { useUserLocation } from '@/hooks/ui/useUserLocation'
+import { useLocationGate } from '@/hooks/ui/useLocationGate'
+import { LocationAsk } from '@/components/organisms/LocationAsk'
 import { useSeenAnswers, useMarkAnswerSeen } from '@/stores/useSeenAnswersStore'
 import type { TradeSlug } from '@/utils/trades'
 import type { LatLng } from '@/utils/geo'
@@ -120,12 +122,34 @@ export function HomePage({
    * diálogo del sistema nada más entrar se deniega por reflejo, y luego el
    * sistema ya no deja volver a preguntar. Buscar un oficio es justo el
    * momento en que la ubicación sirve para algo que se ve.
+   *
+   * Y desde el 7 de septiembre de 2026, **con una frase nuestra delante**
+   * (`LocationAsk`): el diálogo del sistema no dice para qué y sale una sola
+   * vez en la vida de la instalación. Quien lo deniega sin saber qué gana se
+   * queda sin ubicación para siempre.
    */
   const { position, status, request } = useUserLocation()
 
+  /**
+   * Si la pregunta de la ubicación ya está resuelta, de una forma o de otra.
+   *
+   * Hace falta aparte de `status` porque decir "ahora no" lo deja en `idle`,
+   * igual que antes de preguntar, y el recuento se quedaría esperando a una
+   * respuesta que ya se ha dado: el bocadillo no diría nunca cuántos hay.
+   */
+  const [resuelto, setResuelto] = useState(false)
+
+  const gate = useLocationGate(
+    async () => {
+      await request()
+      setResuelto(true)
+    },
+    () => setResuelto(true),
+  )
+
   const buscar = (slug: TradeSlug) => {
     setBuscado(slug)
-    if (status === 'idle') void request()
+    if (status === 'idle' && !resuelto) void gate.start()
   }
 
   /*
@@ -151,7 +175,15 @@ export function HomePage({
     conceder el permiso el número cambiaría solo delante del cliente.
   */
   const pros = usePros(filtros, {
-    enabled: buscado !== null && status !== 'idle' && status !== 'requesting',
+    /*
+      Nada de preguntar mientras la pregunta sigue abierta —la nuestra o la
+      del sistema—: traería el recuento nacional, y al conceder el permiso el
+      número cambiaría solo delante del cliente. Con "ahora no" tampoco se
+      espera más: `resuelto` lo desbloquea sin ubicación.
+    */
+    enabled:
+      buscado !== null &&
+      (resuelto || (status !== 'idle' && status !== 'requesting')),
   })
 
   /**
@@ -240,6 +272,18 @@ export function HomePage({
         />
       </Animated.ScrollView>
 
+      {/*
+        Para qué se pide, antes de que pregunte el sistema. A quien ya lo
+        concedió no le sale: `useLocationGate` va derecho a situarle.
+      */}
+      <LocationAsk
+        visible={gate.visible}
+        reason="find-pros"
+        busy={gate.busy}
+        onAccept={() => void gate.accept()}
+        onDismiss={gate.dismiss}
+        testID="home-location-ask"
+      />
     </SafeAreaView>
   )
 }

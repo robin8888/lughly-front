@@ -60,7 +60,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Usamos tu ubicación para encontrar profesionales cerca de ti y calcular su tiempo de llegada.",
+          "locationWhenInUsePermission": "Usamos tu ubicación para enseñarte los profesionales que llegan hasta donde estás, y —si trabajas con Lughly— para poner tu zona de trabajo en el mapa y que te encuentren los clientes de tu zona.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }
