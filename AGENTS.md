@@ -9,7 +9,7 @@ otro sitio del disco y no se ve desde aquí.
 
 | | Dónde | Qué es |
 |---|---|---|
-| **Móvil** (este) | `C:\Users\robin\Desktop\design_handoff_lughly\apps\mobile` | Expo / React Native. Es la raíz de git: `design_handoff_lughly` **no** es el repositorio. |
+| **Móvil** (este) | `C:\Users\robin\Desktop\frontend_lughly\apps\mobile` | Expo / React Native. Es la raíz de git: `frontend_lughly` **no** es el repositorio. |
 | **Backend** | `C:\Users\robin\Desktop\lughly-backend` | NestJS + Prisma + PostgreSQL. Repositorio propio, rama `main`. |
 
 - Móvil: https://github.com/robin8888/lughly-front
@@ -61,7 +61,7 @@ commiteado aquí.
 ## Materiales de origen
 
 Las piezas en bruto que llegan de diseño —secuencias de fotogramas, imágenes a
-tamaño completo— viven en `C:\Users\robin\Desktop\design_handoff_lughly\_fuentes`,
+tamaño completo— viven en `C:\Users\robin\Desktop\frontend_lughly\_fuentes`,
 **fuera del repositorio**, con un `LEEME.md` que explica de qué asset es origen
 cada una y el comando exacto para regenerarlo.
 
