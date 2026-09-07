@@ -26,6 +26,7 @@ export default function InicioRoute() {
         onUrgencies={() => router.navigate('/urgent')}
         /* Fuera de las pestañas: se apila y se vuelve, como el resto de Mi cuenta */
         onZone={() => router.push('/mi-zona')}
+        onPayoutAccount={() => router.push('/mi-cobro')}
         onMessages={() => router.push('/mensajes')}
       />
     )

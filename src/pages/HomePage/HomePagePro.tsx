@@ -32,7 +32,9 @@ import { ReviewList } from '@/components/organisms/ReviewList'
 import { AssignmentConfirm } from '@/components/organisms/AssignmentConfirm'
 import { Dialog } from '@/components/organisms/Dialog'
 import { LocationAsk } from '@/components/organisms/LocationAsk'
+import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useLocateMyBase } from '@/hooks/domain/useLocateMyBase'
+import { useAccountStatus } from '@/hooks/domain/usePaymentAccount'
 import { useLocationGate } from '@/hooks/ui/useLocationGate'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useProProfile } from '@/hooks/domain/useProProfile'
@@ -59,6 +61,8 @@ export interface HomePageProProps {
   onUrgencies: () => void
   /** A Mi zona de trabajo, para quien prefiera escribir su dirección */
   onZone: () => void
+  /** A la cuenta de cobro, que es lo último que le falta del alta */
+  onPayoutAccount: () => void
   /** Al botón flotante de Mensajes. Vivía como fila de Mi cuenta hasta el 22 Ago 2026 */
   onMessages: () => void
 }
@@ -70,6 +74,7 @@ export function HomePagePro({
   onInbox,
   onUrgencies,
   onZone,
+  onPayoutAccount,
   onMessages,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
@@ -83,6 +88,16 @@ export function HomePagePro({
   const user = useUser()
 
   /**
+   * Si trabaja para otro. Sale de su propia ficha, que esta pantalla ya pide
+   * —`useIsEmployee` lee esa misma caché, sin consulta nueva—.
+   *
+   * Manda en dos cosas de aquí: no ve su tarifa —la fija su empresa y es el
+   * precio que ella cobra, no su sueldo— y no se le pregunta por la cuenta de
+   * cobro, que es de ella.
+   */
+  const isEmployee = useIsEmployee()
+
+  /**
    * Si está en el mapa, y el botón para ponerse de un toque.
    *
    * `hasBase` es `null` mientras no se sabe: la tarjeta no sale hasta que hay
@@ -91,6 +106,22 @@ export function HomePagePro({
    */
   const { status: locateStatus, hasBase, locate } = useLocateMyBase()
   const zoneGate = useLocationGate(locate)
+
+  /**
+   * Si puede cobrar. **Solo del que va por su cuenta**: a un empleado le paga
+   * su empresa y la cuenta es de ella, así que preguntarlo por él devuelve un
+   * 403 y avisarle sería mandarle a una pantalla que no es suya.
+   *
+   * Se espera a que la consulta termine —`isPending`— antes de dar nada por
+   * ausente: sin eso, el aviso aparece medio segundo en cada arranque, también
+   * a quien la tiene puesta desde hace meses.
+   *
+   * Y **el fallo cuenta como que no la tiene**, a propósito: quien todavía no
+   * ha llegado a abrir la cuenta no tiene ni `Employer`, y ahí el servidor
+   * responde 403. Es justo el que más necesita el aviso.
+   */
+  const { data: account, isPending: askingAccount } = useAccountStatus(!isEmployee)
+  const sinCobro = !isEmployee && !askingAccount && account?.transfersEnabled !== true
 
   /**
    * Las valoraciones empiezan plegadas. Quien abre su propia home viene a ver
@@ -115,13 +146,6 @@ export function HomePagePro({
    */
   const hasNoProfile = error instanceof ApiError && error.status === 404
   const { setAvailableNow, isSaving } = useAvailableNow(userId)
-
-  /**
-   * Un trabajador por cuenta ajena no ve su tarifa: la fija su empresa y es
-   * el precio que ella cobra, no su sueldo. Enseñársela invitaría a
-   * confundir una cosa con la otra.
-   */
-  const isEmployee = pro?.employerName != null
 
   /**
    * Quien es empleado no puede tener empleados: no se le pregunta. Al resto
@@ -378,57 +402,92 @@ export function HomePagePro({
         )}
 
         {/**
-         * Sin punto en el mapa no le encuentra nadie por cercanía, y va aquí
-         * arriba porque es lo único de esta pantalla que le está costando
-         * trabajos ahora mismo.
+         * Lo que le impide trabajar, en una sola tarjeta.
          *
-         * Le pasa **siempre** al que entra dado de alta por su empresa: ese
-         * formulario no pide dirección. Al autónomo casi nunca, porque su base
-         * queda puesta al registrarse con la dirección que da.
+         * Son dos cosas y las dos se descubrían tarde y por las bravas: la
+         * cuenta de cobro, al intentar aceptar un trabajo ya prometido; el
+         * punto en el mapa, nunca —simplemente no le llegaba nada—.
+         *
+         * **Una tarjeta y no dos.** Dos avisos apilados en la primera pantalla
+         * se leen como una app que se queja, y el segundo no lo lee nadie. La
+         * cuenta de cobro va primero porque es la que cierra la puerta del
+         * todo: sin ella el cliente ni siquiera ve el botón de contratar.
          *
          * **No se puede cerrar**, y es a propósito. Los otros avisos de esta
          * home sí —son cosas que pasan una vez y se resuelven—; éste dura lo
          * que dure el problema, y cerrarlo sería esconder justo lo que hace
-         * que no le llegue trabajo. Se va solo en cuanto tiene base.
+         * que no le llegue trabajo. Se va solo en cuanto está resuelto.
          */}
-        {hasBase === false && (
-          <InfoCard style={styles.zone} testID="home-pro-zone">
-            <Text style={styles.employeesTitle}>No sales en las búsquedas</Text>
-            <Text style={styles.employeesBody}>
-              Los clientes buscan por cercanía y tú todavía no estás en el mapa,
-              así que no apareces —ni aunque el trabajo sea en tu calle—.
-              Tampoco te llegan urgencias, que se reparten por distancia.
+        {(sinCobro || hasBase === false) && (
+          <InfoCard style={styles.zone} testID="home-pro-setup">
+            <Text style={styles.employeesTitle}>
+              {sinCobro ? 'Todavía no pueden contratarte' : 'No sales en las búsquedas'}
             </Text>
 
-            <Button
-              onPress={() => void zoneGate.start()}
-              loading={locateStatus === 'locating' || locateStatus === 'saving'}
-              style={styles.employeesAction}
-              pressedStyle={styles.employeesActionPressed}
-              textStyle={styles.employeesActionText}
-              testID="home-pro-zone-locate"
-            >
-              Usar mi ubicación
-            </Button>
+            {sinCobro && (
+              <>
+                <Text style={styles.employeesBody}>
+                  Te falta la cuenta de cobro, y sin ella no hay a dónde mandarte
+                  el dinero: en tu ficha no sale el botón de contratar. Se hace
+                  una vez y son unos minutos. Al mes de darte de alta, si sigue
+                  sin estar, tu ficha deja de salir en el directorio.
+                </Text>
 
-            {/*
-              Y la salida para quien no quiere dar el permiso, o ya lo ha
-              denegado: la pantalla de siempre, donde se busca la dirección a
-              mano. Un aviso cuya única salida fuera ceder el GPS no sería un
-              aviso.
-            */}
-            <Pressable
-              onPress={onZone}
-              accessibilityRole="button"
-              style={styles.zoneManual}
-              testID="home-pro-zone-manual"
-            >
-              <Text style={styles.zoneManualText}>
-                {locateStatus === 'denied'
-                  ? 'Sin ubicación: buscar mi dirección'
-                  : 'Prefiero escribir mi dirección'}
-              </Text>
-            </Pressable>
+                <Button
+                  onPress={onPayoutAccount}
+                  style={styles.employeesAction}
+                  pressedStyle={styles.employeesActionPressed}
+                  textStyle={styles.employeesActionText}
+                  testID="home-pro-payout"
+                >
+                  Poner mi cuenta de cobro
+                </Button>
+              </>
+            )}
+
+            {hasBase === false && (
+              <>
+                <Text style={sinCobro ? styles.setupNext : styles.employeesBody}>
+                  {sinCobro ? 'Y no estás en el mapa: ' : ''}
+                  Los clientes buscan por cercanía, así que sin un punto no
+                  apareces —ni aunque el trabajo sea en tu calle—. Tampoco te
+                  llegan urgencias, que se reparten por distancia.
+                </Text>
+
+                <Button
+                  onPress={() => void zoneGate.start()}
+                  loading={locateStatus === 'locating' || locateStatus === 'saving'}
+                  variant={sinCobro ? 'secondary' : undefined}
+                  style={styles.employeesAction}
+                  {...(!sinCobro && {
+                    pressedStyle: styles.employeesActionPressed,
+                    textStyle: styles.employeesActionText,
+                  })}
+                  testID="home-pro-zone-locate"
+                >
+                  Usar mi ubicación
+                </Button>
+
+                {/*
+                  Y la salida para quien no quiere dar el permiso, o ya lo ha
+                  denegado: la pantalla de siempre, donde se busca la dirección
+                  a mano. Un aviso cuya única salida fuera ceder el GPS no sería
+                  un aviso.
+                */}
+                <Pressable
+                  onPress={onZone}
+                  accessibilityRole="button"
+                  style={styles.zoneManual}
+                  testID="home-pro-zone-manual"
+                >
+                  <Text style={styles.zoneManualText}>
+                    {locateStatus === 'denied'
+                      ? 'Sin ubicación: buscar mi dirección'
+                      : 'Prefiero escribir mi dirección'}
+                  </Text>
+                </Pressable>
+              </>
+            )}
           </InfoCard>
         )}
 

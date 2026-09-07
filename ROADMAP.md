@@ -1661,8 +1661,8 @@ existiera, un cobro a los profesionales de prueba fallaría con
       oficio. **Pero no basta**: ver la regla de abajo, que manda sobre esto.
 - [x] **Cuenta de cobro para todo profesional**. Hecho el 2 de septiembre por
       la tarde: pantalla propia, accesible desde Mi cuenta, y exigida para
-      aceptar. Lo que queda es **pedirla en el alta** y los 30 días de gracia
-      de §9 —abajo—.
+      aceptar. **Pedida en el alta y con sus 30 días de gracia** el 7 de
+      septiembre —abajo—.
 - [x] Sembrar cuentas de Stripe de prueba en `seed-recurrentes.ts`. Hecho el
       1 de septiembre: `prisma/seed-stripe.ts`, y con él **el ciclo del dinero
       se ha visto entero por primera vez** —abajo—.
@@ -2760,6 +2760,48 @@ preguntado dónde están— y la app tenía el GPS a mano sin usarlo.
   —cuentas de antes de que se pidiera— veía la lista entera sin ordenar y
   nada lo decía.
 
+## ✅ La cuenta de cobro, pedida a tiempo (7 Septiembre 2026)
+
+La cuenta de cobro se exigía al aceptar un trabajo, que es **el peor momento
+posible**: el profesional se enteraba de que le faltaba delante de un cliente
+que ya le había elegido, y el cliente —que había elegido, rellenado y
+pagado— se estrellaba contra un aviso que habla de la cuenta de otro y que no
+puede arreglar.
+
+### Nadie contrata a quien no puede cobrar
+
+- **`acceptsBookings`** viaja en el listado y en la ficha. Sale del mismo par
+  de relaciones que mira `missingToWork` —la empresa para la que trabaja o la
+  suya propia—, ahora escrito una vez en `common/payout-grace.ts` y usado
+  desde los tres sitios. El orden importa: quien trabaja para una empresa cobra
+  **por ella**, así que si ella no la tiene, no vale su cuenta personal.
+- **Sin él no hay botones de contratar**, ni en la tarjeta ni en la ficha ni en
+  la carta. En su sitio, la frase: «aún no acepta reservas por la app». Lo
+  demás se ve entero —precios, fotos, valoraciones— y se puede guardar en
+  favoritos: quien abre una ficha tiene derecho a saber si le interesa.
+
+### Los 30 días de gracia (`CICLOS`, tabla de plazos)
+
+- Dentro del plazo **sale en el directorio** aunque no pueda cobrar. Darse de
+  alta y no terminar de configurarse es lo normal la primera semana.
+- **Pasado el plazo, deja de salir.** Una ficha que solo sirve para
+  decepcionar a quien la abre vale menos que un directorio más corto. Se
+  cuenta desde que existe el perfil profesional, no desde el alta de la cuenta:
+  quien se registró de cliente y se hizo profesional medio año después no ha
+  tenido treinta días de nada.
+
+### Y se le pide cuando puede hacer algo con ello
+
+- **En su home**, junto a lo de la zona y **en una sola tarjeta**: dos avisos
+  apilados en la primera pantalla se leen como una app que se queja, y el
+  segundo no lo lee nadie. La cuenta de cobro va primero —es la que cierra la
+  puerta del todo— y dice el plazo: «al mes, si sigue sin estar, tu ficha deja
+  de salir».
+- **Al empleado no se le pide**: le paga su empresa y la cuenta es de ella.
+- **Un 403 cuenta como que falta**, a propósito: quien no ha llegado a abrirla
+  no tiene ni `Employer`, y el servidor responde 403. Es justo el que más
+  necesita el aviso.
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
@@ -2784,4 +2826,4 @@ preguntado dónde están— y la app tenía el GPS a mano sin usarlo.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: la ubicación, pedida diciendo para qué — 7 Septiembre 2026_
+_Última actualización: la cuenta de cobro, pedida a tiempo — 7 Septiembre 2026_

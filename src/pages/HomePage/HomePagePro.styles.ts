@@ -171,6 +171,19 @@ export const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
   },
+  /**
+   * La segunda mitad de la tarjeta, cuando hay dos cosas que decir. Separada
+   * por arriba para que no se lea como la continuación del párrafo anterior:
+   * son dos problemas distintos con dos botones distintos.
+   */
+  setupNext: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.75,
+    marginTop: 14,
+  },
   /* El de a mano, debajo del naranja: es la salida, no lo que se propone */
   zoneManual: {
     marginTop: 10,
