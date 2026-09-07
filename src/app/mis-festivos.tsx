@@ -41,15 +41,12 @@ export default function HolidaysRoute() {
         employeeId={id}
         employeeName={name}
         /*
-         * Sin zona no hay comunidad, y sin comunidad no hay calendario. Se le
-         * lleva a ponerla llevando el trabajador en la dirección si lo había,
-         * para no sacar a la empresa del trabajador que estaba mirando.
+         * Sin zona no hay comunidad, y sin comunidad no hay calendario. Solo
+         * para la propia: la de un trabajador la pone él desde su móvil, así
+         * que a su empresa la pantalla se lo dice en vez de ofrecerle un
+         * botón que no llevaría a ninguna parte.
          */
-        onSetZone={() =>
-          router.navigate(
-            id ? { pathname: '/mi-zona', params: { id, name } } : '/mi-zona',
-          )
-        }
+        onSetZone={() => router.navigate('/mi-zona')}
         onBack={() => router.navigate(id ? '/empleados' : '/account')}
       />
     </RoleGate>

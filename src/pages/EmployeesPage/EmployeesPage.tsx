@@ -103,7 +103,7 @@ export interface EmployeesPageProps {
    * empresa tuviera dónde.
    */
   onEmployeeSetting: (
-    setting: 'horario' | 'zona' | 'ausencias' | 'recargos' | 'festivos',
+    setting: 'horario' | 'ausencias' | 'recargos' | 'festivos',
     employeeId: string,
     employeeName: string,
   ) => void
@@ -414,19 +414,22 @@ function Ajuste({
 }
 
 /**
- * Si a ese trabajador no le falta nada de lo que **sí** se puede completar.
+ * Si a ese trabajador no le falta nada **de lo que la empresa pone**.
  *
- * Las cuatro que cuentan son las que le impiden trabajar como es debido: sin
- * guardias no atiende urgencias, sin horario no se le puede reservar, sin
- * punto en el mapa no sale en ninguna búsqueda por cercanía y sin código
- * postal no hay festivos que aplicarle.
+ * Las dos que cuentan son las que le impiden trabajar como es debido y están
+ * en manos de quien mira esta pantalla: sin guardias no atiende urgencias y
+ * sin horario no se le puede reservar.
+ *
+ * **Su punto en el mapa no entra aquí**, aunque sea igual de importante —sin
+ * él no sale en ninguna búsqueda por cercanía, y de su código postal salen
+ * sus festivos—. Desde el 7 de septiembre de 2026 lo pone él desde su móvil,
+ * así que aquí se dice, pero no en rojo: es la misma regla que deja sin color
+ * los recargos y los días fuera, y por el mismo motivo —un rojo que quien lo
+ * ve no puede apagar deja de significar nada—.
  */
 function listo(employee: ApiEmployee): boolean {
   return (
-    employee.setup.urgencyWindows > 0 &&
-    employee.setup.availabilityWindows > 0 &&
-    employee.setup.hasLocation &&
-    employee.setup.hasPostcode
+    employee.setup.urgencyWindows > 0 && employee.setup.availabilityWindows > 0
   )
 }
 
@@ -859,16 +862,6 @@ export function EmployeesPage({
                         />
 
                         <Ajuste
-                          label="Zona de trabajo"
-                          done={employee.setup.hasLocation}
-                          onPress={() =>
-                            onEmployeeSetting('zona', employee.id, employee.name)
-                          }
-                          disabled={isRemoving}
-                          testID={`employee-coverage-${employee.id}`}
-                        />
-
-                        <Ajuste
                           label="Días que no está"
                           onPress={() =>
                             onEmployeeSetting('ausencias', employee.id, employee.name)
@@ -897,14 +890,14 @@ export function EmployeesPage({
                         />
 
                         {/*
-                          Los festivos sí: salen de la comunidad, y la comunidad
-                          sale del código postal de su base. Sin código postal
-                          no hay calendario que aplicarle, y eso son días que
-                          se cobran distinto.
+                          Los festivos, sin color desde que la base es suya: la
+                          comunidad sale del código postal de esa base, así que
+                          un "falta" aquí sería pedirle a la empresa algo que
+                          no puede hacer. Lo que sí puede es añadir los de su
+                          municipio, que el BOE no publica, y para eso entra.
                         */}
                         <Ajuste
                           label="Festivos"
-                          done={employee.setup.hasPostcode}
                           onPress={() =>
                             onEmployeeSetting('festivos', employee.id, employee.name)
                           }
@@ -912,6 +905,23 @@ export function EmployeesPage({
                           testID={`employee-holidays-${employee.id}`}
                         />
                       </View>
+
+                      {/*
+                        Dónde ha ido la zona, que estaba aquí hasta el 7 de
+                        septiembre de 2026. Se dice y no se calla porque su
+                        ausencia se nota —eran seis botones y ahora son cinco—
+                        y porque mientras él no la ponga hay trabajos que no le
+                        llegan. Lo que la empresa puede hacer es decírselo, y
+                        para eso tiene que saberlo.
+                      */}
+                      <Text
+                        style={styles.zoneNote}
+                        testID={`employee-zone-note-${employee.id}`}
+                      >
+                        {employee.setup.hasLocation
+                          ? 'Su zona de trabajo la pone él desde su móvil, y ya la tiene puesta.'
+                          : 'Su zona de trabajo la pone él desde su móvil, y aún no la tiene: hasta que lo haga no sale en las búsquedas por cercanía ni le llegan urgencias, y tampoco tiene calendario de festivos. Se hace en Mi cuenta › Mi zona de trabajo, de un toque con la ubicación.'}
+                      </Text>
 
                       {/*
                         La baja, separada de los ajustes y en el color de

@@ -2,28 +2,26 @@
  * Mi zona: /mi-zona
  *
  * Fuera de las pestañas: se entra desde Mi cuenta. Aquí el profesional fija su
- * base y su radio, que hasta ahora solo se podían poner al dar de alta a un
- * empleado —un autónomo se quedaba sin punto base para siempre—.
+ * base y su radio.
+ *
+ * **También el que trabaja para una empresa.** Hasta el 7 de septiembre de
+ * 2026 esta ruta admitía un `id` en la dirección y entonces lo que se editaba
+ * era la zona de ese trabajador, puesta por su empresa. Se quitó porque el
+ * reparto estaba al revés de donde está el problema: el alta de un trabajador
+ * no pide dirección, así que entraba sin punto en el mapa, fuera de todas las
+ * búsquedas por cercanía, y el único que podía sacarle de ahí era alguien que
+ * no es él.
  *
  * Solo profesional. Un cliente no tiene zona: pone la dirección de cada
  * trabajo, que puede ser distinta cada vez.
  */
 
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { RoleGate } from '@/components/organisms/RoleGate'
 import { CoveragePage } from '@/pages/CoveragePage'
 
 export default function CoverageRoute() {
   const router = useRouter()
-
-  /**
-   * Con `id` en la dirección, lo que se edita es lo de ese trabajador y quien
-   * lo edita es su empresa. Se reutiliza la ruta en vez de crear otra porque la
-   * pantalla es la misma y las reglas también: solo cambia de quién es lo que
-   * se guarda. Y se vuelve a la lista de trabajadores, no a Mi cuenta, que es
-   * de donde se ha venido.
-   */
-  const { id, name } = useLocalSearchParams<{ id?: string; name?: string }>()
 
   return (
     <RoleGate
@@ -40,11 +38,7 @@ export default function CoverageRoute() {
       unavailableMessage="Tu cuenta es de cliente, así que no hay zona que fijar."
       testID="coverage-denied"
     >
-      <CoveragePage
-        employeeId={id}
-        employeeName={name}
-        onBack={() => router.navigate(id ? '/empleados' : '/account')}
-      />
+      <CoveragePage onBack={() => router.navigate('/account')} />
     </RoleGate>
   )
 }

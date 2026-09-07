@@ -9,13 +9,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { prosApi, type ApiCoverageSettings } from '@/api/pros.api'
-import { employeesApi } from '@/api/employees.api'
 
-/** Con trabajador en la clave: dos empleados seguidos enseñarían la misma zona */
-export function coverageQueryKey(employeeId?: string) {
-  return employeeId
-    ? (['employees', employeeId, 'coverage'] as const)
-    : (['pro', 'coverage'] as const)
+export function coverageQueryKey() {
+  return ['pro', 'coverage'] as const
 }
 
 export interface CoverageInput {
@@ -31,26 +27,32 @@ export interface CoverageInput {
   postcode?: string | null
 }
 
-export function useMyCoverage(enabled = true, employeeId?: string) {
+export function useMyCoverage(enabled = true) {
   return useQuery<ApiCoverageSettings>({
-    queryKey: coverageQueryKey(employeeId),
-    queryFn: () =>
-      employeeId ? employeesApi.coverage(employeeId) : prosApi.myCoverage(),
+    queryKey: coverageQueryKey(),
+    queryFn: () => prosApi.myCoverage(),
     enabled,
     staleTime: 60_000,
   })
 }
 
-export function useSetMyCoverage(employeeId?: string) {
+/**
+ * La zona es de quien se desplaza, también si trabaja para una empresa.
+ *
+ * Hasta el 7 de septiembre de 2026 esto tenía una segunda forma —la empresa
+ * ponía la de cada uno de los suyos— y el servidor rechazaba con un 403 que
+ * un empleado pusiera la propia. Salía caro al revés de lo que parecía: el
+ * alta de un trabajador no pide dirección, así que entraba sin punto en el
+ * mapa y no salía en ninguna búsqueda por cercanía hasta que su empresa se
+ * acordara de entrar a ponérsela.
+ */
+export function useSetMyCoverage() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (input: CoverageInput) =>
-      employeeId
-        ? employeesApi.setCoverage(employeeId, input)
-        : prosApi.setMyCoverage(input),
+    mutationFn: (input: CoverageInput) => prosApi.setMyCoverage(input),
     onSuccess: (saved) => {
-      queryClient.setQueryData(coverageQueryKey(employeeId), saved)
+      queryClient.setQueryData(coverageQueryKey(), saved)
       // Su radio y su ciudad salen en el directorio y en su ficha
       void queryClient.invalidateQueries({ queryKey: ['pros'] })
       /**
@@ -62,11 +64,12 @@ export function useSetMyCoverage(employeeId?: string) {
        * —porque la respuesta de antes aún estaba fresca—, así que parecía que
        * no se había guardado.
        */
-      void queryClient.invalidateQueries({
-        queryKey: employeeId
-          ? ['employees', employeeId, 'holidays']
-          : ['pro', 'holidays'],
-      })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'holidays'] })
+      /*
+        Y la lista de trabajadores de su empresa, si la tiene: ahí sale en
+        rojo o en verde si este ya está en el mapa (`setup.hasLocation`).
+      */
+      void queryClient.invalidateQueries({ queryKey: ['employees'] })
     },
   })
 

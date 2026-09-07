@@ -170,18 +170,28 @@ export function HolidaysPage({
         {header}
         <EmptyState
           title={isForEmployee ? 'Le falta la zona' : 'Te falta la zona'}
+          /*
+            Al empleador se le explica y no se le da botón: desde el 7 de
+            septiembre de 2026 la zona la pone el trabajador desde su móvil, y
+            un botón que llevara a una pantalla donde no puede guardar sería
+            peor que no tener botón.
+          */
           message={
             isForEmployee
-              ? 'Los festivos son los de la comunidad donde tenga la base, y todavía no la tiene puesta. Ponsela y aparecerán aquí.'
+              ? 'Los festivos son los de la comunidad donde tenga la base, y todavía no la tiene puesta. La pone él desde su móvil, en Mi cuenta › Mi zona de trabajo: en cuanto lo haga, su calendario aparece aquí.'
               : 'Los festivos no son los mismos en toda España: dependen de la comunidad donde tengas la base. Pon tu zona de trabajo y aparecerán aquí.'
           }
-          actions={[
-            {
-              label: isForEmployee ? 'Poner su zona' : 'Poner mi zona',
-              onPress: onSetZone,
-              testID: 'holidays-set-zone',
-            },
-          ]}
+          actions={
+            isForEmployee
+              ? []
+              : [
+                  {
+                    label: 'Poner mi zona',
+                    onPress: onSetZone,
+                    testID: 'holidays-set-zone',
+                  },
+                ]
+          }
           testID="holidays-no-region"
         />
       </View>

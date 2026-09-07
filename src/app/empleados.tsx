@@ -48,13 +48,11 @@ export default function EmployeesRoute() {
             pathname:
               setting === 'horario'
                 ? '/mi-horario'
-                : setting === 'zona'
-                  ? '/mi-zona'
-                  : setting === 'recargos'
-                    ? '/mis-recargos'
-                    : setting === 'festivos'
-                      ? '/mis-festivos'
-                      : '/mis-ausencias',
+                : setting === 'recargos'
+                  ? '/mis-recargos'
+                  : setting === 'festivos'
+                    ? '/mis-festivos'
+                    : '/mis-ausencias',
             params: { id, name },
           })
         }

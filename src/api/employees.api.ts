@@ -12,7 +12,6 @@ import type {
   ApiAvailabilityCalendar,
   ApiAvailabilityWindow,
   ApiCalendarDay,
-  ApiCoverageSettings,
   ApiDayWindow,
   ApiHoliday,
   ApiHolidayCalendar,
@@ -255,7 +254,7 @@ export const employeesApi = {
       body: payload,
     }),
 
-  /** Sus festivos: los de la comunidad donde la empresa le ha puesto la base */
+  /** Sus festivos: los de la comunidad donde él tenga puesta su base */
   holidays: (id: string, year: number) =>
     apiRequest<ApiHolidayCalendar>(`/v1/employees/${id}/holidays?year=${year}`, {
       auth: true,
@@ -268,25 +267,14 @@ export const employeesApi = {
       body: { appliesSurcharge },
     }),
 
-  coverage: (id: string) =>
-    apiRequest<ApiCoverageSettings>(`/v1/employees/${id}/coverage`, { auth: true }),
-
-  setCoverage: (
-    id: string,
-    payload: {
-      latitude: number
-      longitude: number
-      radiusKm: number
-      city?: string
-      /** `null` lo vacía: mover la base sin saber el nuevo no puede dejar el viejo */
-      postcode?: string | null
-    },
-  ) =>
-    apiRequest<ApiCoverageSettings>(`/v1/employees/${id}/coverage`, {
-      method: 'PUT',
-      auth: true,
-      body: payload,
-    }),
+  /*
+    La zona de un trabajador **no está aquí**, y no es un olvido: desde el 7 de
+    septiembre de 2026 la pone él desde su móvil, con la ubicación o buscando
+    su dirección. Era de la empresa, y así no la tenía casi nadie —el alta no
+    pide dirección, y sacar de ahí a cada trabajador era entrar una por una a
+    su pantalla—. Lo que la empresa sigue viendo es si la tiene puesta:
+    `setup.hasLocation`, que viaja con la propia lista.
+  */
 
   absences: (id: string) =>
     apiRequest<ApiAbsence[]>(`/v1/employees/${id}/absences`, { auth: true }),

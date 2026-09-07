@@ -216,6 +216,19 @@ export const styles = StyleSheet.create({
     opacity: 0.85,
     marginTop: 12,
   },
+  /**
+   * Dónde ha ido la zona de trabajo. Debajo de los botones y más apagado que
+   * la entradilla: no es una de las cosas que se hacen aquí, es lo que hay que
+   * saber sobre una que ya no está.
+   */
+  zoneNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.7,
+    marginTop: 12,
+  },
   setting: {
     paddingVertical: 10,
     paddingHorizontal: 12,

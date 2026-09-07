@@ -93,11 +93,33 @@ export default function AccountRoute() {
             links: [
               /**
                * Los oficios y las fotos de un empleado los pone su empresa, y
-               * su horario y su zona también. Las pantallas se lo explicarían,
-               * pero es mejor no llevarle a una puerta cerrada.
+               * su horario también. Las pantallas se lo explicarían, pero es
+               * mejor no llevarle a una puerta cerrada.
+               *
+               * **Su zona no**, desde el 7 de septiembre de 2026: esa es suya
+               * y es la única fila que le queda de este grupo. Iba con las
+               * demás y salía caro —el alta que le hace su empresa no pide
+               * dirección, así que entraba sin punto en el mapa y no aparecía
+               * en ninguna búsqueda por cercanía, que es de donde vienen los
+               * trabajos—.
                */
               ...(isEmployee
-                ? []
+                ? ([
+                    {
+                      label: 'Mi zona de trabajo',
+                      onPress: () => router.push('/mi-zona'),
+                      icon: 'map-pin',
+                      /*
+                        En rojo, y más abajo la misma fila lo dice en gris.
+                        No es incoherencia: al autónomo la base le queda puesta
+                        al registrarse —sale de la dirección que da—, así que
+                        que le falte es raro. Al que entra dado de alta por su
+                        empresa le falta **siempre**, es lo único que tiene que
+                        hacer, y sin ello no le encuentra nadie.
+                      */
+                      ...(checklist?.coverage === 'MISSING' && { note: blocking }),
+                    },
+                  ] satisfies AccountLink[])
                 : ([
                     /*
                      * Va el primero del grupo: el nombre y la descripción son

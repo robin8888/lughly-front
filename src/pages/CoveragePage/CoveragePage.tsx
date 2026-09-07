@@ -2,6 +2,13 @@
  * CoveragePage
  * Dónde trabaja el profesional: su base y hasta dónde se desplaza.
  *
+ * **De cualquier profesional, también del que trabaja para una empresa.** Hasta
+ * el 7 de septiembre de 2026 al empleado se le cerraba la puerta aquí —su zona
+ * la ponía quien le dio de alta— y el resultado era el contrario del buscado:
+ * el alta no pide dirección, así que entraba sin punto en el mapa y se quedaba
+ * fuera de las búsquedas por cercanía hasta que su empresa se acordara. Ahora
+ * la pone él, que es quien sabe desde dónde sale y con qué se mueve.
+ *
  * Faltaba, y no era un detalle de acabado. Esto solo se podía fijar cuando una
  * empresa daba de alta a un trabajador, así que un autónomo se quedaba sin
  * punto base para siempre, y eso le costaba dos cosas:
@@ -30,7 +37,6 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { Picker } from '@/components/molecules/Picker'
 import { CoverageMap } from '@/components/organisms/CoverageMap'
 import { useMyCoverage, useSetMyCoverage } from '@/hooks/domain/useMyCoverage'
-import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useShareLocation } from '@/hooks/domain/useShareLocation'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
@@ -54,25 +60,14 @@ const FALLBACK_CENTER: [number, number] = [-3.7038, 40.4168]
 
 export interface CoveragePageProps {
   onBack: () => void
-  /** Cuando la pone la empresa: la zona que se edita es la de ese trabajador */
-  employeeId?: string
-  employeeName?: string
 }
 
-export function CoveragePage({
-  onBack,
-  employeeId,
-  employeeName,
-}: CoveragePageProps) {
+export function CoveragePage({ onBack }: CoveragePageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
-  const isEmployee = useIsEmployee()
 
-  const isForEmployee = employeeId !== undefined
-  const blocked = isEmployee && !isForEmployee
-
-  const { data, isPending, isError, refetch } = useMyCoverage(!blocked, employeeId)
-  const { save, isSaving } = useSetMyCoverage(employeeId)
+  const { data, isPending, isError, refetch } = useMyCoverage()
+  const { save, isSaving } = useSetMyCoverage()
   const { status: shareStatus, share } = useShareLocation()
 
   const [point, setPoint] = useState<{ lat: number; lng: number } | null>(null)
@@ -228,27 +223,10 @@ export function CoveragePage({
         <Text style={styles.backIcon}>←</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={1}>
-        {isForEmployee ? (employeeName ?? 'Su zona') : 'Mi zona'}
+        Mi zona
       </Text>
     </View>
   )
-
-  /**
-   * A un empleado se la pone su empresa, igual que sus oficios y su horario:
-   * la zona a la que se le manda a trabajar es de quien organiza el trabajo.
-   */
-  if (blocked) {
-    return (
-      <View style={styles.screen} testID="coverage-page">
-        {header}
-        <EmptyState
-          title="Tu zona la pone tu empresa"
-          message="Quien te dio de alta decide desde dónde y hasta dónde trabajas, igual que tus oficios y tu horario. Si algo no cuadra, háblalo con ellos."
-          testID="coverage-employee"
-        />
-      </View>
-    )
-  }
 
   if (isPending) {
     return (
@@ -294,9 +272,8 @@ export function CoveragePage({
       >
         <InfoCard variant="accent">
           <Text style={styles.intro}>
-            {isForEmployee
-              ? 'Desde dónde sale y hasta dónde se desplaza. El cliente lo ve en su ficha antes de escribirle, así que decide cuánta gente le encuentra.'
-              : 'Desde dónde sales y hasta dónde te desplazas. El cliente lo ve en tu ficha antes de escribirte, así que decide cuánta gente te encuentra.'}
+            Desde dónde sales y hasta dónde te desplazas. El cliente lo ve en tu
+            ficha antes de escribirte, así que decide cuánta gente te encuentra.
           </Text>
 
           <Text style={styles.note}>
