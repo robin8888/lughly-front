@@ -344,8 +344,33 @@ arriba:
 - `materialsUpfront` se guarda ya, pero **el cobro del material por adelantado
   es de §C6**, que no está.
 
-**Lo que falta de aquí: aceptarlo.** Mueve dinero —`Charge(QUOTE, PAID)`, la
-`Appointment(WORK)` nueva y el `MATERIALS_ADVANCE`— y es §C6 entero.
+**Aceptarlo se construyó el mismo día**: ver §C6.
+
+**Construido el 7 Septiembre 2026 (C6), con estas decisiones:**
+
+- **La visita se descuenta una sola vez.** `quote.total` ya viene con
+  `visitCredit` restado desde que se emitió, así que aceptar cobra ese total y
+  no vuelve a restar nada. Restarlo dos veces regala el desplazamiento; no
+  restarlo lo cobra dos veces. Las dos versiones del error se descubren cuando
+  alguien reclama, y por eso hay una prueba que lo fija.
+- **El diálogo enseña la resta entera**, no solo el total: con una visita
+  pagada dos semanas antes, un número a secas se lee como si se cobrara dos
+  veces el mismo viaje.
+- **Un arreglo más barato que la visita se acepta sin cobrar nada.** La visita
+  no se devuelve —el viaje se hizo— pero tampoco se cobra un negativo, y sigue
+  habiendo contrato: lo que se acepta es el acuerdo.
+- **Presupuestar es comprometerse**: la `Appointment(WORK)` nace `CONFIRMED` y
+  no esperando un sí del profesional. Él puso el precio y la validez; pedirle
+  otra confirmación sería dejarle echarse atrás de su oferta con el dinero ya
+  retenido.
+- **Con 3D Secure no cambia nada hasta que el banco conteste**: el trabajo
+  sigue en `QUOTED` y lo cierra `ConfirmQuotePaymentUseCase`. Un pago abandonado
+  lo suelta el barrido a la media hora, sin borrar el trabajo —que existe desde
+  antes—.
+- **El pago a cuenta del material no está**, y la casilla se retiró a propósito:
+  `materialsUpfront` se guarda, pero prometer una retención que nadie puede
+  liberar —falta el «material comprado» con justificante— es peor que no
+  ofrecerla.
 
 **C6. Pablo acepta v2 (198 €).** `Job CONTRACTED` otra vez —es el mismo hecho,
 hay acuerdo y dinero— con una **nueva `Appointment(WORK)`** sobre el horario de

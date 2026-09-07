@@ -2857,8 +2857,34 @@ declarados desde el 22 de agosto, esperando justo a esto.
 - En la ficha del trabajo salen **todos**, del más nuevo al más viejo, con el
   motivo del rechazo dentro de su tarjeta.
 
-**Falta aceptarlo**, que es §C6 entero: mueve dinero —`Charge(QUOTE, PAID)`, la
-`Appointment(WORK)` nueva y el pago a cuenta del material—.
+### Y aceptarlo, el mismo día (§C6)
+
+Un presupuesto que solo se puede rechazar no cierra nada: el que gustaba se
+acababa aceptando por WhatsApp, igual que antes.
+
+- **La visita se descuenta una sola vez.** `quote.total` ya viene con
+  `visitCredit` restado desde que se emitió; aceptar retiene ese total y no
+  resta nada más. Restarlo dos veces regala el desplazamiento, no restarlo lo
+  cobra dos veces, y las dos se descubren cuando alguien reclama.
+- **El diálogo enseña la resta entera** —228 del arreglo, menos los 30 de la
+  visita, 198—: un total a secas, con una visita pagada dos semanas antes, se
+  lee como si se cobrara dos veces el mismo viaje.
+- **Presupuestar es comprometerse**: la cita del arreglo nace `CONFIRMED`. Él
+  puso el precio y la validez; pedirle otra confirmación sería dejarle echarse
+  atrás con el dinero ya retenido.
+- **Se retiene, no se cobra**, como en todo lo demás: sale cuando el cliente da
+  por bueno el trabajo terminado.
+- **Con 3D Secure no cambia nada hasta que el banco conteste**: el trabajo sigue
+  en `QUOTED` y lo cierra `ConfirmQuotePaymentUseCase`. `useCardChallenge` pasó
+  a `useCardChallengeFor` para admitir este cuarto camino sin una cuarta copia
+  de los pasos.
+- **Y un arreglo más barato que la visita se acepta sin cobrar nada**, pero se
+  acepta: lo que se acepta es el acuerdo, no el importe.
+
+**Lo que queda de §C6**: el pago a cuenta del material. La casilla llegó a
+estar y se retiró el mismo día: `materialsUpfront` se guarda, pero prometerle
+al cliente una retención que nadie puede liberar —falta el «material
+comprado» con justificante— es peor que no ofrecerla.
 
 ## 🆘 Si te Bloqueas
 
@@ -2884,4 +2910,4 @@ declarados desde el 22 de agosto, esperando justo a esto.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: el presupuesto en sí — 7 Septiembre 2026_
+_Última actualización: el presupuesto, emitido y aceptado — 7 Septiembre 2026_

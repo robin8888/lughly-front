@@ -9,11 +9,16 @@
  *
  * ## Por qué es una pieza y no tres copias
  *
- * Lo piden los tres caminos que cobran: la carta, las horas y la visita para
- * presupuesto. Estaba escrito dos veces —igual salvo un detalle— y la tercera
- * copia habría sido la que se quedara atrás: son cuatro mensajes de error y un
- * orden de pasos que **no se puede equivocar**, porque el paso que se salta es
- * el que decide si alguien trabaja gratis.
+ * Lo piden los cuatro caminos que cobran: la carta, las horas, la visita para
+ * presupuesto y **aceptar el presupuesto** (`CICLOS` §C6). Estaba escrito dos
+ * veces —igual salvo un detalle— y la tercera copia habría sido la que se
+ * quedara atrás: son cuatro mensajes de error y un orden de pasos que **no se
+ * puede equivocar**, porque el paso que se salta es el que decide si alguien
+ * trabaja gratis.
+ *
+ * El cuarto camino cierra por otro endpoint —su trabajo lleva días existiendo,
+ * no es un borrador— y termina en otro estado, así que eso es lo único que
+ * entra por parámetro: `useCardChallengeFor`. Los pasos siguen siendo uno.
  *
  * El paso que no se puede saltar es el último: quien dice si el banco aceptó es
  * el servidor, que se lo pregunta a Stripe. Que `handleNextAction` no devuelva
@@ -32,7 +37,18 @@ import { assignmentsApi, type ApiBookedServices } from '@/api/assignments.api'
  */
 export class CardAuthError extends Error {}
 
-export function useCardChallenge() {
+/**
+ * El reto, para un camino cualquiera de los que cobran.
+ *
+ * `confirm` es la llamada que cierra el pago en el servidor y `isDone` dice
+ * cuándo está hecho: lo demás —abrir el reto, distinguir un cierre de un
+ * rechazo, no fiarse de que el diálogo se cerrara— es igual en los cuatro y
+ * vive aquí una sola vez.
+ */
+export function useCardChallengeFor<T>(
+  confirm: (jobId: string) => Promise<T>,
+  isDone: (result: T) => boolean,
+) {
   const { handleNextAction } = useStripe()
 
   /**
@@ -40,10 +56,10 @@ export function useCardChallenge() {
    *
    * Lanza `CardAuthError` en todo lo que el cliente puede arreglar. Lo que
    * quede a medias —cierra la app, se le va la batería— lo recoge el barrido
-   * del servidor a la media hora: suelta el intento y borra el borrador, así
-   * que no queda nada que limpiar desde aquí.
+   * del servidor a la media hora: suelta el intento, así que no queda nada que
+   * limpiar desde aquí.
    */
-  return async (jobId: string, clientSecret: string | null): Promise<ApiBookedServices> => {
+  return async (jobId: string, clientSecret: string | null): Promise<T> => {
     if (!clientSecret) {
       throw new CardAuthError(
         'Tu banco pide confirmar el pago y no hemos podido abrir la confirmación. Inténtalo de nuevo.',
@@ -64,9 +80,9 @@ export function useCardChallenge() {
       )
     }
 
-    const confirmed = await assignmentsApi.confirmPayment(jobId)
+    const confirmed = await confirm(jobId)
 
-    if (confirmed.status !== 'booked') {
+    if (!isDone(confirmed)) {
       throw new CardAuthError(
         'Tu banco todavía no ha confirmado el pago. Espera un momento y vuelve a intentarlo.',
       )
@@ -74,4 +90,12 @@ export function useCardChallenge() {
 
     return confirmed
   }
+}
+
+/** El de contratar: carta, horas y visita. Los tres acaban en `booked`. */
+export function useCardChallenge() {
+  return useCardChallengeFor<ApiBookedServices>(
+    (jobId) => assignmentsApi.confirmPayment(jobId),
+    (result) => result.status === 'booked',
+  )
 }

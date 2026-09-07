@@ -41,6 +41,8 @@ export default function JobDetailRoute() {
        * en un formulario largo que hay que recorrer para llegar a lo demás.
        */
       onQuote={(id) => router.push({ pathname: '/presupuestar', params: { id } })}
+      /* Para aceptar hay que tener tarjeta: si no la hay, se va a guardarla */
+      onAddPaymentMethod={() => router.push('/mis-pagos')}
       onOpenChat={(jobId, title, otherName, otherAvatarUrl) =>
         router.push({
           pathname: '/mensajes/trabajo/[id]',

@@ -346,6 +346,20 @@ export interface ApiJobQuote {
   createdAt: string
 }
 
+export interface ApiAcceptedQuote {
+  jobId: string
+  quoteId: string
+  /** Lo retenido: el total del presupuesto, con la visita ya descontada */
+  amount: number
+  /**
+   * `accepted`: retenido y el profesional ya lo sabe. `requires_action`: el
+   * banco pide autenticación y **el presupuesto sigue pendiente** —nada se ha
+   * contratado— hasta que se resuelva el reto y se confirme.
+   */
+  status: 'accepted' | 'requires_action'
+  clientSecret: string | null
+}
+
 /** Una línea tal y como se escribe en el formulario, sin importe todavía */
 export interface QuoteLinePayload {
   kind: ApiQuoteLineKind
@@ -572,6 +586,26 @@ export const jobsApi = {
       method: 'POST',
       auth: true,
       body: { reason },
+    }),
+
+  /**
+   * Aceptar el presupuesto y poner el dinero (§C6).
+   *
+   * **El importe no viaja desde aquí**: se retiene `quote.total`, con la visita
+   * ya descontada. Mandar la cifra sería dejar elegir cuánto se paga.
+   */
+  acceptQuote: (jobId: string, paymentMethodId: string) =>
+    apiRequest<ApiAcceptedQuote>(`/v1/jobs/${jobId}/quotes/accept`, {
+      method: 'POST',
+      auth: true,
+      body: { paymentMethodId },
+    }),
+
+  /** Y cerrarlo tras el 3D Secure. Idempotente: dos toques no contratan dos veces */
+  confirmQuotePayment: (jobId: string) =>
+    apiRequest<ApiAcceptedQuote>(`/v1/jobs/${jobId}/quotes/confirm-payment`, {
+      method: 'POST',
+      auth: true,
     }),
 
   review: (jobId: string, rating: number, comment: string | null) =>

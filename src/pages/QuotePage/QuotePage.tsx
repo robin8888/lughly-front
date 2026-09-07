@@ -28,7 +28,6 @@ import { StatusBar } from 'expo-status-bar'
 import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
-import { Checkbox } from '@/components/atoms/Checkbox'
 import { formatAmount } from '@/components/atoms/Money'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
@@ -103,7 +102,6 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
 
   const [lineas, setLineas] = useState<Linea[]>([{ ...LINEA_NUEVA }])
   const [validDays, setValidDays] = useState('15')
-  const [materialsUpfront, setMaterialsUpfront] = useState(false)
 
   /** Lo que el cliente pagó por la visita, que se descuenta del total */
   const visitCredit = job?.amount != null && job.type === 'QUOTE' ? job.amount : 0
@@ -166,7 +164,6 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
           unitPrice: numero(linea.unitPrice),
         })),
         validDays: Number(validDays),
-        materialsUpfront: materialsUpfront && totales.materialsTotal > 0,
       })
 
       if (!ok) {
@@ -342,19 +339,12 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
         </FormField>
 
         {/*
-          El pago del material por adelantado, solo si hay material. Ofrecerlo
-          en un presupuesto que es todo mano de obra es una casilla que no
-          significa nada.
+          **El cobro del material por adelantado no se ofrece todavía.** La
+          columna existe en la base y la casilla estuvo aquí unas horas, y se
+          quitó a propósito: prometerle al cliente una retención que después
+          nadie puede liberar —falta el "material comprado" con justificante de
+          §C6— es peor que no ofrecerla. Vuelve cuando exista esa mitad.
         */}
-        {totales.materialsTotal > 0 && (
-          <Checkbox
-            checked={materialsUpfront}
-            onChange={() => setMaterialsUpfront((valor) => !valor)}
-            testID="quote-materials-upfront"
-          >
-            {`Cobrar el material al aceptar (${formatAmount(totales.materialsTotal)} €): se retiene hasta que lo compres`}
-          </Checkbox>
-        )}
 
         {falta && <Text style={styles.missing}>{falta}</Text>}
 

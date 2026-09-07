@@ -9,6 +9,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { jobsApi, type ApiJobDetail } from '@/api/jobs.api'
+import { CardAuthError, useCardChallengeFor } from './useCardChallenge'
 import { assignmentsApi } from '@/api/assignments.api'
 import { uploadApi } from '@/api/upload.api'
 import type { PickedImage } from '@/hooks/media/usePickImage'
@@ -485,5 +486,64 @@ export function useRejectQuote() {
       }
     },
     isRejecting: mutation.isPending,
+  }
+}
+
+/**
+ * El cliente acepta el presupuesto y pone el dinero (`CICLOS` §C6).
+ *
+ * **La visita ya viene descontada**: lo que se retiene es el total del
+ * presupuesto, que se calculó restando lo que el cliente pagó por que fueran a
+ * verlo. Aquí no se resta nada más — hacerlo dos veces regalaría el
+ * desplazamiento.
+ *
+ * El 3D Secure vive dentro de `accept()`, igual que en la carta y en las
+ * horas: para la pantalla es la misma llamada que tarda un poco más, y así no
+ * hay dos caminos de contratación en paralelo.
+ */
+export function useAcceptQuote() {
+  const queryClient = useQueryClient()
+  const resolveCardChallenge = useCardChallengeFor(
+    (jobId: string) => jobsApi.confirmQuotePayment(jobId),
+    (result) => result.status === 'accepted',
+  )
+
+  const mutation = useMutation({
+    mutationFn: async ({
+      jobId,
+      paymentMethodId,
+    }: {
+      jobId: string
+      paymentMethodId: string
+    }) => {
+      const accepted = await jobsApi.acceptQuote(jobId, paymentMethodId)
+
+      if (accepted.status === 'accepted') return accepted
+
+      return resolveCardChallenge(jobId, accepted.clientSecret)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+
+  return {
+    acceptQuote: async (jobId: string, paymentMethodId: string) => {
+      try {
+        return {
+          ok: true as const,
+          error: null,
+          result: await mutation.mutateAsync({ jobId, paymentMethodId }),
+        }
+      } catch (error) {
+        return {
+          ok: false as const,
+          result: null,
+          error:
+            error instanceof CardAuthError ? error.message : mensajeDe(error),
+        }
+      }
+    },
+    isAccepting: mutation.isPending,
   }
 }

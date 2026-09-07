@@ -34,6 +34,8 @@ jest.mock('@/hooks/domain/useJob', () => {
     reviewed: [] as { jobId: string; rating: number; comment: string | null }[],
     /** Los presupuestos rechazados, con el motivo (`CICLOS` §C5) */
     rejectedQuotes: [] as { jobId: string; reason: string }[],
+    /** Y los aceptados, con la tarjeta que se usó (§C6) */
+    acceptedQuotes: [] as { jobId: string; paymentMethodId: string }[],
   }
 
   return {
@@ -96,8 +98,31 @@ jest.mock('@/hooks/domain/useJob', () => {
       },
       isRejecting: false,
     }),
+    useAcceptQuote: () => ({
+      acceptQuote: (jobId: string, paymentMethodId: string) => {
+        soporte.acceptedQuotes.push({ jobId, paymentMethodId })
+        return Promise.resolve({ ok: true, result: null, error: null })
+      },
+      isAccepting: false,
+    }),
   }
 })
+
+/*
+  Las tarjetas guardadas. Se simula entero porque el de verdad arrastra el SDK
+  de Stripe, que no existe fuera de un móvil: sin esto la suite no arranca.
+  `soporteTarjetas.hay` decide si el cliente tiene una, que es lo que separa
+  "aceptar y pagar" de "guárdate una tarjeta primero".
+*/
+export const soporteTarjetas = { hay: true }
+
+jest.mock('@/hooks/domain/usePaymentMethods', () => ({
+  usePaymentMethods: () => ({
+    data: soporteTarjetas.hay ? [{ id: 'pm_1', brand: 'visa', last4: '4242' }] : [],
+    isPending: false,
+    isError: false,
+  }),
+}))
 
 jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefined }))
 jest.mock('@/hooks/ui/useTabBarClearance', () => ({ useTabBarClearance: () => 0 }))
@@ -168,6 +193,8 @@ beforeEach(() => {
   soporte.held.length = 0
   soporte.reviewed.length = 0
   soporte.rejectedQuotes.length = 0
+  soporte.acceptedQuotes.length = 0
+  soporteTarjetas.hay = true
   soporte.pending = false
 })
 
@@ -825,5 +852,114 @@ describe('JobDetailPage: el presupuesto', () => {
     )
 
     expect(queryByTestId('job-detail-quote')).toBeNull()
+  })
+})
+
+/**
+ * Aceptar el presupuesto (`CICLOS` §C6).
+ *
+ * Lo que se ata aquí es lo que Robin pidió que no se perdiera: **la visita
+ * pagada se descuenta, y se dice**. El diálogo enseña la resta entera —lo que
+ * vale el arreglo, lo que ya puso, lo que queda— porque un total a secas, con
+ * una visita pagada dos semanas antes, se lee como si se cobrara dos veces el
+ * mismo viaje.
+ */
+describe('JobDetailPage: aceptar el presupuesto', () => {
+  const conPresupuesto = () =>
+    ficha({
+      type: 'QUOTE',
+      status: 'QUOTED',
+      viewer: 'client',
+      quotes: [
+        {
+          id: 'quote-1',
+          version: 1,
+          status: 'SENT' as const,
+          lines: [
+            {
+              kind: 'LABOUR' as const,
+              concept: 'Cambiar pastillas',
+              quantity: 2,
+              unitPrice: 45,
+              amount: 90,
+            },
+          ],
+          linesTotal: 228,
+          visitCredit: 30,
+          total: 198,
+          validUntil: '2099-01-01T00:00:00.000Z',
+          materialsUpfront: false,
+          rejectionReason: null,
+          rejectedAt: null,
+          acceptedAt: null,
+          createdAt: '2026-09-07T10:00:00.000Z',
+        },
+      ],
+    })
+
+  it('el botón dice lo que se paga, no "aceptar" a secas', () => {
+    soporte.job = conPresupuesto()
+
+    const { getByText } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByText('Aceptar y pagar 198,00 €')).toBeTruthy()
+  })
+
+  it('el diálogo enseña la resta de la visita antes de cobrar', async () => {
+    soporte.job = conPresupuesto()
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(screen.getByTestId('job-detail-quote-accept'))
+    await screen.findByTestId('job-detail-quote-accept-dialog')
+
+    expect(
+      screen.getByText(/menos los 30,00 € de la visita que ya pagaste/),
+    ).toBeTruthy()
+  })
+
+  it('al confirmar, se retiene con la tarjeta guardada', async () => {
+    soporte.job = conPresupuesto()
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(screen.getByTestId('job-detail-quote-accept'))
+    await screen.findByTestId('job-detail-quote-accept-dialog')
+    fireEvent.press(screen.getByTestId('job-detail-quote-accept-confirm'))
+
+    await waitFor(() =>
+      expect(soporte.acceptedQuotes).toEqual([
+        { jobId: 'job-1', paymentMethodId: 'pm_1' },
+      ]),
+    )
+  })
+
+  it('sin tarjeta guardada, lleva a guardar una en vez de fallar al pagar', async () => {
+    soporte.job = conPresupuesto()
+    soporteTarjetas.hay = false
+    const onAddPaymentMethod = jest.fn()
+
+    render(
+      <JobDetailPage
+        jobId="job-1"
+        onBack={() => {}}
+        onAddPaymentMethod={onAddPaymentMethod}
+      />,
+    )
+    fireEvent.press(screen.getByTestId('job-detail-quote-accept'))
+    await screen.findByTestId('job-detail-quote-accept-dialog')
+
+    fireEvent.press(screen.getByTestId('job-detail-quote-accept-card'))
+
+    expect(onAddPaymentMethod).toHaveBeenCalled()
+    expect(soporte.acceptedQuotes).toEqual([])
+  })
+
+  it('al profesional no se le ofrece aceptar su propio presupuesto', () => {
+    soporte.job = { ...conPresupuesto(), viewer: 'pro' as const }
+
+    const { queryByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} onQuote={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-quote-accept')).toBeNull()
   })
 })

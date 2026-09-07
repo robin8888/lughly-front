@@ -43,7 +43,9 @@ import {
   useHoldJob,
   useReviewJob,
   useRejectQuote,
+  useAcceptQuote,
 } from '@/hooks/domain/useJob'
+import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { StarRating } from '@/components/atoms/StarRating'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
@@ -185,6 +187,11 @@ export interface JobDetailPageProps {
    * formulario largo que hay que recorrer para llegar a lo demás.
    */
   onQuote?: (jobId: string) => void
+  /**
+   * A guardar una tarjeta, para quien va a aceptar un presupuesto y no tiene
+   * ninguna. Sin esto, el aviso sería un callejón.
+   */
+  onAddPaymentMethod?: () => void
 }
 
 export function JobDetailPage({
@@ -193,6 +200,7 @@ export function JobDetailPage({
   onReassign,
   onOpenChat,
   onQuote,
+  onAddPaymentMethod,
 }: JobDetailPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
@@ -205,6 +213,13 @@ export function JobDetailPage({
   const { hold, isHolding } = useHoldJob()
   const { review, isReviewing } = useReviewJob()
   const { rejectQuote, isRejecting } = useRejectQuote()
+  const { acceptQuote, isAccepting } = useAcceptQuote()
+  /*
+    Las tarjetas guardadas. Se pide siempre y no solo cuando hay presupuesto:
+    la consulta está cacheada y en cuanto llega uno, el botón de aceptar tiene
+    que poder pulsarse sin esperar a nada.
+  */
+  const { data: methods } = usePaymentMethods()
 
   /**
    * Todo el estado va **aquí arriba, con el resto de hooks**, y no junto a lo
@@ -225,6 +240,8 @@ export function JobDetailPage({
   /** Y el de por qué no le vale el presupuesto (`CICLOS` §C5) */
   const [rejecting, setRejecting] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  /** Aceptarlo mueve dinero, así que se pregunta antes (§C6) */
+  const [accepting, setAccepting] = useState(false)
 
   /**
    * Lo que ya se le ha preguntado al cliente en esta visita, si hay algo.
@@ -526,6 +543,27 @@ export function JobDetailPage({
 
       setRejecting(false)
       setRejectReason('')
+    })()
+  }
+
+  /** La tarjeta con la que se retiene: la primera guardada, como en la carta */
+  const card = methods?.[0] ?? null
+
+  const doAcceptQuote = (id: string) => {
+    if (!card) return
+
+    void (async () => {
+      const { ok, error } = await acceptQuote(id, card.id)
+
+      if (!ok) {
+        Alert.alert(
+          'No se ha podido aceptar',
+          error ?? 'Inténtalo de nuevo en un momento.',
+        )
+        return
+      }
+
+      setAccepting(false)
     })()
   }
 
@@ -836,15 +874,29 @@ export function JobDetailPage({
               lo que desbloquea la v2 y no cuesta nada.
             */}
             {index === 0 && canAnswerQuote && (
-              <Button
-                variant="secondary"
-                fullWidth
-                onPress={() => setRejecting(true)}
-                style={styles.quoteAction}
-                testID="job-detail-quote-reject"
-              >
-                No me vale, dile por qué
-              </Button>
+              <>
+                <Button
+                  fullWidth
+                  onPress={() => setAccepting(true)}
+                  loading={isAccepting}
+                  style={styles.quoteAction}
+                  testID="job-detail-quote-accept"
+                >
+                  {entry.total > 0
+                    ? `Aceptar y pagar ${formatAmount(entry.total)} €`
+                    : 'Aceptar'}
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onPress={() => setRejecting(true)}
+                  style={styles.quoteAction}
+                  testID="job-detail-quote-reject"
+                >
+                  No me vale, dile por qué
+                </Button>
+              </>
             )}
           </QuoteCard>
         ))}
@@ -1452,6 +1504,69 @@ Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el s
           testID="job-detail-quote-reject-reason"
         />
       </Dialog>
+
+      {/**
+        * Aceptar mueve dinero, así que se pregunta antes (§C6).
+        *
+        * Y el diálogo dice **la cuenta entera**, no solo el total: la visita
+        * que ya pagó está descontada, y si no se dice parece que se le cobra
+        * dos veces el mismo viaje. Es la misma resta que hizo el profesional al
+        * emitirlo; aquí solo se le enseña.
+        *
+        * Se **retiene**, no se cobra: sale cuando él dé por bueno el trabajo
+        * terminado, como en todo lo demás.
+        */}
+      <Dialog
+        visible={accepting}
+        title="¿Aceptas el presupuesto?"
+        message={
+          quote === null
+            ? ''
+            : [
+                quote.visitCredit > 0
+                  ? `${formatAmount(quote.linesTotal)} € del arreglo, menos los ${formatAmount(quote.visitCredit)} € de la visita que ya pagaste: ${formatAmount(quote.total)} €.`
+                  : `Son ${formatAmount(quote.total)} €.`,
+                card
+                  ? 'Se retienen ahora en tu tarjeta y se le pagan cuando des por bueno el trabajo terminado.'
+                  : 'Necesitas una tarjeta guardada para poder aceptarlo.',
+              ].join('\n\n')
+        }
+        actions={
+          card
+            ? [
+                {
+                  label: isAccepting ? 'Aceptando…' : 'Aceptar y pagar',
+                  onPress: () => doAcceptQuote(job.id),
+                  disabled: isAccepting,
+                  testID: 'job-detail-quote-accept-confirm',
+                },
+                {
+                  label: 'Ahora no',
+                  variant: 'secondary',
+                  onPress: () => setAccepting(false),
+                  testID: 'job-detail-quote-accept-cancel',
+                },
+              ]
+            : [
+                {
+                  label: 'Guardar una tarjeta',
+                  onPress: () => {
+                    setAccepting(false)
+                    onAddPaymentMethod?.()
+                  },
+                  testID: 'job-detail-quote-accept-card',
+                },
+                {
+                  label: 'Ahora no',
+                  variant: 'secondary',
+                  onPress: () => setAccepting(false),
+                  testID: 'job-detail-quote-accept-cancel',
+                },
+              ]
+        }
+        onDismiss={() => setAccepting(false)}
+        testID="job-detail-quote-accept-dialog"
+      />
     </View>
   )
 }
