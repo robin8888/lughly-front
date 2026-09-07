@@ -2946,6 +2946,21 @@ un día que el profesional no tiene**.
 y el aviso de §F6 —al marcar unas vacaciones, decirle al profesional qué
 sesiones fijas se lleva por delante—.
 
+## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
+
+Hoy es una pantalla de leer de corrido —`HowItWorksPage`: tres pasos y un botón
+al directorio— y escrita **solo para el cliente**.
+
+**Cómo lo quiere Robin**: un recorrido por pasos, cada pantalla con **una
+imagen, su explicación y un botón de siguiente**. Y **dos recorridos**, no uno:
+al cliente se le habilita la explicación de la parte de cliente y al trabajador
+la del profesional, según su cuenta. Las dos hay que escribirlas.
+
+Las imágenes ya están en el repositorio: **`albert.png`, `albert-idea.png` y
+`albert-piensa.png`** en `src/images/`. Se van **alternando según lo que toque
+explicar**, que es de donde salió la idea. Entraron sin usarse todavía y por eso
+se dice aquí para qué son: sin esta nota, la siguiente limpieza se las lleva.
+
 ## 🆘 Si te Bloqueas
 
 1. **Revisa el README.md principal** - Tiene todas las reglas de negocio
