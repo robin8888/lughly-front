@@ -359,6 +359,22 @@ export function ProDirectoryCard({
       </View>
 
       {/*
+        Sin cuenta de cobro no hay forma de pagarle, así que no hay botón de
+        contratar en ninguno de los dos caminos —ni la carta de aquí ni los
+        de la ficha— y en su lugar se dice por qué.
+
+        Fuera de `body` y después de la carta: es lo último que se lee de la
+        tarjeta, justo donde estaría el botón que no está. La tarjeta sigue
+        abriéndose: se puede mirar, comparar y guardar en favoritos, que es la
+        mitad de la gracia de 30 días.
+      */}
+      {!pro.acceptsBookings && (
+        <Text style={styles.noBookings} testID="pro-card-no-bookings">
+          Aún no acepta reservas por la app
+        </Text>
+      )}
+
+      {/*
         La carta, desplegable: con varios oficios con carta en la lista,
         pintarla siempre alargaría cada tarjeta y sería difícil comparar de
         un vistazo. Cerrada de entrada; quien quiera el detalle la abre.
@@ -401,16 +417,24 @@ export function ProDirectoryCard({
                 Con cero marcados o con varios: se contrata igual, solo la
                 visita si no hace falta nada más. Así el cliente no tiene que
                 entrar a la ficha solo para pulsar este mismo botón.
+
+                Salvo que no tenga cuenta de cobro: entonces no hay botón, hay
+                una frase. El pago se estrellaría al final —no hay a quién
+                transferirle el dinero— y el cliente se habría llevado el
+                golpe después de elegir, rellenar y pagar, por algo que no es
+                suyo ni puede arreglar.
               */}
-              <Button
-                onPress={() =>
-                  onHireCarta(pro.id, featuredTrade!.slug, selectedServices)
-                }
-                style={styles.cartaHire}
-                testID="pro-card-carta-hire"
-              >
-                Contratar por {formatAmount(cartaTotal)} €
-              </Button>
+              {pro.acceptsBookings ? (
+                <Button
+                  onPress={() =>
+                    onHireCarta(pro.id, featuredTrade!.slug, selectedServices)
+                  }
+                  style={styles.cartaHire}
+                  testID="pro-card-carta-hire"
+                >
+                  Contratar por {formatAmount(cartaTotal)} €
+                </Button>
+              ) : null}
             </View>
           )}
         </View>

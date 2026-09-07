@@ -50,6 +50,8 @@ function perfil(trades: Record<string, unknown>[]) {
     tradeLabel: 'Fontanería',
     city: 'Madrid',
     employerName: null,
+    /* Con cuenta de cobro: sin ella no habría botones que probar */
+    acceptsBookings: true,
     bio: null,
     hourlyRate: null,
     visitFee: null,
@@ -247,5 +249,63 @@ describe('ProProfilePage: un oficio sin precios', () => {
 
     expect(screen.getByTestId('pro-no-price-dialog')).toBeTruthy()
     expect(onQuote).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * Sin cuenta de cobro no hay a quién transferirle el dinero.
+ *
+ * El cliente lo descubría al final: elegía, rellenaba, pagaba, y el cobro se
+ * estrellaba contra «falta completar la cuenta de cobro» —la de otro, y nada
+ * que él pudiera arreglar—. Aquí se dice antes de empezar, y no hay botón que
+ * empiece el camino.
+ *
+ * La ficha se ve entera igualmente: es la mitad amable de los 30 días de
+ * gracia. Se mira, se compara y se guarda en favoritos; lo que no se hace es
+ * pagar.
+ */
+describe('ProProfilePage: cuando no puede cobrar', () => {
+  const sinCobro = (trades: Record<string, unknown>[]) => ({
+    ...perfil(trades),
+    acceptsBookings: false,
+  })
+
+  it('no hay ni reservar ni presupuesto: hay una explicación', () => {
+    mockPro = sinCobro([
+      { slug: 'fontaneria', label: 'Fontanería', hourlyRate: 28, visitFee: null },
+    ])
+
+    abrir()
+
+    expect(screen.queryByTestId('pro-book')).toBeNull()
+    expect(screen.queryByTestId('pro-quote')).toBeNull()
+    expect(screen.getByTestId('pro-no-bookings')).toBeTruthy()
+  })
+
+  it('tampoco se contrata su carta', () => {
+    mockPro = sinCobro([
+      {
+        slug: 'fontaneria',
+        label: 'Fontanería',
+        hourlyRate: null,
+        visitFee: 35,
+        services: [{ id: 'svc-1', name: 'Cambio de grifo', price: 40 }],
+      },
+    ])
+
+    abrir()
+
+    expect(screen.queryByTestId('pro-carta-hire-fontaneria')).toBeNull()
+  })
+
+  it('pero la ficha se ve entera: precios incluidos', () => {
+    mockPro = sinCobro([
+      { slug: 'fontaneria', label: 'Fontanería', hourlyRate: 28, visitFee: null },
+    ])
+
+    abrir()
+
+    // Lo que se retira es el camino de pago, no la información para decidir
+    expect(screen.getByText('Rocío Vega')).toBeTruthy()
   })
 })

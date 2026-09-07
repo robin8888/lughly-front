@@ -650,13 +650,15 @@ export function ProProfilePage({
                         <Money amount={total} style={styles.cartaTotal} />
                       </View>
 
-                      <Button
-                        onPress={() => onHireCarta(trade.slug, selected)}
-                        style={styles.cartaHire}
-                        testID={`pro-carta-hire-${trade.slug}`}
-                      >
-                        Contratar por {formatAmount(total)} €
-                      </Button>
+                      {pro.acceptsBookings && (
+                        <Button
+                          onPress={() => onHireCarta(trade.slug, selected)}
+                          style={styles.cartaHire}
+                          testID={`pro-carta-hire-${trade.slug}`}
+                        >
+                          Contratar por {formatAmount(total)} €
+                        </Button>
+                      )}
                     </View>
                   )}
                 </View>
@@ -777,19 +779,42 @@ export function ProProfilePage({
 
         <ReviewList proId={pro.id} proName={pro.name} testID="pro-reviews" />
 
-        <View style={styles.actions}>
-          <Button onPress={handleBook} style={styles.actionButton} testID="pro-book">
-            Reservar ahora
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={handleQuote}
-            style={styles.actionButton}
-            testID="pro-quote"
-          >
-            Presupuesto
-          </Button>
-        </View>
+        {/*
+          Sin cuenta de cobro no hay a quién transferirle el dinero, así que no
+          hay forma de contratarle: el pago se estrellaría al final del camino
+          contra un aviso que habla de la cuenta de otro. En vez de los dos
+          botones, la frase.
+
+          La ficha se ve entera igualmente —precios, fotos, valoraciones—
+          porque quien la abre tiene derecho a saber si le interesa esta
+          persona. Es la gracia de 30 días: sale y se mira, no se paga.
+        */}
+        {pro.acceptsBookings ? (
+          <View style={styles.actions}>
+            <Button onPress={handleBook} style={styles.actionButton} testID="pro-book">
+              Reservar ahora
+            </Button>
+            <Button
+              variant="secondary"
+              onPress={handleQuote}
+              style={styles.actionButton}
+              testID="pro-quote"
+            >
+              Presupuesto
+            </Button>
+          </View>
+        ) : (
+          <InfoCard style={styles.noBookings} testID="pro-no-bookings">
+            <Text style={styles.noBookingsTitle}>
+              Aún no acepta reservas por la app
+            </Text>
+            <Text style={styles.noBookingsBody}>
+              Le falta terminar su cuenta de cobro, y hasta que lo haga no
+              podemos pagarle lo que contrates. Puedes guardarle en favoritos:
+              en cuanto la tenga, podrás contratarle desde aquí.
+            </Text>
+          </InfoCard>
+        )}
 
         <Pressable
           onPress={onReport}

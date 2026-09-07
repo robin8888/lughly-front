@@ -32,6 +32,7 @@ function makePro(photos: string[]): ApiPro {
     bio: 'Reparaciones y reformas de baño.',
     distanceKm: null,
     employerName: null,
+    acceptsBookings: true,
   }
 }
 
@@ -179,5 +180,66 @@ describe('ProDirectoryCard', () => {
     fireEvent.press(getByText('Ana Gil'))
 
     expect(onPress).toHaveBeenCalledWith(undefined)
+  })
+
+  /**
+   * Sin cuenta de cobro no hay a quién transferirle el dinero. El cobro se
+   * estrellaba al final del camino —después de elegir, rellenar y pagar—
+   * contra un aviso que habla de la cuenta de otro, y el cliente no puede
+   * arreglar eso ni tenía forma de saberlo antes de empezar.
+   */
+  describe('cuando no puede cobrar', () => {
+    const sinCobro = (pro: ApiPro): ApiPro => ({ ...pro, acceptsBookings: false })
+
+    it('lo dice, en vez de dejarlo para el final del pago', () => {
+      const { getByTestId } = render(
+        <ProDirectoryCard
+          pro={sinCobro(makePro([]))}
+          onPress={() => {}}
+          onHireCarta={noopHireCarta}
+        />,
+      )
+
+      expect(getByTestId('pro-card-no-bookings')).toBeTruthy()
+    })
+
+    it('y quita el botón de contratar de la carta, no solo lo apaga', () => {
+      const { getByTestId, queryByTestId } = render(
+        <ProDirectoryCard
+          pro={sinCobro(makeProConCarta())}
+          onPress={() => {}}
+          onHireCarta={noopHireCarta}
+        />,
+      )
+
+      fireEvent.press(getByTestId('pro-card-carta-toggle'))
+
+      // La carta se sigue viendo: sirve para comparar precios
+      expect(getByTestId('pro-card-carta-service-svc-1')).toBeTruthy()
+      expect(queryByTestId('pro-card-carta-hire')).toBeNull()
+    })
+
+    it('pero la tarjeta se abre igual: se puede mirar y guardar', () => {
+      const onPress = jest.fn()
+      const { getByText } = render(
+        <ProDirectoryCard
+          pro={sinCobro(makePro([]))}
+          onPress={onPress}
+          onHireCarta={noopHireCarta}
+        />,
+      )
+
+      fireEvent.press(getByText('Ana Gil'))
+
+      expect(onPress).toHaveBeenCalled()
+    })
+
+    it('con cuenta, ni rastro del aviso', () => {
+      const { queryByTestId } = render(
+        <ProDirectoryCard pro={makePro([])} onPress={() => {}} onHireCarta={noopHireCarta} />,
+      )
+
+      expect(queryByTestId('pro-card-no-bookings')).toBeNull()
+    })
   })
 })

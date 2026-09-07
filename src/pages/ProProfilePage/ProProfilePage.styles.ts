@@ -393,6 +393,28 @@ export const styles = StyleSheet.create({
     marginTop: 6,
   },
 
+  /**
+   * El sitio de los dos botones cuando no se le puede contratar. En tarjeta y
+   * no en una línea suelta: ahí abajo, después de las valoraciones, una frase
+   * a palo seco se lee como un pie de página y no como la respuesta a "¿y cómo
+   * le contrato?".
+   */
+  noBookings: {
+    marginTop: 20,
+  },
+  noBookingsTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  noBookingsBody: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.cardText,
+    opacity: 0.75,
+    marginTop: 3,
+  },
   actions: {
     flexDirection: 'row',
     gap: 8,

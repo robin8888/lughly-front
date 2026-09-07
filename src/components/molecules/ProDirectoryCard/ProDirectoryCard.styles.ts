@@ -257,6 +257,19 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.h6,
     color: theme.colors.accent700,
   },
+  /**
+   * "Aún no acepta reservas": ocupa el sitio del botón de contratar. Centrado
+   * y apagado, sin el rojo de urgencia: no es un fallo del profesional que el
+   * cliente tenga que juzgar, es que ese camino no está abierto todavía.
+   */
+  noBookings: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+    opacity: 0.6,
+    textAlign: 'center',
+    marginTop: 12,
+  },
   cartaHire: {
     marginTop: 10,
   },

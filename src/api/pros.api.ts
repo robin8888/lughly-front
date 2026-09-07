@@ -107,6 +107,16 @@ export interface ApiPro {
    * pone el precio y quien factura. Null si trabaja por su cuenta.
    */
   employerName: string | null
+  /**
+   * Si se le puede contratar hoy. En falso hay alguien sin cuenta de cobro
+   * detrás, y el pago se estrellaría al final del camino con un aviso que
+   * habla de la cuenta de otro.
+   *
+   * Sale igual en el directorio: dentro de sus 30 días de gracia se ve, se
+   * compara y se guarda en favoritos —lo que no hay es botón de contratar—.
+   * Pasado el plazo, el servidor deja de devolverle en el listado.
+   */
+  acceptsBookings: boolean
 }
 
 /**
