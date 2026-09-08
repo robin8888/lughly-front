@@ -1,15 +1,28 @@
 /**
  * ThreadDetailPage
- * Una conversación: la de un encargo, o la propia con administración.
+ * Una conversación: la que se tiene con una persona, o la propia con
+ * administración.
  *
  * Las dos formas comparten toda la pantalla —burbujas, adjunto, composición—
  * y solo cambian en qué hook lee y manda los mensajes (`mode`). Repetir la
  * pantalla entera por un cambio de endpoint habría dejado dos sitios donde
  * arreglar el mismo fallo.
  *
+ * **Es la conversación con la persona, no la de un encargo** (Robin, 8 Sep
+ * 2026): aquí está todo lo que os habéis escrito, del primer trabajo al
+ * último, seguido y sin separaciones. De qué trabajo hablabais en cada momento
+ * lo dice lo que os dijisteis.
+ *
+ * Y se puede quedar **de solo lectura**: cuando el último trabajo en común
+ * está terminado **y cobrado**, el servidor deja de admitir mensajes
+ * (`canWrite`) y en el sitio del campo de escribir se explica por qué. Que la
+ * raya esté en el cobro y no en terminar es de Robin: entre una cosa y otra
+ * hay una retención que liberar, y ahí es donde hacen falta los dos. Se lee
+ * entera igual: lo que se acordó, la foto que mandó, el precio que dijo.
+ *
  * Sin WebSocket: sondea cada pocos segundos mientras está abierta (ver
  * `useChat`). No hay paginación —el backend devuelve el hilo entero— porque
- * una conversación de un encargo no llega a los cientos de mensajes.
+ * una conversación entre dos personas no llega a los cientos de mensajes.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -37,9 +50,9 @@ import { Icon } from '@/components/atoms/Icon'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import {
-  useJobMessages,
+  useConversation,
   useMarkThreadRead,
-  useSendJobMessage,
+  useSendMessage,
   useSendSupportMessage,
   useSupportMessages,
   useUploadChatAttachment,
@@ -55,11 +68,15 @@ import { theme } from '@/theme'
 import { styles } from './ThreadDetailPage.styles'
 
 export interface ThreadDetailPageProps {
-  mode: 'job' | 'support'
-  /** Obligatorio en modo `job` */
-  jobId?: string
-  /** El título del encargo; "Soporte" en modo `support` */
-  title: string
+  mode: 'direct' | 'support'
+  /** Obligatorio en modo `direct`: con quién se habla */
+  otherUserId?: string
+  /**
+   * Su nombre y su foto, para pintar la cabecera desde el primer fotograma.
+   * Viajan como parámetro porque quien abre la pantalla siempre los sabe —la
+   * bandeja y la ficha del trabajo—, y esperar a la respuesta del servidor
+   * dejaría la cabecera en blanco un segundo.
+   */
   otherName: string
   otherAvatarUrl: string | null
   onBack: () => void
@@ -83,8 +100,7 @@ const ATTACHMENT_LABEL: Record<PendingAttachment['kind'], string> = {
 
 export function ThreadDetailPage({
   mode,
-  jobId,
-  title,
+  otherUserId,
   otherName,
   otherAvatarUrl,
   onBack,
@@ -93,14 +109,17 @@ export function ThreadDetailPage({
   const user = useUser()
   const scrollRef = useRef<ScrollView>(null)
 
-  const jobMessages = useJobMessages(mode === 'job' ? jobId : undefined, mode === 'job')
+  const conversation = useConversation(
+    mode === 'direct' ? otherUserId : undefined,
+    mode === 'direct',
+  )
   const supportMessages = useSupportMessages(mode === 'support')
-  const { data, isPending, isError, refetch } =
-    mode === 'job' ? jobMessages : supportMessages
+  const { isPending, isError, refetch } =
+    mode === 'direct' ? conversation : supportMessages
 
-  const sendJob = useSendJobMessage(jobId)
+  const sendDirect = useSendMessage(otherUserId)
   const sendSupport = useSendSupportMessage()
-  const { send, isSending } = mode === 'job' ? sendJob : sendSupport
+  const { send, isSending } = mode === 'direct' ? sendDirect : sendSupport
 
   const { markRead } = useMarkThreadRead()
 
@@ -113,8 +132,19 @@ export function ThreadDetailPage({
   const [attachment, setAttachment] = useState<PendingAttachment | null>(null)
   const [viewerUri, setViewerUri] = useState<string | null>(null)
 
-  const messages = data ?? []
-  const canSend = (text.trim().length > 0 || attachment !== null) && !isSending
+  const messages =
+    (mode === 'direct' ? conversation.data?.messages : supportMessages.data) ?? []
+
+  /*
+    A soporte siempre se le puede escribir: no depende de ningún trabajo. En
+    una conversación con otra persona lo dice el servidor, y mientras se está
+    cargando se da por bueno —enseñar el campo y quitarlo medio segundo
+    después se lee como un fallo—.
+  */
+  const canWrite = mode === 'support' || (conversation.data?.canWrite ?? true)
+
+  const canSend =
+    canWrite && (text.trim().length > 0 || attachment !== null) && !isSending
 
   const chooseAttachment = () => {
     Alert.alert('Adjuntar', undefined, [
@@ -194,10 +224,10 @@ export function ThreadDetailPage({
     if (messages.length === 0) return
 
     if (mode === 'support') markRead({ support: true })
-    else if (jobId) markRead({ jobId })
+    else if (otherUserId) markRead({ otherUserId })
     // `markRead` es estable; incluirlo aquí volvería a marcar en cada pintado
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length, mode, jobId])
+  }, [messages.length, mode, otherUserId])
 
   const header = (
     <View style={styles.header}>
@@ -214,11 +244,6 @@ export function ThreadDetailPage({
         <Text style={styles.otherName} numberOfLines={1}>
           {otherName}
         </Text>
-        {mode === 'job' && (
-          <Text style={styles.jobTitle} numberOfLines={1}>
-            {title}
-          </Text>
-        )}
       </View>
     </View>
   )
@@ -252,7 +277,7 @@ export function ThreadDetailPage({
         >
           {messages.length === 0 ? (
             <Text style={styles.empty}>
-              {mode === 'job'
+              {mode === 'direct'
                 ? 'Todavía no os habéis escrito. Empieza tú.'
                 : 'Escríbenos y te contestaremos lo antes posible.'}
             </Text>
@@ -275,7 +300,7 @@ export function ThreadDetailPage({
         </ScrollView>
       )}
 
-      {attachment && (
+      {attachment && canWrite && (
         <View style={styles.pendingAttachment} testID="thread-detail-pending-attachment">
           {attachment.kind === 'IMAGE' ? (
             <Avatar uri={attachment.previewUri} size={40} />
@@ -317,6 +342,27 @@ export function ThreadDetailPage({
         </View>
       )}
 
+      {!canWrite ? (
+        /*
+          El trabajo se acabó y el dinero ya llegó (`chat-open.ts` en el
+          servidor). Se dice, y se dice cómo vuelve a abrirse: un campo de
+          texto desactivado sin explicación se lee como una app rota, y
+          esconder la pantalla entera perdería lo que ya está escrito.
+
+          El texto no dice quién contrata a quién porque lo leen los dos
+          lados: «si vuelve a contratarte» sobra en la mitad de las pantallas
+          donde sale, y aquí no hay forma de saber cuál de las dos es.
+        */
+        <View
+          style={[styles.closed, { paddingBottom: 14 + insets.bottom }]}
+          testID="thread-detail-closed"
+        >
+          <Text style={styles.closedText}>
+            El trabajo está terminado y cobrado, así que esta conversación está cerrada. Si
+            volvéis a trabajar juntos, se abrirá otra vez aquí mismo.
+          </Text>
+        </View>
+      ) : (
       <View style={[styles.composer, { paddingBottom: 10 + insets.bottom }]}>
         <Pressable
           onPress={chooseAttachment}
@@ -355,6 +401,7 @@ export function ThreadDetailPage({
           <Icon name="send" size={18} color="#ffffff" />
         </Pressable>
       </View>
+      )}
 
       <PhotoViewer
         photos={viewerUri ? [viewerUri] : []}

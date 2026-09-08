@@ -15,7 +15,6 @@ export default function SupportThreadRoute() {
   return (
     <ThreadDetailPage
       mode="support"
-      title="Soporte"
       otherName="Administración"
       otherAvatarUrl={null}
       // Con destino de reserva: `back()` a secas no hace nada si no hay

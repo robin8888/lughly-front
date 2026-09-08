@@ -55,6 +55,13 @@ export const LIVE_QUERY_KEYS: QueryKey[] = [
 export interface PushData {
   screen?: string
   jobId?: string
+  /**
+   * Quién ha escrito, en el aviso de un mensaje. Es lo que abre la
+   * conversación, que desde el 8 de septiembre de 2026 es de una persona y no
+   * de un encargo.
+   */
+  otherUserId?: string
+  /** Lo mandaba el chat hasta esa fecha, y no servía para abrir nada. */
   threadId?: string
 }
 
@@ -68,6 +75,7 @@ export function readPushData(data: unknown): PushData {
   return {
     screen: text(raw.screen),
     jobId: text(raw.jobId),
+    otherUserId: text(raw.otherUserId),
     threadId: text(raw.threadId),
   }
 }

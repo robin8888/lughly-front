@@ -43,10 +43,14 @@ export default function JobDetailRoute() {
       onQuote={(id) => router.push({ pathname: '/presupuestar', params: { id } })}
       /* Para aceptar hay que tener tarjeta: si no la hay, se va a guardarla */
       onAddPaymentMethod={() => router.push('/mis-pagos')}
-      onOpenChat={(jobId, title, otherName, otherAvatarUrl) =>
+      /*
+        Se abre por quién, no por qué trabajo: la conversación con esa persona
+        es una sola, y desde aquí se entra a la misma que desde "Mensajes".
+      */
+      onOpenChat={(otherUserId, otherName, otherAvatarUrl) =>
         router.push({
-          pathname: '/mensajes/trabajo/[id]',
-          params: { id: jobId, title, otherName, otherAvatarUrl: otherAvatarUrl ?? '' },
+          pathname: '/mensajes/persona/[id]',
+          params: { id: otherUserId, otherName, otherAvatarUrl: otherAvatarUrl ?? '' },
         })
       }
     />

@@ -226,7 +226,7 @@ export default function RootLayout() {
               */}
               <Stack.Screen name="mensajes" />
               <Stack.Screen name="mensajes/soporte" />
-              <Stack.Screen name="mensajes/trabajo/[id]" />
+              <Stack.Screen name="mensajes/persona/[id]" />
             </Stack.Protected>
 
             <Stack.Protected guard={!isAuthenticated}>

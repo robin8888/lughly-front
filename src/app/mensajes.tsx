@@ -12,14 +12,13 @@ import type { ApiThreadSummary } from '@/api/chat.api'
 export default function MessagesRoute() {
   const router = useRouter()
 
-  const openJobThread = (thread: ApiThreadSummary) => {
-    if (!thread.jobId) return
+  const openConversation = (thread: ApiThreadSummary) => {
+    if (!thread.otherUserId) return
 
     router.push({
-      pathname: '/mensajes/trabajo/[id]',
+      pathname: '/mensajes/persona/[id]',
       params: {
-        id: thread.jobId,
-        title: thread.title,
+        id: thread.otherUserId,
         otherName: thread.otherName,
         otherAvatarUrl: thread.otherAvatarUrl ?? '',
       },
@@ -36,7 +35,7 @@ export default function MessagesRoute() {
        * de reserva no hace falta que haya nada detrás.
        */
       onBack={() => (router.canGoBack() ? router.back() : router.navigate('/account'))}
-      onOpenJobThread={openJobThread}
+      onOpenConversation={openConversation}
       onOpenSupport={() => router.push('/mensajes/soporte')}
     />
   )

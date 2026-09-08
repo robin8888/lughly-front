@@ -1,8 +1,14 @@
 /**
- * Chat: hilos de encargo entre cliente y quien lo tiene, más una bandeja de
- * soporte con administración. Sin WebSocket — la app sondea mientras la
- * pantalla está abierta y recibe un push si no (decidido con Robin, 22 Ago
- * 2026).
+ * Chat: una conversación por persona —el cliente y quien hace el trabajo—, más
+ * una bandeja de soporte con administración. Sin WebSocket — la app sondea
+ * mientras la pantalla está abierta y recibe un push si no (decidido con
+ * Robin, 22 Ago 2026).
+ *
+ * **Una por persona, no una por encargo** (Robin, 8 Sep 2026): todo lo que se
+ * escriban dos se suma al mismo hilo, se contraten una vez o veinte. Y se
+ * puede escribir solo mientras compartan un trabajo vivo: acabado el último,
+ * la conversación se lee pero se calla, hasta que esa persona vuelva a
+ * contratar.
  * Contrato: lughly-backend/src/modules/chat/chat.controller.ts
  *
  * El adjunto no se manda aquí: se sube antes por su cuenta con
@@ -30,20 +36,33 @@ export interface ApiMessage {
   createdAt: string
 }
 
-/** Una fila de "Mi bandeja" (GET /v1/threads) */
+/** Una fila de "Mi bandeja" (GET /v1/threads): una por persona */
 export interface ApiThreadSummary {
   id: string
-  kind: 'JOB' | 'SUPPORT'
-  /** Solo en JOB: el encargo del que habla el hilo */
-  jobId: string | null
-  /** El título del encargo, o "Soporte" */
-  title: string
+  kind: 'DIRECT' | 'SUPPORT'
+  /** Con quién se habla. `null` en el hilo de soporte, que no es de nadie. */
+  otherUserId: string | null
+  /** Su nombre, o "Administración" */
   otherName: string
   otherAvatarUrl: string | null
   lastMessage: string | null
   lastMessageAt: string | null
   /** Cuántos mensajes de ese hilo no he visto todavía. Cero es "al día". */
   unreadCount: number
+}
+
+/** La conversación con una persona (GET /v1/chat/with/:userId) */
+export interface ApiConversation {
+  otherUserId: string
+  otherName: string
+  otherAvatarUrl: string | null
+  /**
+   * Si ahora mismo se le puede escribir: hace falta compartir un trabajo vivo.
+   * A falso la pantalla enseña por qué en vez de un campo de texto que iba a
+   * fallar al pulsar enviar.
+   */
+  canWrite: boolean
+  messages: ApiMessage[]
 }
 
 /** Lo que pinta el aviso del botón de mensajes */
@@ -92,8 +111,8 @@ export const chatApi = {
    * no debe cambiar nada, y además esos mensajes se sondean —marcar al leerlos
    * daría por vista una pantalla olvidada abierta en un bolsillo—.
    */
-  markJobRead: (jobId: string) =>
-    apiRequest<{ ok: true }>(`/v1/jobs/${jobId}/messages/read`, {
+  markConversationRead: (userId: string) =>
+    apiRequest<{ ok: true }>(`/v1/chat/with/${userId}/read`, {
       method: 'POST',
       auth: true,
     }),
@@ -104,11 +123,12 @@ export const chatApi = {
       auth: true,
     }),
 
-  jobMessages: (jobId: string) =>
-    apiRequest<ApiMessage[]>(`/v1/jobs/${jobId}/messages`, { auth: true }),
+  /** Todo lo escrito con esa persona, del primer encargo al último */
+  conversation: (userId: string) =>
+    apiRequest<ApiConversation>(`/v1/chat/with/${userId}`, { auth: true }),
 
-  sendJobMessage: (jobId: string, payload: SendMessagePayload) =>
-    apiRequest<ApiMessage>(`/v1/jobs/${jobId}/messages`, {
+  sendMessage: (userId: string, payload: SendMessagePayload) =>
+    apiRequest<ApiMessage>(`/v1/chat/with/${userId}/messages`, {
       method: 'POST',
       auth: true,
       body: payload,

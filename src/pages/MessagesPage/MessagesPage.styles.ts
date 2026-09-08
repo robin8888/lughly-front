@@ -135,12 +135,6 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.textSoft,
   },
-  jobTitle: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.textSoft,
-    marginTop: 1,
-  },
   lastMessage: {
     fontFamily: theme.typography.fonts.body,
     fontSize: theme.typography.sizes.tiny,

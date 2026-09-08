@@ -1423,11 +1423,12 @@ instantánea (Fase 7), y los festivos locales.
 
 ### Día 46-47: Chat
 **Tareas**:
-- [ ] MessagesPage (lista de threads)
-- [ ] ThreadDetailPage
-  - Mensajes con contexto del trabajo
-  - Adjuntos
-  - WebSocket real-time
+- [x] MessagesPage — una fila por persona, no por encargo (8 Sep 2026)
+- [x] ThreadDetailPage
+  - [x] Toda la conversación con esa persona, seguida
+  - [x] Adjuntos
+  - [ ] ~~WebSocket real-time~~ — se sondea, y el aviso lo despierta
+        (decidido con Robin, 22 Ago 2026)
 
 ---
 
@@ -2558,6 +2559,33 @@ listener no ve: la app cerrada del todo.
 Terminado, cancelado, caducado o rechazado no tienen conversación pendiente.
 Se decide en `chatWith`, que es lo que mira la app, así que se apaga en la ficha
 y en la lista a la vez.
+
+### ✅ Un hilo por persona, no uno por encargo (8 Septiembre 2026)
+
+Entrar en Mensajes y encontrarse tres filas de la misma persona porque le
+habías encargado tres trabajos. El hilo colgaba del `Job` (`threads.job_id`,
+único), así que cada encargo abría su conversación aparte.
+
+Ahora `Thread` es de **una pareja de personas** (`user_a_id`/`user_b_id`,
+ordenados por uuid para que la pareja no pueda entrar dos veces con los papeles
+cambiados) y todo lo que se escriben se suma al mismo sitio, se contraten una
+vez o veinte. La migración fusiona lo que ya había: mueve los mensajes al hilo
+más antiguo de cada pareja y se queda con **la marca de lectura más vieja** de
+las que fusiona —al revés, un mensaje sin leer de una conversación vieja
+quedaría enterrado para siempre—.
+
+El chat se direcciona por quién y no por qué trabajo: `GET/POST
+/v1/chat/with/:userId`. De paso, el aviso de un mensaje vuelve a llevar a
+alguna parte —mandaba el `threadId`, que `routeFor` no sabía abrir, así que
+tocarlo no hacía nada—.
+
+**Y se cierra cuando el trabajador cobra, no cuando el trabajo termina**
+(Robin). Entre terminar y cobrar hay una retención que alguien tiene que
+liberar, y de ese rato es de lo que más se habla; cerrar antes dejaba a los dos
+sin forma de hablar del pago pendiente. La regla vive en `chat-open.ts` y la
+miran los dos sitios que tienen que decir lo mismo: el botón de la ficha y el
+envío. Cerrada **no es escondida**: se lee entera, y se reabre sola si esa
+persona vuelve a contratar.
 
 ## 🐛 Tres fallos que solo se veían usándolo
 

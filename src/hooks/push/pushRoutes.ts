@@ -36,7 +36,7 @@ import type { PushData } from './pushInvalidation'
 export type PushRoute =
   | { pathname: '/trabajo/[id]'; params: { id: string } }
   | { pathname: '/urgencia/[id]'; params: { id: string } }
-  | { pathname: '/mensajes/trabajo/[id]'; params: { id: string } }
+  | { pathname: '/mensajes/persona/[id]'; params: { id: string } }
   | { pathname: '/encargos' }
   | { pathname: '/jobs' }
   | { pathname: '/account' }
@@ -49,7 +49,7 @@ export type PushRoute =
  * usuario**. Abrir una pantalla al azar es peor que abrir por donde estaba.
  */
 export function routeFor(data: PushData): PushRoute | null {
-  const { screen, jobId } = data
+  const { screen, jobId, otherUserId } = data
 
   switch (screen) {
     /**
@@ -75,12 +75,16 @@ export function routeFor(data: PushData): PushRoute | null {
       return jobId ? { pathname: '/urgencia/[id]', params: { id: jobId } } : null
 
     /**
-     * Un mensaje. La conversación vive dentro de un trabajo
-     * (`resolveJobThreadSides` en el servidor), así que sin `jobId` no hay hilo
-     * que abrir.
+     * Un mensaje: se abre la conversación con **quien lo ha escrito**.
+     *
+     * Iba por `jobId` desde que existe el chat, y era un aviso muerto: el
+     * servidor nunca mandó ese dato en los mensajes —mandaba el del hilo, que
+     * aquí no sirve de nada—, así que tocar el aviso no abría nada. Desde el 8
+     * de septiembre de 2026 manda `otherUserId`, que es lo que la conversación
+     * necesita ahora que es de una persona y no de un encargo.
      */
     case 'chat':
-      return jobId ? { pathname: '/mensajes/trabajo/[id]', params: { id: jobId } } : null
+      return otherUserId ? { pathname: '/mensajes/persona/[id]', params: { id: otherUserId } } : null
 
     /**
      * La bandeja de quien recibe encargos. **No** se abre el trabajo suelto

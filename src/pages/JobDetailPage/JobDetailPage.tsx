@@ -174,8 +174,7 @@ export interface JobDetailPageProps {
    * abre la conversación.
    */
   onOpenChat?: (
-    jobId: string,
-    title: string,
+    otherUserId: string,
     otherName: string,
     otherAvatarUrl: string | null,
   ) => void
@@ -1116,7 +1115,7 @@ export function JobDetailPage({
             fullWidth
             onPress={() => {
               const chatWith = job.chatWith
-              if (chatWith) onOpenChat(job.id, job.title, chatWith.name, chatWith.avatarUrl)
+              if (chatWith) onOpenChat(chatWith.id, chatWith.name, chatWith.avatarUrl)
             }}
             style={styles.bids}
             testID="job-detail-chat"

@@ -1,13 +1,18 @@
 /**
  * MessagesPage
- * "Mensajes" (ROADMAP.md Fase 11): mis hilos de encargo con conversación, más
- * mi hilo de soporte si lo tengo.
+ * "Mensajes" (ROADMAP.md Fase 11): **una fila por persona** con la que he
+ * hablado, más mi hilo de soporte si lo tengo.
  *
- * Un hilo de encargo solo aparece aquí cuando ya tiene un primer mensaje —lo
+ * Una por persona y no una por encargo (Robin, 8 Sep 2026): hasta entonces
+ * tres trabajos con Ana salían aquí como tres conversaciones con Ana, que es
+ * lo contrario de lo que espera cualquiera que haya usado una app de mensajes.
+ * El trabajo tampoco sale de subtítulo: la conversación es con la persona.
+ *
+ * Una conversación solo aparece aquí cuando ya tiene un primer mensaje —lo
  * dice el propio backend, `ListMyThreadsUseCase`—, así que no hay nada que
- * listar hasta que alguien escribe. Para empezar una conversación nueva con
- * quien tiene un trabajo se entra desde su ficha (`JobDetailPage`), que es
- * donde se sabe con quién se habla.
+ * listar hasta que alguien escribe. Para empezar una nueva se entra desde la
+ * ficha del trabajo (`JobDetailPage`), que es donde se sabe con quién se
+ * habla.
  *
  * "Contactar con soporte" es la excepción: siempre está a la vista, tenga o
  * no hilo todavía, porque si no hubiera manera de escribir a soporte por
@@ -31,11 +36,11 @@ import { styles } from './MessagesPage.styles'
 
 export interface MessagesPageProps {
   onBack: () => void
-  onOpenJobThread: (thread: ApiThreadSummary) => void
+  onOpenConversation: (thread: ApiThreadSummary) => void
   onOpenSupport: () => void
 }
 
-export function MessagesPage({ onBack, onOpenJobThread, onOpenSupport }: MessagesPageProps) {
+export function MessagesPage({ onBack, onOpenConversation, onOpenSupport }: MessagesPageProps) {
   const onScroll = useNavScrollHandler()
   const tabBarClearance = useTabBarClearance()
   const { data, isPending, isError, refetch } = useMyThreads()
@@ -105,7 +110,7 @@ export function MessagesPage({ onBack, onOpenJobThread, onOpenSupport }: Message
               <Pressable
                 key={thread.id}
                 onPress={() =>
-                  thread.kind === 'JOB' ? onOpenJobThread(thread) : onOpenSupport()
+                  thread.kind === 'DIRECT' ? onOpenConversation(thread) : onOpenSupport()
                 }
                 style={styles.row}
                 accessibilityRole="button"
@@ -129,9 +134,6 @@ export function MessagesPage({ onBack, onOpenJobThread, onOpenSupport }: Message
                       </Text>
                     )}
                   </View>
-                  <Text style={styles.jobTitle} numberOfLines={1}>
-                    {thread.title}
-                  </Text>
                   {thread.lastMessage && (
                     <Text style={styles.lastMessage} numberOfLines={1}>
                       {thread.lastMessage}

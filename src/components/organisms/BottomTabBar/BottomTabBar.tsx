@@ -43,7 +43,7 @@ import { styles } from './BottomTabBar.styles'
 export const HIDDEN_PATHS = ['/', '/login', '/registro', '/recuperar']
 
 /**
- * Y una conversación (`/mensajes/trabajo/[id]`, `/mensajes/soporte`): lleva
+ * Y una conversación (`/mensajes/persona/[id]`, `/mensajes/soporte`): lleva
  * su propia caja de escribir pegada abajo, con el teclado encima. No hay
  * ningún otro sitio en la app con un control fijo ahí, y la píldora flotando
  * sobre el teclado o encima de la caja de escribir no tiene hueco limpio

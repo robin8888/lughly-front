@@ -1,6 +1,6 @@
 /**
  * useChat
- * Hilos de encargo y de soporte.
+ * La conversación con cada persona, y la de soporte.
  * Contrato: lughly-backend/src/modules/chat/chat.controller.ts
  *
  * Sin WebSocket (decidido con Robin, 22 Ago 2026): se sondea mientras la
@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError, uploadApi, type UploadFile } from '@/api'
 import {
   chatApi,
+  type ApiConversation,
   type ApiMessage,
   type ApiThreadSummary,
   type ApiUnreadCount,
@@ -66,8 +67,8 @@ export function myThreadsQueryKey() {
   return ['chat', 'threads'] as const
 }
 
-export function jobMessagesQueryKey(jobId: string) {
-  return ['chat', 'job', jobId] as const
+export function conversationQueryKey(userId: string) {
+  return ['chat', 'with', userId] as const
 }
 
 export function supportMessagesQueryKey() {
@@ -117,10 +118,10 @@ export function useMarkThreadRead() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (target: { jobId: string } | { support: true }) =>
+    mutationFn: (target: { otherUserId: string } | { support: true }) =>
       'support' in target
         ? chatApi.markSupportRead()
-        : chatApi.markJobRead(target.jobId),
+        : chatApi.markConversationRead(target.otherUserId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: unreadCountQueryKey() })
       void queryClient.invalidateQueries({ queryKey: myThreadsQueryKey() })
@@ -133,7 +134,7 @@ export function useMarkThreadRead() {
       lo peor que pasa es que el número tarde en bajar, y no hay nada que
       pedirle al usuario que haga al respecto.
     */
-    markRead: (target: { jobId: string } | { support: true }) =>
+    markRead: (target: { otherUserId: string } | { support: true }) =>
       mutation.mutate(target),
   }
 }
@@ -150,27 +151,31 @@ export function useMyThreads(enabled = true) {
   })
 }
 
-export function useJobMessages(jobId: string | undefined, enabled = true) {
+/**
+ * La conversación con una persona: todo lo escrito con ella, del primer
+ * encargo al último.
+ */
+export function useConversation(userId: string | undefined, enabled = true) {
   const refetchInterval = usePollInterval('messages')
 
-  return useQuery<ApiMessage[]>({
-    queryKey: jobMessagesQueryKey(jobId ?? ''),
-    queryFn: () => chatApi.jobMessages(jobId as string),
-    enabled: enabled && Boolean(jobId),
+  return useQuery<ApiConversation>({
+    queryKey: conversationQueryKey(userId ?? ''),
+    queryFn: () => chatApi.conversation(userId as string),
+    enabled: enabled && Boolean(userId),
     staleTime: 2_000,
     refetchInterval,
   })
 }
 
-export function useSendJobMessage(jobId: string | undefined) {
+export function useSendMessage(userId: string | undefined) {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
     mutationFn: (payload: SendMessagePayload) =>
-      chatApi.sendJobMessage(jobId as string, payload),
+      chatApi.sendMessage(userId as string, payload),
     onSuccess: () => {
-      if (jobId) {
-        void queryClient.invalidateQueries({ queryKey: jobMessagesQueryKey(jobId) })
+      if (userId) {
+        void queryClient.invalidateQueries({ queryKey: conversationQueryKey(userId) })
       }
       void queryClient.invalidateQueries({ queryKey: myThreadsQueryKey() })
     },

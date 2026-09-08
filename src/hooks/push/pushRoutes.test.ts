@@ -46,11 +46,22 @@ describe('routeFor', () => {
     })
   })
 
-  it('un mensaje lleva a su conversación', () => {
-    expect(routeFor({ screen: 'chat', jobId: 'job-1' })).toEqual({
-      pathname: '/mensajes/trabajo/[id]',
-      params: { id: 'job-1' },
+  it('un mensaje lleva a la conversación con quien lo escribió', () => {
+    expect(routeFor({ screen: 'chat', otherUserId: 'marta-1' })).toEqual({
+      pathname: '/mensajes/persona/[id]',
+      params: { id: 'marta-1' },
     })
+  })
+
+  /**
+   * El aviso de un mensaje ya no lleva a un trabajo, y traer uno no lo salva:
+   * la conversación es de la persona. Un aviso de una versión anterior del
+   * servidor —que mandaba el hilo, o el trabajo— no abre nada, que es mejor
+   * que abrir una pantalla equivocada.
+   */
+  it('un mensaje sin quién no lleva a ninguna parte', () => {
+    expect(routeFor({ screen: 'chat', jobId: 'job-1' })).toBeNull()
+    expect(routeFor({ screen: 'chat', threadId: 'thread-1' })).toBeNull()
   })
 
   /**

@@ -46,12 +46,6 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     color: '#ffffff',
   },
-  jobTitle: {
-    fontFamily: theme.typography.fonts.body,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.accent300,
-    marginTop: 1,
-  },
 
   state: {
     flex: 1,
@@ -266,6 +260,22 @@ export const styles = StyleSheet.create({
   pendingAttachmentRemoveText: {
     fontSize: theme.typography.sizes.small,
     color: theme.colors.textSoft,
+  },
+
+  /* En vez del campo de escribir, cuando ya no queda trabajo vivo en común */
+  closed: {
+    paddingTop: 14,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+    backgroundColor: theme.colors.surfaceSoft,
+  },
+  closedText: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: 18,
+    color: theme.colors.textSoft,
+    textAlign: 'center',
   },
 
   composer: {
