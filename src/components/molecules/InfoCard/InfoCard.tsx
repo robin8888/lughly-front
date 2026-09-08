@@ -18,7 +18,7 @@
  */
 
 import { ReactNode } from 'react'
-import { View, type ViewStyle } from 'react-native'
+import { View, type StyleProp, type ViewStyle } from 'react-native'
 import { styles } from './InfoCard.styles'
 
 /**
@@ -31,7 +31,13 @@ export type InfoCardVariant = 'light' | 'dark' | 'accent'
 export interface InfoCardProps {
   children: ReactNode
   variant?: InfoCardVariant
-  style?: ViewStyle
+  /**
+   * Estilo extra. `StyleProp` y no `ViewStyle` a secas para poder pasarle una
+   * lista: quien la usa suele componer el color por estado con el grosor de la
+   * línea, y aplanarlo en cada sitio solo servía para repetir el mismo
+   * `StyleSheet.flatten` cinco veces.
+   */
+  style?: StyleProp<ViewStyle>
   testID?: string
 }
 

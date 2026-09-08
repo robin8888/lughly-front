@@ -113,6 +113,21 @@ export interface ApiJob {
    * etiqueta de la tarjeta lo distingue con esto.
    */
   workFinishedAt: string | null
+  /**
+   * Las tres fechas que cuentan la vida del trabajo, para la tarjeta de "Mis
+   * trabajos".
+   *
+   * `startedAt` es cuándo el profesional pulsó Empezar, no cuándo estaba
+   * citado, y sale de la cita: puede faltar en un trabajo ya terminado si es
+   * de antes de que existiera ese botón.
+   *
+   * Se solapan menos de lo que parece: un trabajo cancelado a media faena
+   * tiene `startedAt` **y** `cancelledAt`, y hacen falta las dos para contar
+   * qué pasó.
+   */
+  startedAt: string | null
+  completedAt: string | null
+  cancelledAt: string | null
 }
 
 export interface CreateJobPayload {

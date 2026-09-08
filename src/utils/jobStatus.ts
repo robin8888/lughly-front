@@ -9,6 +9,7 @@
 
 import type { ApiAppointmentStatus, ApiJobStatus, ApiJobType } from '@/api/jobs.api'
 import type { TagVariant } from '@/components/atoms/Tag'
+import { theme } from '@/theme'
 
 interface StatusLook {
   label: string
@@ -101,26 +102,43 @@ export function jobStatusLook(
 /**
  * De qué color va el **fondo** de la tarjeta de un trabajo.
  *
- * Es lo que convierte una lista de diez tarjetas blancas en algo que se lee de
+ * Es lo que convierte una lista de diez tarjetas iguales en algo que se lee de
  * un vistazo: sin esto hay que leer la etiqueta de cada una para saber cuál es
  * la de ahora. El color no dice nada nuevo —subraya la etiqueta que ya lleva
  * la tarjeta— y por eso vive aquí, al lado de `jobStatusLook`: si un estado
  * cambia de familia, cambia en un sitio.
  *
- * Cuatro señales y no una por estado. Un color por cada uno de los trece
- * estados no sería una señal, sería un arcoíris: lo que hay que distinguir de
- * lejos es **si esto pide algo, si está pasando ahora, o si ya no hay nada que
- * hacer**.
+ * ## Por qué seis tonos, y no cuatro
  *
- * - `waiting`: te espera a ti. Lo pinta quien lo llama, porque depende de más
- *   cosas que el estado —una urgencia abierta espera a que elijas—.
- * - `contracted`: cerrado y por delante.
- * - `inProgress`: está pasando ahora mismo.
- * - `done`: terminado, cancelado o cerrado sin trato. No pide nada.
- * - `none`: esperando a otro. Se queda en blanco a propósito, que es el
- *   estado de reposo: si todo llevara color, ninguno destacaría.
+ * Hasta el 8 de septiembre de 2026 eran cuatro, y tres cuartas partes de los
+ * estados caían en «ninguno» o en «hecho»: una lista de trabajos terminados
+ * —que es como acaba siendo cualquier cuenta con unos meses— **era una pared
+ * gris**, que es exactamente lo que Robin dijo al verla. Los estados que le
+ * faltaban color no eran raros: publicado, esperando respuesta, cancelado,
+ * caducado, en disputa.
+ *
+ * Sigue sin haber uno por estado —trece colores no son una señal, son un
+ * arcoíris— pero sí uno por **cada cosa distinta que puede pasarte**:
+ *
+ * - `waiting`: te toca a ti. Naranja. Lo pinta también quien llama, porque
+ *   depende de más cosas que el estado —una urgencia abierta espera a que
+ *   elijas—.
+ * - `open`: en el aire, esperando a otro. Azul claro.
+ * - `contracted`: cerrado y por delante. Azul.
+ * - `inProgress`: está pasando ahora mismo. Verde vivo.
+ * - `completed`: hecho. Verde apagado —buena noticia, pero ya no pide nada—.
+ * - `failed`: se torció. Rojo lavado: cancelado, rechazado, no pueden, en
+ *   disputa.
+ * - `expired`: se apagó solo, sin que nadie decidiera nada. Gris.
  */
-export type JobTint = 'contracted' | 'inProgress' | 'done' | 'none'
+export type JobTint =
+  | 'open'
+  | 'waiting'
+  | 'contracted'
+  | 'inProgress'
+  | 'completed'
+  | 'failed'
+  | 'expired'
 
 export function jobTint(status: ApiJobStatus): JobTint {
   switch (status) {
@@ -129,12 +147,63 @@ export function jobTint(status: ApiJobStatus): JobTint {
     case 'IN_PROGRESS':
       return 'inProgress'
     case 'COMPLETED':
+      return 'completed'
+    /* Con un presupuesto encima de la mesa, el siguiente paso es del cliente */
+    case 'QUOTED':
+      return 'waiting'
     case 'CANCELLED':
+    case 'DECLINED':
+    case 'QUOTE_REJECTED':
+    case 'DISPUTED':
+      return 'failed'
+    /* Nadie dijo que no: se acabó el plazo, o se cerró sin trato */
+    case 'EXPIRED':
     case 'CLOSED':
-      return 'done'
-    default:
-      return 'none'
+      return 'expired'
+    /* Publicado, encargado y esperando respuesta, o todavía sin publicar */
+    case 'DRAFT':
+    case 'OPEN':
+    case 'PENDING_PRO':
+      return 'open'
   }
+}
+
+/**
+ * El color de cada tono, en una sola tabla para las dos pantallas que lo
+ * pintan: la lista del cliente (`JobCard`) y la agenda del profesional.
+ *
+ * Vive aquí y no en cada hoja de estilos porque son la misma señal: dos
+ * tablas del mismo color acaban discrepando el día que se añade un estado, y
+ * entonces el mismo trabajo es verde en una pantalla y gris en la otra.
+ *
+ * El contorno es el que separa los dos verdes y los dos azules: el fondo dice
+ * la familia y la línea dice si eso está vivo. Lo terminado y lo caducado la
+ * llevan apagada a propósito —tienen que pesar menos que lo que está por
+ * hacer, o una lista de tres meses tapa lo de hoy—.
+ */
+export const JOB_TINT_COLORS: Record<
+  JobTint,
+  { backgroundColor: string; borderColor: string }
+> = {
+  open: { backgroundColor: theme.colors.accent100, borderColor: theme.colors.accent300 },
+  waiting: { backgroundColor: theme.colors.pendingSoft, borderColor: theme.colors.pending },
+  contracted: {
+    backgroundColor: theme.colors.accent2200,
+    borderColor: theme.colors.accent2400,
+  },
+  inProgress: {
+    backgroundColor: theme.colors.availableSoft,
+    borderColor: theme.colors.available,
+  },
+  completed: {
+    backgroundColor: theme.colors.completedSoft,
+    borderColor: theme.colors.completedBorder,
+  },
+  failed: {
+    backgroundColor: theme.colors.urgencySoft,
+    borderColor: theme.colors.urgencyBorder,
+  },
+  expired: { backgroundColor: theme.colors.neutral200, borderColor: theme.colors.neutral400 },
 }
 
 const TYPE_LABEL: Record<ApiJobType, string> = {

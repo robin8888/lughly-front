@@ -78,6 +78,9 @@ function trabajo(cambios: Partial<ApiJob>): ApiJob {
     respondByAt: null,
     createdAt: '2026-09-01T09:00:00.000Z',
     workFinishedAt: null,
+    startedAt: null,
+    completedAt: null,
+    cancelledAt: null,
     ...cambios,
   }
 }

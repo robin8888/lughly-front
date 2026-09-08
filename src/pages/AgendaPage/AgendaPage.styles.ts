@@ -79,29 +79,8 @@ export const styles = StyleSheet.create({
    * que hay escrito. El borde del mismo color, un punto más fuerte, es lo que
    * lo separa del fondo de la pantalla ahora que la tarjeta ya no es blanca.
    */
-  cardContracted: {
-    backgroundColor: theme.colors.accent2100,
+  card: {
     borderWidth: 1,
-    borderColor: theme.colors.accent2300,
-  },
-  /** El de ahora mismo: verde, el de "esto está en marcha" */
-  cardInProgress: {
-    backgroundColor: theme.colors.availableSoft,
-    borderWidth: 1,
-    borderColor: theme.colors.available,
-  },
-  /**
-   * Y el terminado en gris, que es el único que **no** pide nada.
-   *
-   * Apagado a propósito y no en otro color vivo: lo que está hecho tiene que
-   * pesar menos que lo que está por hacer, o la agenda de quien lleva un mes
-   * trabajando se convierte en una pared de colores donde no se distingue lo
-   * de hoy.
-   */
-  cardCompleted: {
-    backgroundColor: theme.colors.neutral200,
-    borderWidth: 1,
-    borderColor: theme.colors.neutral400,
   },
   /**
    * Y el título de lo terminado, apagado.

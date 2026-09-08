@@ -36,7 +36,7 @@ import { useJobProgress } from '@/hooks/domain/useJob'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
-import { jobStatusLook, jobTint, jobTypeLabel } from '@/utils/jobStatus'
+import { jobStatusLook, jobTint, jobTypeLabel, JOB_TINT_COLORS } from '@/utils/jobStatus'
 import { theme } from '@/theme'
 import { styles } from './AgendaPage.styles'
 
@@ -147,17 +147,13 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                 /**
                  * El fondo, por el punto en que está. Del mismo color que su
                  * etiqueta: el color no dice nada nuevo, subraya lo que ya
-                 * pone. Qué estado va en cada tono lo decide `jobTint`, que es
-                 * el mismo que usa la lista del cliente — dos tablas del mismo
-                 * color acaban discrepando el día que se añade un estado.
+                 * pone. Qué color va en cada estado lo dicen `jobTint` y
+                 * `JOB_TINT_COLORS`, que son los mismos que usa la lista del
+                 * cliente — dos tablas del mismo color acaban discrepando el
+                 * día que se añade un estado, y entonces el mismo trabajo es
+                 * verde en una pantalla y gris en la otra.
                  */
-                const tinte = jobTint(job.status)
-                const tint =
-                  tinte === 'inProgress'
-                    ? styles.cardInProgress
-                    : tinte === 'done'
-                      ? styles.cardCompleted
-                      : styles.cardContracted
+                const tint = [styles.card, JOB_TINT_COLORS[jobTint(job.status)]]
 
                 /*
                   El contador va en la tarjeta y no solo en la ficha: quien

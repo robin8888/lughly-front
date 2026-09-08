@@ -15,7 +15,8 @@ import { Money } from '@/components/atoms/Money'
 import { Avatar } from '@/components/atoms/Avatar'
 import { API_BASE_URL } from '@/api'
 import type { ApiJob } from '@/api/jobs.api'
-import { jobStatusLook, jobTypeLabel, jobTint } from '@/utils/jobStatus'
+import { jobStatusLook, jobTypeLabel, jobTint, JOB_TINT_COLORS } from '@/utils/jobStatus'
+import { formatDate } from '@/utils/dates'
 import { getTradeImage } from '@/utils/trades'
 import { styles } from './JobCard.styles'
 
@@ -53,6 +54,24 @@ export function JobCard({
   testID,
 }: JobCardProps) {
   const status = jobStatusLook(job.status, job.appointmentStatus, job.workFinishedAt)
+
+  /**
+   * Cuándo empezó y cuándo acabó, que es lo que una lista de trabajos viejos
+   * no decía: todos ponían el estado y ninguno cuándo pasó.
+   *
+   * «Terminó» sale con `completedAt` —el trabajo dado por bueno— y, si aún no
+   * lo está, con `workFinishedAt`, que es cuando el profesional dijo que había
+   * acabado. Son dos momentos distintos y el segundo llega antes; enseñar el
+   * segundo mientras se espera al primero es lo que hace que la tarjeta cuadre
+   * con la etiqueta de «Falta darlo por bueno».
+   *
+   * Cancelado, la fecha que importa es esa: cuándo se cayó. Sustituye a la de
+   * fin —no hubo— pero **no** a la de inicio, porque un trabajo se puede
+   * cancelar a medio hacer y entonces las dos cuentan algo.
+   */
+  const startedOn = job.startedAt
+  const finishedOn = job.completedAt ?? job.workFinishedAt
+  const cancelledOn = job.cancelledAt
   const image = getTradeImage(job.trade)
 
   /** La empresa propone a otra persona y el cliente tiene que decir */
@@ -92,19 +111,21 @@ export function JobCard({
   const waiting = needsYou || pickPro
 
   /**
-   * El fondo por estado. Lo que te espera manda sobre todo lo demás: un
-   * trabajo que se quedó sin nadie es naranja aunque su estado fuera otro,
-   * porque es lo único de la lista que está parado esperando a quien mira.
+   * El fondo por estado, con el color que dice `JOB_TINT_COLORS` —la misma
+   * tabla que usa la agenda del profesional—.
+   *
+   * Lo que te espera a ti manda sobre todo lo demás: un trabajo que se quedó
+   * sin nadie va en naranja aunque su estado fuera otro, porque es lo único de
+   * la lista que está parado esperando a quien mira. Por eso `waiting` se
+   * calcula aquí y no sale solo de `jobTint`: depende de más cosas que el
+   * estado.
    */
-  const tint = waiting
-    ? styles.needsYou
-    : jobTint(job.status) === 'contracted'
-      ? styles.tintContracted
-      : jobTint(job.status) === 'inProgress'
-        ? styles.tintInProgress
-        : jobTint(job.status) === 'done'
-          ? styles.tintDone
-          : undefined
+  const tint = [
+    styles.tint,
+    JOB_TINT_COLORS[waiting ? 'waiting' : jobTint(job.status)],
+    /* El aviso de "te toca" se subraya con la línea más gruesa */
+    waiting && styles.needsYou,
+  ]
 
   return (
     <Pressable
@@ -182,6 +203,29 @@ export function JobCard({
             <Text style={styles.type}>{jobTypeLabel(job.type)}</Text>
           </View>
         </View>
+
+        {(startedOn || finishedOn || cancelledOn) && (
+          <View style={styles.dates}>
+            {startedOn && (
+              <Text style={styles.date}>
+                Empezó el <Text style={styles.strong}>{formatDate(new Date(startedOn))}</Text>
+              </Text>
+            )}
+            {cancelledOn ? (
+              <Text style={styles.date}>
+                Cancelado el{' '}
+                <Text style={styles.strong}>{formatDate(new Date(cancelledOn))}</Text>
+              </Text>
+            ) : (
+              finishedOn && (
+                <Text style={styles.date}>
+                  Terminó el{' '}
+                  <Text style={styles.strong}>{formatDate(new Date(finishedOn))}</Text>
+                </Text>
+              )
+            )}
+          </View>
+        )}
 
         <View style={styles.footer}>
           {job.maxBudget !== null && (

@@ -219,7 +219,28 @@ export const colors = {
    */
   urgencyOnGlass: '#f0958a',
   urgency: '#a3453a',
+  /**
+   * El rojo de fondo de una tarjeta entera, no de una etiqueta: lo que se
+   * torció —cancelado, rechazado, no pueden, en disputa—.
+   *
+   * Tan lavado a propósito, por lo mismo que `availableSoft`: en una lista de
+   * diez tarjetas el color solo tiene que decir de qué familia es cada una, y
+   * un rojo de verdad como fondo convierte la pantalla en una alarma. `text`
+   * encima da 12,9:1.
+   */
+  urgencySoft: '#faedeb',
+  /** Y su contorno, que sí puede ser rojo: es una línea, no un fondo */
+  urgencyBorder: '#d1544a',
   error: '#a3453a',
+  /**
+   * Terminado y cobrado. Es el verde de `availableSoft` con la vida quitada:
+   * un trabajo hecho es una buena noticia —de ahí que siga siendo verde y no
+   * gris— pero ya no pide nada, así que no puede pesar lo mismo que el que
+   * está pasando ahora mismo. En una lista larga los dos verdes se distinguen
+   * por eso, porque uno tiene contorno vivo y el otro no.
+   */
+  completedSoft: '#edf2ee',
+  completedBorder: '#b9cdbf',
   rating: '#d4a13a',
 
   // Dark theme para app móvil (según MobileApp.dc.html)

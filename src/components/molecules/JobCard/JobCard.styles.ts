@@ -197,39 +197,40 @@ export const styles = StyleSheet.create({
    * no distingue el naranja también tiene que enterarse.
    */
   needsYou: {
-    borderWidth: 1.5,
-    borderColor: theme.colors.pending,
     /*
-      Y con fondo, no solo con borde. Un contorno de linea y media se pierde
-      entre diez tarjetas; el fondo es lo que se ve sin leer.
+      El aviso de "te toca a ti" se separa de los demás por el grosor, no por
+      el color: el naranja ya lo pone `JOB_TINT_COLORS`. Línea y media, que
+      entre diez tarjetas de colores es lo que hace que esta sea la primera
+      que se mira.
     */
-    backgroundColor: theme.colors.pendingSoft,
+    borderWidth: 1.5,
   },
 
   /**
-   * El fondo por estado, con la misma regla que la agenda del profesional: el
-   * tono suave de la familia que ya lleva su etiqueta. Qué estado va en cada
-   * uno lo decide `jobTint`, en un solo sitio para las dos pantallas.
+   * El fondo por estado. El color lo pone `JOB_TINT_COLORS` —una sola tabla
+   * para esta tarjeta y para la agenda del profesional—; aquí solo queda el
+   * grosor de la línea, que es lo mismo en todos.
    */
-  tintContracted: {
-    backgroundColor: theme.colors.accent2100,
+  tint: {
     borderWidth: 1,
-    borderColor: theme.colors.accent2300,
   },
-  tintInProgress: {
-    backgroundColor: theme.colors.availableSoft,
-    borderWidth: 1,
-    borderColor: theme.colors.available,
-  },
+
   /**
-   * Lo que ya no pide nada, apagado. Tiene que pesar menos que lo que está por
-   * hacer, o una lista de tres meses se convierte en una pared de colores donde
-   * no se distingue lo de hoy.
+   * Cuándo empezó y cuándo acabó. En una línea propia y por encima del pie
+   * —donde están el precio y las cuentas atrás—: es lo que hace que una lista
+   * de trabajos de hace meses se pueda ordenar de un vistazo, y compite con el
+   * dinero si va al lado.
    */
-  tintDone: {
-    backgroundColor: theme.colors.neutral200,
-    borderWidth: 1,
-    borderColor: theme.colors.neutral400,
+  dates: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 10,
+  },
+  date: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
   },
   needsYouBlock: {
     marginBottom: 10,
