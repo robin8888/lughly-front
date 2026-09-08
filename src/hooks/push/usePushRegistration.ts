@@ -19,7 +19,7 @@ import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 import { meApi } from '@/api/me.api'
-import { useIsAuthenticated } from '@/stores/useAuthStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { usePushStore } from '@/stores/usePushStore'
 
 /**
@@ -192,7 +192,21 @@ async function obtainToken(): Promise<string | null> {
 }
 
 export function usePushRegistration(): void {
-  const isAuthenticated = useIsAuthenticated()
+  /**
+   * **Por el identificador de quien tiene la sesión, no por "hay sesión".**
+   *
+   * El token es del aparato: mientras esté guardado a nombre de una cuenta, es
+   * ella la que recibe los avisos. Colgando de un booleano, cambiar de cuenta
+   * **sin pasar por "sin sesión"** —que es lo que ocurre si se entra desde una
+   * pantalla con sesión viva, o si el refresco devuelve otra— no volvía a
+   * llamar a `registerDevice`: el móvil se quedaba a nombre del anterior y el
+   * nuevo no recibía nada, sin ningún error por ninguna parte.
+   *
+   * Costó encontrarlo desde fuera: el servidor manda el aviso a quien toca,
+   * mira sus aparatos, no encuentra ninguno y calla. Ver el registro de
+   * `PushService`, que desde hoy lo dice.
+   */
+  const userId = useAuthStore((s) => s.user?.id)
 
   useEffect(() => {
     /**
@@ -200,7 +214,7 @@ export function usePushRegistration(): void {
      * sesión, y para cuando esto se entera ya se ha ido. Lo hace `useLogout`
      * llamando a `releaseDevice` antes de limpiarla.
      */
-    if (!isAuthenticated) return
+    if (!userId) return
 
     let cancelled = false
 
@@ -230,7 +244,7 @@ export function usePushRegistration(): void {
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated])
+  }, [userId])
 }
 
 /**
