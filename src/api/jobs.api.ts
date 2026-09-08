@@ -251,6 +251,13 @@ export interface ApiJobDetail {
    * el trabajo en curso solo significa que todavía no ha dicho nada, que es
    * lo normal mientras abre la puerta.
    */
+  /**
+   * Desde cuándo se puede pulsar «He llegado, empiezo»: diez minutos antes de
+   * la hora acordada. El mismo dato que manda la agenda, porque el botón está
+   * en las dos pantallas y no puede estar encendido en una y apagado en la
+   * otra. `null` es "cuando quiera".
+   */
+  canStartAt: string | null
   startApprovedAt: string | null
   maxBudget: number | null
   /** El precio acordado, cuando lo hay */

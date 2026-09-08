@@ -163,6 +163,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     respondByAt: null,
     workFinishedAt: null,
     startedAt: null,
+    canStartAt: null,
     startApprovedAt: null,
     confirmByAt: null,
     completedAt: null,

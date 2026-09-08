@@ -28,6 +28,7 @@ import { Avatar } from '@/components/atoms/Avatar'
 import { formatAmount } from '@/components/atoms/Money'
 import { Countdown } from '@/components/atoms/Countdown'
 import { WorkTimer } from '@/components/molecules/WorkTimer'
+import { StartJobButton } from '@/components/molecules/StartJobButton'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -925,8 +926,13 @@ export function JobDetailPage({
           único a lo que se entra aquí.
         */}
         {canStart && (
-          <Button
-            fullWidth
+          /*
+            Con la misma hora que la agenda: el botón es el mismo y está en dos
+            pantallas, así que no puede estar encendido en una y apagado en la
+            otra —bastaría con entrar en la ficha para saltarse el cierre—.
+          */
+          <StartJobButton
+            canStartAt={job.canStartAt}
             onPress={() => {
               void (async () => {
                 const { ok, error } = await start(job.id)
@@ -938,12 +944,10 @@ export function JobDetailPage({
                 }
               })()
             }}
-            disabled={isStarting}
+            isStarting={isStarting}
             style={styles.bids}
             testID="job-detail-start"
-          >
-            {isStarting ? 'Un momento…' : 'He llegado, empiezo'}
-          </Button>
+          />
         )}
 
         {canFinish && (

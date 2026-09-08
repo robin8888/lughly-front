@@ -33,6 +33,7 @@ import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
 import { useJobProgress } from '@/hooks/domain/useJob'
+import { StartJobButton } from '@/components/molecules/StartJobButton'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
@@ -217,11 +218,18 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                       pintársela diría "a las 02:00" —medianoche UTC—, una hora
                       a la que nadie va a ir. El helper enseña la hora solo
                       cuando el dato la trae.
+
+                      Y la de la cita antes que la que pidió el cliente: es la
+                      que confirmaron los dos, la que puede haberse movido
+                      después, y **la que obedece el botón de empezar**. Con la
+                      preferencia delante, la tarjeta decía una hora y el botón
+                      se encendía a otra.
                     */}
                     <View style={styles.whenBox}>
                       <Text style={styles.whenLabel}>Cuándo</Text>
                       <Text style={styles.when}>
-                        {(job.preferredDate && formatJobWhen(job.preferredDate)) ??
+                        {((job.scheduledAt ?? job.preferredDate) &&
+                          formatJobWhen((job.scheduledAt ?? job.preferredDate) as string)) ??
                           'Sin fecha acordada todavía'}
                       </Text>
                     </View>
@@ -307,8 +315,8 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                      */}
                     {job.status === 'CONTRACTED' &&
                       job.appointmentStatus === 'CONFIRMED' && (
-                        <Button
-                          fullWidth
+                        <StartJobButton
+                          canStartAt={job.canStartAt}
                           onPress={() => {
                             void (async () => {
                               const { ok, error } = await start(job.id)
@@ -320,12 +328,11 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                               }
                             })()
                           }}
-                          disabled={isStarting || bloqueadoPor !== null}
+                          isStarting={isStarting}
+                          disabled={bloqueadoPor !== null}
                           style={styles.action}
                           testID={`assigned-${job.id}-start`}
-                        >
-                          {isStarting ? 'Un momento…' : 'He llegado, empiezo'}
-                        </Button>
+                        />
                       )}
 
                     {/* Y por qué está apagado, que si no parece que la app falla */}

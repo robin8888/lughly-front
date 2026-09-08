@@ -2560,6 +2560,26 @@ Terminado, cancelado, caducado o rechazado no tienen conversación pendiente.
 Se decide en `chatWith`, que es lo que mira la app, así que se apaga en la ficha
 y en la lista a la vez.
 
+### ✅ El botón de empezar no se enciende antes de hora (8 Septiembre 2026)
+
+En la agenda del profesional, «He llegado, empiezo» estaba encendido en todas
+las tarjetas a la vez. Con dos o tres trabajos en el día, **el botón de al lado
+es el del otro**, y equivocarse arranca el reloj del trabajo que no es — que en
+uno por horas acaba en una factura mal contada.
+
+El servidor ya lo rechazaba (`TooEarlyToStartError`, diez minutos de margen)
+pero eso no basta: un botón que se puede pulsar y contesta que no se lee como
+una app rota. Ahora se apaga hasta diez minutos antes de la hora acordada, con
+una cuenta atrás que dice desde cuándo, y se enciende solo al llegar. Lo mismo
+en la ficha del trabajo, que tiene el mismo botón: si no, bastaría con entrar
+ahí para saltárselo.
+
+El instante viaja hecho del servidor (`canStartAt`) en vez de los diez
+minutos: así la regla vive en un sitio —`start-window.ts`— y el día que el
+margen cambie, las apps ya instaladas se enteran solas. Y la agenda pasa a enseñar la hora de
+la **cita** antes que la que pidió el cliente: con la preferencia delante, la
+tarjeta decía una hora y el botón se encendía a otra.
+
 ### ✅ Un hilo por persona, no uno por encargo (8 Septiembre 2026)
 
 Entrar en Mensajes y encontrarse tres filas de la misma persona porque le

@@ -297,6 +297,25 @@ export interface ApiAssignedJob {
   latitude: number | null
   longitude: number | null
   preferredDate: string | null
+  /**
+   * La hora a la que está citado, si hay cita. **Manda sobre
+   * `preferredDate`**: es lo que han confirmado los dos, y `preferredDate` es
+   * una preferencia que puede haberse movido después. La agenda enseña esta,
+   * que es la misma que obedece el botón de empezar.
+   */
+  scheduledAt: string | null
+  /**
+   * Desde cuándo se puede pulsar «He llegado, empiezo»: diez minutos antes de
+   * la hora acordada.
+   *
+   * Viene hecho del servidor y no se calcula aquí, aunque restar diez minutos
+   * sea trivial: así el margen vive en un solo sitio y el día que cambie, las
+   * apps ya instaladas se enteran solas.
+   *
+   * `null` es "cuando quiera" —un encargo sin fecha no tiene hora que
+   * respetar—, no "nunca".
+   */
+  canStartAt: string | null
   clientName: string
   clientPhone: string | null
   amount: number | null
