@@ -108,10 +108,21 @@ export const images = {
    * Van sin fondo para poder ponerlas sobre el claro de la pantalla, y a
    * `contain`: son cuadradas de proporción distinta entre sí, y recortarlas le
    * cortaría la cabeza a alguna.
+   *
+   * **En WebP y no en PNG.** Llegaron como PNG de 2 MB cada una: 5,6 MB de
+   * paquete para una pantalla que se lee una vez. En WebP con alfa a calidad
+   * 90 son 0,93 MB —el 17 %— y a doble aumento no se distinguen del original;
+   * la alternativa obvia, bajar el PNG a 256 colores, pesaba parecido pero
+   * dejaba la cara con bandas. Los originales están en `_fuentes/albert/` con
+   * el comando exacto para rehacerlas.
+   *
+   * Metro empaqueta `.webp` de serie y lo dibujan Android e iOS sin nada más;
+   * el resto del catálogo sigue en PNG y JPG porque no hay motivo para tocar
+   * lo que ya pesa poco.
    */
-  albert: require('./albert.png'),
-  albertIdea: require('./albert-idea.png'),
-  albertPiensa: require('./albert-piensa.png'),
+  albert: require('./albert.webp'),
+  albertIdea: require('./albert-idea.webp'),
+  albertPiensa: require('./albert-piensa.webp'),
 } as const
 
 export type ImageKey = keyof typeof images
