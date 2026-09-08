@@ -43,7 +43,7 @@ const COPY = {
    * Antes decía "Mi panel" y llevaba a la Cartera, que todavía es un "Pronto":
    * un callejón sin salida en el sitio más visible de su pantalla.
    */
-  pro: { secondary: 'Mi agenda' },
+  pro: { secondary: 'Mi agenda', how: 'Cómo funciona' },
 } as const
 
 /** Lo que se enseña bajo el nombre en la ficha del profesional */
@@ -88,6 +88,14 @@ export interface HeroCardProps {
    */
   variant?: HeroVariant
   onSecondary: () => void
+  /**
+   * «Cómo funciona», en la home del profesional.
+   *
+   * El cliente lo tiene desde siempre —es su botón secundario— y el
+   * profesional no lo tenía por ningún lado: su recorrido existía y no se
+   * alcanzaba. Opcional porque la home del cliente usa otro hero.
+   */
+  onHowItWorks?: () => void
   /** Solo cliente */
   onUrgent?: () => void
   /** Solo cliente */
@@ -103,6 +111,7 @@ export function HeroCard({
   profile,
   variant = 'dark',
   onSecondary,
+  onHowItWorks,
   onUrgent,
   onSelectTrade,
   testID,
@@ -211,15 +220,34 @@ export function HeroCard({
           {COPY.client.secondary}
         </Button>
       ) : (
-        <Button
-          variant="primary"
-          onPress={onSecondary}
-          style={styles.actionHalf}
-          textStyle={styles.actionText}
-          testID="hero-secondary"
-        >
-          {COPY.pro.secondary}
-        </Button>
+        /*
+          Los dos a la mitad y en fila: su agenda, que es lo que abre todos los
+          días, y cómo funciona, que se lee una vez. Uno debajo del otro
+          alargaba la cabecera para meter algo que se usa el primer día.
+        */
+        <View style={styles.proActions}>
+          <Button
+            variant="primary"
+            onPress={onSecondary}
+            style={styles.actionHalf}
+            textStyle={styles.actionText}
+            testID="hero-secondary"
+          >
+            {COPY.pro.secondary}
+          </Button>
+
+          {onHowItWorks && (
+            <Button
+              variant="secondary"
+              onPress={onHowItWorks}
+              style={styles.actionHalf}
+              textStyle={styles.actionText}
+              testID="hero-how"
+            >
+              {COPY.pro.how}
+            </Button>
+          )}
+        </View>
       )}
 
       {isClient && onUrgent && (

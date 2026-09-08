@@ -125,8 +125,19 @@ export const styles = StyleSheet.create({
    * estira igual —la tarjeta es una columna— y quedaría a la izquierda.
    */
   actionHalf: {
+    /*
+      A la mitad y centrado. Iba hueco y a lo ancho, y ahí un contorno se leía
+      como un separador más de la ficha. Dentro de `proActions` el `flex` de la
+      fila manda sobre este ancho, y aquí se queda para cuando va solo.
+    */
     width: '50%',
     alignSelf: 'center',
+    flex: 1,
+  },
+  /** Los dos botones del profesional, en fila y a partes iguales */
+  proActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
   actionText: {
     fontSize: 14,

@@ -28,6 +28,11 @@ export default function InicioRoute() {
         onZone={() => router.push('/mi-zona')}
         onPayoutAccount={() => router.push('/mi-cobro')}
         onMessages={() => router.push('/mensajes')}
+        /*
+         * `push` y no `navigate`: no es una pestaña, es una pantalla de pila
+         * que se apila sobre la home y de la que se vuelve.
+         */
+        onHowItWorks={() => router.push('/como-funciona')}
       />
     )
   }

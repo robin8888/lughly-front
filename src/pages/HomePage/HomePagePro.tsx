@@ -65,6 +65,8 @@ export interface HomePageProProps {
   onPayoutAccount: () => void
   /** Al botón flotante de Mensajes. Vivía como fila de Mi cuenta hasta el 22 Ago 2026 */
   onMessages: () => void
+  /** Al recorrido de «Cómo funciona», el del profesional */
+  onHowItWorks: () => void
 }
 
 export function HomePagePro({
@@ -76,6 +78,7 @@ export function HomePagePro({
   onZone,
   onPayoutAccount,
   onMessages,
+  onHowItWorks,
 }: HomePageProProps) {
   const onScroll = useNavScrollHandler()
 
@@ -290,6 +293,7 @@ export function HomePagePro({
             }
           }
           onSecondary={onSecondary}
+          onHowItWorks={onHowItWorks}
           testID="home-pro-hero"
         />
 

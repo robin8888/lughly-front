@@ -95,6 +95,23 @@ export const images = {
   senalando: require('./robot-hormiga-senalando.png'),
   trofeo: require('./robot-hormiga-trofeo.png'),
   salud: require('./robot-hormiga-salud.png'),
+
+  /**
+   * Albert, para el recorrido de «Cómo funciona». Tres gestos del mismo
+   * personaje, ~1200x1300 con alfa, que se van alternando paso a paso: la cara
+   * acompaña a lo que se está contando y no al revés.
+   *
+   * - `albert` es el neutro: presenta y acompaña.
+   * - `albertIdea` para lo que resuelve algo —el dinero retenido, tu nivel—.
+   * - `albertPiensa` para lo que hay que decidir o repasar.
+   *
+   * Van sin fondo para poder ponerlas sobre el claro de la pantalla, y a
+   * `contain`: son cuadradas de proporción distinta entre sí, y recortarlas le
+   * cortaría la cabeza a alguna.
+   */
+  albert: require('./albert.png'),
+  albertIdea: require('./albert-idea.png'),
+  albertPiensa: require('./albert-piensa.png'),
 } as const
 
 export type ImageKey = keyof typeof images
