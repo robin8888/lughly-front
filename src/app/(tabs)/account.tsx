@@ -53,6 +53,16 @@ export default function AccountRoute() {
                 onPress: () => router.push('/revisar-documentos'),
                 icon: 'document',
               },
+              /*
+                Las revisiones de trabajos (`CICLOS` §C9). Aquí y no en otro
+                sitio porque es lo mismo: una cola con plazo que alguien tiene
+                que mirar, y las dos viven en la misma cabeza.
+              */
+              {
+                label: 'Revisiones de trabajos',
+                onPress: () => router.push('/revisiones'),
+                icon: 'document',
+              },
             ],
           },
         ]

@@ -40,6 +40,7 @@ export type PushRoute =
   | { pathname: '/encargos' }
   | { pathname: '/jobs' }
   | { pathname: '/account' }
+  | { pathname: '/revisiones' }
 
 /**
  * A dónde lleva este aviso, o `null` si no lleva a ninguna parte.
@@ -98,6 +99,16 @@ export function routeFor(data: PushData): PushRoute | null {
     /** Cosas de la cuenta: el documento revisado, la cuenta de cobro */
     case 'account':
       return { pathname: '/account' }
+
+    /**
+     * La cola de revisiones, que solo le llega a administración (`CICLOS` §C9).
+     *
+     * A la cola y no al trabajo suelto: estos avisos son «hay algo que
+     * decidir» y «a una se le acaba el plazo», y las dos cosas se atienden
+     * mirando la lista entera, con las más urgentes arriba.
+     */
+    case 'admin-disputes':
+      return { pathname: '/revisiones' }
 
     default:
       return null

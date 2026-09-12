@@ -3038,6 +3038,54 @@ para quien va, y el ticket a secas para quien lo pagó.
 del material ya está escrita en el dinero —lo `RELEASED` no se devuelve solo—,
 pero la pantalla y la tabla de penalizaciones son otro día.
 
+## ✅ Que ningún dinero se quede parado para siempre (12 Septiembre 2026)
+
+El agujero que más daño hacía, y el más viejo: un reparo del cliente apagaba el
+cierre por silencio y **no dejaba ninguna salida al otro lado**. El profesional
+no podía decir que había vuelto a arreglarlo —«He terminado» no se puede pulsar
+dos veces—, así que el dinero se quedaba retenido hasta que el cliente pulsara
+un botón que podía no pulsar nunca.
+
+Y no era solo injusto: el art. 21.2 del TRLGDCU da **un mes como máximo** para
+contestar una reclamación, y una retención sin plazo ni criterio es de las que
+el art. 85 llama abusivas. Todo lo que entró cuelga de una fecha.
+
+### Cuatro caminos, y los cuatro terminan
+
+- **«Ya lo he arreglado»**: la subsanación del art. 1098, que acaba con casi
+  todos los reparos. Sin tocar la cita ni el reloj: la segunda visita no se le
+  factura a nadie.
+- **«Que lo revise alguien»**: de los dos lados y solo con un reparo puesto.
+  Para el profesional es su única salida.
+- **El plazo de 72 h**, que escala el reparo que nadie contesta.
+- **El segundo reparo**, que va derecho a revisión.
+
+### Quince días, tres finales y un motivo obligatorio
+
+Pagar al profesional, rebajar el precio o devolver: los tres remedios del
+incumplimiento contractual, y la rebaja es la que evita elegir entre dos
+injusticias en el «estaba casi bien». Agotado el plazo sin resolver, lo retenido
+vuelve al cliente —es su dinero y nadie ha decidido—, y al profesional se le
+dice que su derecho a cobrarlo sigue intacto.
+
+**No es un laudo.** Lughly decide sobre su propia retención y no cierra la vía
+de consumo ni la judicial; la tarjeta lo dice con esas palabras. El motivo va en
+el aviso a las dos partes, como exige el P2B (UE 2019/1150).
+
+### Y las pruebas, con fecha y autor
+
+`JobEvidence`: ocho por lado, desde el reparo y hasta la decisión, con la fecha
+**del servidor** —la del móvil la cambia su dueño en dos toques— y el lado
+congelado. No se borran, y las ven los dos.
+
+En el móvil: la ficha del trabajo estrena los botones de cada lado y la
+`DisputeCard` con el expediente dentro, y administración tiene su cola en
+`/revisiones`, ordenada por vencimiento y con las vencidas marcadas.
+
+**Lo que falta**: los Términos. Esto es una cláusula contractual, y hoy los del
+registro son texto sin documento detrás; se puede probar entero, pero no
+aplicarse a un cliente real hasta que ese texto exista y lo repase un abogado.
+
 ## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
 
 Hoy es una pantalla de leer de corrido —`HowItWorksPage`: tres pasos y un botón

@@ -490,6 +490,104 @@ lo contratado.
 gratis hasta 48 h antes; después, 10 % con tope en el material ya comprado.
 Aquí: 138 € de material comprado → se cobra 138, se devuelven 60.
 
+## C9. Cuando no se ponen de acuerdo
+
+**Construido el 12 Septiembre 2026.** Es el agujero que más daño hacía de
+todos, y llevaba abierto desde que existe el reparo: un cliente decía «el grifo
+sigue goteando», se apagaba el cierre por silencio, **y ahí se acababa todo**.
+`FinishJobUseCase` exige `workFinishedAt` a nulo, así que el profesional que
+volvía y lo arreglaba no tenía forma de decirlo; la única salida del mundo era
+que el cliente pulsara «doy por bueno», y podía no pulsarlo nunca. El dinero se
+quedaba retenido en la plataforma para siempre.
+
+### Y no podía quedarse así por ley
+
+El **art. 21.2 del TRLGDCU** obliga a contestar una queja o reclamación «en el
+plazo más breve posible y, en todo caso, en el plazo máximo de un mes». Una
+retención sin plazo ni criterio es además de las que el **art. 85** llama
+abusivas, por dejar el contrato al arbitrio del empresario. Así que todo lo que
+hay aquí cuelga de una fecha.
+
+### Los cuatro caminos, que son los remedios que da la ley
+
+No son cuatro botones inventados: son el incumplimiento contractual del Código
+Civil, en orden.
+
+1. **«He vuelto y ya está arreglado»** (`MarkFixedUseCase`) — la subsanación
+   del art. 1098, y la que acaba con casi todos los reparos. Limpia el reparo,
+   vuelve a poner la hora de fin y el cliente recupera sus 24 h enteras, con su
+   recordatorio. **No toca la cita ni el reloj**: reabrirla facturaría la
+   segunda visita en un trabajo por horas, y eso es cobrarle al cliente el
+   fallo del profesional.
+2. **«Que lo revise alguien»** (`OpenDisputeUseCase`) — de los dos lados, y
+   **solo con un reparo encima de la mesa**: sin reparo el trabajo se cierra y
+   se paga solo a las 24 h, así que no hay nada atascado y abrir la puerta
+   antes solo serviría para congelarle el dinero a alguien. Para el profesional
+   es su única salida si cree que el reparo no tiene fundamento.
+3. **El plazo, a las 72 h** — el reparo que nadie contesta escala solo. Que el
+   silencio condenara sería que la aplicación decidiera quién tiene razón, y
+   hay bajas, obras sin cobertura y teléfonos rotos.
+4. **El segundo reparo del mismo trabajo** va derecho a revisión. A la primera
+   lo normal es que se arregle con una vuelta; a la segunda ya no se están
+   entendiendo, y encadenar reparos solo alarga un dinero parado.
+
+### Quince días, y qué pasa si se acaban
+
+Lo resuelve administración con **tres finales, que son los tres remedios**:
+pagar al profesional (`TO_PRO`, y el trabajo se cierra como cualquier otro, con
+su valoración y su contador), **rebajar el precio** (`SPLIT`: una cifra vuelve
+al cliente y el resto se transfiere) o **resolver y devolver** (`TO_CLIENT`,
+art. 1124). La rebaja es la que evita elegir entre dos injusticias en el caso
+más frecuente, que es «estaba casi bien», y por ella liberar y reembolsar
+aprendieron a hacerlo por partes con la comisión proporcional.
+
+**Si se agotan los quince días sin resolver, lo retenido vuelve al cliente.** No
+porque se le dé la razón —no se la da nadie— sino porque es su dinero, nadie ha
+decidido, y quedárselo más tiempo no es una opción legal. El profesional
+conserva íntegro su derecho a cobrar y a reclamárselo, y el aviso se lo dice con
+esas palabras. Que eso salte es un fallo nuestro, no suyo: por eso administración
+recibe un aviso al abrirse y otro cuando quedan tres días.
+
+### Lo que esto **no** es
+
+Lughly es intermediaria y decide sobre **su propia retención**, según unos
+términos que las dos partes aceptaron. No es un laudo, no dice quién tiene
+razón, y no cierra la vía de consumo ni la judicial — y eso está escrito en la
+tarjeta que ven los dos, no en una letra pequeña. El motivo se exige siempre,
+viaja en el aviso a las dos partes y queda en el expediente: el reglamento
+**P2B (UE 2019/1150)** obliga a motivar lo que afecta a un profesional.
+
+### Las pruebas, con fecha
+
+**Pedido por Robin el mismo día.** Una revisión se decide con lo que las dos
+partes puedan enseñar, y lo único que había eran las fotos del resultado: las
+sube el profesional y solo mientras el trabajo está en curso. El cliente que ve
+el goteo al día siguiente no tenía dónde ponerlo.
+
+`JobEvidence` guarda **quién la trae y cuándo**, que es lo que convierte una
+foto en una prueba, y:
+
+- **La fecha es la del servidor.** El reloj de un móvil lo cambia su dueño en
+  dos toques, y la fecha interna de la imagen dice cuándo se disparó la cámara,
+  que no es cuándo se aportó.
+- **El lado se congela** al subirla en vez de deducirse: el trabajador puede
+  cambiar de empresa y el cliente puede borrar su cuenta.
+- **Desde el reparo y hasta la decisión**, no antes ni después. Y **no se
+  borran**: un expediente del que se puede sacar lo que incomoda no vale como
+  expediente.
+- **Ocho por lado**, y por lado: que uno llene su cupo no puede dejar al otro
+  sin enseñar lo suyo.
+- **Las ven los dos.** Un expediente en el que cada uno solo ve lo suyo son dos
+  monólogos.
+
+### Lo que queda por hacer aquí
+
+El mecanismo **es una cláusula contractual**, no solo código: la retención, el
+plazo de 72 h, la revisión y quién decide tienen que estar en unos Términos que
+el usuario haya aceptado. Hoy los del registro son texto sin documento detrás,
+así que esto se puede probar entero pero **no se puede aplicar a un cliente real
+hasta que ese texto exista**.
+
 ---
 
 ## D. Urgencia — Tomás, cerrajero, 02:30
