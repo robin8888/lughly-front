@@ -123,6 +123,22 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.body,
     color: theme.colors.cardText,
   },
+  /* Lo que se cobra antes de empezar, en el mismo verde que lo que suma a favor */
+  advance: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.availableText,
+  },
+  upfront: {
+    marginTop: 20,
+  },
+  upfrontHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: theme.colors.textSoft,
+    marginTop: 8,
+  },
   /**
    * Qué falta, en vez de un botón apagado sin explicación: un botón que no
    * responde y no dice por qué es la forma más rápida de que alguien cierre la

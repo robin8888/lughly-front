@@ -114,6 +114,10 @@ export const styles = StyleSheet.create({
   noteExpired: {
     color: theme.colors.unavailable,
   },
+  /* El material ya comprado, en verde: es algo hecho, no una advertencia */
+  noteDone: {
+    color: theme.colors.availableText,
+  },
   /**
    * El motivo del rechazo, entrecomillado y en cursiva: son las palabras del
    * cliente, no un rótulo de la app, y confundirlos haría que un reproche

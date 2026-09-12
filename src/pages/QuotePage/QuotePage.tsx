@@ -20,6 +20,14 @@
  * Con el descuento de la visita ya restado, que es lo que el cliente va a
  * pagar de verdad. Quien presupuesta sin verlo acaba mandando un número que no
  * es el que pensaba, y corregirlo cuesta otra versión.
+ *
+ * ## Y el material se puede cobrar por delante
+ *
+ * La casilla estuvo aquí unas horas el 7 de septiembre y se retiró el mismo
+ * día: `materialsUpfront` se guardaba, pero **no había nada capaz de liberar
+ * esa retención**, así que prometía algo que nadie podía cumplir. Vuelve con
+ * su otra mitad —«material comprado» con el ticket, §C6—, y solo aparece si
+ * hay líneas de material: sin piezas que comprar no hay nada que adelantar.
  */
 
 import { useMemo, useState } from 'react'
@@ -27,6 +35,7 @@ import { View, Text, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
+import { Checkbox } from '@/components/atoms/Checkbox'
 import { Input } from '@/components/atoms/Input'
 import { formatAmount } from '@/components/atoms/Money'
 import { EmptyState } from '@/components/molecules/EmptyState'
@@ -102,6 +111,7 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
 
   const [lineas, setLineas] = useState<Linea[]>([{ ...LINEA_NUEVA }])
   const [validDays, setValidDays] = useState('15')
+  const [materialsUpfront, setMaterialsUpfront] = useState(false)
 
   /** Lo que el cliente pagó por la visita, que se descuenta del total */
   const visitCredit = job?.amount != null && job.type === 'QUOTE' ? job.amount : 0
@@ -112,14 +122,25 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
       .filter((linea) => linea.kind === 'MATERIALS')
       .reduce((sum, linea) => sum + importeDe(linea), 0)
 
+    const total = Math.max(0, linesTotal - visitCredit)
+
     return {
       linesTotal,
       materialsTotal,
       // Nunca negativo: la visita ya se cobró y no se devuelve, pero tampoco
       // se le debe dinero a nadie
-      total: Math.max(0, linesTotal - visitCredit),
+      total,
+      /*
+        Lo que se adelantaría, con el tope del total y la misma cuenta que hace
+        el servidor: la visita descontada se come antes la mano de obra que las
+        piezas, así que con 138 de material y 120 por pagar se adelantan 120.
+      */
+      advance: Math.min(materialsTotal, total),
     }
   }, [lineas, visitCredit])
+
+  /* Sin piezas que comprar no hay nada que adelantar, y la casilla sobra */
+  const puedeAdelantar = totales.materialsTotal > 0
 
   const cambiar = (index: number, cambios: Partial<Linea>) =>
     setLineas((actuales) =>
@@ -164,6 +185,11 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
           unitPrice: numero(linea.unitPrice),
         })),
         validDays: Number(validDays),
+        /*
+          Y si borró las líneas de material después de marcarla, no se manda:
+          la casilla estaría pidiendo un adelanto de cero.
+        */
+        materialsUpfront: materialsUpfront && puedeAdelantar,
       })
 
       if (!ok) {
@@ -326,6 +352,18 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
             <Text style={styles.finalLabel}>Le queda por pagar</Text>
             <Text style={styles.final}>{formatAmount(totales.total)} €</Text>
           </View>
+
+          {/*
+            Y de eso, cuánto cobras antes de empezar. Va debajo del total y no
+            en su lugar: lo que el cliente paga no cambia —sale de ahí, no se
+            suma—, y enseñarlo como una cifra aparte haría pensar lo contrario.
+          */}
+          {materialsUpfront && puedeAdelantar && (
+            <View style={styles.totalRow} testID="quote-advance">
+              <Text style={styles.totalLabel}>De eso, material por delante</Text>
+              <Text style={styles.advance}>{formatAmount(totales.advance)} €</Text>
+            </View>
+          )}
         </InfoCard>
 
         <FormField label="Cuánto tiempo vale">
@@ -339,12 +377,30 @@ export function QuotePage({ jobId, onBack, onDone }: QuotePageProps) {
         </FormField>
 
         {/*
-          **El cobro del material por adelantado no se ofrece todavía.** La
-          columna existe en la base y la casilla estuvo aquí unas horas, y se
-          quitó a propósito: prometerle al cliente una retención que después
-          nadie puede liberar —falta el "material comprado" con justificante de
-          §C6— es peor que no ofrecerla. Vuelve cuando exista esa mitad.
+          El pago a cuenta del material (§C6).
+
+          Solo cuando hay material: ofrecérselo a quien presupuesta cuatro
+          horas de mano de obra sería ofrecerle adelantar cero euros.
+
+          Se dice lo que le toca a cada uno —él cobra al comprar, el cliente ve
+          el ticket— porque es un trato entre dos, y la casilla decide dinero
+          del cliente antes de que exista nada.
         */}
+        {puedeAdelantar && (
+          <View style={styles.upfront}>
+            <Checkbox
+              checked={materialsUpfront}
+              onChange={setMaterialsUpfront}
+              testID="quote-materials-upfront"
+            >
+              {`Cóbrame el material por adelantado (${formatAmount(totales.advance)} €)`}
+            </Checkbox>
+            <Text style={styles.upfrontHint}>
+              Se le retiene al aceptar, con el resto, y te lo pagamos en cuanto
+              subas el ticket de la compra. Así no pones tú las piezas.
+            </Text>
+          </View>
+        )}
 
         {falta && <Text style={styles.missing}>{falta}</Text>}
 

@@ -54,6 +54,29 @@ function hasta(iso: string): string {
   return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
 }
 
+/**
+ * El material que se paga por delante, contado según en qué punto esté (§C6).
+ *
+ * Tres frases y no una, porque son tres cosas distintas para quien lee: lo que
+ * va a pasar si acepta, lo que falta para que el profesional cobre, y que ya
+ * está comprado —que es cuando ese dinero deja de volver si cancela—.
+ */
+function materialDe(quote: ApiJobQuote): string | null {
+  if (!quote.materialsUpfront || quote.materialsAdvance <= 0) return null
+
+  const importe = `${formatAmount(quote.materialsAdvance)} €`
+
+  if (quote.materialsBoughtAt) {
+    return `Material comprado el ${hasta(quote.materialsBoughtAt)}: los ${importe} ya son suyos. El ticket está en la ficha.`
+  }
+
+  if (quote.status === 'ACCEPTED') {
+    return `${importe} del total son material: se le pagan en cuanto lo compre y suba el ticket.`
+  }
+
+  return `${importe} del total son material y se cobran al aceptar: se retienen hasta que esté comprado, con su ticket.`
+}
+
 export interface QuoteCardProps {
   quote: ApiJobQuote
   /** Los botones de contestar, que dependen de quién mire */
@@ -64,6 +87,7 @@ export interface QuoteCardProps {
 export function QuoteCard({ quote, children, testID = 'quote-card' }: QuoteCardProps) {
   const estado = estadoDe(quote)
   const vencido = new Date(quote.validUntil) <= new Date()
+  const material = materialDe(quote)
 
   return (
     <InfoCard style={styles.card} testID={testID}>
@@ -117,10 +141,12 @@ export function QuoteCard({ quote, children, testID = 'quote-card' }: QuoteCardP
         <Text style={styles.total}>{formatAmount(quote.total)} €</Text>
       </View>
 
-      {quote.materialsUpfront && (
-        <Text style={styles.note}>
-          El material se paga al aceptar, antes de empezar: se retiene hasta que
-          esté comprado.
+      {material !== null && (
+        <Text
+          style={[styles.note, quote.materialsBoughtAt !== null && styles.noteDone]}
+          testID={`${testID}-materials`}
+        >
+          {material}
         </Text>
       )}
 

@@ -285,6 +285,13 @@ export interface ApiJobDetail {
    */
   resultPhotos: { url: string; fullUrl: string }[]
   /**
+   * Los tickets del material que se pagó por adelantado (§C6).
+   *
+   * Las ve el cliente también, y es lo suyo: puso ese dinero antes de que
+   * existiera nada, y el ticket es lo único que le dice en qué se ha ido.
+   */
+  materialsReceipts: { url: string; fullUrl: string }[]
+  /**
    * Por qué el cliente no lo da por bueno todavía, si ha dicho algo.
    *
    * Con esto puesto el cierre automático por silencio está apagado: quien ha
@@ -454,6 +461,16 @@ export interface ApiJobQuote {
   validUntil: string
   /** Si el material se cobra al aceptar, antes de empezar */
   materialsUpfront: boolean
+  /**
+   * Cuánto de `total` es ese material. Cero sin pago a cuenta.
+   *
+   * **Lo dice el servidor**: es la suma de las líneas de material con el tope
+   * del total —la visita descontada se come antes la mano de obra—, y esa
+   * cuenta no puede vivir también aquí y desparejarse.
+   */
+  materialsAdvance: number
+  /** Cuándo dijo el profesional que lo tenía comprado. Nulo mientras no */
+  materialsBoughtAt: string | null
   /** Por qué dijo que no. Solo en los rechazados */
   rejectionReason: string | null
   rejectedAt: string | null
@@ -466,6 +483,11 @@ export interface ApiAcceptedQuote {
   quoteId: string
   /** Lo retenido: el total del presupuesto, con la visita ya descontada */
   amount: number
+  /**
+   * Cuánto de ese total es material que se paga por delante (§C6). **No se
+   * suma al total, sale de él**: son dos cobros que juntos valen `amount`.
+   */
+  materialsAdvance: number
   /**
    * `accepted`: retenido y el profesional ya lo sabe. `requires_action`: el
    * banco pide autenticación y **el presupuesto sigue pendiente** —nada se ha
@@ -779,6 +801,22 @@ export const jobsApi = {
       method: 'POST',
       auth: true,
     }),
+
+  /**
+   * «Ya lo he comprado», del lado profesional (`CICLOS` §C6).
+   *
+   * Cobra el adelanto que el cliente tenía retenido y se lo transfiere. Hace
+   * falta haber subido antes el ticket: es lo que convierte esa retención en
+   * un cobro, y sin él el servidor responde que no.
+   */
+  markMaterialsBought: (jobId: string) =>
+    apiRequest<{
+      jobId: string
+      amount: number
+      boughtAt: string
+      /** Si el dinero ha salido ya. `false` es un reintento, no un «no» */
+      paid: boolean
+    }>(`/v1/jobs/${jobId}/materials-bought`, { method: 'POST', auth: true }),
 
   review: (jobId: string, rating: number, comment: string | null) =>
     apiRequest<{
