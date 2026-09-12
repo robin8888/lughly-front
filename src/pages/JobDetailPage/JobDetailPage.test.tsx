@@ -44,6 +44,8 @@ jest.mock('@/hooks/domain/useJob', () => {
     droppedSessions: [] as { jobId: string; sessionId: string }[],
     /** Lo que devuelve el servidor al saltarse una: lo cobrado y lo que queda */
     dropResult: { fee: 0, refunded: 0, voided: 0, remaining: 17 },
+    /** El material dado por comprado, con los tickets que se mandaron (§C6) */
+    materialsBought: [] as { jobId: string; tickets: number }[],
   }
 
   return {
@@ -136,6 +138,18 @@ jest.mock('@/hooks/domain/useJob', () => {
       },
       isRejecting: false,
     }),
+    useMaterialsBought: () => ({
+      materialsBought: (jobId: string, tickets: unknown[]) => {
+        soporte.materialsBought.push({ jobId, tickets: tickets.length })
+
+        return Promise.resolve({
+          ok: true,
+          error: null,
+          result: { jobId, amount: 138, boughtAt: '2026-09-12T10:00:00.000Z', paid: true },
+        })
+      },
+      isMarkingMaterials: false,
+    }),
     useAcceptQuote: () => ({
       acceptQuote: (jobId: string, paymentMethodId: string) => {
         soporte.acceptedQuotes.push({ jobId, paymentMethodId })
@@ -161,6 +175,31 @@ jest.mock('@/hooks/domain/usePaymentMethods', () => ({
     isError: false,
   }),
 }))
+
+/*
+  El selector de fotos, reducido a un botón: el de verdad arrastra la cámara y
+  la galería del móvil, que no existen aquí. Lo que hace falta comprobar es que
+  el ticket llega, no cómo se hace la foto.
+*/
+jest.mock('@/components/molecules/PhotoPicker', () => {
+  const { Pressable, Text } = require('react-native')
+
+  return {
+    PhotoPicker: ({
+      value,
+      onChange,
+      testID,
+    }: {
+      value: unknown[]
+      onChange: (fotos: unknown[]) => void
+      testID?: string
+    }) => (
+      <Pressable testID={testID} onPress={() => onChange([...value, { uri: 'ticket.jpg' }])}>
+        <Text>Añadir foto</Text>
+      </Pressable>
+    ),
+  }
+})
 
 jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefined }))
 jest.mock('@/hooks/ui/useTabBarClearance', () => ({ useTabBarClearance: () => 0 }))
@@ -215,6 +254,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     photoCount: 0,
     photos: [],
     resultPhotos: [],
+    materialsReceipts: [],
     holdReason: null,
     createdAt: '2026-08-29T09:00:00.000Z',
     serviceLines: [],
@@ -237,6 +277,7 @@ beforeEach(() => {
   soporte.rejectedQuotes.length = 0
   soporte.acceptedQuotes.length = 0
   soporte.droppedSessions.length = 0
+  soporte.materialsBought.length = 0
   soporte.proposed.length = 0
   soporte.acceptedTimes.length = 0
   soporte.dropResult = { fee: 0, refunded: 0, voided: 0, remaining: 17 }
@@ -779,6 +820,8 @@ describe('JobDetailPage: el presupuesto', () => {
     total: 198,
     validUntil: '2099-01-01T00:00:00.000Z',
     materialsUpfront: false,
+    materialsAdvance: 0,
+    materialsBoughtAt: null,
     rejectionReason: null,
     rejectedAt: null,
     acceptedAt: null,
@@ -911,7 +954,7 @@ describe('JobDetailPage: el presupuesto', () => {
  * mismo viaje.
  */
 describe('JobDetailPage: aceptar el presupuesto', () => {
-  const conPresupuesto = () =>
+  const conPresupuesto = (cambios: Record<string, unknown> = {}) =>
     ficha({
       type: 'QUOTE',
       status: 'QUOTED',
@@ -935,10 +978,13 @@ describe('JobDetailPage: aceptar el presupuesto', () => {
           total: 198,
           validUntil: '2099-01-01T00:00:00.000Z',
           materialsUpfront: false,
+          materialsAdvance: 0,
+          materialsBoughtAt: null,
           rejectionReason: null,
           rejectedAt: null,
           acceptedAt: null,
           createdAt: '2026-09-07T10:00:00.000Z',
+          ...cambios,
         },
       ],
     })
@@ -1205,5 +1251,117 @@ describe('JobDetailPage: no ha empezado a su hora', () => {
     const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
     expect(queryByTestId('job-detail-late-accept')).toBeNull()
+  })
+})
+
+/**
+ * El material que se paga por delante (`CICLOS` §C6).
+ *
+ * Lo que se ata aquí es la regla por la que esta casilla estuvo cinco días
+ * retirada del presupuesto: **sin el ticket no sale el dinero**. Y que el
+ * botón solo lo vea quien tiene algo que hacer con él — al cliente lo que le
+ * toca es ver en qué se ha ido lo que adelantó.
+ */
+describe('JobDetailPage: el material por adelantado', () => {
+  const conAdelanto = (cambios: Record<string, unknown> = {}) => ({
+    id: 'quote-1',
+    version: 1,
+    status: 'ACCEPTED' as const,
+    lines: [
+      {
+        kind: 'MATERIALS' as const,
+        concept: 'Juego de pastillas',
+        quantity: 1,
+        unitPrice: 138,
+        amount: 138,
+      },
+    ],
+    linesTotal: 228,
+    visitCredit: 30,
+    total: 198,
+    validUntil: '2099-01-01T00:00:00.000Z',
+    materialsUpfront: true,
+    materialsAdvance: 138,
+    materialsBoughtAt: null,
+    rejectionReason: null,
+    rejectedAt: null,
+    acceptedAt: '2026-09-12T09:00:00.000Z',
+    createdAt: '2026-09-07T10:00:00.000Z',
+    ...cambios,
+  })
+
+  it('sin ticket no se puede marcar comprado', () => {
+    /*
+     * El servidor tampoco lo aceptaría. Dejar pulsar aquí sería mandar al
+     * profesional a por un error en vez de decirle lo que falta.
+     */
+    soporte.job = ficha({ type: 'QUOTE', quotes: [conAdelanto()] })
+
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    fireEvent.press(getByTestId('job-detail-materials-bought'))
+
+    expect(soporte.materialsBought).toHaveLength(0)
+    expect(getByText(/Hace falta el ticket/)).toBeTruthy()
+  })
+
+  it('con el ticket, se marca comprado y el ticket va con ello', () => {
+    soporte.job = ficha({ type: 'QUOTE', quotes: [conAdelanto()] })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-materials-tickets'))
+    fireEvent.press(getByTestId('job-detail-materials-bought'))
+
+    expect(soporte.materialsBought).toEqual([{ jobId: 'job-1', tickets: 1 }])
+  })
+
+  it('una vez comprado no se vuelve a pedir', () => {
+    soporte.job = ficha({
+      type: 'QUOTE',
+      quotes: [conAdelanto({ materialsBoughtAt: '2026-09-12T10:00:00.000Z' })],
+      materialsReceipts: [{ url: '/m/1', fullUrl: '/m/1-full' }],
+    })
+
+    const { queryByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-materials-bought')).toBeNull()
+    expect(getByText(/ya son tuyos/)).toBeTruthy()
+  })
+
+  it('el cliente no lo marca él, pero ve el ticket de lo que pagó', () => {
+    soporte.job = ficha({
+      type: 'QUOTE',
+      viewer: 'client',
+      quotes: [conAdelanto({ materialsBoughtAt: '2026-09-12T10:00:00.000Z' })],
+      materialsReceipts: [{ url: '/m/1', fullUrl: '/m/1-full' }],
+    })
+
+    const { queryByTestId, getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-materials-bought')).toBeNull()
+    expect(getByTestId('job-detail-materials-receipt-0')).toBeTruthy()
+    expect(getByText(/Adelantaste 138,00 €/)).toBeTruthy()
+  })
+
+  /**
+   * Y en un trabajo sin adelanto no aparece nada: es lo que mantiene la ficha
+   * legible para los nueve de cada diez que no compran material.
+   */
+  it('sin pago a cuenta, el bloque no existe', () => {
+    soporte.job = ficha({
+      type: 'QUOTE',
+      quotes: [conAdelanto({ materialsUpfront: false, materialsAdvance: 0 })],
+    })
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-materials')).toBeNull()
   })
 })

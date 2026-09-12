@@ -658,3 +658,69 @@ export function useAcceptQuote() {
     isAccepting: mutation.isPending,
   }
 }
+
+/**
+ * «Ya he comprado el material», del lado profesional (`CICLOS` §C6).
+ *
+ * Es lo que suelta el adelanto que el cliente dejó retenido al aceptar el
+ * presupuesto. Dos pasos que para quien pulsa son uno: **primero los tickets,
+ * después el aviso**, y en ese orden porque el servidor no libera un euro sin
+ * justificante — mandarlo al revés sería pedir un cobro que él mismo va a
+ * rechazar.
+ *
+ * Si ninguno de los tickets llega a subir no se marca nada: se dice que
+ * faltaron y el profesional lo reintenta. Perder la foto aquí no es como
+ * perder una de cómo ha quedado —aquélla es una cortesía y ésta es la prueba
+ * de dónde ha ido el dinero de alguien—.
+ */
+export function useMaterialsBought() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (jobId: string) => jobsApi.markMaterialsBought(jobId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
+    },
+  })
+
+  return {
+    materialsBought: async (jobId: string, tickets: PickedImage[]) => {
+      let subidos = 0
+      const accessToken = useAuthStore.getState().accessToken
+
+      if (accessToken) {
+        /* En serie, como las demás: el servidor las numera al llegar */
+        for (const ticket of tickets) {
+          try {
+            await uploadApi.jobMaterialsReceipt(jobId, ticket, accessToken)
+            subidos += 1
+          } catch {
+            /* Se cuenta abajo: lo que importa es si ha subido alguno */
+          }
+        }
+      }
+
+      if (tickets.length > 0 && subidos === 0) {
+        return {
+          ok: false as const,
+          result: null,
+          error:
+            'No hemos podido subir el ticket. Mira la cobertura y vuelve a intentarlo.',
+        }
+      }
+
+      try {
+        return {
+          ok: true as const,
+          error: null,
+          result: await mutation.mutateAsync(jobId),
+        }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isMarkingMaterials: mutation.isPending,
+  }
+}

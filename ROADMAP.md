@@ -2929,10 +2929,8 @@ acababa aceptando por WhatsApp, igual que antes.
 - **Y un arreglo más barato que la visita se acepta sin cobrar nada**, pero se
   acepta: lo que se acepta es el acuerdo, no el importe.
 
-**Lo que queda de §C6**: el pago a cuenta del material. La casilla llegó a
-estar y se retiró el mismo día: `materialsUpfront` se guarda, pero prometerle
-al cliente una retención que nadie puede liberar —falta el «material
-comprado» con justificante— es peor que no ofrecerla.
+**Lo que quedaba de §C6** —el pago a cuenta del material— **se hizo el 12 de
+septiembre**: ver más abajo.
 
 ## ✅ El contrato fijo (7 Septiembre 2026)
 
@@ -2990,9 +2988,55 @@ un día que el profesional no tiene**.
 - El motivo, en sus palabras y sin destapar la agenda de nadie: «ya tiene otro
   trabajo», no con quién ni dónde.
 
-**Lo que falta de §F**: cancelar una sesión suelta y cancelar el contrato (§F7),
-y el aviso de §F6 —al marcar unas vacaciones, decirle al profesional qué
-sesiones fijas se lleva por delante—.
+**Lo que faltaba de §F** —cancelar una sesión suelta y el contrato entero
+(§F7), y el aviso de §F6 al marcar unas vacaciones— **se hizo el 12 de
+septiembre de 2026**, y con ello §F queda entero.
+
+## ✅ El pago a cuenta del material (12 Septiembre 2026)
+
+Lo último de §C6, y lo que cierra el ciclo del presupuesto. Lo que había era
+media promesa: la casilla guardaba `materialsUpfront` desde el 7 de septiembre
+y **no existía nada capaz de soltar ese dinero**, así que se retiró el mismo
+día que se puso —prometerle al cliente una retención que nadie puede liberar es
+peor que no ofrecerla—.
+
+Lo que entró ahora es la otra mitad: **«ya lo he comprado», con el ticket**.
+
+### Un tipo de foto más, y una fecha
+
+Migración `20260912170000_el_material_por_adelantado`:
+`JobPhotoKind.MATERIALS_RECEIPT` —tercera serie de cuatro, con sus propias
+posiciones— y `quotes.materials_bought_at`. Ninguna tabla nueva: el
+justificante es una foto del trabajo como las otras dos, y el adelanto ya tenía
+su `ChargeKind`.
+
+### Las decisiones
+
+- **El total se parte, no se suma**: 138 de material + 60 de presupuesto = los
+  198 que dice el papel. Cobrar el material *encima* sería cobrar 336 € por
+  marcar una casilla.
+- **Dos `Charge` y no uno**, porque la comisión es por tipo de cobro y
+  `MATERIALS_ADVANCE` tiene su propia fila en `CommissionPolicy`.
+- **La visita descontada se come antes la mano de obra**: con 138 € de piezas y
+  120 € por pagar se adelantan 120. Nunca más de lo que el cliente acepta.
+- **El adelanto se captura al aceptar**, al revés que todo lo demás: es dinero
+  para ir a comprar, y una autorización se muere a los 7 días.
+- **Sin ticket no sale un euro.** Una foto, no un número de factura: es lo que
+  se tiene en la mano saliendo de la tienda. Y la ve el cliente, que es quien
+  lo ha pagado.
+- **La compra queda escrita aunque la transferencia falle**: es un hecho que ya
+  ocurrió, y volver a pulsar reintenta solo el pago.
+- **Dos pagos, una tarjeta**: crear los cobros es idempotente y el 3D Secure a
+  medias continúa donde se quedó en vez de cobrar dos veces.
+
+En el móvil: la casilla vuelve a `QuotePage` —solo si hay líneas de material, y
+diciendo cuánto se adelanta—, `QuoteCard` cuenta en qué punto está ese dinero,
+y `JobDetailPage` tiene el bloque del material: el ticket y «Ya lo he comprado»
+para quien va, y el ticket a secas para quien lo pagó.
+
+**Lo que sigue sin estar es §C8**: cancelar un trabajo ya contratado. La regla
+del material ya está escrita en el dinero —lo `RELEASED` no se devuelve solo—,
+pero la pantalla y la tabla de penalizaciones son otro día.
 
 ## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
 

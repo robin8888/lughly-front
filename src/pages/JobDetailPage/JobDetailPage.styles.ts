@@ -388,4 +388,19 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.tiny,
     color: theme.colors.urgency,
   },
+  /* Lo que hay que hacer con el material, o lo que se hizo con él */
+  materialsHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.textSoft,
+    marginBottom: 12,
+  },
+  materialsMissing: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: theme.colors.textSoft,
+    marginTop: 8,
+  },
 })

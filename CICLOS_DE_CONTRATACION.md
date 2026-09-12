@@ -425,10 +425,10 @@ arriba:
   sigue en `QUOTED` y lo cierra `ConfirmQuotePaymentUseCase`. Un pago abandonado
   lo suelta el barrido a la media hora, sin borrar el trabajo —que existe desde
   antes—.
-- **El pago a cuenta del material no está**, y la casilla se retiró a propósito:
-  `materialsUpfront` se guarda, pero prometer una retención que nadie puede
-  liberar —falta el «material comprado» con justificante— es peor que no
-  ofrecerla.
+- **El pago a cuenta del material se construyó el 12 de septiembre de 2026**, y
+  hasta entonces la casilla estuvo retirada a propósito: `materialsUpfront` se
+  guardaba, pero prometer una retención que nadie podía liberar era peor que no
+  ofrecerla. Las decisiones de ese día están justo debajo.
 
 **C6. Pablo acepta v2 (198 €).** `Job CONTRACTED` otra vez —es el mismo hecho,
 hay acuerdo y dinero— con una **nueva `Appointment(WORK)`** sobre el horario de
@@ -436,6 +436,50 @@ Sergio. `Charge(QUOTE, 198, PAID)` con su comisión congelada. Si Sergio
 marcó pago a cuenta: `Charge(MATERIALS_ADVANCE, 138, PAID)` que **se retiene**
 hasta que marca «material comprado» con justificante; entonces `RELEASED`. Si
 Pablo cancela antes de eso, se devuelve; después, se cobra el material.
+
+### El pago a cuenta del material
+
+**Construido el 12 Septiembre 2026**, que es lo último que le faltaba a este
+ciclo. Lo que existía era media promesa: la casilla guardaba el `boolean` y
+nadie podía soltar ese dinero.
+
+- **El total se parte, no se suma.** De los 198 € que paga Pablo, 138 son el
+  `MATERIALS_ADVANCE` y 60 el `QUOTE`. **Los dos juntos valen exactamente lo
+  que dice el presupuesto**: cobrar el material *encima* del total sería
+  cobrarle 336 € por marcar una casilla, y es el error que las cuentas de §C8
+  —«se cobra 138, se devuelven 60»— dejan a la vista.
+- **Dos `Charge` y no uno con dos mitades**, porque la comisión es por tipo de
+  cobro: `CommissionPolicy` tiene su fila para `MATERIALS_ADVANCE`. Adelantar
+  piezas no es cobrar un trabajo, y con un solo cobro no habría forma de
+  aplicarle otra comisión ni de soltar una parte antes que la otra.
+- **La visita descontada se come antes la mano de obra.** Con 138 € de piezas
+  y 120 € por pagar, se adelantan 120: lo que el cliente ya pagó fue por que
+  alguien fuera a mirar, no por unas piezas que entonces no existían. El tope
+  no es un caso de laboratorio, es lo que impide cobrar más de lo aceptado.
+- **El adelanto se captura al aceptar**, al revés que todo lo demás, que se
+  queda retenido hasta el visto bueno. Es dinero **para ir a comprar**: una
+  autorización de tarjeta se muere a los 7 días, y un adelanto que hubiera que
+  capturar dos semanas después no serviría para nada.
+- **Sin ticket no sale un euro** (`MarkMaterialsBoughtUseCase`, y la casilla
+  vuelve a `QuotePage` por esto). Una foto, no un número de factura: es lo que
+  se tiene en la mano saliendo de la tienda, y cualquier otra cosa acabaría
+  rellenándose a ojo. `JobPhotoKind.MATERIALS_RECEIPT`, su propia serie de
+  cuatro —un material comprado en tres tiendas son tres tickets— y **la ve el
+  cliente**, que es quien lo ha pagado.
+- **La compra se escribe aunque la transferencia falle** (`materialsBoughtAt`
+  en el `Quote`). Haber comprado el material es un hecho que ya ocurrió;
+  colgarlo del `RELEASED` del cobro haría que un mal minuto de Stripe le
+  pidiera al profesional comprarlo otra vez. Volver a pulsar reintenta solo el
+  pago, y no vuelve a avisar al cliente.
+- **Y son dos pagos con la misma tarjeta**, así que el banco puede pedir
+  autenticación en cualquiera de los dos: crear los cobros es idempotente
+  (`ensureCharges`) y `ConfirmQuotePaymentUseCase` crea el que falte con la
+  tarjeta que se acaba de autenticar —sacada del `PaymentIntent`, no de lo que
+  diga el móvil—. Sin eso, volver a darle a aceptar cobraría dos veces la
+  mitad que sí salió.
+- **Lo que sigue sin estar es §C8**: cancelar un trabajo ya contratado. Cuando
+  llegue, la regla ya está escrita en el dinero — `UndoJobChargesUseCase` no
+  toca lo `RELEASED`, así que un material comprado no se devuelve solo.
 
 **C7. El arreglo.** Empezar/Terminar sobre la cita; Pablo confirma →
 `COMPLETED`, `QUOTE RELEASED`. El latiguillo: `Quote` con `parentQuoteId`, una

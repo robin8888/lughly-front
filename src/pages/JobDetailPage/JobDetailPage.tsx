@@ -30,6 +30,7 @@ import { Countdown } from '@/components/atoms/Countdown'
 import { WorkTimer } from '@/components/molecules/WorkTimer'
 import { StartJobButton } from '@/components/molecules/StartJobButton'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
+import { PhotoPicker } from '@/components/molecules/PhotoPicker'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
@@ -48,11 +49,13 @@ import {
   useAcceptQuote,
   useCancelSession,
   useReschedule,
+  useMaterialsBought,
 } from '@/hooks/domain/useJob'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { StarRating } from '@/components/atoms/StarRating'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobSession, ApiJobType } from '@/api/jobs.api'
+import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
@@ -220,6 +223,7 @@ export function JobDetailPage({
   const { acceptQuote, isAccepting } = useAcceptQuote()
   const { cancelSession, isCancelling: isDroppingSession } = useCancelSession()
   const { proposeTime, acceptTime, isRescheduling } = useReschedule()
+  const { materialsBought, isMarkingMaterials } = useMaterialsBought()
   /*
     Las tarjetas guardadas. Se pide siempre y no solo cuando hay presupuesto:
     la consulta está cacheada y en cuanto llega uno, el botón de aceptar tiene
@@ -241,6 +245,10 @@ export function JobDetailPage({
 
   /** Qué foto del resultado se está mirando a pantalla completa. `null` es ninguna */
   const [viewingResult, setViewingResult] = useState<number | null>(null)
+  /** Y qué ticket del material, que también hay que poder leer de cerca */
+  const [viewingReceipt, setViewingReceipt] = useState<number | null>(null)
+  /** Los tickets que el profesional acaba de hacer y todavía no ha mandado */
+  const [tickets, setTickets] = useState<PickedImage[]>([])
   /** El motivo que escribe el cliente cuando algo no ha quedado bien */
   const [holdReason, setHoldReason] = useState('')
   /** Y el de por qué no le vale el presupuesto (`CICLOS` §C5) */
@@ -543,11 +551,59 @@ export function JobDetailPage({
    * —el trabajo se cierra solo— y rechazarlo a posteriori pondría un motivo
    * en un documento que ya no decidía nada.
    */
+  /**
+   * El material que se paga por delante, y en qué punto está (`CICLOS` §C6).
+   *
+   * Solo del presupuesto aceptado: en uno pendiente esto todavía es una
+   * propuesta, y la tarjeta ya la cuenta como tal.
+   */
+  const materialsAdvance =
+    quote?.status === 'ACCEPTED' && quote.materialsUpfront ? quote.materialsAdvance : 0
+  const materialsBoughtAt = quote?.materialsBoughtAt ?? null
+
+  /**
+   * Puede decir que ya lo ha comprado quien va a hacerlo, mientras el trabajo
+   * está contratado o en curso. **No después**: cerrado el trabajo, el dinero
+   * sale entero por su camino y este botón solo confundiría.
+   */
+  const canMarkMaterials =
+    job.viewer === 'pro' &&
+    materialsAdvance > 0 &&
+    materialsBoughtAt === null &&
+    (job.status === 'CONTRACTED' || job.status === 'IN_PROGRESS')
+
   const canAnswerQuote =
     job.viewer === 'client' &&
     quote !== null &&
     quote.status === 'SENT' &&
     new Date(quote.validUntil) > new Date()
+
+  /**
+   * «Ya lo he comprado», con su ticket.
+   *
+   * Los dos pasos van dentro del hook y aquí solo se cuenta el final, que es
+   * lo único que le interesa a quien acaba de volver de la tienda: si el
+   * dinero sale ya o si hay que esperar un momento.
+   */
+  const doMaterialsBought = (id: string) => {
+    void (async () => {
+      const { ok, error, result } = await materialsBought(id, tickets)
+
+      if (!ok) {
+        Alert.alert('No se ha podido', error ?? 'Inténtalo de nuevo en un momento.')
+        return
+      }
+
+      setTickets([])
+
+      Alert.alert(
+        'Material comprado',
+        result?.paid
+          ? `Te hemos pagado los ${formatAmount(result.amount)} € del material. Se lo hemos dicho al cliente.`
+          : 'Queda apuntado. El pago puede tardar un momento en salir; si no llega, vuelve a pulsar.',
+      )
+    })()
+  }
 
   const doRejectQuote = (id: string) => {
     const motivo = rejectReason.trim()
@@ -1122,6 +1178,84 @@ export function JobDetailPage({
           </QuoteCard>
         ))}
 
+        {/**
+          * El material que el cliente adelantó (`CICLOS` §C6).
+          *
+          * Va pegado al presupuesto porque de ahí sale, y aparece en los dos
+          * lados por motivos distintos: al profesional le falta hacer algo
+          * —comprar y enseñar el ticket— y al cliente le falta ver en qué se
+          * ha ido su dinero. Quien no tenga ni lo uno ni lo otro no ve nada.
+          */}
+        {(canMarkMaterials || job.materialsReceipts.length > 0) && (
+          <InfoCard style={styles.block} testID="job-detail-materials">
+            <Text style={styles.blockTitle}>El material</Text>
+
+            <Text style={styles.materialsHint}>
+              {materialsBoughtAt !== null
+                ? job.viewer === 'pro'
+                  ? `Comprado. Los ${formatAmount(materialsAdvance)} € que te adelantó el cliente ya son tuyos.`
+                  : `Adelantaste ${formatAmount(materialsAdvance)} € para el material. Aquí está el ticket de la compra.`
+                : `Tu cliente te ha adelantado ${formatAmount(materialsAdvance)} €. Sube el ticket de la compra y te los pagamos en el momento.`}
+            </Text>
+
+            {job.materialsReceipts.length > 0 && (
+              <View style={styles.photos}>
+                {job.materialsReceipts.map((photo, index) => (
+                  <Pressable
+                    key={photo.url}
+                    onPress={() => setViewingReceipt(index)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver el ticket ${index + 1} del material`}
+                    style={styles.photo}
+                    testID={`job-detail-materials-receipt-${index}`}
+                  >
+                    <RemotePhoto
+                      uri={`${API_BASE_URL}${photo.url}`}
+                      style={styles.photoImage}
+                      fallback="No carga"
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            {canMarkMaterials && (
+              <>
+                <PhotoPicker
+                  value={tickets}
+                  onChange={setTickets}
+                  disabled={isMarkingMaterials}
+                  testID="job-detail-materials-tickets"
+                />
+
+                {/*
+                  Apagado mientras no haya ticket, y dicho: el servidor no
+                  suelta un euro sin él, así que dejar pulsar aquí sería
+                  mandarle a por un error.
+                */}
+                <Button
+                  fullWidth
+                  onPress={() => doMaterialsBought(job.id)}
+                  disabled={
+                    isMarkingMaterials ||
+                    (tickets.length === 0 && job.materialsReceipts.length === 0)
+                  }
+                  style={styles.quoteAction}
+                  testID="job-detail-materials-bought"
+                >
+                  {isMarkingMaterials ? 'Un momento…' : 'Ya lo he comprado'}
+                </Button>
+
+                {tickets.length === 0 && job.materialsReceipts.length === 0 && (
+                  <Text style={styles.materialsMissing}>
+                    Hace falta el ticket: es lo que nos deja pagarte el adelanto.
+                  </Text>
+                )}
+              </>
+            )}
+          </InfoCard>
+        )}
+
         {/*
           Y el botón de hacerlo, del lado del profesional. El texto cambia
           según haya algo ya: "otro" después de un rechazo dice, sin explicarlo,
@@ -1622,6 +1756,14 @@ export function JobDetailPage({
         testID="job-detail-result-viewer"
       />
 
+      {/* Un ticket hay que poder leerlo, y en una miniatura no se lee nada */}
+      <PhotoViewer
+        photos={job.materialsReceipts.map((photo) => `${API_BASE_URL}${photo.fullUrl}`)}
+        openAt={viewingReceipt}
+        onClose={() => setViewingReceipt(null)}
+        testID="job-detail-materials-viewer"
+      />
+
       {/**
         * «Han empezado». Se abre solo al entrar, que es a donde lleva el aviso
         * del móvil.
@@ -1869,7 +2011,17 @@ Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el s
                 card
                   ? 'Se retienen ahora en tu tarjeta y se le pagan cuando des por bueno el trabajo terminado.'
                   : 'Necesitas una tarjeta guardada para poder aceptarlo.',
-              ].join('\n\n')
+                /*
+                  El material, si lo hay. **Sale del total, no se suma**, y
+                  decirlo importa: es la única parte que se le paga antes de
+                  empezar, y a partir de que la compre ya no vuelve.
+                */
+                card && quote.materialsUpfront && quote.materialsAdvance > 0
+                  ? `De ese total, ${formatAmount(quote.materialsAdvance)} € son el material: se le pagan en cuanto lo compre y suba el ticket.`
+                  : '',
+              ]
+                .filter((linea) => linea !== '')
+                .join('\n\n')
         }
         actions={
           card
