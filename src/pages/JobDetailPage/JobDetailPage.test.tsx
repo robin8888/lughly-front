@@ -36,6 +36,10 @@ jest.mock('@/hooks/domain/useJob', () => {
     rejectedQuotes: [] as { jobId: string; reason: string }[],
     /** Y los aceptados, con la tarjeta que se usó (§C6) */
     acceptedQuotes: [] as { jobId: string; paymentMethodId: string }[],
+    /** Las horas nuevas propuestas para un trabajo que no empezó (§A9) */
+    proposed: [] as { jobId: string; scheduledAt: Date }[],
+    /** Y las aceptadas */
+    acceptedTimes: [] as string[],
     /** Las sesiones de un contrato fijo que se han saltado (§F7) */
     droppedSessions: [] as { jobId: string; sessionId: string }[],
     /** Lo que devuelve el servidor al saltarse una: lo cobrado y lo que queda */
@@ -59,6 +63,19 @@ jest.mock('@/hooks/domain/useJob', () => {
           result: { refunded: 0, voided: 0, releasedCharges: 0, cancelledSessions: 18 },
         }),
       isCancelling: false,
+    }),
+    useReschedule: () => ({
+      proposeTime: (jobId: string, scheduledAt: Date) => {
+        soporte.proposed.push({ jobId, scheduledAt })
+
+        return Promise.resolve({ ok: true, error: null, result: null })
+      },
+      acceptTime: (jobId: string) => {
+        soporte.acceptedTimes.push(jobId)
+
+        return Promise.resolve({ ok: true, error: null, result: null })
+      },
+      isRescheduling: false,
     }),
     useCancelSession: () => ({
       cancelSession: (jobId: string, sessionId: string) => {
@@ -202,6 +219,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     createdAt: '2026-08-29T09:00:00.000Z',
     serviceLines: [],
     quotes: [],
+    lateStart: null,
     recurrence: null,
     sessions: [],
     ...cambios,
@@ -219,6 +237,8 @@ beforeEach(() => {
   soporte.rejectedQuotes.length = 0
   soporte.acceptedQuotes.length = 0
   soporte.droppedSessions.length = 0
+  soporte.proposed.length = 0
+  soporte.acceptedTimes.length = 0
   soporte.dropResult = { fee: 0, refunded: 0, voided: 0, remaining: 17 }
   soporteTarjetas.hay = true
   soporte.pending = false
@@ -1097,5 +1117,93 @@ describe('JobDetailPage: el contrato fijo', () => {
 
     expect(getByTestId('job-detail-break')).toBeTruthy()
     expect(getByText('Cancelar el contrato fijo')).toBeTruthy()
+  })
+})
+
+/**
+ * El trabajo que no ha empezado a su hora (§A9).
+ *
+ * Lo que se ata aquí es **quién ve qué botón**. Aceptar lo ve el que no
+ * propuso; quien propuso está esperando, y enseñarle "Aceptar" le dejaría
+ * moverle la cita al otro sin preguntarle, que es justo lo que los dos pasos
+ * evitan.
+ */
+describe('JobDetailPage: no ha empezado a su hora', () => {
+  const TOQUE = {
+    noticedAt: '2026-09-12T10:15:00.000Z',
+    decideByAt: '2026-09-12T10:25:00.000Z',
+    proposedAt: null,
+    proposedByMe: false,
+  }
+
+  it('sin retraso no hay nada de esto en pantalla', () => {
+    soporte.job = ficha({})
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-late')).toBeNull()
+  })
+
+  /** Con el reloj delante: pasados esos minutos el trabajo se cae entero */
+  it('con el toque dado, sale primero y con su cuenta atrás', () => {
+    soporte.job = ficha({ lateStart: TOQUE })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-late')).toBeTruthy()
+    expect(getByTestId('job-detail-late-countdown')).toBeTruthy()
+  })
+
+  it('sin ninguna hora encima de la mesa no hay nada que aceptar', () => {
+    soporte.job = ficha({ lateStart: TOQUE })
+
+    const { queryByTestId, getByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-late-accept')).toBeNull()
+    expect(getByTestId('job-detail-late-open')).toBeTruthy()
+  })
+
+  it('proponer una hora manda la que se ha elegido', () => {
+    soporte.job = ficha({ lateStart: TOQUE })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-late-open'))
+
+    const elegida = new Date('2026-09-12T12:00:00.000Z')
+    fireEvent(getByTestId('job-detail-late-picker'), 'onChange', elegida)
+    fireEvent.press(getByTestId('job-detail-late-send'))
+
+    expect(soporte.proposed).toEqual([{ jobId: 'job-1', scheduledAt: elegida }])
+  })
+
+  /** La propuesta del otro sí se acepta: es la que salva el trabajo */
+  it('la hora que propone el otro se puede aceptar', () => {
+    soporte.job = ficha({
+      lateStart: { ...TOQUE, proposedAt: '2026-09-12T12:00:00.000Z', proposedByMe: false },
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-late-accept'))
+
+    expect(soporte.acceptedTimes).toEqual(['job-1'])
+  })
+
+  /**
+   * Y la propia no. Aceptar la propia propuesta sería moverle la cita al de
+   * enfrente sin su sí; el servidor lo rechaza, y enseñar el botón sería
+   * enseñar uno que falla.
+   */
+  it('quien propuso no ve el botón de aceptar: está esperando', () => {
+    soporte.job = ficha({
+      lateStart: { ...TOQUE, proposedAt: '2026-09-12T12:00:00.000Z', proposedByMe: true },
+    })
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-late-accept')).toBeNull()
   })
 })

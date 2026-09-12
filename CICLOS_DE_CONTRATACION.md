@@ -229,6 +229,64 @@ dura, ni qué pasa cuando un día de la serie no le cabe al profesional, que es
 casi todo el asunto. **El caso entero está en §F**, y esta línea se conserva
 solo porque es de donde salió.
 
+### A9. La hora que pasa y nadie empieza
+
+**Pedido por Robin el 12 de septiembre de 2026, y construido ese mismo día.**
+Es el hueco que más ocurre de todos: la cita era a las diez, son y cuarto, y
+nadie ha pulsado «He llegado».
+
+Hasta ese día **no pasaba nada nunca**. El trabajo se quedaba `CONTRACTED`
+para siempre, la mañana del profesional seguía ocupada en su agenda, el dinero
+del cliente seguía retenido, y los dos esperando a que el otro dijera algo.
+§A6 dejaba apuntado un `NO_SHOW_PRO` a las dos horas que nunca se construyó, y
+que además resolvía mal las dos cosas que importan: dos horas es tardísimo
+—para entonces el cliente ya se ha ido a hacer otra cosa— y repartir culpas
+desde el servidor es adivinar.
+
+**Quince minutos, y un toque a los dos.** No cinco: llegar con un cuarto de
+hora de retraso es llegar tarde, no es no aparecer, y un aviso a los cinco
+minutos sonaría cada vez que alguien no encuentra aparcamiento. Se avisa a los
+dos porque ninguno sabe qué pasa del otro lado: el que espera no sabe si viene,
+y el que va no sabe si le han dado por perdido.
+
+**Diez minutos más para acordar otra hora.** Es corto a propósito: no es el
+plazo para hacer el trabajo, es el plazo para que uno de los dos conteste
+algo. Quien está esperando en su casa con la mañana apartada no puede quedarse
+otra hora sin saber si va a ir alguien.
+
+**Y hace falta el sí de los dos.** Propone uno —cualquiera— y acepta el otro.
+La hora propuesta vive aparte (`Appointment.proposedAt`) y la acordada sigue
+siendo la de antes hasta que alguien la acepte: escribirla de un solo toque
+sería dejar que cualquiera moviera la mañana del otro, y quien espera en su
+casa descubriría por un aviso que ahora es a las seis. Aceptada, el reloj se
+pone a cero y la hora nueva tiene sus propios quince minutos.
+
+Una propuesta sin aceptar **no cuenta**: mientras solo haya una hora encima de
+la mesa sigue sin haber nadie que sepa cuándo se hace.
+
+**Si se acaban los diez minutos**, el trabajo se da por no realizado y se cae
+entero: `Job CANCELLED` con su motivo, la cita `CANCELLED(by SYSTEM)` —que es
+lo que libera el hueco de la agenda—, la serie apagada si era un fijo, y el
+dinero de vuelta al cliente.
+
+**No se le carga la culpa a nadie, y es deliberado.** Desde el servidor no se
+puede saber si el profesional no ha llegado o el cliente no ha abierto la
+puerta, y cobrarle a uno de los dos adivinando es peor que no cobrar a
+ninguno. Las dos filas de plantón de la tabla de §6 —«profesional no aparece»
+y «cliente no está»— siguen necesitando que alguien diga lo que pasó, y eso no
+está construido: hoy esto solo cierra el trabajo y devuelve el dinero.
+
+| Pieza | Qué |
+|---|---|
+| `Appointment` | **nuevo**: `lateNoticeAt` (cuándo se dio el toque, y lo que hace el paso idempotente), `proposedAt` y `proposedById` |
+| `expire-overdue` | + `noticeLateStarts` (el toque de los 15 min) y `dropUnstartedJobs` (el cierre de los 10) |
+| `reschedule-job` | `propose` y `accept`, los dos pasos |
+| `get-job` | + `lateStart`, con el plazo ya calculado: la cuenta atrás de la app y la del barrido tienen que ser la misma |
+| `JobDetailPage` | La tarjeta, lo primero de la pantalla, con su cuenta atrás |
+
+Las urgencias quedan fuera: ahí no hay una hora acordada que incumplir, hay
+alguien de camino, y su plazo es otro.
+
 ---
 
 ## B. Tarifa cerrada — Iván, peluquería

@@ -282,6 +282,40 @@ export const styles = StyleSheet.create({
     color: theme.colors.cardText,
   },
 
+  /** El trabajo que no ha empezado a su hora: lo primero de la pantalla */
+  late: {
+    marginBottom: 4,
+  },
+  lateTitle: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.cardText,
+  },
+  lateText: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+    marginTop: 8,
+  },
+  lateAction: {
+    marginTop: 12,
+  },
+  lateForm: {
+    marginTop: 12,
+    gap: 10,
+  },
+  /** Proponer, en enlace y no en botón: aceptar es lo que se viene a hacer */
+  lateLink: {
+    alignSelf: 'center',
+    marginTop: 12,
+    paddingVertical: 8,
+  },
+  lateLinkText: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.accent,
+  },
+
   /** La frase que resume el contrato fijo: qué días y a qué hora */
   recurrenceLine: {
     fontFamily: theme.typography.fonts.bodyBold,

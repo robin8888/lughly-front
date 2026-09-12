@@ -311,6 +311,14 @@ export interface ApiJobDetail {
    */
   quotes: ApiJobQuote[]
   /**
+   * El trabajo que no empezó a su hora, mientras se decide qué hacer
+   * (`CICLOS_DE_CONTRATACION.md` §A9).
+   *
+   * `null` es lo normal. Con algo dentro hay diez minutos y una decisión: o se
+   * acuerda otra hora, o el trabajo se da por no realizado y se cae entero.
+   */
+  lateStart: ApiLateStart | null
+  /**
    * La regla del contrato fijo, si lo es (`CICLOS_DE_CONTRATACION.md` §F).
    * `null` en un trabajo de una vez, que son casi todos.
    */
@@ -323,6 +331,26 @@ export interface ApiJobDetail {
    * pagos, y aquí lo que hace falta es lo que todavía se puede mover.
    */
   sessions: ApiJobSession[]
+}
+
+/**
+ * El toque de «no ha empezado», con su reloj.
+ *
+ * `decideByAt` viene del servidor y no se calcula aquí aunque la suma sea de
+ * una línea: la cuenta atrás de la pantalla y la del barrido tienen que ser la
+ * misma, o se enseñaría "te quedan tres minutos" sobre un trabajo que el
+ * servidor ya ha cerrado.
+ */
+export interface ApiLateStart {
+  noticedAt: string
+  decideByAt: string
+  /** La hora propuesta, si alguien ha propuesto una */
+  proposedAt: string | null
+  /**
+   * Si la propuesta es mía. Decide el botón: quien la hizo espera, y el otro
+   * acepta.
+   */
+  proposedByMe: boolean
 }
 
 /** Qué días, a qué hora y hasta dónde llega un contrato fijo */
@@ -364,6 +392,17 @@ export interface ApiJobSession {
    * acabarían enseñando "gratis" y cobrando.
    */
   freeCancel: boolean
+}
+
+/** Cómo queda la hora después de proponer o aceptar */
+export interface ApiRescheduleResult {
+  jobId: string
+  /** La que vale: la propuesta si se ha aceptado, la de siempre si no */
+  scheduledAt: string
+  /** La que espera un sí, cuando hay una */
+  proposedAt: string | null
+  /** Hasta cuándo hay para acordarla. `null` si ya está acordada */
+  decideByAt: string | null
 }
 
 /** De qué es una línea. El tipo decide dinero, no es una etiqueta. */
@@ -620,6 +659,27 @@ export const jobsApi = {
       method: 'POST',
       auth: true,
       body: { reason },
+    }),
+
+  /**
+   * Proponer otra hora para un trabajo que no empezó a la suya (§A9).
+   *
+   * No mueve la cita: deja la hora encima de la mesa y avisa al otro, que es
+   * quien tiene que aceptarla. Escribirla directamente sería moverle la mañana
+   * a alguien sin su sí.
+   */
+  proposeTime: (jobId: string, scheduledAt: string) =>
+    apiRequest<ApiRescheduleResult>(`/v1/jobs/${jobId}/reschedule`, {
+      method: 'POST',
+      auth: true,
+      body: { scheduledAt },
+    }),
+
+  /** Y el otro dice que sí. **El otro**: quien la propuso no puede aceptarla */
+  acceptTime: (jobId: string) =>
+    apiRequest<ApiRescheduleResult>(`/v1/jobs/${jobId}/reschedule/accept`, {
+      method: 'POST',
+      auth: true,
     }),
 
   /**

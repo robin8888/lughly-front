@@ -33,6 +33,7 @@ import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { QuoteCard } from '@/components/organisms/QuoteCard'
 import {
   useJob,
@@ -46,6 +47,7 @@ import {
   useRejectQuote,
   useAcceptQuote,
   useCancelSession,
+  useReschedule,
 } from '@/hooks/domain/useJob'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { StarRating } from '@/components/atoms/StarRating'
@@ -217,6 +219,7 @@ export function JobDetailPage({
   const { rejectQuote, isRejecting } = useRejectQuote()
   const { acceptQuote, isAccepting } = useAcceptQuote()
   const { cancelSession, isCancelling: isDroppingSession } = useCancelSession()
+  const { proposeTime, acceptTime, isRescheduling } = useReschedule()
   /*
     Las tarjetas guardadas. Se pide siempre y no solo cuando hay presupuesto:
     la consulta está cacheada y en cuanto llega uno, el botón de aceptar tiene
@@ -253,6 +256,15 @@ export function JobDetailPage({
    * una lista de dieciocho, es una pregunta que no se puede contestar.
    */
   const [droppingSession, setDroppingSession] = useState<ApiJobSession | null>(null)
+  /**
+   * La hora que se está proponiendo para un trabajo que no empezó a la suya
+   * (§A9). `null` es "el selector no está abierto".
+   *
+   * Arranca en media hora a partir de ahora y no en la hora de antes: quien
+   * abre esto llega tarde, y proponerle de vuelta la hora que acaba de
+   * incumplir no ayuda a nadie.
+   */
+  const [proposing, setProposing] = useState<Date | null>(null)
 
   /**
    * Lo que ya se le ha preguntado al cliente en esta visita, si hay algo.
@@ -677,6 +689,126 @@ export function JobDetailPage({
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
       >
+        {/*
+          El trabajo que no ha empezado a su hora (§A9), y lo primero de todo.
+
+          Es lo más urgente que puede haber en esta pantalla: hay diez minutos
+          y una decisión, y pasados esos diez minutos el trabajo se cae entero
+          —la cita, la agenda y el dinero—. Debajo del estado se leería
+          después, y aquí "después" es tarde.
+        */}
+        {job.lateStart && (
+          <InfoCard variant="accent" style={styles.late} testID="job-detail-late">
+            <Text style={styles.lateTitle}>
+              {job.viewer === 'client'
+                ? 'El trabajo no ha empezado'
+                : 'No has empezado este trabajo'}
+            </Text>
+
+            <View style={styles.deadline}>
+              <Text style={styles.deadlineLabel}>Se cancela en</Text>
+              <Countdown
+                target={job.lateStart.decideByAt}
+                expiredLabel="Se está cancelando"
+                testID="job-detail-late-countdown"
+              />
+            </View>
+
+            {/*
+              Y qué hacer con ese reloj. Tres estados y tres frases distintas,
+              porque son tres situaciones distintas: no hay ninguna hora
+              encima de la mesa, la ha puesto el otro, o la he puesto yo y
+              estoy esperando.
+            */}
+            <Text style={styles.lateText}>
+              {job.lateStart.proposedAt === null
+                ? 'Podéis acordar otra hora. Si no hay ninguna acordada cuando se acabe el tiempo, el trabajo se cancela y no se cobra nada.'
+                : job.lateStart.proposedByMe
+                  ? `Has propuesto las ${soloHora(job.lateStart.proposedAt)}. Falta que la acepten.`
+                  : `Te proponen las ${soloHora(job.lateStart.proposedAt)}.`}
+            </Text>
+
+            {/* Aceptar solo lo ve el que no propuso: el otro está esperando */}
+            {job.lateStart.proposedAt !== null && !job.lateStart.proposedByMe && (
+              <Button
+                fullWidth
+                loading={isRescheduling}
+                disabled={isRescheduling}
+                onPress={() => {
+                  void (async () => {
+                    const { ok, error } = await acceptTime(job.id)
+
+                    Alert.alert(
+                      ok ? 'Hora acordada' : 'No se ha podido',
+                      ok
+                        ? 'El trabajo queda para esa hora. Se lo hemos dicho.'
+                        : (error ?? 'Inténtalo de nuevo en un momento.'),
+                    )
+                  })()
+                }}
+                style={styles.lateAction}
+                testID="job-detail-late-accept"
+              >
+                Aceptar esa hora
+              </Button>
+            )}
+
+            {proposing === null ? (
+              <Pressable
+                onPress={() => setProposing(new Date(Date.now() + 30 * 60_000))}
+                disabled={isRescheduling}
+                accessibilityRole="button"
+                style={styles.lateLink}
+                testID="job-detail-late-open"
+              >
+                <Text style={styles.lateLinkText}>
+                  {job.lateStart.proposedAt === null ? 'Proponer otra hora' : 'Proponer otra'}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={styles.lateForm}>
+                <DateTimeField
+                  value={proposing}
+                  onChange={setProposing}
+                  mode="datetime"
+                  disabled={isRescheduling}
+                  testID="job-detail-late-picker"
+                />
+
+                <Button
+                  fullWidth
+                  loading={isRescheduling}
+                  disabled={isRescheduling}
+                  onPress={() => {
+                    void (async () => {
+                      const { ok, error } = await proposeTime(job.id, proposing)
+
+                      if (!ok) {
+                        Alert.alert(
+                          'No se ha podido proponer',
+                          error ?? 'Inténtalo de nuevo en un momento.',
+                        )
+                        return
+                      }
+
+                      setProposing(null)
+
+                      Alert.alert(
+                        'Hora propuesta',
+                        'Se lo hemos dicho. En cuanto la acepten, el trabajo queda para esa hora.',
+                      )
+                    })()
+                  }}
+                  style={styles.lateAction}
+                  testID="job-detail-late-send"
+                >
+                  Proponer esta hora
+                </Button>
+              </View>
+            )}
+          </InfoCard>
+        )}
+
         {/*
           El estado, arriba y contado: es la única pregunta que trae aquí a
           alguien, y un rótulo con el nombre del estado no la responde.
@@ -1787,4 +1919,11 @@ function Fact({ label, value }: { label: string; value: string }) {
       <Text style={styles.factValue}>{value}</Text>
     </View>
   )
+}
+
+/** "11:30", que es como se dice una hora cuando el día es hoy */
+function soloHora(iso: string): string {
+  const date = new Date(iso)
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }

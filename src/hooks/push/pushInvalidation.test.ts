@@ -15,12 +15,18 @@ const incluye = (keys: unknown[], key: unknown[]) =>
   keys.some((candidate) => JSON.stringify(candidate) === JSON.stringify(key))
 
 describe('keysToInvalidate', () => {
-  it('un cambio en un trabajo recarga los trabajos y la agenda del profesional', () => {
+  it('un cambio en un trabajo recarga los trabajos y todo lo del profesional', () => {
     const keys = keysToInvalidate({ screen: 'jobs', jobId: 'job-1' })
 
     expect(incluye(keys, ['jobs'])).toBe(true)
-    expect(incluye(keys, ['pro', 'agenda'])).toBe(true)
-    expect(incluye(keys, ['pro', 'assignments'])).toBe(true)
+    /*
+      La raíz `['pro']` y no sus ramas sueltas: React Query invalida por
+      prefijo, así que con ella caen la agenda, los asignados **y la ficha**
+      —`['pro', id]`—, que es donde vive la cuenta de trabajos terminados. Con
+      las ramas enumeradas, esa se quedaba fuera y la tarjeta de su inicio
+      seguía enseñando la de antes.
+    */
+    expect(incluye(keys, ['pro'])).toBe(true)
   })
 
   /**

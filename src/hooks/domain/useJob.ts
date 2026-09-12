@@ -116,6 +116,59 @@ export function useCancelContract() {
 }
 
 /**
+ * Acordar otra hora para un trabajo que no empezó a la suya
+ * (`CICLOS_DE_CONTRATACION.md` §A9).
+ *
+ * Dos pasos y no uno: propone uno y acepta el otro. Escribir la hora nueva de
+ * un solo toque sería moverle la mañana al de enfrente sin su sí.
+ *
+ * Refresca la ficha y la agenda: la cita cambia de hora, y la agenda del
+ * profesional la enseña donde estaba.
+ */
+export function useReschedule() {
+  const queryClient = useQueryClient()
+
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
+  }
+
+  const propose = useMutation({
+    mutationFn: ({ jobId, scheduledAt }: { jobId: string; scheduledAt: string }) =>
+      jobsApi.proposeTime(jobId, scheduledAt),
+    onSuccess: refresh,
+  })
+
+  const accept = useMutation({
+    mutationFn: (jobId: string) => jobsApi.acceptTime(jobId),
+    onSuccess: refresh,
+  })
+
+  return {
+    proposeTime: async (jobId: string, scheduledAt: Date) => {
+      try {
+        const result = await propose.mutateAsync({
+          jobId,
+          scheduledAt: scheduledAt.toISOString(),
+        })
+
+        return { ok: true as const, result, error: null }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    acceptTime: async (jobId: string) => {
+      try {
+        return { ok: true as const, result: await accept.mutateAsync(jobId), error: null }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isRescheduling: propose.isPending || accept.isPending,
+  }
+}
+
+/**
  * Saltarse una sesión de un contrato fijo, sin romperlo
  * (`CICLOS_DE_CONTRATACION.md` §F7).
  *
@@ -412,7 +465,13 @@ export function useCompleteJob() {
     mutationFn: (jobId: string) => jobsApi.complete(jobId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
+      /*
+        La ficha del profesional entera, por prefijo: cerrar un trabajo le sube
+        la cuenta de trabajos terminados, y esa vive en `['pro', id]`. Con
+        `['pro', 'assignments']` a secas no caía, porque React Query invalida
+        por prefijo y aquel es otro.
+      */
+      void queryClient.invalidateQueries({ queryKey: ['pro'] })
     },
   })
 

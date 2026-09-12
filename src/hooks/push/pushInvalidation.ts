@@ -98,7 +98,16 @@ export function keysToInvalidate(data: unknown): QueryKey[] {
     */
     case 'job':
     case 'jobs':
-      return [['jobs'], ['pro', 'agenda'], ['pro', 'assignments']]
+      /*
+        `['pro']` entera y no solo la agenda y los asignados: un trabajo que se
+        cierra le sube al profesional la cuenta de trabajos terminados, y esa
+        vive en su ficha (`['pro', id]`). Sin esto, la tarjeta "Trabajos ·
+        terminados" de su inicio seguía enseñando la de antes hasta que la
+        caché caducara sola, que es medio minuto después y solo si vuelve a
+        entrar. Por prefijo caen también la agenda y los asignados, que ya
+        estaban.
+      */
+      return [['jobs'], ['pro']]
 
     /*
       Un encargo nuevo, o uno que deja de estar pendiente. Toca la bandeja, y
