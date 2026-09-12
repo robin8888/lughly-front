@@ -29,6 +29,9 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { WorkTimer } from '@/components/molecules/WorkTimer'
 import { RemotePhoto } from '@/components/molecules/RemotePhoto'
 import { PhotoPicker } from '@/components/molecules/PhotoPicker'
+import { Checkbox } from '@/components/atoms/Checkbox'
+import { formatAmount } from '@/components/atoms/Money'
+import { overtimeNow } from '@/utils/overtime'
 import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import type { PickedImage } from '@/hooks/media/usePickImage'
 import { useAssignedJobs } from '@/hooks/domain/useInbox'
@@ -58,6 +61,14 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
    * con un solo estado, elegir fotos en uno se las pondría al de al lado.
    */
   const [resultPhotos, setResultPhotos] = useState<Record<string, PickedImage[]>>({})
+  /**
+   * Si cobra el rato de más, por trabajo (`CICLOS` §A6).
+   *
+   * **Apagado por defecto, y es lo importante.** Que la app lo cobrara sola
+   * sería cobrarle al cliente una charla en el rellano; quien sabe si la media
+   * hora de más fue trabajo es quien estaba allí.
+   */
+  const [chargeExtra, setChargeExtra] = useState<Record<string, boolean>>({})
 
   const jobs = data?.items ?? []
 
@@ -378,6 +389,46 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                         </View>
                       )}
 
+                    {/**
+                      * El rato de más, si lo hay (`CICLOS` §A6).
+                      *
+                      * Se enseña con la cifra hecha —«los 45 minutos de más
+                      * (10,50 €)»— porque una casilla que dijera «cobrar el
+                      * extra» obliga a echar la cuenta de cabeza en la puerta
+                      * de un cliente. El importe definitivo lo calcula el
+                      * servidor con la tarifa congelada: esto es para decidir.
+                      */}
+                    {job.status === 'IN_PROGRESS' &&
+                      job.appointmentStatus === 'STARTED' &&
+                      !job.workFinishedAt &&
+                      (() => {
+                        const extra = overtimeNow({
+                          startedAt: job.startedAt,
+                          bookedMinutes: job.bookedMinutes,
+                          hourlyRate: job.hourlyRate,
+                        })
+
+                        if (extra === null) return null
+
+                        return (
+                          <View style={styles.resultPhotos}>
+                            <Checkbox
+                              checked={chargeExtra[job.id] ?? false}
+                              onChange={(valor) =>
+                                setChargeExtra((antes) => ({ ...antes, [job.id]: valor }))
+                              }
+                              testID={`assigned-${job.id}-charge-extra`}
+                            >
+                              {`Cobrar los ${extra.minutes} minutos de más (${formatAmount(extra.amount)} €)`}
+                            </Checkbox>
+                            <Text style={styles.resultPhotosHint}>
+                              Se le retiene con el resto y tiene 24 horas para
+                              decir que no fue así, como con todo lo demás.
+                            </Text>
+                          </View>
+                        )
+                      })()}
+
                     {job.status === 'IN_PROGRESS' &&
                       job.appointmentStatus === 'STARTED' &&
                       !job.workFinishedAt && (
@@ -388,6 +439,7 @@ export function AgendaPage({ onBack }: AgendaPageProps) {
                               const { ok, error, photosFailed } = await finish(
                                 job.id,
                                 resultPhotos[job.id] ?? [],
+                                chargeExtra[job.id] ?? false,
                               )
 
                               if (!ok) {

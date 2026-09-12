@@ -243,6 +243,14 @@ export interface ApiFinishedJob {
   finishedAt: string
   /** Hasta cuándo puede el cliente decir que no fue así */
   confirmByAt: string
+  /**
+   * Lo que se ha retenido por el rato de más, si se ha pedido cobrarlo
+   * (§A6). Cero es lo normal. **Lo dice el servidor**: aquí se enseña una
+   * estimación para decidir, pero el importe que se retiene lo calcula él.
+   */
+  extra: number
+  /** Y cuántos minutos eran */
+  extraMinutes: number
 }
 
 export interface ApiSubstituteDecision {
@@ -319,6 +327,12 @@ export interface ApiAssignedJob {
   clientName: string
   clientPhone: string | null
   amount: number | null
+  /**
+   * Lo reservado y la tarifa, para poder ofrecer cobrar el rato de más al
+   * terminar (§A6). Nulos en lo que no sea una reserva por horas.
+   */
+  bookedMinutes: number | null
+  hourlyRate: number | null
   photoCount: number
   awardedAt: string | null
   createdAt: string
@@ -494,10 +508,18 @@ export const assignmentsApi = {
       auth: true,
     }),
 
-  finish: (jobId: string) =>
+  /**
+   * «He terminado», y si cobra el rato de más (§A6).
+   *
+   * Solo viaja el sí o el no, no el importe: el servidor lo calcula con la
+   * tarifa congelada y la hora de la cita. Mandar la cifra desde aquí sería
+   * dejar que quien cobra decida cuánto cobra.
+   */
+  finish: (jobId: string, chargeExtra = false) =>
     apiRequest<ApiFinishedJob>(`/v1/jobs/${jobId}/finish`, {
       method: 'POST',
       auth: true,
+      body: { chargeExtra },
     }),
 
   /** La respuesta del cliente al cambio de persona */

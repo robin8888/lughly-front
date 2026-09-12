@@ -214,6 +214,30 @@ Si nadie pulsa Empezar: `scheduledAt` + 2 h → `expire-overdue` marca
 `NO_SHOW_PRO` y reembolsa, salvo que Marta haya marcado «cliente ausente» con
 hora y foto → `NO_SHOW_CLIENT`, se cobra el mínimo (28 €), resto devuelto.
 
+### El rato de más, construido el 12 Septiembre 2026
+
+`HOURS_EXTRA` estaba en el esquema desde agosto y **no lo creaba nadie**: una
+limpieza de dos horas que duraba tres se cobraba a dos, y la tercera la ponía el
+profesional. El reloj de la app enseñaba las tres a los dos lados, así que
+además se veía.
+
+- **Lo decide él**, como dice A6 arriba («Marta elige si cobra el extra»). Que
+  la app lo cobrara sola sería cobrarle al cliente una charla en el rellano, y
+  quien sabe si la media hora fue trabajo es quien estaba allí.
+- **Cuartos completos, no empezados.** Dieciséis minutos son un cuarto y no
+  dos. Es al revés que en la urgencia —donde la salida lleva una hora dentro y
+  lo que pasa de ahí se redondea hacia arriba—, y la diferencia es deliberada:
+  aquí el cliente ya ha pagado su rato y lo que se añade es un exceso sobre lo
+  acordado.
+- **Se retiene, no se cobra**: nace `AUTHORIZED` y sale con el resto cuando el
+  cliente da por bueno el trabajo. Así tiene el mismo plazo para discutirlo que
+  para discutir lo demás, y si lo discute está la revisión de §C9.
+- **Hacía falta guardar la tarjeta al reservar** (`paymentMethodRef`): la
+  tarifa se congelaba desde el principio y la tarjeta no, así que no había con
+  qué cobrar la hora de más.
+- **Solo en las reservas por horas.** Un precio cerrado de carta no se alarga:
+  lo que se vendió fue el servicio, no el rato.
+
 **A7. Lucía cancela a mitad** (1 h 20 trabajada). *Cambio*: `WorkLog` se cierra
 con la hora de la cancelación; se cobra lo trabajado redondeado, mínimo el
 mínimo: 2 h = 28 €, 14 € devueltos.
@@ -374,6 +398,27 @@ estaba (foto y hora), `NO_SHOW_CLIENT`, se cobra.
 **Y un plazo que la v2 no tenía**: Sergio tiene **72 h** para presupuestar
 tras la visita; si no, `Job CLOSED` con la visita cobrada. `reassign-job` no
 se aplica a un trabajo con cobros liberados.
+
+### Las 72 horas para presupuestar (12 Septiembre 2026)
+
+**La visita cerraba el trabajo, y con él la posibilidad de presupuestar.** Al
+darla por buena —o a las 24 h de silencio— el trabajo quedaba `COMPLETED`, y
+`CreateQuoteUseCase` no admite nada desde ahí: quien mandaba el precio al día
+siguiente se encontraba con que no podía. El presupuesto se iba por WhatsApp, y
+con él el resto del trato — que ahora es lo único que queda dentro de este
+ciclo, porque el arreglo ya se paga fuera.
+
+Ahora la visita cobrada **deja el trabajo vivo y esperando precio**: vuelve a
+`CONTRACTED` con `quoteByAt` a 72 horas, y el barrido lo cierra si no llega
+nada. Con tres decisiones que no se deducen del código:
+
+- **Se mira el modo, no el tipo.** Un contrato fijo de limpieza también es
+  `JobType.QUOTE` —lo hereda del encargo directo— y sus sesiones no esperan
+  ningún presupuesto. `JobMode.QUOTE` es lo que dice qué se contrató.
+- **Una visita no es un trabajo terminado**: no sube el contador del
+  profesional ni abre la valoración. Lo que se ha hecho es ir a mirar.
+- **Y la visita sí se cobra y se libera**: el viaje se hizo (§C2b), pase lo que
+  pase con el presupuesto.
 
 **C5. Presupuesto.** `Quote v1` (líneas tipadas, visita −30, `validUntil`) →
 `Job QUOTED`. Pablo rechaza con motivo → `QUOTE_REJECTED`; Sergio emite v2 →

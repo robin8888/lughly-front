@@ -55,6 +55,8 @@ import {
   useAddEvidence,
 } from '@/hooks/domain/useJob'
 import { StarRating } from '@/components/atoms/StarRating'
+import { Checkbox } from '@/components/atoms/Checkbox'
+import { overtimeNow } from '@/utils/overtime'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobSession, ApiJobType } from '@/api/jobs.api'
 import type { PickedImage } from '@/hooks/media/usePickImage'
@@ -245,6 +247,8 @@ export function JobDetailPage({
   const [viewingResult, setViewingResult] = useState<number | null>(null)
   /** Y qué ticket del material, que también hay que poder leer de cerca */
   const [viewingReceipt, setViewingReceipt] = useState<number | null>(null)
+  /** Si cobra el rato de más al terminar (`CICLOS` §A6) */
+  const [chargeExtra, setChargeExtra] = useState(false)
   /** Y las pruebas de la revisión: las del formulario de abrirla y las de después */
   const [disputing, setDisputing] = useState(false)
   const [disputeReason, setDisputeReason] = useState('')
@@ -562,6 +566,16 @@ export function JobDetailPage({
    * reparo encima de la mesa: sin reparo el trabajo se cierra y se paga solo a
    * las 24 h, así que no hay nada atascado que desatascar.
    */
+  /**
+   * Lo que lleva de más, si lleva algo. Se recalcula en cada render, que es lo
+   * que hace que la cifra siga al reloj mientras el trabajo sigue abierto.
+   */
+  const overtime = overtimeNow({
+    startedAt: job.startedAt,
+    bookedMinutes: job.bookedMinutes,
+    hourlyRate: job.hourlyRate,
+  })
+
   const conReparo = job.status === 'IN_PROGRESS' && job.holdReason !== null
   const canAnswerHold = conReparo && job.viewer === 'pro'
   /**
@@ -1221,6 +1235,22 @@ export function JobDetailPage({
           </QuoteCard>
         ))}
 
+        {/**
+          * El plazo para presupuestar después de la visita (`CICLOS` §C5).
+          *
+          * Lo ven los dos, y dice lo mismo a cada uno: al que tiene que
+          * escribirlo, cuánto le queda; al que espera, cuándo lo tendrá. Antes
+          * del 12 de septiembre de 2026 esto no existía porque la visita
+          * cerraba el trabajo — y con él, la posibilidad de presupuestar.
+          */}
+        {job.quoteByAt !== null && (
+          <Text style={styles.quoteDeadline} testID="job-detail-quote-deadline">
+            {job.viewer === 'pro'
+              ? `Tienes hasta el ${formatJobWhen(job.quoteByAt)} para mandarle el presupuesto. Después, el trabajo se cierra con la visita cobrada.`
+              : `Te mandará el presupuesto antes del ${formatJobWhen(job.quoteByAt)}. Si no llega, el trabajo se cierra: la visita ya estaba pagada.`}
+          </Text>
+        )}
+
         {/*
           Y el botón de hacerlo, del lado del profesional. El texto cambia
           según haya algo ya: "otro" después de un rechazo dice, sin explicarlo,
@@ -1270,12 +1300,36 @@ export function JobDetailPage({
           />
         )}
 
+        {/**
+          * El rato de más (`CICLOS` §A6), con la cifra hecha.
+          *
+          * **Apagado por defecto**: que la app lo cobrara sola sería cobrarle
+          * al cliente una charla en el rellano, y quien sabe si la media hora
+          * de más fue trabajo es quien estaba allí. El importe definitivo lo
+          * calcula el servidor con la tarifa congelada; esto es para decidir.
+          */}
+        {canFinish && overtime !== null && (
+          <View style={styles.overtime} testID="job-detail-overtime">
+            <Checkbox
+              checked={chargeExtra}
+              onChange={setChargeExtra}
+              testID="job-detail-charge-extra"
+            >
+              {`Cobrar los ${overtime.minutes} minutos de más (${formatAmount(overtime.amount)} €)`}
+            </Checkbox>
+            <Text style={styles.overtimeHint}>
+              Se le retiene con el resto y tiene 24 horas para decir que no fue
+              así, como con todo lo demás.
+            </Text>
+          </View>
+        )}
+
         {canFinish && (
           <Button
             fullWidth
             onPress={() => {
               void (async () => {
-                const { ok, error } = await finish(job.id)
+                const { ok, error } = await finish(job.id, [], chargeExtra)
 
                 if (!ok) {
                   Alert.alert(

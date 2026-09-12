@@ -25,7 +25,7 @@ jest.mock('@/hooks/domain/useJob', () => {
     /** Si la ficha todavía está cargando: es el primer render de verdad */
     pending: false,
     started: [] as string[],
-    finished: [] as string[],
+    finished: [] as { jobId: string; chargeExtra: boolean }[],
     completed: [] as string[],
     startApproved: [] as string[],
     /** Los reparos: por qué el cliente no da por bueno */
@@ -100,8 +100,8 @@ jest.mock('@/hooks/domain/useJob', () => {
         soporte.started.push(jobId)
         return Promise.resolve({ ok: true, error: null, result: null })
       },
-      finish: (jobId: string) => {
-        soporte.finished.push(jobId)
+      finish: (jobId: string, _photos: unknown[] = [], chargeExtra = false) => {
+        soporte.finished.push({ jobId, chargeExtra })
         return Promise.resolve({ ok: true, error: null, result: null })
       },
       isStarting: false,
@@ -280,6 +280,9 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     photos: [],
     resultPhotos: [],
     retained: 77,
+    quoteByAt: null,
+    bookedMinutes: null,
+    hourlyRate: null,
     holdReason: null,
     holdAnswerByAt: null,
     dispute: null,
@@ -339,7 +342,7 @@ describe('JobDetailPage: terminar y cobrar', () => {
 
     fireEvent.press(getByTestId('job-detail-finish'))
 
-    expect(soporte.finished).toEqual(['job-1'])
+    expect(soporte.finished).toEqual([{ jobId: 'job-1', chargeExtra: false }])
     expect(queryByTestId('job-detail-start')).toBeNull()
   })
 
@@ -1443,5 +1446,101 @@ describe('JobDetailPage: el reparo y la revisión', () => {
     expect(getByTestId('job-detail-dispute-card-decision')).toBeTruthy()
     expect(getByText(/Se te devolvieron 50,00 €/)).toBeTruthy()
     expect(queryByTestId('job-detail-evidence-send')).toBeNull()
+  })
+})
+
+/**
+ * Las dos ventanas que faltaban (12 Septiembre 2026).
+ *
+ * **El plazo para presupuestar tras la visita** (§C5): antes no existía porque
+ * la visita cerraba el trabajo, y desde `COMPLETED` no se puede presupuestar —
+ * el precio acababa yendo por WhatsApp.
+ *
+ * **Y el rato de más** (§A6): una reserva de dos horas que dura tres no se
+ * cobraba sola, y la tercera la ponía el profesional de su bolsillo. Lo que se
+ * ata aquí es que **se ofrezca apagado**: la app no cobra una charla en la
+ * puerta por su cuenta.
+ */
+describe('JobDetailPage: las dos ventanas', () => {
+  it('tras la visita, al profesional se le dice hasta cuándo puede presupuestar', () => {
+    soporte.job = ficha({
+      type: 'QUOTE',
+      status: 'CONTRACTED',
+      viewer: 'pro',
+      quoteByAt: '2026-09-15T18:00:00.000Z',
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-quote-deadline')).toBeTruthy()
+  })
+
+  it('y al cliente, cuándo lo tendrá', () => {
+    soporte.job = ficha({
+      type: 'QUOTE',
+      status: 'CONTRACTED',
+      viewer: 'client',
+      quoteByAt: '2026-09-15T18:00:00.000Z',
+    })
+
+    const { getByText } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByText(/Te mandará el presupuesto antes del/)).toBeTruthy()
+  })
+
+  it('el rato de más se ofrece con su cifra, y apagado', () => {
+    // Reservadas 2 h, empezó hace 2 h 45, a 14 €/h: tres cuartos, 10,50 €
+    soporte.job = ficha({
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      viewer: 'pro',
+      startedAt: new Date(Date.now() - 165 * 60_000).toISOString(),
+      bookedMinutes: 120,
+      hourlyRate: 14,
+    })
+
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-overtime')).toBeTruthy()
+    expect(getByText(/Cobrar los 45 minutos de más \(10,50 €\)/)).toBeTruthy()
+
+    /* Y terminar sin tocarlo no lo cobra */
+    fireEvent.press(getByTestId('job-detail-finish'))
+    expect(soporte.finished).toEqual([{ jobId: 'job-1', chargeExtra: false }])
+  })
+
+  it('marcado, se manda que sí', () => {
+    soporte.job = ficha({
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      viewer: 'pro',
+      startedAt: new Date(Date.now() - 165 * 60_000).toISOString(),
+      bookedMinutes: 120,
+      hourlyRate: 14,
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-charge-extra'))
+    fireEvent.press(getByTestId('job-detail-finish'))
+
+    expect(soporte.finished).toEqual([{ jobId: 'job-1', chargeExtra: true }])
+  })
+
+  it('sin llegar a un cuarto de hora no se ofrece nada', () => {
+    soporte.job = ficha({
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'STARTED',
+      viewer: 'pro',
+      startedAt: new Date(Date.now() - 130 * 60_000).toISOString(),
+      bookedMinutes: 120,
+      hourlyRate: 14,
+    })
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-overtime')).toBeNull()
   })
 })

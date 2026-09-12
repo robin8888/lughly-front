@@ -430,4 +430,23 @@ export const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 10,
   },
+  /* El rato de más, justo encima del botón que lo cobra */
+  overtime: {
+    marginTop: 20,
+  },
+  overtimeHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: theme.colors.textSoft,
+    marginTop: 8,
+  },
+  /* El plazo para presupuestar, encima del botón de hacerlo */
+  quoteDeadline: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.textSoft,
+    marginTop: 16,
+  },
 })

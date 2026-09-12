@@ -91,6 +91,8 @@ function trabajo(cambios: Partial<ApiAssignedJob>): ApiAssignedJob {
     clientName: 'Ana',
     clientPhone: null,
     amount: 60,
+    bookedMinutes: null,
+    hourlyRate: null,
     photoCount: 0,
     awardedAt: null,
     createdAt: '2026-08-29T09:00:00.000Z',

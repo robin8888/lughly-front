@@ -285,6 +285,17 @@ export interface ApiJobDetail {
    */
   resultPhotos: { url: string; fullUrl: string }[]
   /**
+   * Hasta cuándo tiene el profesional para mandar el presupuesto tras la
+   * visita (§C5, 72 h). Nulo en todo lo que no sea eso.
+   */
+  quoteByAt: string | null
+  /**
+   * Lo reservado y la tarifa, para ofrecerle cobrar el rato de más al terminar
+   * (§A6). Solo del lado profesional y solo en reservas por horas.
+   */
+  bookedMinutes: number | null
+  hourlyRate: number | null
+  /**
    * Lo que la plataforma tiene retenido de este trabajo ahora mismo.
    *
    * **Decide si aquí se puede pedir revisión** (§C9): revisar es decidir qué

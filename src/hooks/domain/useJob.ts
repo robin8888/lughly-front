@@ -299,7 +299,8 @@ export function useJobProgress() {
   })
 
   const finish = useMutation({
-    mutationFn: (jobId: string) => assignmentsApi.finish(jobId),
+    mutationFn: ({ jobId, chargeExtra }: { jobId: string; chargeExtra: boolean }) =>
+      assignmentsApi.finish(jobId, chargeExtra),
     onSuccess: invalidate,
   })
 
@@ -324,7 +325,12 @@ export function useJobProgress() {
      * puede quedarse sin poder marcar que ha acabado—; se dice cuántas
      * faltaron y se pueden añadir mientras el cliente no lo dé por bueno.
      */
-    finish: async (jobId: string, photos: PickedImage[] = []) => {
+    finish: async (
+      jobId: string,
+      photos: PickedImage[] = [],
+      /** Si cobra el rato de más, cuando lo haya (`CICLOS` §A6) */
+      chargeExtra = false,
+    ) => {
       let photosFailed = 0
 
       if (photos.length > 0) {
@@ -351,7 +357,7 @@ export function useJobProgress() {
         return {
           ok: true as const,
           error: null,
-          result: await finish.mutateAsync(jobId),
+          result: await finish.mutateAsync({ jobId, chargeExtra }),
           photosFailed,
         }
       } catch (error) {

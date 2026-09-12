@@ -3132,6 +3132,40 @@ que la siguiente operación se haga fuera, y deja al presupuesto sin la
 protección de §C9. Se asume a cambio de no poder perder en una sola operación lo
 que no se gana en un mes.
 
+## ✅ Las dos ventanas que faltaban en lo que sí se cobra (12 Septiembre 2026)
+
+Revisadas de punta a punta las tres cosas que **sí** pasan por la app —la visita
+para presupuesto, las horas contratadas y las urgencias—, aparecieron dos
+agujeros. Los dos están tapados.
+
+### La visita cerraba el trabajo, y con él el presupuesto
+
+Dar por buena la visita dejaba el trabajo en `COMPLETED`, y desde ahí no se
+puede presupuestar. El profesional que mandaba el precio al día siguiente se
+encontraba con que la app no le dejaba, y el presupuesto se iba por WhatsApp —
+justo lo único que queda dentro de este ciclo ahora que el arreglo se paga
+fuera.
+
+Ahora la visita cobrada deja el trabajo **vivo y esperando precio** 72 horas
+(§C5), y el barrido lo cierra si no llega nada, con la visita cobrada: el viaje
+se hizo. Se mira el **modo** y no el tipo, porque un contrato fijo también es
+`JobType.QUOTE` y sus sesiones no esperan ningún presupuesto. Y una visita no
+suma trabajo terminado en la cuenta del profesional: lo que hizo fue ir a mirar.
+
+### El rato de más no se cobraba en ninguna reserva por horas
+
+`HOURS_EXTRA` llevaba en el esquema desde agosto sin que lo creara nadie: dos
+horas reservadas que duraban tres se cobraban a dos, y la tercera la ponía el
+profesional —con el reloj de la app enseñándola a los dos lados—.
+
+Ahora, al terminar, **se le ofrece cobrarla con la cifra hecha** («cobrar los 45
+minutos de más (10,50 €)»), apagado por defecto: la app no cobra una charla en
+la puerta por su cuenta. Se cobran **cuartos completos**, no empezados —al revés
+que la urgencia, donde la salida lleva una hora dentro—, se retiene con el resto
+para que el cliente tenga sus 24 horas para discutirlo, y hubo que empezar a
+guardar la tarjeta al reservar por horas, que era lo que faltaba para poder
+cobrarla.
+
 ## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
 
 Hoy es una pantalla de leer de corrido —`HowItWorksPage`: tres pasos y un botón
