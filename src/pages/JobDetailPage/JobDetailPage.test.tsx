@@ -34,8 +34,8 @@ jest.mock('@/hooks/domain/useJob', () => {
     reviewed: [] as { jobId: string; rating: number; comment: string | null }[],
     /** Los presupuestos rechazados, con el motivo (`CICLOS` §C5) */
     rejectedQuotes: [] as { jobId: string; reason: string }[],
-    /** Y los aceptados, con la tarjeta que se usó (§C6) */
-    acceptedQuotes: [] as { jobId: string; paymentMethodId: string }[],
+    /** Y los aceptados. Sin tarjeta: desde el 12 sep 2026 esto no cobra (§C6) */
+    acceptedQuotes: [] as string[],
     /** Las horas nuevas propuestas para un trabajo que no empezó (§A9) */
     proposed: [] as { jobId: string; scheduledAt: Date }[],
     /** Y las aceptadas */
@@ -44,8 +44,6 @@ jest.mock('@/hooks/domain/useJob', () => {
     droppedSessions: [] as { jobId: string; sessionId: string }[],
     /** Lo que devuelve el servidor al saltarse una: lo cobrado y lo que queda */
     dropResult: { fee: 0, refunded: 0, voided: 0, remaining: 17 },
-    /** El material dado por comprado, con los tickets que se mandaron (§C6) */
-    materialsBought: [] as { jobId: string; tickets: number }[],
     /** Los trabajos dados por arreglados tras un reparo (§C9) */
     fixed: [] as string[],
     /** Las revisiones pedidas, con el motivo y las pruebas que iban */
@@ -177,21 +175,9 @@ jest.mock('@/hooks/domain/useJob', () => {
       },
       isAddingEvidence: false,
     }),
-    useMaterialsBought: () => ({
-      materialsBought: (jobId: string, tickets: unknown[]) => {
-        soporte.materialsBought.push({ jobId, tickets: tickets.length })
-
-        return Promise.resolve({
-          ok: true,
-          error: null,
-          result: { jobId, amount: 138, boughtAt: '2026-09-12T10:00:00.000Z', paid: true },
-        })
-      },
-      isMarkingMaterials: false,
-    }),
     useAcceptQuote: () => ({
-      acceptQuote: (jobId: string, paymentMethodId: string) => {
-        soporte.acceptedQuotes.push({ jobId, paymentMethodId })
+      acceptQuote: (jobId: string) => {
+        soporte.acceptedQuotes.push(jobId)
         return Promise.resolve({ ok: true, result: null, error: null })
       },
       isAccepting: false,
@@ -293,7 +279,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     photoCount: 0,
     photos: [],
     resultPhotos: [],
-    materialsReceipts: [],
+    retained: 77,
     holdReason: null,
     holdAnswerByAt: null,
     dispute: null,
@@ -319,7 +305,6 @@ beforeEach(() => {
   soporte.rejectedQuotes.length = 0
   soporte.acceptedQuotes.length = 0
   soporte.droppedSessions.length = 0
-  soporte.materialsBought.length = 0
   soporte.fixed.length = 0
   soporte.disputes.length = 0
   soporte.evidence.length = 0
@@ -864,9 +849,6 @@ describe('JobDetailPage: el presupuesto', () => {
     visitCredit: 30,
     total: 198,
     validUntil: '2099-01-01T00:00:00.000Z',
-    materialsUpfront: false,
-    materialsAdvance: 0,
-    materialsBoughtAt: null,
     rejectionReason: null,
     rejectedAt: null,
     acceptedAt: null,
@@ -1022,9 +1004,6 @@ describe('JobDetailPage: aceptar el presupuesto', () => {
           visitCredit: 30,
           total: 198,
           validUntil: '2099-01-01T00:00:00.000Z',
-          materialsUpfront: false,
-          materialsAdvance: 0,
-          materialsBoughtAt: null,
           rejectionReason: null,
           rejectedAt: null,
           acceptedAt: null,
@@ -1039,7 +1018,7 @@ describe('JobDetailPage: aceptar el presupuesto', () => {
 
     const { getByText } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
-    expect(getByText('Aceptar y pagar 198,00 €')).toBeTruthy()
+    expect(getByText('Aceptar 198,00 €')).toBeTruthy()
   })
 
   it('el diálogo enseña la resta de la visita antes de cobrar', async () => {
@@ -1054,7 +1033,11 @@ describe('JobDetailPage: aceptar el presupuesto', () => {
     ).toBeTruthy()
   })
 
-  it('al confirmar, se retiene con la tarjeta guardada', async () => {
+  it('al confirmar, se acepta: no hay tarjeta ni cobro por medio', async () => {
+    /*
+     * Desde el 12 de septiembre de 2026 esto no mueve dinero: el arreglo se lo
+     * paga el cliente al profesional directamente (§C6).
+     */
     soporte.job = conPresupuesto()
 
     render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
@@ -1062,32 +1045,25 @@ describe('JobDetailPage: aceptar el presupuesto', () => {
     await screen.findByTestId('job-detail-quote-accept-dialog')
     fireEvent.press(screen.getByTestId('job-detail-quote-accept-confirm'))
 
-    await waitFor(() =>
-      expect(soporte.acceptedQuotes).toEqual([
-        { jobId: 'job-1', paymentMethodId: 'pm_1' },
-      ]),
-    )
+    await waitFor(() => expect(soporte.acceptedQuotes).toEqual(['job-1']))
   })
 
-  it('sin tarjeta guardada, lleva a guardar una en vez de fallar al pagar', async () => {
+  /**
+   * Y el diálogo lo dice. Es lo más importante de esa pantalla: un cliente que
+   * crea que ya ha pagado se planta delante del profesional sin dinero, y un
+   * profesional que espere una transferencia nuestra la espera para siempre.
+   */
+  it('el diálogo avisa de que ese importe se paga fuera de la app', async () => {
     soporte.job = conPresupuesto()
-    soporteTarjetas.hay = false
-    const onAddPaymentMethod = jest.fn()
 
-    render(
-      <JobDetailPage
-        jobId="job-1"
-        onBack={() => {}}
-        onAddPaymentMethod={onAddPaymentMethod}
-      />,
-    )
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
     fireEvent.press(screen.getByTestId('job-detail-quote-accept'))
     await screen.findByTestId('job-detail-quote-accept-dialog')
 
-    fireEvent.press(screen.getByTestId('job-detail-quote-accept-card'))
-
-    expect(onAddPaymentMethod).toHaveBeenCalled()
-    expect(soporte.acceptedQuotes).toEqual([])
+    /* En el diálogo, con sus palabras: la tarjeta lo dice a su manera */
+    expect(
+      screen.getByText(/Este importe se lo pagas directamente a quien hace el trabajo/),
+    ).toBeTruthy()
   })
 
   it('al profesional no se le ofrece aceptar su propio presupuesto', () => {
@@ -1298,119 +1274,6 @@ describe('JobDetailPage: no ha empezado a su hora', () => {
     expect(queryByTestId('job-detail-late-accept')).toBeNull()
   })
 })
-
-/**
- * El material que se paga por delante (`CICLOS` §C6).
- *
- * Lo que se ata aquí es la regla por la que esta casilla estuvo cinco días
- * retirada del presupuesto: **sin el ticket no sale el dinero**. Y que el
- * botón solo lo vea quien tiene algo que hacer con él — al cliente lo que le
- * toca es ver en qué se ha ido lo que adelantó.
- */
-describe('JobDetailPage: el material por adelantado', () => {
-  const conAdelanto = (cambios: Record<string, unknown> = {}) => ({
-    id: 'quote-1',
-    version: 1,
-    status: 'ACCEPTED' as const,
-    lines: [
-      {
-        kind: 'MATERIALS' as const,
-        concept: 'Juego de pastillas',
-        quantity: 1,
-        unitPrice: 138,
-        amount: 138,
-      },
-    ],
-    linesTotal: 228,
-    visitCredit: 30,
-    total: 198,
-    validUntil: '2099-01-01T00:00:00.000Z',
-    materialsUpfront: true,
-    materialsAdvance: 138,
-    materialsBoughtAt: null,
-    rejectionReason: null,
-    rejectedAt: null,
-    acceptedAt: '2026-09-12T09:00:00.000Z',
-    createdAt: '2026-09-07T10:00:00.000Z',
-    ...cambios,
-  })
-
-  it('sin ticket no se puede marcar comprado', () => {
-    /*
-     * El servidor tampoco lo aceptaría. Dejar pulsar aquí sería mandar al
-     * profesional a por un error en vez de decirle lo que falta.
-     */
-    soporte.job = ficha({ type: 'QUOTE', quotes: [conAdelanto()] })
-
-    const { getByTestId, getByText } = render(
-      <JobDetailPage jobId="job-1" onBack={() => {}} />,
-    )
-
-    fireEvent.press(getByTestId('job-detail-materials-bought'))
-
-    expect(soporte.materialsBought).toHaveLength(0)
-    expect(getByText(/Hace falta el ticket/)).toBeTruthy()
-  })
-
-  it('con el ticket, se marca comprado y el ticket va con ello', () => {
-    soporte.job = ficha({ type: 'QUOTE', quotes: [conAdelanto()] })
-
-    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
-
-    fireEvent.press(getByTestId('job-detail-materials-tickets'))
-    fireEvent.press(getByTestId('job-detail-materials-bought'))
-
-    expect(soporte.materialsBought).toEqual([{ jobId: 'job-1', tickets: 1 }])
-  })
-
-  it('una vez comprado no se vuelve a pedir', () => {
-    soporte.job = ficha({
-      type: 'QUOTE',
-      quotes: [conAdelanto({ materialsBoughtAt: '2026-09-12T10:00:00.000Z' })],
-      materialsReceipts: [{ url: '/m/1', fullUrl: '/m/1-full' }],
-    })
-
-    const { queryByTestId, getByText } = render(
-      <JobDetailPage jobId="job-1" onBack={() => {}} />,
-    )
-
-    expect(queryByTestId('job-detail-materials-bought')).toBeNull()
-    expect(getByText(/ya son tuyos/)).toBeTruthy()
-  })
-
-  it('el cliente no lo marca él, pero ve el ticket de lo que pagó', () => {
-    soporte.job = ficha({
-      type: 'QUOTE',
-      viewer: 'client',
-      quotes: [conAdelanto({ materialsBoughtAt: '2026-09-12T10:00:00.000Z' })],
-      materialsReceipts: [{ url: '/m/1', fullUrl: '/m/1-full' }],
-    })
-
-    const { queryByTestId, getByTestId, getByText } = render(
-      <JobDetailPage jobId="job-1" onBack={() => {}} />,
-    )
-
-    expect(queryByTestId('job-detail-materials-bought')).toBeNull()
-    expect(getByTestId('job-detail-materials-receipt-0')).toBeTruthy()
-    expect(getByText(/Adelantaste 138,00 €/)).toBeTruthy()
-  })
-
-  /**
-   * Y en un trabajo sin adelanto no aparece nada: es lo que mantiene la ficha
-   * legible para los nueve de cada diez que no compran material.
-   */
-  it('sin pago a cuenta, el bloque no existe', () => {
-    soporte.job = ficha({
-      type: 'QUOTE',
-      quotes: [conAdelanto({ materialsUpfront: false, materialsAdvance: 0 })],
-    })
-
-    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
-
-    expect(queryByTestId('job-detail-materials')).toBeNull()
-  })
-})
-
 
 /**
  * El reparo que ya no es un callejón, y la revisión (`CICLOS` §C9).

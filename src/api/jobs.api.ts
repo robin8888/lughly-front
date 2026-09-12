@@ -285,12 +285,14 @@ export interface ApiJobDetail {
    */
   resultPhotos: { url: string; fullUrl: string }[]
   /**
-   * Los tickets del material que se pagó por adelantado (§C6).
+   * Lo que la plataforma tiene retenido de este trabajo ahora mismo.
    *
-   * Las ve el cliente también, y es lo suyo: puso ese dinero antes de que
-   * existiera nada, y el ticket es lo único que le dice en qué se ha ido.
+   * **Decide si aquí se puede pedir revisión** (§C9): revisar es decidir qué
+   * hacemos con lo que tenemos, y del ciclo del presupuesto no tenemos nada
+   * desde el 12 de septiembre de 2026 —el arreglo se paga fuera de la app—.
+   * Sirve para no enseñar un botón que el servidor va a rechazar.
    */
-  materialsReceipts: { url: string; fullUrl: string }[]
+  retained: number
   /**
    * Por qué el cliente no lo da por bueno todavía, si ha dicho algo.
    *
@@ -469,18 +471,6 @@ export interface ApiJobQuote {
   /** Lo que el cliente paga al aceptar */
   total: number
   validUntil: string
-  /** Si el material se cobra al aceptar, antes de empezar */
-  materialsUpfront: boolean
-  /**
-   * Cuánto de `total` es ese material. Cero sin pago a cuenta.
-   *
-   * **Lo dice el servidor**: es la suma de las líneas de material con el tope
-   * del total —la visita descontada se come antes la mano de obra—, y esa
-   * cuenta no puede vivir también aquí y desparejarse.
-   */
-  materialsAdvance: number
-  /** Cuándo dijo el profesional que lo tenía comprado. Nulo mientras no */
-  materialsBoughtAt: string | null
   /** Por qué dijo que no. Solo en los rechazados */
   rejectionReason: string | null
   rejectedAt: string | null
@@ -536,20 +526,12 @@ export interface ApiJobEvidence {
 export interface ApiAcceptedQuote {
   jobId: string
   quoteId: string
-  /** Lo retenido: el total del presupuesto, con la visita ya descontada */
+  /**
+   * Lo acordado, con la visita ya descontada. **No es un cobro**: desde el 12
+   * de septiembre de 2026 el arreglo se lo paga el cliente al profesional
+   * directamente (§C6), y la app no lo retiene ni lo transfiere.
+   */
   amount: number
-  /**
-   * Cuánto de ese total es material que se paga por delante (§C6). **No se
-   * suma al total, sale de él**: son dos cobros que juntos valen `amount`.
-   */
-  materialsAdvance: number
-  /**
-   * `accepted`: retenido y el profesional ya lo sabe. `requires_action`: el
-   * banco pide autenticación y **el presupuesto sigue pendiente** —nada se ha
-   * contratado— hasta que se resuelva el reto y se confirme.
-   */
-  status: 'accepted' | 'requires_action'
-  clientSecret: string | null
 }
 
 /** Una línea tal y como se escribe en el formulario, sin importe todavía */
@@ -807,8 +789,6 @@ export const jobsApi = {
       lines: QuoteLinePayload[]
       /** Cuántos días vale. Sin poner, quince */
       validDays?: number
-      /** Si el material se cobra al aceptar, antes de empezar */
-      materialsUpfront?: boolean
     },
   ) =>
     apiRequest<{
@@ -843,16 +823,8 @@ export const jobsApi = {
    * **El importe no viaja desde aquí**: se retiene `quote.total`, con la visita
    * ya descontada. Mandar la cifra sería dejar elegir cuánto se paga.
    */
-  acceptQuote: (jobId: string, paymentMethodId: string) =>
+  acceptQuote: (jobId: string) =>
     apiRequest<ApiAcceptedQuote>(`/v1/jobs/${jobId}/quotes/accept`, {
-      method: 'POST',
-      auth: true,
-      body: { paymentMethodId },
-    }),
-
-  /** Y cerrarlo tras el 3D Secure. Idempotente: dos toques no contratan dos veces */
-  confirmQuotePayment: (jobId: string) =>
-    apiRequest<ApiAcceptedQuote>(`/v1/jobs/${jobId}/quotes/confirm-payment`, {
       method: 'POST',
       auth: true,
     }),
@@ -881,22 +853,6 @@ export const jobsApi = {
       `/v1/jobs/${jobId}/dispute`,
       { method: 'POST', auth: true, body: { reason } },
     ),
-
-  /**
-   * «Ya lo he comprado», del lado profesional (`CICLOS` §C6).
-   *
-   * Cobra el adelanto que el cliente tenía retenido y se lo transfiere. Hace
-   * falta haber subido antes el ticket: es lo que convierte esa retención en
-   * un cobro, y sin él el servidor responde que no.
-   */
-  markMaterialsBought: (jobId: string) =>
-    apiRequest<{
-      jobId: string
-      amount: number
-      boughtAt: string
-      /** Si el dinero ha salido ya. `false` es un reintento, no un «no» */
-      paid: boolean
-    }>(`/v1/jobs/${jobId}/materials-bought`, { method: 'POST', auth: true }),
 
   review: (jobId: string, rating: number, comment: string | null) =>
     apiRequest<{

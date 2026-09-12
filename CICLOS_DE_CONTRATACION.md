@@ -437,11 +437,54 @@ marcó pago a cuenta: `Charge(MATERIALS_ADVANCE, 138, PAID)` que **se retiene**
 hasta que marca «material comprado» con justificante; entonces `RELEASED`. Si
 Pablo cancela antes de eso, se devuelve; después, se cobra el material.
 
-### El pago a cuenta del material
+### El arreglo dejó de cobrarse por la app (12 Septiembre 2026)
 
-**Construido el 12 Septiembre 2026**, que es lo último que le faltaba a este
-ciclo. Lo que existía era media promesa: la casilla guardaba el `boolean` y
-nadie podía soltar ese dinero.
+**Decisión de Robin, y es la más grande de este ciclo.** Aceptar un presupuesto
+ya no retiene nada: el importe se lo paga el cliente al profesional
+directamente. Por la app siguen yendo **la visita, las horas, la carta y las
+urgencias**.
+
+**El motivo es el chargeback, y está en nuestro propio código.** Cobramos con
+*separate charges and transfers*: el `PaymentIntent` nace en la cuenta de
+Lughly, así que cuando un cliente discute un cargo con su banco, **el dinero
+sale del balance de la plataforma**, no del profesional. Un arreglo de 2.000 €
+discutido tres semanas después de habérselo transferido a él cuesta esos 2.000 €
+más la comisión de disputa, y deja a Lughly reclamándoselos por su cuenta.
+
+**Y ese riesgo vive justo aquí.** Los otros ciclos venden **tiempo** —una hora,
+una visita, un servicio de carta a precio cerrado— y eso se comprueba: vino o no
+vino, trabajó de diez a una. Un presupuesto vende **un resultado**, que es
+opinable, y con importes diez veces mayores. El 90 % de la exposición está en el
+10 % de las operaciones, y son éstas.
+
+**Lo que cuesta, dicho también**: es la parte grande del ciclo —la visita son
+30 € y el arreglo 198—, empuja a que la siguiente operación también se haga
+fuera, y deja al cliente de un presupuesto sin la revisión de §C9, porque no hay
+nada retenido que revisar. Se asume a cambio de no poder perder en una sola
+operación lo que no se gana en un mes.
+
+**Lo que se quitó con ello**: el cobro al aceptar, el 3D Secure del presupuesto
+(`ConfirmQuotePaymentUseCase`), el pago a cuenta del material entero
+(`MarkMaterialsBoughtUseCase`, la casilla y el ticket) y el rescate del pago
+abandonado en el barrido. **Lo que se queda en el esquema son fantasmas
+documentados**: `materials_upfront`, `materials_bought_at`,
+`ChargeKind.MATERIALS_ADVANCE` y `JobPhotoKind.MATERIALS_RECEIPT` siguen ahí
+porque quitar un valor de un tipo de Postgres obliga a recrearlo entero, y
+porque estas columnas no llegaron a tener un solo dato. Nadie las escribe.
+
+**Y en la app se dice en los tres sitios donde se lee el precio**: al escribir el
+presupuesto, en la tarjeta del presupuesto y en el diálogo de aceptar. Un cliente
+que crea que ya ha pagado se planta delante del profesional sin dinero, y un
+profesional que espere una transferencia nuestra la espera para siempre.
+
+### El pago a cuenta del material — retirado el 12 Septiembre 2026
+
+**Construido y retirado el mismo día.** Se hizo por la mañana —era lo último que
+le faltaba al ciclo— y por la tarde se cayó con el cobro del presupuesto: sin
+retención no hay adelanto que liberar. Se conserva escrito porque las decisiones
+de dinero que hay debajo siguen valiendo si algún día vuelve, y porque la mitad
+de lo que salió de aquí —reembolsar y transferir **por partes**, con la comisión
+proporcional— es justo lo que hace posible la rebaja de precio de §C9.
 
 - **El total se parte, no se suma.** De los 198 € que paga Pablo, 138 son el
   `MATERIALS_ADVANCE` y 60 el `QUOTE`. **Los dos juntos valen exactamente lo
@@ -547,6 +590,21 @@ decidido, y quedárselo más tiempo no es una opción legal. El profesional
 conserva íntegro su derecho a cobrar y a reclamárselo, y el aviso se lo dice con
 esas palabras. Que eso salte es un fallo nuestro, no suyo: por eso administración
 recibe un aviso al abrirse y otro cuando quedan tres días.
+
+### Y solo donde hay dinero nuestro
+
+Revisar es decidir **qué hacemos con lo que tenemos retenido**. Desde el corte
+del 12 de septiembre, del ciclo del presupuesto no tenemos nada, así que **ahí
+no hay revisión**: el reparo sigue existiendo —el cliente pide que vuelva y el
+profesional puede volver— pero la puerta de la revisión no se abre, ni a mano ni
+por el plazo de 72 h.
+
+No es una laguna: es lo honrado. Un expediente que no puede terminar en nada
+sería prometer una protección que no existe. La ficha lo dice con esas palabras
+y recuerda lo que sí le queda a cada uno: reclamar, consumo, el juzgado.
+
+La revisión sigue entera donde sí retenemos: las horas, la carta, la visita y
+las urgencias.
 
 ### Lo que esto **no** es
 

@@ -55,26 +55,22 @@ function hasta(iso: string): string {
 }
 
 /**
- * El material que se paga por delante, contado según en qué punto esté (§C6).
+ * Quién cobra esto, dicho donde se lee el precio (§C6).
  *
- * Tres frases y no una, porque son tres cosas distintas para quien lee: lo que
- * va a pasar si acepta, lo que falta para que el profesional cobre, y que ya
- * está comprado —que es cuando ese dinero deja de volver si cancela—.
+ * **Desde el 12 de septiembre de 2026 el arreglo no se paga por la app**: va
+ * directo del cliente al profesional. Decirlo aquí y no en una pantalla de
+ * ayuda es lo que evita el malentendido caro —un cliente que cree que ya ha
+ * pagado, o un profesional que espera una transferencia nuestra—.
+ *
+ * Solo en el que está sobre la mesa y en el aceptado: en uno rechazado o
+ * sustituido, cómo se habría pagado ya no le importa a nadie.
  */
-function materialDe(quote: ApiJobQuote): string | null {
-  if (!quote.materialsUpfront || quote.materialsAdvance <= 0) return null
+function pagoDe(quote: ApiJobQuote): string | null {
+  if (quote.status !== 'SENT' && quote.status !== 'ACCEPTED') return null
 
-  const importe = `${formatAmount(quote.materialsAdvance)} €`
-
-  if (quote.materialsBoughtAt) {
-    return `Material comprado el ${hasta(quote.materialsBoughtAt)}: los ${importe} ya son suyos. El ticket está en la ficha.`
-  }
-
-  if (quote.status === 'ACCEPTED') {
-    return `${importe} del total son material: se le pagan en cuanto lo compre y suba el ticket.`
-  }
-
-  return `${importe} del total son material y se cobran al aceptar: se retienen hasta que esté comprado, con su ticket.`
+  return quote.status === 'ACCEPTED'
+    ? 'Este importe se paga directamente entre vosotros, como acordéis. Lughly no lo cobra ni lo retiene.'
+    : 'Si lo aceptas, este importe se lo pagas directamente a quien lo hace, como acordéis. Lughly no lo cobra ni lo retiene.'
 }
 
 export interface QuoteCardProps {
@@ -87,7 +83,7 @@ export interface QuoteCardProps {
 export function QuoteCard({ quote, children, testID = 'quote-card' }: QuoteCardProps) {
   const estado = estadoDe(quote)
   const vencido = new Date(quote.validUntil) <= new Date()
-  const material = materialDe(quote)
+  const pago = pagoDe(quote)
 
   return (
     <InfoCard style={styles.card} testID={testID}>
@@ -141,12 +137,9 @@ export function QuoteCard({ quote, children, testID = 'quote-card' }: QuoteCardP
         <Text style={styles.total}>{formatAmount(quote.total)} €</Text>
       </View>
 
-      {material !== null && (
-        <Text
-          style={[styles.note, quote.materialsBoughtAt !== null && styles.noteDone]}
-          testID={`${testID}-materials`}
-        >
-          {material}
+      {pago !== null && (
+        <Text style={styles.note} testID={`${testID}-payment`}>
+          {pago}
         </Text>
       )}
 

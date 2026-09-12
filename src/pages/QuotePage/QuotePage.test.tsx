@@ -1,14 +1,14 @@
 /**
- * La casilla del pago a cuenta del material (`CICLOS` §C6).
+ * Lo que el profesional escribe, y quién lo cobra.
  *
- * Estuvo aquí unas horas el 7 de septiembre y se retiró el mismo día: se
- * guardaba `materialsUpfront`, pero no había nada capaz de liberar esa
- * retención, así que le prometía al cliente algo que nadie podía cumplir.
+ * **Desde el 12 de septiembre de 2026 el arreglo no pasa por la app** (§C6):
+ * por aquí van la visita, las horas, la carta y las urgencias, y este importe
+ * se lo cobra él al cliente. La casilla del pago a cuenta del material se fue
+ * con el cobro — sin retención no hay adelanto que ofrecer.
  *
- * Lo que se ata aquí, ahora que existe su otra mitad, es **cuándo se ofrece**:
- * solo si hay líneas de material —adelantar cero euros no es una opción— y que
- * lo que se manda al servidor sea lo que el profesional ve marcado, no lo que
- * marcó antes de borrar las piezas.
+ * Lo que se ata aquí es que **eso se diga en la pantalla donde se escribe el
+ * precio**: un profesional que termine el trabajo esperando una transferencia
+ * nuestra es un problema que no se arregla con una pantalla de ayuda.
  */
 
 import { fireEvent, render } from '@testing-library/react-native'
@@ -69,54 +69,55 @@ function escribirLinea(
   }
 }
 
-describe('QuotePage: el material por adelantado', () => {
-  it('sin líneas de material no se ofrece: no habría nada que adelantar', () => {
+describe('QuotePage: quién cobra el presupuesto', () => {
+  it('dice que ese importe lo cobra él, junto a la cifra', () => {
     const screen = render(
       <QuotePage jobId="job-1" onBack={() => {}} onDone={() => {}} />,
     )
 
     escribirLinea(screen, 'LABOUR', '90')
 
+    expect(screen.getByTestId('quote-payment-note')).toBeTruthy()
+    expect(screen.getByText(/Por la app va la visita, no el arreglo/)).toBeTruthy()
+  })
+
+  /**
+   * La casilla del pago a cuenta se retiró con el cobro. Si algún día vuelve a
+   * aparecer sin que vuelva la retención, esta prueba es la que tiene que
+   * pararlo: prometería un adelanto que nadie puede pagar.
+   */
+  it('no se ofrece cobrar el material por adelantado', () => {
+    const screen = render(
+      <QuotePage jobId="job-1" onBack={() => {}} onDone={() => {}} />,
+    )
+
+    escribirLinea(screen, 'MATERIALS', '138')
+
     expect(screen.queryByTestId('quote-materials-upfront')).toBeNull()
   })
 
-  it('con material, la casilla dice cuánto se adelanta', () => {
+  it('el presupuesto se manda con sus líneas y su validez, y nada más de dinero', async () => {
     const screen = render(
       <QuotePage jobId="job-1" onBack={() => {}} onDone={() => {}} />,
     )
 
     escribirLinea(screen, 'MATERIALS', '138')
-
-    expect(screen.getByTestId('quote-materials-upfront')).toBeTruthy()
-    /* 138 de piezas, y el cliente paga 108: la visita ya pagada se descuenta */
-    expect(screen.getByText(/Cóbrame el material por adelantado \(108,00 €\)/)).toBeTruthy()
-  })
-
-  it('marcada, el presupuesto sale con el pago a cuenta puesto', async () => {
-    const screen = render(
-      <QuotePage jobId="job-1" onBack={() => {}} onDone={() => {}} />,
-    )
-
-    escribirLinea(screen, 'MATERIALS', '138')
-    fireEvent.press(screen.getByTestId('quote-materials-upfront'))
     fireEvent.press(screen.getByTestId('quote-send'))
 
     await screen.findByTestId('quote-send')
 
     expect(soporte.enviados).toHaveLength(1)
-    expect(soporte.enviados[0]?.payload).toMatchObject({ materialsUpfront: true })
+    expect(Object.keys(soporte.enviados[0]?.payload ?? {})).toEqual(['lines', 'validDays'])
   })
 
-  it('sin marcar, se manda como hasta ahora', async () => {
+  it('y la visita ya pagada se descuenta del total', () => {
     const screen = render(
       <QuotePage jobId="job-1" onBack={() => {}} onDone={() => {}} />,
     )
 
-    escribirLinea(screen, 'MATERIALS', '138')
-    fireEvent.press(screen.getByTestId('quote-send'))
+    escribirLinea(screen, 'LABOUR', '138')
 
-    await screen.findByTestId('quote-send')
-
-    expect(soporte.enviados[0]?.payload).toMatchObject({ materialsUpfront: false })
+    /* 138 menos los 30 de la visita que el cliente ya pagó */
+    expect(screen.getByText('108,00 €')).toBeTruthy()
   })
 })

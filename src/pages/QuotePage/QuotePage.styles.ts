@@ -123,15 +123,6 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.body,
     color: theme.colors.cardText,
   },
-  /* Lo que se cobra antes de empezar, en el mismo verde que lo que suma a favor */
-  advance: {
-    fontFamily: theme.typography.fonts.bodySemiBold,
-    fontSize: theme.typography.sizes.tiny,
-    color: theme.colors.availableText,
-  },
-  upfront: {
-    marginTop: 20,
-  },
   upfrontHint: {
     fontFamily: theme.typography.fonts.body,
     fontSize: 11,

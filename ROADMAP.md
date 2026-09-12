@@ -3086,6 +3086,52 @@ En el móvil: la ficha del trabajo estrena los botones de cada lado y la
 registro son texto sin documento detrás; se puede probar entero, pero no
 aplicarse a un cliente real hasta que ese texto exista y lo repase un abogado.
 
+## ✅ El presupuesto deja de cobrarse por la app (12 Septiembre 2026)
+
+**Decisión de Robin.** Por la app van **la visita, las horas, la carta y las
+urgencias**; el arreglo que sale de un presupuesto se lo paga el cliente al
+profesional directamente.
+
+### El porqué, en una línea de nuestro propio código
+
+Cobramos con *separate charges and transfers*, así que el `PaymentIntent` nace
+en la cuenta de Lughly: **un chargeback sale de nuestro balance**. Un arreglo de
+2.000 € discutido con el banco tres semanas después de transferírselo al
+profesional cuesta esos 2.000 € más la comisión, y nos deja reclamándoselos.
+
+Y el riesgo no está repartido: los demás ciclos venden **tiempo** —comprobable—
+y éste vende **un resultado** —opinable— con importes diez veces mayores.
+
+### Lo que se ha quitado
+
+- El cobro al aceptar, y con él el 3D Secure del presupuesto
+  (`ConfirmQuotePaymentUseCase`) y el rescate del pago abandonado del barrido.
+- **El pago a cuenta del material entero**, construido esa misma mañana: sin
+  retención no hay adelanto que liberar. La casilla, el ticket y
+  `MarkMaterialsBoughtUseCase`.
+- La tarjeta guardada del diálogo de aceptar: ya no hace falta ninguna.
+
+En el esquema quedan cuatro fantasmas documentados —`materials_upfront`,
+`materials_bought_at`, `MATERIALS_ADVANCE` y `MATERIALS_RECEIPT`— porque quitar
+un valor de un tipo de Postgres obliga a recrearlo entero y ninguno llegó a
+tener un dato.
+
+### Lo que se ha añadido
+
+- **La app lo dice en los tres sitios donde se lee el precio**: al escribirlo,
+  en la tarjeta del presupuesto y en el diálogo de aceptar. Un cliente que crea
+  que ya pagó se planta sin dinero delante del profesional.
+- **`retained` en la ficha**: lo que la plataforma tiene de ese trabajo. Es lo
+  que decide si se puede pedir revisión (§C9) — sin dinero retenido no hay nada
+  que revisar, y en vez del botón se dice qué le queda a cada uno.
+
+### Lo que cuesta, para que esté escrito
+
+Es la parte grande del ciclo —30 € de visita contra 198 de arreglo—, empuja a
+que la siguiente operación se haga fuera, y deja al presupuesto sin la
+protección de §C9. Se asume a cambio de no poder perder en una sola operación lo
+que no se gana en un mes.
+
 ## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
 
 Hoy es una pantalla de leer de corrido —`HowItWorksPage`: tres pasos y un botón

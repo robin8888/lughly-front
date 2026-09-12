@@ -163,21 +163,6 @@ export const uploadApi = {
     ),
 
   /**
-   * El **ticket del material** que el cliente pagó por adelantado (§C6).
-   *
-   * Tercera serie y ruta propia por lo mismo que la segunda: no es una foto de
-   * cómo ha quedado, es un justificante, y es lo único que hace que ese
-   * adelanto salga hacia el profesional. Cuatro por trabajo, con su propia
-   * cuenta — un material comprado en tres tiendas son tres tickets.
-   */
-  jobMaterialsReceipt: (jobId: string, file: UploadFile, accessToken: string) =>
-    uploadMultipart<JobPhotoResponse>(
-      `/v1/jobs/${jobId}/materials-receipts`,
-      file,
-      accessToken,
-    ),
-
-  /**
    * Una **prueba** para una revisión (`CICLOS` §C9), de cualquiera de los dos.
    *
    * Admite una nota de una línea explicando qué se enseña. El lado y la fecha

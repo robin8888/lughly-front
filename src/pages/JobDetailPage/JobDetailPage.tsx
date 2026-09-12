@@ -50,12 +50,10 @@ import {
   useAcceptQuote,
   useCancelSession,
   useReschedule,
-  useMaterialsBought,
   useMarkFixed,
   useOpenDispute,
   useAddEvidence,
 } from '@/hooks/domain/useJob'
-import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { StarRating } from '@/components/atoms/StarRating'
 import { API_BASE_URL } from '@/api'
 import type { ApiJobDetail, ApiJobSession, ApiJobType } from '@/api/jobs.api'
@@ -227,16 +225,9 @@ export function JobDetailPage({
   const { acceptQuote, isAccepting } = useAcceptQuote()
   const { cancelSession, isCancelling: isDroppingSession } = useCancelSession()
   const { proposeTime, acceptTime, isRescheduling } = useReschedule()
-  const { materialsBought, isMarkingMaterials } = useMaterialsBought()
   const { markFixed, isMarkingFixed } = useMarkFixed()
   const { openDispute, isOpeningDispute } = useOpenDispute()
   const { addEvidence, isAddingEvidence } = useAddEvidence()
-  /*
-    Las tarjetas guardadas. Se pide siempre y no solo cuando hay presupuesto:
-    la consulta está cacheada y en cuanto llega uno, el botón de aceptar tiene
-    que poder pulsarse sin esperar a nada.
-  */
-  const { data: methods } = usePaymentMethods()
 
   /**
    * Todo el estado va **aquí arriba, con el resto de hooks**, y no junto a lo
@@ -254,8 +245,6 @@ export function JobDetailPage({
   const [viewingResult, setViewingResult] = useState<number | null>(null)
   /** Y qué ticket del material, que también hay que poder leer de cerca */
   const [viewingReceipt, setViewingReceipt] = useState<number | null>(null)
-  /** Los tickets que el profesional acaba de hacer y todavía no ha mandado */
-  const [tickets, setTickets] = useState<PickedImage[]>([])
   /** Y las pruebas de la revisión: las del formulario de abrirla y las de después */
   const [disputing, setDisputing] = useState(false)
   const [disputeReason, setDisputeReason] = useState('')
@@ -566,27 +555,6 @@ export function JobDetailPage({
    * en un documento que ya no decidía nada.
    */
   /**
-   * El material que se paga por delante, y en qué punto está (`CICLOS` §C6).
-   *
-   * Solo del presupuesto aceptado: en uno pendiente esto todavía es una
-   * propuesta, y la tarjeta ya la cuenta como tal.
-   */
-  const materialsAdvance =
-    quote?.status === 'ACCEPTED' && quote.materialsUpfront ? quote.materialsAdvance : 0
-  const materialsBoughtAt = quote?.materialsBoughtAt ?? null
-
-  /**
-   * Puede decir que ya lo ha comprado quien va a hacerlo, mientras el trabajo
-   * está contratado o en curso. **No después**: cerrado el trabajo, el dinero
-   * sale entero por su camino y este botón solo confundiría.
-   */
-  const canMarkMaterials =
-    job.viewer === 'pro' &&
-    materialsAdvance > 0 &&
-    materialsBoughtAt === null &&
-    (job.status === 'CONTRACTED' || job.status === 'IN_PROGRESS')
-
-  /**
    * El reparo y la revisión (`CICLOS` §C9).
    *
    * Contestar al reparo es del lado profesional: volver y arreglarlo, o decir
@@ -596,7 +564,14 @@ export function JobDetailPage({
    */
   const conReparo = job.status === 'IN_PROGRESS' && job.holdReason !== null
   const canAnswerHold = conReparo && job.viewer === 'pro'
-  const canOpenDispute = conReparo
+  /**
+   * **Y revisar solo donde tenemos dinero.** Revisar es decidir qué hacemos
+   * con lo retenido; del ciclo del presupuesto no retenemos nada desde el 12 de
+   * septiembre de 2026 —el arreglo se paga fuera de la app—, así que ahí el
+   * botón no aparece. Enseñarlo sería ofrecer una protección que no existe, y
+   * el servidor lo rechazaría de todos modos.
+   */
+  const canOpenDispute = conReparo && job.retained > 0
   const enRevision = job.dispute !== null && job.dispute.resolvedAt === null
 
   const canAnswerQuote =
@@ -605,30 +580,46 @@ export function JobDetailPage({
     quote.status === 'SENT' &&
     new Date(quote.validUntil) > new Date()
 
-  /**
-   * «Ya lo he comprado», con su ticket.
-   *
-   * Los dos pasos van dentro del hook y aquí solo se cuenta el final, que es
-   * lo único que le interesa a quien acaba de volver de la tienda: si el
-   * dinero sale ya o si hay que esperar un momento.
-   */
-  const doMaterialsBought = (id: string) => {
+  const doRejectQuote = (id: string) => {
+    const motivo = rejectReason.trim()
+    if (motivo.length < 5) return
+
     void (async () => {
-      const { ok, error, result } = await materialsBought(id, tickets)
+      const { ok, error } = await rejectQuote(id, motivo)
 
       if (!ok) {
-        Alert.alert('No se ha podido', error ?? 'Inténtalo de nuevo en un momento.')
+        Alert.alert(
+          'No se ha podido enviar',
+          error ?? 'Inténtalo de nuevo en un momento.',
+        )
         return
       }
 
-      setTickets([])
+      setRejecting(false)
+      setRejectReason('')
+    })()
+  }
 
-      Alert.alert(
-        'Material comprado',
-        result?.paid
-          ? `Te hemos pagado los ${formatAmount(result.amount)} € del material. Se lo hemos dicho al cliente.`
-          : 'Queda apuntado. El pago puede tardar un momento en salir; si no llega, vuelve a pulsar.',
-      )
+  /**
+   * Aceptar el presupuesto (`CICLOS` §C6).
+   *
+   * **Sin tarjeta y sin cobro desde el 12 de septiembre de 2026**: el arreglo
+   * se lo paga el cliente al profesional directamente. Lo que se firma aquí es
+   * el acuerdo, y lo que se abre es la cita para ir a hacerlo.
+   */
+  const doAcceptQuote = (id: string) => {
+    void (async () => {
+      const { ok, error } = await acceptQuote(id)
+
+      if (!ok) {
+        Alert.alert(
+          'No se ha podido aceptar',
+          error ?? 'Inténtalo de nuevo en un momento.',
+        )
+        return
+      }
+
+      setAccepting(false)
     })()
   }
 
@@ -695,47 +686,6 @@ export function JobDetailPage({
       }
 
       setNewEvidence([])
-    })()
-  }
-
-  const doRejectQuote = (id: string) => {
-    const motivo = rejectReason.trim()
-    if (motivo.length < 5) return
-
-    void (async () => {
-      const { ok, error } = await rejectQuote(id, motivo)
-
-      if (!ok) {
-        Alert.alert(
-          'No se ha podido enviar',
-          error ?? 'Inténtalo de nuevo en un momento.',
-        )
-        return
-      }
-
-      setRejecting(false)
-      setRejectReason('')
-    })()
-  }
-
-  /** La tarjeta con la que se retiene: la primera guardada, como en la carta */
-  const card = methods?.[0] ?? null
-
-  const doAcceptQuote = (id: string) => {
-    if (!card) return
-
-    void (async () => {
-      const { ok, error } = await acceptQuote(id, card.id)
-
-      if (!ok) {
-        Alert.alert(
-          'No se ha podido aceptar',
-          error ?? 'Inténtalo de nuevo en un momento.',
-        )
-        return
-      }
-
-      setAccepting(false)
     })()
   }
 
@@ -1253,7 +1203,7 @@ export function JobDetailPage({
                   testID="job-detail-quote-accept"
                 >
                   {entry.total > 0
-                    ? `Aceptar y pagar ${formatAmount(entry.total)} €`
+                    ? `Aceptar ${formatAmount(entry.total)} €`
                     : 'Aceptar'}
                 </Button>
 
@@ -1270,84 +1220,6 @@ export function JobDetailPage({
             )}
           </QuoteCard>
         ))}
-
-        {/**
-          * El material que el cliente adelantó (`CICLOS` §C6).
-          *
-          * Va pegado al presupuesto porque de ahí sale, y aparece en los dos
-          * lados por motivos distintos: al profesional le falta hacer algo
-          * —comprar y enseñar el ticket— y al cliente le falta ver en qué se
-          * ha ido su dinero. Quien no tenga ni lo uno ni lo otro no ve nada.
-          */}
-        {(canMarkMaterials || job.materialsReceipts.length > 0) && (
-          <InfoCard style={styles.block} testID="job-detail-materials">
-            <Text style={styles.blockTitle}>El material</Text>
-
-            <Text style={styles.materialsHint}>
-              {materialsBoughtAt !== null
-                ? job.viewer === 'pro'
-                  ? `Comprado. Los ${formatAmount(materialsAdvance)} € que te adelantó el cliente ya son tuyos.`
-                  : `Adelantaste ${formatAmount(materialsAdvance)} € para el material. Aquí está el ticket de la compra.`
-                : `Tu cliente te ha adelantado ${formatAmount(materialsAdvance)} €. Sube el ticket de la compra y te los pagamos en el momento.`}
-            </Text>
-
-            {job.materialsReceipts.length > 0 && (
-              <View style={styles.photos}>
-                {job.materialsReceipts.map((photo, index) => (
-                  <Pressable
-                    key={photo.url}
-                    onPress={() => setViewingReceipt(index)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Ver el ticket ${index + 1} del material`}
-                    style={styles.photo}
-                    testID={`job-detail-materials-receipt-${index}`}
-                  >
-                    <RemotePhoto
-                      uri={`${API_BASE_URL}${photo.url}`}
-                      style={styles.photoImage}
-                      fallback="No carga"
-                    />
-                  </Pressable>
-                ))}
-              </View>
-            )}
-
-            {canMarkMaterials && (
-              <>
-                <PhotoPicker
-                  value={tickets}
-                  onChange={setTickets}
-                  disabled={isMarkingMaterials}
-                  testID="job-detail-materials-tickets"
-                />
-
-                {/*
-                  Apagado mientras no haya ticket, y dicho: el servidor no
-                  suelta un euro sin él, así que dejar pulsar aquí sería
-                  mandarle a por un error.
-                */}
-                <Button
-                  fullWidth
-                  onPress={() => doMaterialsBought(job.id)}
-                  disabled={
-                    isMarkingMaterials ||
-                    (tickets.length === 0 && job.materialsReceipts.length === 0)
-                  }
-                  style={styles.quoteAction}
-                  testID="job-detail-materials-bought"
-                >
-                  {isMarkingMaterials ? 'Un momento…' : 'Ya lo he comprado'}
-                </Button>
-
-                {tickets.length === 0 && job.materialsReceipts.length === 0 && (
-                  <Text style={styles.materialsMissing}>
-                    Hace falta el ticket: es lo que nos deja pagarte el adelanto.
-                  </Text>
-                )}
-              </>
-            )}
-          </InfoCard>
-        )}
 
         {/*
           Y el botón de hacerlo, del lado del profesional. El texto cambia
@@ -1498,6 +1370,18 @@ export function JobDetailPage({
                 expiredLabel="El plazo se ha pasado: pasa a revisión"
                 testID="job-detail-hold-countdown"
               />
+            )}
+
+            {/*
+              Sin dinero retenido no hay revisión que ofrecer, y callarlo sería
+              dejar a alguien esperando un botón. Se dice qué hay de verdad.
+            */}
+            {conReparo && job.retained === 0 && (
+              <Text style={styles.holdDeadline} testID="job-detail-hold-no-cover">
+                Este importe se paga directamente entre vosotros, así que no hay
+                nada retenido que podamos decidir. Si no llegáis a un acuerdo,
+                te quedan las vías de siempre: reclamarle, consumo o el juzgado.
+              </Text>
             )}
 
             {/* Del lado del profesional: volver, o no estar de acuerdo */}
@@ -2009,14 +1893,6 @@ export function JobDetailPage({
         />
       </Dialog>
 
-      {/* Un ticket hay que poder leerlo, y en una miniatura no se lee nada */}
-      <PhotoViewer
-        photos={job.materialsReceipts.map((photo) => `${API_BASE_URL}${photo.fullUrl}`)}
-        openAt={viewingReceipt}
-        onClose={() => setViewingReceipt(null)}
-        testID="job-detail-materials-viewer"
-      />
-
       {/**
         * «Han empezado». Se abre solo al entrar, que es a donde lleva el aviso
         * del móvil.
@@ -2241,15 +2117,17 @@ Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el s
       </Dialog>
 
       {/**
-        * Aceptar mueve dinero, así que se pregunta antes (§C6).
+        * Aceptar el presupuesto (§C6).
         *
-        * Y el diálogo dice **la cuenta entera**, no solo el total: la visita
-        * que ya pagó está descontada, y si no se dice parece que se le cobra
-        * dos veces el mismo viaje. Es la misma resta que hizo el profesional al
-        * emitirlo; aquí solo se le enseña.
+        * **No se cobra nada aquí desde el 12 de septiembre de 2026**, y el
+        * diálogo lo dice con esas palabras. Es lo más importante de esta
+        * pantalla: un cliente que crea que ya ha pagado se planta delante del
+        * profesional sin dinero, y un profesional que espere una transferencia
+        * nuestra la espera para siempre.
         *
-        * Se **retiene**, no se cobra: sale cuando él dé por bueno el trabajo
-        * terminado, como en todo lo demás.
+        * La cuenta entera sigue estando —la visita que ya pagó va descontada, y
+        * si no se dice parece que se le cobra dos veces el mismo viaje— porque
+        * lo que se acepta es ese número, aunque lo pague fuera.
         */}
       <Dialog
         visible={accepting}
@@ -2261,54 +2139,24 @@ Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el s
                 quote.visitCredit > 0
                   ? `${formatAmount(quote.linesTotal)} € del arreglo, menos los ${formatAmount(quote.visitCredit)} € de la visita que ya pagaste: ${formatAmount(quote.total)} €.`
                   : `Son ${formatAmount(quote.total)} €.`,
-                card
-                  ? 'Se retienen ahora en tu tarjeta y se le pagan cuando des por bueno el trabajo terminado.'
-                  : 'Necesitas una tarjeta guardada para poder aceptarlo.',
-                /*
-                  El material, si lo hay. **Sale del total, no se suma**, y
-                  decirlo importa: es la única parte que se le paga antes de
-                  empezar, y a partir de que la compre ya no vuelve.
-                */
-                card && quote.materialsUpfront && quote.materialsAdvance > 0
-                  ? `De ese total, ${formatAmount(quote.materialsAdvance)} € son el material: se le pagan en cuanto lo compre y suba el ticket.`
-                  : '',
-              ]
-                .filter((linea) => linea !== '')
-                .join('\n\n')
+                'Este importe se lo pagas directamente a quien hace el trabajo, como acordéis entre vosotros: Lughly no lo cobra ni lo retiene.',
+                'Aceptar cierra el acuerdo y abre la cita para que vaya.',
+              ].join('\n\n')
         }
-        actions={
-          card
-            ? [
-                {
-                  label: isAccepting ? 'Aceptando…' : 'Aceptar y pagar',
-                  onPress: () => doAcceptQuote(job.id),
-                  disabled: isAccepting,
-                  testID: 'job-detail-quote-accept-confirm',
-                },
-                {
-                  label: 'Ahora no',
-                  variant: 'secondary',
-                  onPress: () => setAccepting(false),
-                  testID: 'job-detail-quote-accept-cancel',
-                },
-              ]
-            : [
-                {
-                  label: 'Guardar una tarjeta',
-                  onPress: () => {
-                    setAccepting(false)
-                    onAddPaymentMethod?.()
-                  },
-                  testID: 'job-detail-quote-accept-card',
-                },
-                {
-                  label: 'Ahora no',
-                  variant: 'secondary',
-                  onPress: () => setAccepting(false),
-                  testID: 'job-detail-quote-accept-cancel',
-                },
-              ]
-        }
+        actions={[
+          {
+            label: isAccepting ? 'Aceptando…' : 'Aceptar el presupuesto',
+            onPress: () => doAcceptQuote(job.id),
+            disabled: isAccepting,
+            testID: 'job-detail-quote-accept-confirm',
+          },
+          {
+            label: 'Ahora no',
+            variant: 'secondary',
+            onPress: () => setAccepting(false),
+            testID: 'job-detail-quote-accept-cancel',
+          },
+        ]}
         onDismiss={() => setAccepting(false)}
         testID="job-detail-quote-accept-dialog"
       />

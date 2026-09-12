@@ -10,7 +10,6 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { jobsApi, type ApiJobDetail } from '@/api/jobs.api'
-import { CardAuthError, useCardChallengeFor } from './useCardChallenge'
 import { assignmentsApi } from '@/api/assignments.api'
 import { uploadApi } from '@/api/upload.api'
 import type { PickedImage } from '@/hooks/media/usePickImage'
@@ -602,131 +601,37 @@ export function useRejectQuote() {
 }
 
 /**
- * El cliente acepta el presupuesto y pone el dinero (`CICLOS` §C6).
+ * El cliente acepta el presupuesto (`CICLOS` §C6).
  *
- * **La visita ya viene descontada**: lo que se retiene es el total del
- * presupuesto, que se calculó restando lo que el cliente pagó por que fueran a
- * verlo. Aquí no se resta nada más — hacerlo dos veces regalaría el
- * desplazamiento.
+ * **Ya no cobra nada.** Desde el 12 de septiembre de 2026 el arreglo se lo paga
+ * el cliente al profesional directamente: por la app van la visita, las horas,
+ * la carta y las urgencias —que venden tiempo comprobable— y no el presupuesto,
+ * que vende un resultado y con importes diez veces mayores.
  *
- * El 3D Secure vive dentro de `accept()`, igual que en la carta y en las
- * horas: para la pantalla es la misma llamada que tarda un poco más, y así no
- * hay dos caminos de contratación en paralelo.
+ * Por eso aquí no hay tarjeta ni reto del banco: aceptar es firmar un acuerdo,
+ * y lo que devuelve es lo acordado, no lo retenido.
  */
 export function useAcceptQuote() {
   const queryClient = useQueryClient()
-  const resolveCardChallenge = useCardChallengeFor(
-    (jobId: string) => jobsApi.confirmQuotePayment(jobId),
-    (result) => result.status === 'accepted',
-  )
 
   const mutation = useMutation({
-    mutationFn: async ({
-      jobId,
-      paymentMethodId,
-    }: {
-      jobId: string
-      paymentMethodId: string
-    }) => {
-      const accepted = await jobsApi.acceptQuote(jobId, paymentMethodId)
-
-      if (accepted.status === 'accepted') return accepted
-
-      return resolveCardChallenge(jobId, accepted.clientSecret)
-    },
+    mutationFn: (jobId: string) => jobsApi.acceptQuote(jobId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['jobs'] })
     },
   })
 
   return {
-    acceptQuote: async (jobId: string, paymentMethodId: string) => {
+    acceptQuote: async (jobId: string) => {
       try {
-        return {
-          ok: true as const,
-          error: null,
-          result: await mutation.mutateAsync({ jobId, paymentMethodId }),
-        }
+        return { ok: true as const, error: null, result: await mutation.mutateAsync(jobId) }
       } catch (error) {
-        return {
-          ok: false as const,
-          result: null,
-          error:
-            error instanceof CardAuthError ? error.message : mensajeDe(error),
-        }
+        return { ok: false as const, result: null, error: mensajeDe(error) }
       }
     },
     isAccepting: mutation.isPending,
   }
 }
-
-/**
- * «Ya he comprado el material», del lado profesional (`CICLOS` §C6).
- *
- * Es lo que suelta el adelanto que el cliente dejó retenido al aceptar el
- * presupuesto. Dos pasos que para quien pulsa son uno: **primero los tickets,
- * después el aviso**, y en ese orden porque el servidor no libera un euro sin
- * justificante — mandarlo al revés sería pedir un cobro que él mismo va a
- * rechazar.
- *
- * Si ninguno de los tickets llega a subir no se marca nada: se dice que
- * faltaron y el profesional lo reintenta. Perder la foto aquí no es como
- * perder una de cómo ha quedado —aquélla es una cortesía y ésta es la prueba
- * de dónde ha ido el dinero de alguien—.
- */
-export function useMaterialsBought() {
-  const queryClient = useQueryClient()
-
-  const mutation = useMutation({
-    mutationFn: (jobId: string) => jobsApi.markMaterialsBought(jobId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
-      void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
-    },
-  })
-
-  return {
-    materialsBought: async (jobId: string, tickets: PickedImage[]) => {
-      let subidos = 0
-      const accessToken = useAuthStore.getState().accessToken
-
-      if (accessToken) {
-        /* En serie, como las demás: el servidor las numera al llegar */
-        for (const ticket of tickets) {
-          try {
-            await uploadApi.jobMaterialsReceipt(jobId, ticket, accessToken)
-            subidos += 1
-          } catch {
-            /* Se cuenta abajo: lo que importa es si ha subido alguno */
-          }
-        }
-      }
-
-      if (tickets.length > 0 && subidos === 0) {
-        return {
-          ok: false as const,
-          result: null,
-          error:
-            'No hemos podido subir el ticket. Mira la cobertura y vuelve a intentarlo.',
-        }
-      }
-
-      try {
-        return {
-          ok: true as const,
-          error: null,
-          result: await mutation.mutateAsync(jobId),
-        }
-      } catch (error) {
-        return { ok: false as const, result: null, error: mensajeDe(error) }
-      }
-    },
-    isMarkingMaterials: mutation.isPending,
-  }
-}
-
-
 /**
  * «He vuelto y ya está arreglado», del lado profesional (`CICLOS` §C9).
  *
