@@ -310,6 +310,60 @@ export interface ApiJobDetail {
    * por horas o una urgencia tienen el precio pactado antes de moverse.
    */
   quotes: ApiJobQuote[]
+  /**
+   * La regla del contrato fijo, si lo es (`CICLOS_DE_CONTRATACION.md` §F).
+   * `null` en un trabajo de una vez, que son casi todos.
+   */
+  recurrence: ApiJobRecurrence | null
+  /**
+   * Las sesiones que quedan por delante, de la primera a la última. Vacío en
+   * cualquier trabajo que no sea fijo.
+   *
+   * Solo las que no han pasado: las de atrás están en la agenda y en los
+   * pagos, y aquí lo que hace falta es lo que todavía se puede mover.
+   */
+  sessions: ApiJobSession[]
+}
+
+/** Qué días, a qué hora y hasta dónde llega un contrato fijo */
+export interface ApiJobRecurrence {
+  id: string
+  /** 0 domingo … 6 sábado, como `Date.getDay()` */
+  weekdays: number[]
+  /** A qué hora empieza, en minutos desde medianoche */
+  startMinute: number
+  durationMin: number
+  /** "AAAA-MM-DD" */
+  startsOn: string
+  /** Hasta qué día hay sesiones creadas. El barrido lo va estirando */
+  generatedUntil: string
+  /**
+   * Si el contrato sigue vivo. Apagado es un contrato cortado —por quien sea,
+   * o por tres impagos—: no va a haber más sesiones.
+   */
+  active: boolean
+}
+
+export interface ApiJobSession {
+  id: string
+  scheduledAt: string
+  durationMin: number
+  status: ApiAppointmentStatus
+  /** Lo que cuesta, con el mínimo del contrato aplicado */
+  amount: number | null
+  /**
+   * Si su importe ya está apartado en la tarjeta del cliente. Se retiene 24 h
+   * antes, que es justo cuando cancelar deja de ser gratis.
+   */
+  held: boolean
+  /**
+   * Si cancelarla no cuesta nada.
+   *
+   * **Lo dice el servidor y no se calcula aquí** aunque la resta sea de una
+   * línea: es la misma cuenta que decide el dinero, y dos relojes distintos
+   * acabarían enseñando "gratis" y cobrando.
+   */
+  freeCancel: boolean
 }
 
 /** De qué es una línea. El tipo decide dinero, no es una etiqueta. */
@@ -553,10 +607,46 @@ export const jobsApi = {
       refunded: number
       voided: number
       releasedCharges: number
+      /**
+       * Cuántas sesiones de un contrato fijo se ha llevado por delante. Cero
+       * en un trabajo de una vez.
+       *
+       * Se enseña: "se cancelan las 18 sesiones que quedaban" y "se cancela la
+       * cita del jueves" son dos avisos distintos, y quien acaba de romper un
+       * acuerdo de meses tiene derecho a ver el tamaño de lo que ha hecho.
+       */
+      cancelledSessions: number
     }>(`/v1/jobs/${jobId}/cancel-contract`, {
       method: 'POST',
       auth: true,
       body: { reason },
+    }),
+
+  /**
+   * Saltarse **una sesión** de un contrato fijo, sin romperlo (§F7).
+   *
+   * Distinta de `cancelContract` a propósito, y no un parámetro suyo: aquella
+   * se lleva el acuerdo entero y sus dieciocho mañanas; esta, el miércoles que
+   * viene. El motivo es opcional porque no hay nada que justificar: saltarse
+   * un día es la vida normal de un acuerdo de meses.
+   *
+   * `fee` es lo que se cobra por avisar con menos de 24 horas —el mínimo del
+   * contrato—, y viene a cero en el caso normal. `remaining` es lo que sigue
+   * en pie, que es la mitad del mensaje que hay que enseñar: cancelar una
+   * sesión no cancela el contrato.
+   */
+  cancelSession: (jobId: string, sessionId: string, reason?: string) =>
+    apiRequest<{
+      jobId: string
+      sessionId: string
+      fee: number
+      refunded: number
+      voided: number
+      remaining: number
+    }>(`/v1/jobs/${jobId}/sessions/${sessionId}/cancel`, {
+      method: 'POST',
+      auth: true,
+      body: reason ? { reason } : {},
     }),
 
   /**

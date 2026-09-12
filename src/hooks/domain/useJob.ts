@@ -116,6 +116,58 @@ export function useCancelContract() {
 }
 
 /**
+ * Saltarse una sesión de un contrato fijo, sin romperlo
+ * (`CICLOS_DE_CONTRATACION.md` §F7).
+ *
+ * Aparte de `useCancelContract` y no un parámetro suyo, por lo mismo que en el
+ * servidor: aquella se lleva el acuerdo entero y sus dieciocho mañanas, y esta
+ * el miércoles que viene. Un solo botón con un interruptor dejaría que un
+ * dedazo cancelara un contrato de meses.
+ *
+ * Refresca lo mismo: la ficha, la agenda —a alguien se le acaba de caer una
+ * mañana— y la bandeja.
+ */
+export function useCancelSession() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({
+      jobId,
+      sessionId,
+      reason,
+    }: {
+      jobId: string
+      sessionId: string
+      reason?: string
+    }) => jobsApi.cancelSession(jobId, sessionId, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'inbox'] })
+    },
+  })
+
+  return {
+    cancelSession: async (jobId: string, sessionId: string, reason?: string) => {
+      try {
+        const result = await mutation.mutateAsync({ jobId, sessionId, reason })
+        return { ok: true as const, result, error: null }
+      } catch (error) {
+        return {
+          ok: false as const,
+          result: null,
+          error:
+            error instanceof NetworkError || error instanceof ApiError
+              ? error.message
+              : null,
+        }
+      }
+    },
+    isCancelling: mutation.isPending,
+  }
+}
+
+/**
  * Volver a encargar un trabajo a otro profesional, **retiniendo su visita**.
  *
  * Cambia su ficha y su sitio en la lista —vuelve a estar esperando respuesta—,

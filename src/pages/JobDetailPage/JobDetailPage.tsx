@@ -45,14 +45,16 @@ import {
   useReviewJob,
   useRejectQuote,
   useAcceptQuote,
+  useCancelSession,
 } from '@/hooks/domain/useJob'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { StarRating } from '@/components/atoms/StarRating'
 import { API_BASE_URL } from '@/api'
-import type { ApiJobDetail, ApiJobType } from '@/api/jobs.api'
+import type { ApiJobDetail, ApiJobSession, ApiJobType } from '@/api/jobs.api'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatJobWhen } from '@/utils/dates'
+import { describeRecurrence } from '@/utils/recurrence'
 import { jobStatusLook, jobTypeLabel, jobStateSignature } from '@/utils/jobStatus'
 import { useUser } from '@/stores/useAuthStore'
 import { useMarkJobStateSeen } from '@/stores/useSeenJobStatesStore'
@@ -214,6 +216,7 @@ export function JobDetailPage({
   const { review, isReviewing } = useReviewJob()
   const { rejectQuote, isRejecting } = useRejectQuote()
   const { acceptQuote, isAccepting } = useAcceptQuote()
+  const { cancelSession, isCancelling: isDroppingSession } = useCancelSession()
   /*
     Las tarjetas guardadas. Se pide siempre y no solo cuando hay presupuesto:
     la consulta está cacheada y en cuanto llega uno, el botón de aceptar tiene
@@ -242,6 +245,14 @@ export function JobDetailPage({
   const [rejectReason, setRejectReason] = useState('')
   /** Aceptarlo mueve dinero, así que se pregunta antes (§C6) */
   const [accepting, setAccepting] = useState(false)
+  /**
+   * La sesión del contrato fijo que se está a punto de saltar, si alguna.
+   *
+   * Se guarda la sesión entera y no su id porque el diálogo tiene que decir
+   * **cuál** y **cuánto cuesta**: "¿cancelar la sesión?" sin fecha delante, en
+   * una lista de dieciocho, es una pregunta que no se puede contestar.
+   */
+  const [droppingSession, setDroppingSession] = useState<ApiJobSession | null>(null)
 
   /**
    * Lo que ya se le ha preguntado al cliente en esta visita, si hay algo.
@@ -855,6 +866,84 @@ export function JobDetailPage({
         </InfoCard>
 
         {/*
+          El contrato fijo, si lo es (§F).
+
+          Primero el acuerdo en una frase y después sus días, en ese orden:
+          quien firmó una limpieza de meses viene a comprobar qué firmó, y
+          deducirlo de una lista de dieciocho citas no es comprobarlo.
+
+          Las canceladas se quedan a la vista, tachadas. El hueco **es** la
+          información: una semana sin limpieza se ve mirando dónde falta.
+        */}
+        {job.recurrence && (
+          <InfoCard style={styles.block} testID="job-detail-recurrence">
+            <Text style={styles.blockTitle}>El contrato fijo</Text>
+            <Text style={styles.recurrenceLine}>
+              {describeRecurrence(job.recurrence)}
+            </Text>
+
+            <Text style={styles.recurrenceNote}>
+              {job.recurrence.active
+                ? 'Sin fecha de fin: sigue hasta que alguien lo corte.'
+                : 'Cortado: no va a haber más sesiones.'}
+            </Text>
+
+            {job.sessions.length > 0 && (
+              <View style={styles.sessions} testID="job-detail-sessions">
+                {job.sessions.map((session) => {
+                  const cancelada = session.status === 'CANCELLED'
+
+                  return (
+                    <View
+                      key={session.id}
+                      style={styles.sessionRow}
+                      testID={`job-detail-session-${session.id}`}
+                    >
+                      <Text
+                        style={[
+                          styles.sessionWhen,
+                          cancelada && styles.sessionGone,
+                        ]}
+                      >
+                        {formatJobWhen(session.scheduledAt) ?? '—'}
+                      </Text>
+
+                      {cancelada ? (
+                        <Text style={styles.sessionTag}>Cancelada</Text>
+                      ) : (
+                        <View style={styles.sessionRow}>
+                          {session.amount !== null && (
+                            <Text style={styles.sessionAmount}>
+                              {formatAmount(session.amount)}
+                            </Text>
+                          )}
+                          {/*
+                            Saltarse un día es la vida normal de un acuerdo de
+                            meses, así que el botón está en su fila y no
+                            escondido: sin esta puerta, la única salida de "el
+                            viernes no puedo" sería cortar el contrato entero.
+                          */}
+                          {job.status === 'CONTRACTED' && (
+                            <Pressable
+                              onPress={() => setDroppingSession(session)}
+                              disabled={isDroppingSession}
+                              accessibilityRole="button"
+                              testID={`job-detail-session-drop-${session.id}`}
+                            >
+                              <Text style={styles.sessionDrop}>Cancelar</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )
+                })}
+              </View>
+            )}
+          </InfoCard>
+        )}
+
+        {/*
           El presupuesto, o los que haya (§C5).
 
           **Todos y no solo el vigente**: el rechazado lleva el motivo, y ese
@@ -1182,9 +1271,19 @@ export function JobDetailPage({
             testID="job-detail-break"
           >
             <Text style={styles.cancelText}>
-              {job.viewer === 'client'
-                ? 'Cancelar el trabajo'
-                : 'No puedo hacer este trabajo'}
+              {/*
+                Y en un contrato fijo se dice que es el contrato: en una
+                pantalla que acaba de enseñar el botón de cancelar una sesión,
+                "cancelar el trabajo" se lee como "cancelar esta cita", y lo
+                que hace es llevarse dieciocho.
+              */}
+              {job.recurrence
+                ? job.viewer === 'client'
+                  ? 'Cancelar el contrato fijo'
+                  : 'No puedo seguir con este contrato'
+                : job.viewer === 'client'
+                  ? 'Cancelar el trabajo'
+                  : 'No puedo hacer este trabajo'}
             </Text>
           </Pressable>
         )}
@@ -1194,14 +1293,25 @@ export function JobDetailPage({
         visible={breaking}
         tone="danger"
         title={
-          job.viewer === 'client'
-            ? '¿Cancelar el trabajo?'
-            : '¿No puedes hacerlo?'
+          job.recurrence
+            ? '¿Cancelar el contrato entero?'
+            : job.viewer === 'client'
+              ? '¿Cancelar el trabajo?'
+              : '¿No puedes hacerlo?'
         }
         message={
-          job.viewer === 'client'
-            ? 'Hay alguien que ha apartado ese rato para ti. Cuéntale qué ha pasado: lo va a leer.'
-            : 'El cliente contaba contigo. Cuéntale qué ha pasado: lo va a leer, y cancelar sin explicación cuenta como un plantón.'
+          /*
+            En un fijo lo primero es el tamaño: se caen todas las sesiones que
+            quedaban, no la de esta semana. Quien solo quería saltarse un día
+            tiene el otro botón, y este es el momento de recordárselo.
+          */
+          job.recurrence
+            ? `Se cancelan ${
+                job.sessions.filter((session) => session.status !== 'CANCELLED').length
+              } sesiones y el acuerdo se acaba. Si solo no puedes un día, cancela esa sesión y el contrato sigue.`
+            : job.viewer === 'client'
+              ? 'Hay alguien que ha apartado ese rato para ti. Cuéntale qué ha pasado: lo va a leer.'
+              : 'El cliente contaba contigo. Cuéntale qué ha pasado: lo va a leer, y cancelar sin explicación cuenta como un plantón.'
         }
         onDismiss={() => setBreaking(false)}
         actions={[
@@ -1212,7 +1322,11 @@ export function JobDetailPage({
             testID: 'job-detail-break-back',
           },
           {
-            label: isBreaking ? 'Cancelando…' : 'Cancelar el trabajo',
+            label: isBreaking
+              ? 'Cancelando…'
+              : job.recurrence
+                ? 'Cancelar el contrato'
+                : 'Cancelar el trabajo',
             /*
               Apagado hasta que haya motivo. El servidor lo rechazaría igual,
               pero enterarse después de pulsar convierte en error lo que aquí
@@ -1256,9 +1370,15 @@ export function JobDetailPage({
                         ? ' Se ha soltado la retención de tu tarjeta: no se te ha cobrado nada.'
                         : ''
 
+                /* Y en un fijo, cuántas mañanas se ha llevado por delante */
+                const sesiones =
+                  result.cancelledSessions > 0
+                    ? ` Se han cancelado las ${result.cancelledSessions} sesiones que quedaban.`
+                    : ''
+
                 Alert.alert(
-                  'Trabajo cancelado',
-                  `Hemos avisado a la otra parte.${dinero}`,
+                  job.recurrence ? 'Contrato cancelado' : 'Trabajo cancelado',
+                  `Hemos avisado a la otra parte.${sesiones}${dinero}`,
                 )
               })()
             },
@@ -1277,6 +1397,91 @@ export function JobDetailPage({
           testID="job-detail-break-reason"
         />
       </Dialog>
+
+      {/*
+        Saltarse un día, con lo que cuesta dicho antes.
+
+        Se pregunta aunque sea gratis: en una lista de dieciocho fechas, el
+        toque de al lado cancela la semana que viene, y deshacerlo no existe.
+      */}
+      <Dialog
+        visible={droppingSession !== null}
+        tone="danger"
+        title="¿Cancelar esta sesión?"
+        message={
+          droppingSession === null
+            ? ''
+            : `${formatJobWhen(droppingSession.scheduledAt) ?? 'Esa sesión'}. El contrato sigue: solo se cae ese día.${
+                /*
+                  Y el dinero, antes de pulsar. Enterarse de una penalización
+                  por el extracto del banco es la peor forma de enterarse, y
+                  aquí todavía se está a tiempo de no hacerlo.
+
+                  Solo al cliente: quien deja el hueco no paga por dejarlo, así
+                  que al profesional decirle nada de cobros sería asustarle con
+                  algo que no va a pasar.
+                */
+                job.viewer !== 'client' || droppingSession.freeCancel
+                  ? ' No cuesta nada.'
+                  : ' Quedan menos de 24 horas, así que se cobra el mínimo del contrato.'
+              }`
+        }
+        onDismiss={() => setDroppingSession(null)}
+        actions={[
+          {
+            label: 'Volver',
+            variant: 'secondary',
+            onPress: () => setDroppingSession(null),
+            testID: 'job-detail-session-back',
+          },
+          {
+            label: isDroppingSession ? 'Cancelando…' : 'Cancelar la sesión',
+            disabled: isDroppingSession,
+            onPress: () => {
+              void (async () => {
+                if (!droppingSession) return
+
+                const { ok, result, error } = await cancelSession(
+                  job.id,
+                  droppingSession.id,
+                )
+
+                if (!ok) {
+                  Alert.alert(
+                    'No se ha podido cancelar',
+                    error ?? 'Inténtalo de nuevo en un momento.',
+                  )
+                  return
+                }
+
+                setDroppingSession(null)
+
+                /*
+                  Lo que queda en pie va en el mismo aviso, y no es cortesía:
+                  quien acaba de cancelar algo de un contrato de meses necesita
+                  ver que no se ha llevado el resto por delante.
+                */
+                const resto =
+                  result.remaining > 0
+                    ? ` Quedan ${result.remaining} ${result.remaining === 1 ? 'sesión' : 'sesiones'}.`
+                    : ' No quedan más sesiones por delante.'
+
+                const cobro =
+                  result.fee > 0
+                    ? ` Se ha cobrado el mínimo del contrato: ${formatAmount(result.fee)}.`
+                    : ''
+
+                Alert.alert(
+                  'Sesión cancelada',
+                  `Hemos avisado a la otra parte.${cobro}${resto}`,
+                )
+              })()
+            },
+            testID: 'job-detail-session-confirm',
+          },
+        ]}
+        testID="job-detail-session-dialog"
+      />
 
       <PhotoViewer
         photos={job.resultPhotos.map((photo) => `${API_BASE_URL}${photo.fullUrl}`)}

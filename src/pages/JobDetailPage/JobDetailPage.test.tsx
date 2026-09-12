@@ -36,6 +36,10 @@ jest.mock('@/hooks/domain/useJob', () => {
     rejectedQuotes: [] as { jobId: string; reason: string }[],
     /** Y los aceptados, con la tarjeta que se usó (§C6) */
     acceptedQuotes: [] as { jobId: string; paymentMethodId: string }[],
+    /** Las sesiones de un contrato fijo que se han saltado (§F7) */
+    droppedSessions: [] as { jobId: string; sessionId: string }[],
+    /** Lo que devuelve el servidor al saltarse una: lo cobrado y lo que queda */
+    dropResult: { fee: 0, refunded: 0, voided: 0, remaining: 17 },
   }
 
   return {
@@ -48,7 +52,24 @@ jest.mock('@/hooks/domain/useJob', () => {
     }),
     useCancelJob: () => ({ cancel: () => Promise.resolve({ ok: true }), isCancelling: false }),
     useCancelContract: () => ({
-      cancelContract: () => Promise.resolve({ ok: true }),
+      cancelContract: () =>
+        Promise.resolve({
+          ok: true,
+          error: null,
+          result: { refunded: 0, voided: 0, releasedCharges: 0, cancelledSessions: 18 },
+        }),
+      isCancelling: false,
+    }),
+    useCancelSession: () => ({
+      cancelSession: (jobId: string, sessionId: string) => {
+        soporte.droppedSessions.push({ jobId, sessionId })
+
+        return Promise.resolve({
+          ok: true,
+          error: null,
+          result: { jobId, sessionId, ...soporte.dropResult },
+        })
+      },
       isCancelling: false,
     }),
     useJobProgress: () => ({
@@ -181,6 +202,8 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     createdAt: '2026-08-29T09:00:00.000Z',
     serviceLines: [],
     quotes: [],
+    recurrence: null,
+    sessions: [],
     ...cambios,
   }
 }
@@ -195,6 +218,8 @@ beforeEach(() => {
   soporte.reviewed.length = 0
   soporte.rejectedQuotes.length = 0
   soporte.acceptedQuotes.length = 0
+  soporte.droppedSessions.length = 0
+  soporte.dropResult = { fee: 0, refunded: 0, voided: 0, remaining: 17 }
   soporteTarjetas.hay = true
   soporte.pending = false
 })
@@ -962,5 +987,115 @@ describe('JobDetailPage: aceptar el presupuesto', () => {
     )
 
     expect(queryByTestId('job-detail-quote-accept')).toBeNull()
+  })
+})
+
+/**
+ * El contrato fijo en la ficha (`CICLOS_DE_CONTRATACION.md` §F).
+ *
+ * Lo que se ata aquí es que **las dos salidas no se confundan**: saltarse un
+ * día y romper el acuerdo de meses son dos botones distintos, y en una
+ * pantalla que acaba de enseñar dieciocho fechas es fácil que el segundo se
+ * lea como el primero.
+ */
+describe('JobDetailPage: el contrato fijo', () => {
+  const SERIE = {
+    id: 'serie-1',
+    weekdays: [1, 3, 5],
+    startMinute: 600,
+    durationMin: 120,
+    startsOn: '2026-09-14',
+    generatedUntil: '2026-11-09',
+    active: true,
+  }
+
+  const sesion = (id: string, cambios: Partial<ApiJobDetail['sessions'][number]> = {}) => ({
+    id,
+    scheduledAt: '2026-09-14T08:00:00.000Z',
+    durationMin: 120,
+    status: 'CONFIRMED' as const,
+    amount: 28,
+    held: false,
+    freeCancel: true,
+    ...cambios,
+  })
+
+  it('un trabajo de una vez no enseña nada de contratos', () => {
+    soporte.job = ficha({})
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-recurrence')).toBeNull()
+  })
+
+  /** Primero el acuerdo en una frase: es lo que se viene a comprobar */
+  it('un contrato fijo dice qué días y a qué hora', () => {
+    soporte.job = ficha({ recurrence: SERIE, sessions: [sesion('s1')] })
+
+    const { getByText } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByText('Los lunes, miércoles y viernes, de 10:00 a 12:00')).toBeTruthy()
+  })
+
+  it('y lista sus sesiones, cada una con lo que cuesta', () => {
+    soporte.job = ficha({
+      recurrence: SERIE,
+      sessions: [sesion('s1'), sesion('s2', { scheduledAt: '2026-09-16T08:00:00.000Z' })],
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-session-s1')).toBeTruthy()
+    expect(getByTestId('job-detail-session-s2')).toBeTruthy()
+  })
+
+  /**
+   * Una cancelada se queda a la vista y sin botón: el hueco **es** la
+   * información —así se ve qué semana se quedó sin limpieza— y volver a
+   * cancelar lo cancelado no significa nada.
+   */
+  it('una sesión cancelada sigue a la vista, pero ya no se puede cancelar', () => {
+    soporte.job = ficha({
+      recurrence: SERIE,
+      sessions: [sesion('s1', { status: 'CANCELLED' })],
+    })
+
+    const { getByTestId, queryByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-session-s1')).toBeTruthy()
+    expect(queryByTestId('job-detail-session-drop-s1')).toBeNull()
+  })
+
+  /** Se pregunta antes: el toque de al lado cancela otra semana */
+  it('saltarse una sesión se confirma antes, y manda esa y no otra', () => {
+    soporte.job = ficha({
+      recurrence: SERIE,
+      sessions: [sesion('s1'), sesion('s2', { scheduledAt: '2026-09-16T08:00:00.000Z' })],
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-session-drop-s2'))
+    fireEvent.press(getByTestId('job-detail-session-confirm'))
+
+    expect(soporte.droppedSessions).toEqual([{ jobId: 'job-1', sessionId: 's2' }])
+  })
+
+  /**
+   * Y romper el contrato se llama por su nombre. "Cancelar el trabajo", en
+   * una pantalla que acaba de enseñar el botón de cancelar una sesión, se lee
+   * como "cancelar esta cita", y lo que hace es llevarse dieciocho.
+   */
+  it('cortar el contrato entero se dice que es el contrato', () => {
+    soporte.job = ficha({ viewer: 'client', recurrence: SERIE, sessions: [sesion('s1')] })
+
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-break')).toBeTruthy()
+    expect(getByText('Cancelar el contrato fijo')).toBeTruthy()
   })
 })

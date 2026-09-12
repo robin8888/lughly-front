@@ -282,6 +282,59 @@ export const styles = StyleSheet.create({
     color: theme.colors.cardText,
   },
 
+  /** La frase que resume el contrato fijo: qué días y a qué hora */
+  recurrenceLine: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.cardText,
+  },
+  recurrenceNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+    marginTop: 4,
+  },
+  sessions: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  /** Una sesión: cuándo a la izquierda, lo que se puede hacer a la derecha */
+  sessionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  sessionWhen: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+    flexShrink: 1,
+  },
+  /** Una cancelada se queda a la vista, apagada: el hueco es la información */
+  sessionGone: {
+    color: theme.colors.textSoft,
+    textDecorationLine: 'line-through',
+  },
+  sessionAmount: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+  },
+  sessionDrop: {
+    fontFamily: theme.typography.fonts.bodyBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.urgency,
+  },
+  sessionTag: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.textSoft,
+  },
+
   bids: {
     marginTop: 16,
   },
