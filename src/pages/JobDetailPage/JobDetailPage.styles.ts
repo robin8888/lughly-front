@@ -403,4 +403,31 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSoft,
     marginTop: 8,
   },
+  /* El plazo del reparo, con lo que pasa al acabarse */
+  holdDeadline: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: theme.colors.textSoft,
+    marginTop: 8,
+  },
+  evidenceAdd: {
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  evidenceAddTitle: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.tiny,
+    color: theme.colors.cardText,
+  },
+  evidenceAddHint: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: theme.colors.textSoft,
+    marginTop: 4,
+    marginBottom: 10,
+  },
 })

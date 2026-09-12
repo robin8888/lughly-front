@@ -36,6 +36,7 @@ import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { QuoteCard } from '@/components/organisms/QuoteCard'
+import { DisputeCard } from '@/components/organisms/DisputeCard'
 import {
   useJob,
   useCancelJob,
@@ -50,6 +51,9 @@ import {
   useCancelSession,
   useReschedule,
   useMaterialsBought,
+  useMarkFixed,
+  useOpenDispute,
+  useAddEvidence,
 } from '@/hooks/domain/useJob'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { StarRating } from '@/components/atoms/StarRating'
@@ -224,6 +228,9 @@ export function JobDetailPage({
   const { cancelSession, isCancelling: isDroppingSession } = useCancelSession()
   const { proposeTime, acceptTime, isRescheduling } = useReschedule()
   const { materialsBought, isMarkingMaterials } = useMaterialsBought()
+  const { markFixed, isMarkingFixed } = useMarkFixed()
+  const { openDispute, isOpeningDispute } = useOpenDispute()
+  const { addEvidence, isAddingEvidence } = useAddEvidence()
   /*
     Las tarjetas guardadas. Se pide siempre y no solo cuando hay presupuesto:
     la consulta está cacheada y en cuanto llega uno, el botón de aceptar tiene
@@ -249,6 +256,13 @@ export function JobDetailPage({
   const [viewingReceipt, setViewingReceipt] = useState<number | null>(null)
   /** Los tickets que el profesional acaba de hacer y todavía no ha mandado */
   const [tickets, setTickets] = useState<PickedImage[]>([])
+  /** Y las pruebas de la revisión: las del formulario de abrirla y las de después */
+  const [disputing, setDisputing] = useState(false)
+  const [disputeReason, setDisputeReason] = useState('')
+  const [disputeProof, setDisputeProof] = useState<PickedImage[]>([])
+  const [newEvidence, setNewEvidence] = useState<PickedImage[]>([])
+  /** Qué prueba del expediente se está mirando a pantalla completa */
+  const [viewingEvidence, setViewingEvidence] = useState<number | null>(null)
   /** El motivo que escribe el cliente cuando algo no ha quedado bien */
   const [holdReason, setHoldReason] = useState('')
   /** Y el de por qué no le vale el presupuesto (`CICLOS` §C5) */
@@ -572,6 +586,19 @@ export function JobDetailPage({
     materialsBoughtAt === null &&
     (job.status === 'CONTRACTED' || job.status === 'IN_PROGRESS')
 
+  /**
+   * El reparo y la revisión (`CICLOS` §C9).
+   *
+   * Contestar al reparo es del lado profesional: volver y arreglarlo, o decir
+   * que no está de acuerdo. **Pedir revisión pueden los dos**, y solo con un
+   * reparo encima de la mesa: sin reparo el trabajo se cierra y se paga solo a
+   * las 24 h, así que no hay nada atascado que desatascar.
+   */
+  const conReparo = job.status === 'IN_PROGRESS' && job.holdReason !== null
+  const canAnswerHold = conReparo && job.viewer === 'pro'
+  const canOpenDispute = conReparo
+  const enRevision = job.dispute !== null && job.dispute.resolvedAt === null
+
   const canAnswerQuote =
     job.viewer === 'client' &&
     quote !== null &&
@@ -602,6 +629,72 @@ export function JobDetailPage({
           ? `Te hemos pagado los ${formatAmount(result.amount)} € del material. Se lo hemos dicho al cliente.`
           : 'Queda apuntado. El pago puede tardar un momento en salir; si no llega, vuelve a pulsar.',
       )
+    })()
+  }
+
+  /** «He vuelto y ya está arreglado»: el cliente recupera sus 24 horas */
+  const doMarkFixed = (id: string) => {
+    void (async () => {
+      const { ok, error } = await markFixed(id)
+
+      if (!ok) {
+        Alert.alert('No se ha podido', error ?? 'Inténtalo de nuevo en un momento.')
+        return
+      }
+
+      Alert.alert(
+        'Se lo hemos dicho',
+        'Tiene 24 horas para mirarlo. Si no dice lo contrario, se da por bueno y se te paga.',
+      )
+    })()
+  }
+
+  /**
+   * Pedir que lo revisemos, con lo que tenga para enseñar.
+   *
+   * Las pruebas van dentro de la misma acción y no en un paso aparte: quien
+   * abre una revisión está contando algo, y la foto es la mitad de lo que
+   * cuenta. Si alguna no sube se abre igual y se dice cuántas faltaron — una
+   * foto perdida no puede dejar a nadie sin poder pedir que le revisen su
+   * dinero.
+   */
+  const doOpenDispute = (id: string) => {
+    void (async () => {
+      const { ok, error, photosFailed } = await openDispute(
+        id,
+        disputeReason.trim(),
+        disputeProof,
+      )
+
+      if (!ok) {
+        Alert.alert('No se ha podido', error ?? 'Inténtalo de nuevo en un momento.')
+        return
+      }
+
+      setDisputing(false)
+      setDisputeReason('')
+      setDisputeProof([])
+
+      Alert.alert(
+        'Lo estamos mirando',
+        photosFailed > 0
+          ? `Tendrás respuesta en quince días como mucho. ${photosFailed} de tus fotos no han subido: puedes volver a añadirlas desde la ficha.`
+          : 'Tendrás respuesta en quince días como mucho. El dinero sigue retenido mientras tanto.',
+      )
+    })()
+  }
+
+  /** Añadir algo más al expediente, mientras siga abierto */
+  const doAddEvidence = (id: string) => {
+    void (async () => {
+      const { ok, error } = await addEvidence(id, newEvidence)
+
+      if (!ok) {
+        Alert.alert('No se ha podido', error ?? 'Inténtalo de nuevo en un momento.')
+        return
+      }
+
+      setNewEvidence([])
     })()
   }
 
@@ -1381,8 +1474,109 @@ export function JobDetailPage({
                 : 'El cliente pide una corrección'}
             </Text>
             <Text style={styles.holdReason}>{job.holdReason}</Text>
+
+            {/**
+              * El plazo, y lo que pasa cuando se acabe (`CICLOS` §C9).
+              *
+              * Las dos partes lo ven, y dice lo mismo para los dos: a las 72 h
+              * sin respuesta esto pasa a revisión. Es lo que convierte un
+              * reparo en algo que **termina** — antes se quedaba ahí para
+              * siempre con el dinero parado.
+              */}
+            {job.holdAnswerByAt !== null && (
+              <Text style={styles.holdDeadline} testID="job-detail-hold-deadline">
+                {job.viewer === 'pro'
+                  ? 'Si no contestas antes de que se acabe el plazo, lo revisamos nosotros.'
+                  : 'Tiene tres días para volver o decir que no está de acuerdo. Si no contesta, lo revisamos nosotros.'}
+              </Text>
+            )}
+
+            {job.holdAnswerByAt !== null && (
+              <Countdown
+                target={job.holdAnswerByAt}
+                prefix="Plazo para contestar:"
+                expiredLabel="El plazo se ha pasado: pasa a revisión"
+                testID="job-detail-hold-countdown"
+              />
+            )}
+
+            {/* Del lado del profesional: volver, o no estar de acuerdo */}
+            {canAnswerHold && (
+              <Button
+                fullWidth
+                onPress={() => doMarkFixed(job.id)}
+                disabled={isMarkingFixed}
+                style={styles.quoteAction}
+                testID="job-detail-fixed"
+              >
+                {isMarkingFixed ? 'Un momento…' : 'Ya lo he arreglado'}
+              </Button>
+            )}
+
+            {/*
+              Y pedir que lo miremos, que pueden los dos. Para el profesional es
+              su única salida si cree que el reparo no tiene fundamento: el
+              cierre por silencio está apagado y no puede depender de que el
+              cliente se acuerde de pulsar.
+            */}
+            {canOpenDispute && (
+              <Button
+                variant="secondary"
+                fullWidth
+                onPress={() => setDisputing(true)}
+                style={styles.quoteAction}
+                testID="job-detail-dispute"
+              >
+                {job.viewer === 'pro' ? 'No estoy de acuerdo' : 'Que lo reviséis vosotros'}
+              </Button>
+            )}
           </View>
         ) : null}
+
+        {/**
+          * La revisión (`CICLOS` §C9), abierta o ya resuelta.
+          *
+          * Con el expediente dentro: lo que dijo quien la abrió y lo que ha
+          * aportado cada parte, con su fecha. Los dos ven lo mismo — un
+          * expediente en el que cada uno solo ve lo suyo son dos monólogos.
+          */}
+        {job.dispute !== null && (
+          <DisputeCard
+            dispute={job.dispute}
+            viewer={job.viewer === 'client' ? 'client' : 'pro'}
+            evidence={job.evidence}
+            onOpenEvidence={setViewingEvidence}
+            testID="job-detail-dispute-card"
+          >
+            {enRevision && (
+              <View style={styles.evidenceAdd}>
+                <Text style={styles.evidenceAddTitle}>Aportar algo más</Text>
+                <Text style={styles.evidenceAddHint}>
+                  Se guarda con la fecha de hoy y lo ve la otra parte. Mientras la
+                  revisión siga abierta puedes añadir lo que haga falta.
+                </Text>
+
+                <PhotoPicker
+                  value={newEvidence}
+                  onChange={setNewEvidence}
+                  disabled={isAddingEvidence}
+                  testID="job-detail-evidence-picker"
+                />
+
+                <Button
+                  fullWidth
+                  variant="secondary"
+                  onPress={() => doAddEvidence(job.id)}
+                  disabled={isAddingEvidence || newEvidence.length === 0}
+                  style={styles.quoteAction}
+                  testID="job-detail-evidence-send"
+                >
+                  {isAddingEvidence ? 'Subiendo…' : 'Aportar como prueba'}
+                </Button>
+              </View>
+            )}
+          </DisputeCard>
+        )}
 
         {/*
           Y el botón que paga. Con el plazo a la vista: es lo que convierte
@@ -1755,6 +1949,65 @@ export function JobDetailPage({
         onClose={() => setViewingResult(null)}
         testID="job-detail-result-viewer"
       />
+
+      {/* El expediente se mira de cerca: en una miniatura no se ve un desconchón */}
+      <PhotoViewer
+        photos={job.evidence.map((prueba) => `${API_BASE_URL}${prueba.fullUrl}`)}
+        openAt={viewingEvidence}
+        onClose={() => setViewingEvidence(null)}
+        testID="job-detail-evidence-viewer"
+      />
+
+      {/**
+        * Pedir que lo revisemos nosotros (`CICLOS` §C9).
+        *
+        * Se dice lo que va a pasar y **lo que no**: el dinero sigue retenido,
+        * hay fecha, y esto no decide quién tiene razón ni cierra ninguna
+        * puerta. Quien pulsa esto está entregando una decisión sobre su dinero
+        * a un tercero; merece saber exactamente qué está entregando.
+        *
+        * Y se puede aportar la prueba aquí mismo, porque es cuando se tiene
+        * delante: el goteo se fotografía cuando se ve, no cuando alguien abre
+        * un expediente.
+        */}
+      <Dialog
+        visible={disputing}
+        title="¿Lo revisamos nosotros?"
+        message={`Lo mira una persona de Lughly con lo que contéis los dos. El dinero sigue retenido y tendrás respuesta en quince días como mucho.\n\nDecidimos qué hacemos con lo retenido, no quién tiene razón: conservas tu derecho a acudir a consumo o a los tribunales.`}
+        actions={[
+          {
+            label: isOpeningDispute ? 'Enviando…' : 'Pedir revisión',
+            onPress: () => doOpenDispute(job.id),
+            disabled: isOpeningDispute || disputeReason.trim().length < 10,
+            testID: 'job-detail-dispute-confirm',
+          },
+          {
+            label: 'Volver',
+            variant: 'secondary',
+            onPress: () => setDisputing(false),
+            testID: 'job-detail-dispute-cancel',
+          },
+        ]}
+        onDismiss={() => setDisputing(false)}
+        testID="job-detail-dispute-dialog"
+      >
+        <Input
+          value={disputeReason}
+          onChangeText={setDisputeReason}
+          placeholder="Cuenta qué ha pasado: quien lo lea no estuvo allí"
+          multiline
+          numberOfLines={3}
+          editable={!isOpeningDispute}
+          testID="job-detail-dispute-reason"
+        />
+
+        <PhotoPicker
+          value={disputeProof}
+          onChange={setDisputeProof}
+          disabled={isOpeningDispute}
+          testID="job-detail-dispute-photos"
+        />
+      </Dialog>
 
       {/* Un ticket hay que poder leerlo, y en una miniatura no se lee nada */}
       <PhotoViewer

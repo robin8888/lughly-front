@@ -46,6 +46,12 @@ jest.mock('@/hooks/domain/useJob', () => {
     dropResult: { fee: 0, refunded: 0, voided: 0, remaining: 17 },
     /** El material dado por comprado, con los tickets que se mandaron (§C6) */
     materialsBought: [] as { jobId: string; tickets: number }[],
+    /** Los trabajos dados por arreglados tras un reparo (§C9) */
+    fixed: [] as string[],
+    /** Las revisiones pedidas, con el motivo y las pruebas que iban */
+    disputes: [] as { jobId: string; reason: string; pruebas: number }[],
+    /** Y las pruebas aportadas después */
+    evidence: [] as { jobId: string; pruebas: number }[],
   }
 
   return {
@@ -137,6 +143,39 @@ jest.mock('@/hooks/domain/useJob', () => {
         return Promise.resolve({ ok: true, result: null, error: null })
       },
       isRejecting: false,
+    }),
+    useMarkFixed: () => ({
+      markFixed: (jobId: string) => {
+        soporte.fixed.push(jobId)
+
+        return Promise.resolve({
+          ok: true,
+          error: null,
+          result: { jobId, status: 'IN_PROGRESS', confirmByAt: '2026-09-13T10:00:00.000Z' },
+        })
+      },
+      isMarkingFixed: false,
+    }),
+    useOpenDispute: () => ({
+      openDispute: (jobId: string, reason: string, pruebas: unknown[] = []) => {
+        soporte.disputes.push({ jobId, reason, pruebas: pruebas.length })
+
+        return Promise.resolve({
+          ok: true,
+          error: null,
+          photosFailed: 0,
+          result: { disputeId: 'disputa-1', jobId, status: 'DISPUTED', dueAt: '2026-09-27T10:00:00.000Z' },
+        })
+      },
+      isOpeningDispute: false,
+    }),
+    useAddEvidence: () => ({
+      addEvidence: (jobId: string, pruebas: unknown[]) => {
+        soporte.evidence.push({ jobId, pruebas: pruebas.length })
+
+        return Promise.resolve({ ok: true, error: null, photosFailed: 0 })
+      },
+      isAddingEvidence: false,
     }),
     useMaterialsBought: () => ({
       materialsBought: (jobId: string, tickets: unknown[]) => {
@@ -256,6 +295,9 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     resultPhotos: [],
     materialsReceipts: [],
     holdReason: null,
+    holdAnswerByAt: null,
+    dispute: null,
+    evidence: [],
     createdAt: '2026-08-29T09:00:00.000Z',
     serviceLines: [],
     quotes: [],
@@ -278,6 +320,9 @@ beforeEach(() => {
   soporte.acceptedQuotes.length = 0
   soporte.droppedSessions.length = 0
   soporte.materialsBought.length = 0
+  soporte.fixed.length = 0
+  soporte.disputes.length = 0
+  soporte.evidence.length = 0
   soporte.proposed.length = 0
   soporte.acceptedTimes.length = 0
   soporte.dropResult = { fee: 0, refunded: 0, voided: 0, remaining: 17 }
@@ -1363,5 +1408,177 @@ describe('JobDetailPage: el material por adelantado', () => {
     const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
     expect(queryByTestId('job-detail-materials')).toBeNull()
+  })
+})
+
+
+/**
+ * El reparo que ya no es un callejón, y la revisión (`CICLOS` §C9).
+ *
+ * Lo que se ata aquí es que **las dos partes tengan salida**: el profesional
+ * puede decir que ha vuelto o que no está de acuerdo, y el cliente puede pedir
+ * que lo miremos. Antes de esto, un reparo dejaba el dinero retenido hasta que
+ * el cliente pulsara un botón que podía no pulsar nunca.
+ *
+ * Y que la ficha diga **qué pasa con ese dinero y hasta cuándo**: es la mitad
+ * de lo que necesita saber quien lo tiene parado.
+ */
+describe('JobDetailPage: el reparo y la revisión', () => {
+  const conReparo = (cambios: Partial<ApiJobDetail> = {}) =>
+    ficha({
+      status: 'IN_PROGRESS',
+      appointmentStatus: 'DONE',
+      workFinishedAt: '2026-09-11T18:00:00.000Z',
+      holdReason: 'El grifo sigue goteando',
+      holdAnswerByAt: '2099-09-15T18:00:00.000Z',
+      ...cambios,
+    })
+
+  const disputa = {
+    openedAt: '2026-09-12T10:00:00.000Z',
+    dueAt: '2026-09-27T10:00:00.000Z',
+    openedByMe: false,
+    byDeadline: false,
+    reason: 'Ha vuelto dos veces y sigue goteando',
+    resolvedAt: null,
+    outcome: null,
+    decision: null,
+    refunded: null,
+  }
+
+  it('el profesional puede decir que ha vuelto y lo ha arreglado', () => {
+    soporte.job = conReparo({ viewer: 'pro' })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-fixed'))
+
+    expect(soporte.fixed).toEqual(['job-1'])
+  })
+
+  it('y si no está de acuerdo, pedir que lo revisemos: es su única salida', async () => {
+    soporte.job = conReparo({ viewer: 'pro' })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(screen.getByTestId('job-detail-dispute'))
+    await screen.findByTestId('job-detail-dispute-dialog')
+
+    fireEvent.changeText(
+      screen.getByTestId('job-detail-dispute-reason'),
+      'Volví el martes y lo dejé seco, tengo fotos',
+    )
+    fireEvent.press(screen.getByTestId('job-detail-dispute-confirm'))
+
+    await waitFor(() => expect(soporte.disputes).toHaveLength(1))
+    expect(soporte.disputes[0]).toMatchObject({ jobId: 'job-1' })
+  })
+
+  it('sin contar qué ha pasado no se puede pedir: quien lo lea no estuvo allí', async () => {
+    soporte.job = conReparo({ viewer: 'client' })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(screen.getByTestId('job-detail-dispute'))
+    await screen.findByTestId('job-detail-dispute-dialog')
+
+    fireEvent.changeText(screen.getByTestId('job-detail-dispute-reason'), 'mal')
+    fireEvent.press(screen.getByTestId('job-detail-dispute-confirm'))
+
+    expect(soporte.disputes).toHaveLength(0)
+  })
+
+  it('el cliente no ve el botón de arreglarlo: no es suyo', () => {
+    soporte.job = conReparo({ viewer: 'client' })
+
+    const { queryByTestId, getByTestId } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(queryByTestId('job-detail-fixed')).toBeNull()
+    /* Pero sí el de pedir revisión */
+    expect(getByTestId('job-detail-dispute')).toBeTruthy()
+  });
+
+  it('en revisión se dice el plazo y que no decidimos quién tiene razón', () => {
+    soporte.job = ficha({
+      status: 'DISPUTED',
+      viewer: 'client',
+      workFinishedAt: '2026-09-11T18:00:00.000Z',
+      dispute: disputa,
+    })
+
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByText(/Antes del 27 de septiembre/)).toBeTruthy()
+    /* La frase que separa una intermediaria de quien resuelve pleitos ajenos */
+    expect(getByTestId('job-detail-dispute-card-rights')).toBeTruthy()
+  })
+
+  it('las pruebas se ven con de quién son y de cuándo', () => {
+    soporte.job = ficha({
+      status: 'DISPUTED',
+      viewer: 'pro',
+      workFinishedAt: '2026-09-11T18:00:00.000Z',
+      dispute: disputa,
+      evidence: [
+        {
+          id: 'prueba-1',
+          url: '/m/1',
+          fullUrl: '/m/1-full',
+          side: 'CLIENT',
+          note: 'El goteo del día siguiente',
+          createdAt: '2026-09-12T09:30:00.000Z',
+        },
+      ],
+    })
+
+    const { getByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-dispute-card-evidence-0')).toBeTruthy()
+    expect(getByText('Cliente')).toBeTruthy()
+  })
+
+  it('y se puede aportar algo más mientras siga abierta', async () => {
+    soporte.job = ficha({
+      status: 'DISPUTED',
+      viewer: 'pro',
+      workFinishedAt: '2026-09-11T18:00:00.000Z',
+      dispute: disputa,
+    })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-evidence-picker'))
+    fireEvent.press(getByTestId('job-detail-evidence-send'))
+
+    await waitFor(() => expect(soporte.evidence).toEqual([{ jobId: 'job-1', pruebas: 1 }]))
+  })
+
+  it('resuelta, se lee la decisión y ya no se aportan pruebas', () => {
+    soporte.job = ficha({
+      status: 'CLOSED',
+      viewer: 'client',
+      workFinishedAt: '2026-09-11T18:00:00.000Z',
+      dispute: {
+        ...disputa,
+        resolvedAt: '2026-09-20T10:00:00.000Z',
+        outcome: 'SPLIT',
+        decision: 'Falta el remate, el resto está bien.',
+        refunded: 50,
+      },
+    })
+
+    const { getByTestId, queryByTestId, getByText } = render(
+      <JobDetailPage jobId="job-1" onBack={() => {}} />,
+    )
+
+    expect(getByTestId('job-detail-dispute-card-decision')).toBeTruthy()
+    expect(getByText(/Se te devolvieron 50,00 €/)).toBeTruthy()
+    expect(queryByTestId('job-detail-evidence-send')).toBeNull()
   })
 })

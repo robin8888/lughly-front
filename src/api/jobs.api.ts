@@ -298,6 +298,16 @@ export interface ApiJobDetail {
    * hablado no está callando, y el trabajo espera a que se arregle.
    */
   holdReason: string | null
+  /**
+   * Hasta cuándo tiene el profesional para contestar a ese reparo (§C9).
+   * Pasado, el trabajo se va a revisión solo. **Lo dice el servidor**: dos
+   * relojes distintos acabarían enseñando un plazo sobre algo que ya escaló.
+   */
+  holdAnswerByAt: string | null
+  /** La revisión, si la hay. La ven los dos con lo mismo dentro */
+  dispute: ApiJobDispute | null
+  /** Y lo que ha aportado cada parte, en el orden en que llegó */
+  evidence: ApiJobEvidence[]
   createdAt: string
   /**
    * Los servicios de la carta que se contrataron, copiados al pedirlo: si el
@@ -475,6 +485,51 @@ export interface ApiJobQuote {
   rejectionReason: string | null
   rejectedAt: string | null
   acceptedAt: string | null
+  createdAt: string
+}
+
+/** Cómo acabó una revisión: pagar, devolver o rebajar (§C9) */
+export type ApiDisputeOutcome = 'TO_PRO' | 'TO_CLIENT' | 'SPLIT'
+
+/**
+ * Un trabajo en revisión, tal y como lo leen las dos partes (§C9).
+ *
+ * Con el plazo dentro, que es la mitad de lo que hace falta saber: lo que
+ * tranquiliza a quien tiene el dinero parado no es que alguien lo esté mirando,
+ * es cuándo termina.
+ */
+export interface ApiJobDispute {
+  openedAt: string
+  /** Hasta cuándo hay para resolverla */
+  dueAt: string
+  /** Si la abrió quien está mirando la ficha */
+  openedByMe: boolean
+  /** O la abrió el plazo, porque el reparo se quedó sin contestar */
+  byDeadline: boolean
+  reason: string
+  resolvedAt: string | null
+  outcome: ApiDisputeOutcome | null
+  /** El motivo de la decisión, con las palabras de quien la tomó */
+  decision: string | null
+  /** Lo que se le devolvió al cliente */
+  refunded: number | null
+}
+
+/**
+ * Una prueba aportada en una revisión (§C9).
+ *
+ * Con **de qué lado viene y cuándo llegó**: es lo que la distingue de una foto
+ * cualquiera, y la fecha es la del servidor —la del móvil la cambia su dueño en
+ * dos toques—.
+ */
+export interface ApiJobEvidence {
+  id: string
+  /** La reducida, para la tira */
+  url: string
+  /** Y la original, para leer un ticket de cerca */
+  fullUrl: string
+  side: 'CLIENT' | 'PRO'
+  note: string | null
   createdAt: string
 }
 
@@ -801,6 +856,31 @@ export const jobsApi = {
       method: 'POST',
       auth: true,
     }),
+
+  /**
+   * «He vuelto y ya está arreglado», del lado profesional (`CICLOS` §C9).
+   *
+   * Limpia el reparo y le devuelve al cliente sus 24 horas. No reabre la cita:
+   * volver a arreglar algo mal hecho no es trabajo nuevo.
+   */
+  markFixed: (jobId: string) =>
+    apiRequest<{ jobId: string; status: ApiJobStatus; confirmByAt: string }>(
+      `/v1/jobs/${jobId}/fixed`,
+      { method: 'POST', auth: true },
+    ),
+
+  /**
+   * «Que lo revise alguien» (`CICLOS` §C9).
+   *
+   * De los dos lados, y solo con un reparo encima de la mesa. Lo que se decide
+   * es qué pasa con el dinero retenido; no cierra la vía de consumo ni la
+   * judicial.
+   */
+  openDispute: (jobId: string, reason: string) =>
+    apiRequest<{ disputeId: string; jobId: string; status: ApiJobStatus; dueAt: string }>(
+      `/v1/jobs/${jobId}/dispute`,
+      { method: 'POST', auth: true, body: { reason } },
+    ),
 
   /**
    * «Ya lo he comprado», del lado profesional (`CICLOS` §C6).

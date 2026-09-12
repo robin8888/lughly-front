@@ -6,6 +6,7 @@
  * así que aquí no hay dos hooks ni dos rutas.
  */
 
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
 import { jobsApi, type ApiJobDetail } from '@/api/jobs.api'
@@ -517,7 +518,7 @@ export function useApproveStart() {
 }
 
 /** Lo que se le puede enseñar a alguien de un fallo, si es que se puede algo */
-function mensajeDe(error: unknown): string | null {
+export function mensajeDe(error: unknown): string | null {
   return error instanceof NetworkError || error instanceof ApiError ? error.message : null
 }
 
@@ -723,4 +724,146 @@ export function useMaterialsBought() {
     },
     isMarkingMaterials: mutation.isPending,
   }
+}
+
+
+/**
+ * «He vuelto y ya está arreglado», del lado profesional (`CICLOS` §C9).
+ *
+ * Es la salida que no existía: hasta el 12 de septiembre de 2026, un reparo del
+ * cliente dejaba al profesional sin ningún botón y el dinero retenido hasta que
+ * el cliente pulsara «doy por bueno» —que podía no pulsar nunca—.
+ */
+export function useMarkFixed() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (jobId: string) => jobsApi.markFixed(jobId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
+    },
+  })
+
+  return {
+    markFixed: async (jobId: string) => {
+      try {
+        return { ok: true as const, error: null, result: await mutation.mutateAsync(jobId) }
+      } catch (error) {
+        return { ok: false as const, result: null, error: mensajeDe(error) }
+      }
+    },
+    isMarkingFixed: mutation.isPending,
+  }
+}
+
+/**
+ * «Que lo revise alguien» (`CICLOS` §C9), de cualquiera de los dos lados.
+ *
+ * Se manda **con las pruebas primero**, si las hay: quien abre una revisión
+ * está contando algo, y las fotos son la mitad de lo que cuenta. Llegando
+ * después, el aviso que reciben el otro y administración sale sin ellas.
+ *
+ * Si ninguna sube, se abre igual. Lo que no puede pasar es que una foto perdida
+ * en un portal sin cobertura deje a alguien sin poder pedir que le revisen su
+ * dinero; se dice cuántas faltaron y se pueden añadir después.
+ */
+export function useOpenDispute() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ jobId, reason }: { jobId: string; reason: string }) =>
+      jobsApi.openDispute(jobId, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      void queryClient.invalidateQueries({ queryKey: ['pro', 'assignments'] })
+    },
+  })
+
+  return {
+    openDispute: async (jobId: string, reason: string, pruebas: PickedImage[] = []) => {
+      const photosFailed = await subirPruebas(jobId, pruebas)
+
+      try {
+        return {
+          ok: true as const,
+          error: null,
+          photosFailed,
+          result: await mutation.mutateAsync({ jobId, reason }),
+        }
+      } catch (error) {
+        return { ok: false as const, result: null, photosFailed, error: mensajeDe(error) }
+      }
+    },
+    isOpeningDispute: mutation.isPending,
+  }
+}
+
+/**
+ * Aportar pruebas a algo ya abierto (`CICLOS` §C9).
+ *
+ * Se pueden añadir mientras la revisión siga sin resolver: una discusión no
+ * termina de contarse de una vez, y el otro lado puede aportar algo que obligue
+ * a enseñar otra cosa.
+ */
+export function useAddEvidence() {
+  const queryClient = useQueryClient()
+  const [isAdding, setIsAdding] = useState(false)
+
+  return {
+    addEvidence: async (jobId: string, pruebas: PickedImage[], note?: string) => {
+      setIsAdding(true)
+
+      try {
+        const photosFailed = await subirPruebas(jobId, pruebas, note)
+
+        void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+
+        if (photosFailed === pruebas.length && pruebas.length > 0) {
+          return {
+            ok: false as const,
+            photosFailed,
+            error: 'No hemos podido subirlas. Mira la cobertura y vuelve a intentarlo.',
+          }
+        }
+
+        return { ok: true as const, photosFailed, error: null }
+      } finally {
+        setIsAdding(false)
+      }
+    },
+    isAddingEvidence: isAdding,
+  }
+}
+
+/**
+ * Las pruebas, de una en una y en orden, con su nota.
+ *
+ * En serie como las demás fotos: el expediente se lee por fecha, y en paralelo
+ * el orden que ve quien decide no sería el que eligió quien las aporta.
+ * Devuelve cuántas se han quedado por el camino.
+ */
+async function subirPruebas(
+  jobId: string,
+  pruebas: PickedImage[],
+  note?: string,
+): Promise<number> {
+  if (pruebas.length === 0) return 0
+
+  const accessToken = useAuthStore.getState().accessToken
+
+  if (!accessToken) return pruebas.length
+
+  let fallidas = 0
+
+  for (const prueba of pruebas) {
+    try {
+      await uploadApi.jobEvidence(jobId, prueba, accessToken, note)
+    } catch {
+      fallidas += 1
+    }
+  }
+
+  return fallidas
 }

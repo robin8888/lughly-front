@@ -178,6 +178,32 @@ export const uploadApi = {
     ),
 
   /**
+   * Una **prueba** para una revisión (`CICLOS` §C9), de cualquiera de los dos.
+   *
+   * Admite una nota de una línea explicando qué se enseña. El lado y la fecha
+   * los pone el servidor: la fecha de un móvil la cambia su dueño en dos
+   * toques, y una prueba fechada por quien la aporta no es una prueba.
+   */
+  jobEvidence: (
+    jobId: string,
+    file: UploadFile,
+    accessToken: string,
+    note?: string,
+  ) =>
+    uploadMultipart<{
+      id: string
+      url: string
+      side: 'CLIENT' | 'PRO'
+      note: string | null
+      createdAt: string
+    }>(
+      `/v1/jobs/${jobId}/evidence`,
+      file,
+      accessToken,
+      note ? { note } : undefined,
+    ),
+
+  /**
    * Una foto de su trabajo, con el oficio al que pertenece.
    *
    * El servidor admite cinco POR OFICIO y las numera por orden de llegada, así
