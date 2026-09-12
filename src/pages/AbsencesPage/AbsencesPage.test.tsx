@@ -14,6 +14,13 @@ import { AbsencesPage } from './AbsencesPage'
  * lea de fuera, porque `jest.mock` se eleva al principio del fichero.
  */
 let mockEsEmpleado = false
+/** Lo que el servidor diría que se lleva por delante marcar esos días (§F6) */
+let mockImpacto: {
+  sessions: number
+  contracts: { jobId: string; jobTitle: string; clientName: string; trade: string; days: string[] }[]
+} = { sessions: 0, contracts: [] }
+/** Las ausencias que se han llegado a guardar de verdad */
+const mockGuardadas: { startsOn: string; endsOn: string }[] = []
 
 jest.mock('@/hooks/domain/useIsEmployee', () => ({
   useIsEmployee: () => mockEsEmpleado,
@@ -30,8 +37,13 @@ jest.mock('@/hooks/domain/useMyAbsences', () => ({
     refetch: () => {},
   }),
   useManageMyAbsences: () => ({
-    add: () => Promise.resolve({ ok: true, error: null }),
+    add: (input: { startsOn: string; endsOn: string }) => {
+      mockGuardadas.push({ startsOn: input.startsOn, endsOn: input.endsOn })
+
+      return Promise.resolve({ ok: true, error: null, impact: mockImpacto })
+    },
     remove: () => Promise.resolve({ ok: true, error: null }),
+    checkImpact: () => Promise.resolve(mockImpacto),
     isWorking: false,
   }),
 }))
@@ -41,6 +53,8 @@ jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefi
 describe('AbsencesPage', () => {
   beforeEach(() => {
     mockEsEmpleado = false
+    mockImpacto = { sessions: 0, contracts: [] }
+    mockGuardadas.length = 0
   })
 
   it('lista los tramos marcados', () => {
@@ -85,5 +99,57 @@ describe('AbsencesPage', () => {
 
     expect(getByTestId('absences-employee')).toBeTruthy()
     expect(queryByTestId('absences-add')).toBeNull()
+  })
+
+  /**
+   * El aviso de §F6.
+   *
+   * Unas vacaciones son, para quien tiene contratos fijos, un botón que
+   * cancela el trabajo de otra gente. Sin este aviso se pulsa sin verlo, y
+   * cuando se ve ya está hecho.
+   */
+  it('avisa de las sesiones fijas que se lleva por delante, y no guarda hasta el sí', async () => {
+    mockImpacto = {
+      sessions: 3,
+      contracts: [
+        {
+          jobId: 'job-1',
+          jobTitle: 'Limpieza de los lunes',
+          clientName: 'Lucía',
+          trade: 'limpieza',
+          days: ['2026-10-05', '2026-10-07', '2026-10-09'],
+        },
+      ],
+    }
+
+    const { getByTestId, findByTestId } = render(<AbsencesPage onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('absences-add'))
+
+    await findByTestId('absences-impact-dialog')
+
+    /* Todavía no se ha guardado nada: está esperando el sí */
+    expect(mockGuardadas).toHaveLength(0)
+
+    fireEvent.press(getByTestId('absences-impact-confirm'))
+
+    expect(mockGuardadas).toHaveLength(1)
+  })
+
+  /**
+   * Y sin contratos fijos no se pregunta nada: un diálogo para decir "no pasa
+   * nada" es un toque de más en cada vacación.
+   */
+  it('sin trabajo fijo esos días, se guarda sin preguntar', async () => {
+    const { getByTestId, queryByTestId, findByTestId } = render(
+      <AbsencesPage onBack={() => {}} />,
+    )
+
+    fireEvent.press(getByTestId('absences-add'))
+
+    await findByTestId('absences-notice')
+
+    expect(queryByTestId('absences-impact-dialog')).toBeNull()
+    expect(mockGuardadas).toHaveLength(1)
   })
 })

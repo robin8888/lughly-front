@@ -942,9 +942,40 @@ que ve huecos y reserva por horas.
 - En el móvil, `RecurringBookingPage`: elegir y repasar en la misma pantalla,
   con los días que no caben y sus alternativas.
 
-**Lo que falta (paso 5)**: cancelar una sesión suelta y cancelar el contrato
-(§F7), y el aviso de §F6 al marcar unas vacaciones que se llevan sesiones por
-delante. Hoy el contrato se corta por la vía del impago y nada más.
+**Construido el 12 Septiembre 2026: el paso 5, y la ficha que faltaba
+debajo.** La serie estaba entera en la base desde el día 7 y no salía por
+ningún sitio: quien contrataba los lunes, miércoles y viernes veía en su ficha
+un trabajo suelto. Así que primero `get-job` devuelve la regla y las sesiones
+que quedan —cada una con lo que cuesta, si su importe ya está apartado y **si
+cancelarla sale gratis**, que lo dice el servidor porque es la misma cuenta que
+decide el dinero—, y después las dos cancelaciones:
+
+- **`cancel-session`**: una sesión, desde los dos lados, y el contrato sigue.
+  Gratis con más de 24 h porque no hay nada que deshacer; dentro de 24 h se
+  cobra **el mínimo del contrato** y el resto de la retención se suelta. Si la
+  cancela el profesional, el cliente no paga aunque falten dos horas.
+- **`cancel-contract` ya existía pero dejaba la mitad hecha**: la regla seguía
+  activa —el barrido habría seguido creando sesiones de un trabajo cancelado— y
+  las sesiones que quedaban seguían en pie. Y arrastraba un fallo suyo de
+  antes, que no era solo de los fijos: solo cancelaba las citas que esperaban
+  respuesta, nunca la ya confirmada, y una cita confirmada bloquea el hueco del
+  profesional aunque su trabajo esté cancelado. Cada contrato roto le dejaba
+  una mañana muerta en la agenda.
+- **§F6**: marcar unas vacaciones cancela las sesiones fijas de esos días y
+  avisa a cada cliente con sus días concretos, uno por contrato. Y antes de
+  confirmar se enseña qué se va a llevar por delante, porque para quien tiene
+  contratos fijos unas vacaciones son un botón que cancela el trabajo de otra
+  gente: enseñarlo después es enseñarlo tarde.
+
+Cobrar el mínimo y no la sesión entera ha pedido que **capturar menos de lo
+retenido** exista, que Stripe ya permitía y aquí no se usaba.
+
+**Lo que sigue faltando de §F7**: la marca en la ficha. §F7 dice que un fijo
+cortado por el profesional cuenta aparte de una cita suelta, pero la marca en
+ficha de §6 —el contador de cancelaciones y plantones de los últimos 12
+meses— no existe todavía para ningún caso, así que no hay dónde contarlo
+aparte. Los datos están: `Job.cancelledById` y `cancelledAt` se guardan desde
+el 4 de septiembre.
 
 ---
 

@@ -151,4 +151,14 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.small,
     color: theme.colors.urgency,
   },
+
+  /** Lo que se lleva por delante marcar estos días: un contrato por línea */
+  impact: {
+    gap: 4,
+  },
+  impactLine: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
 })

@@ -9,7 +9,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, NetworkError } from '@/api'
-import { prosApi, type ApiAbsence } from '@/api/pros.api'
+import { prosApi, type ApiAbsence, type ApiAbsenceImpact } from '@/api/pros.api'
 import { employeesApi } from '@/api/employees.api'
 
 /** Con trabajador en la clave: si no, se verían las vacaciones del anterior */
@@ -63,12 +63,58 @@ export function useManageMyAbsences(employeeId?: string) {
       startsOn: string
       endsOn: string
       reason?: string
-    }): Promise<{ ok: boolean; error: string | null }> => {
+    }): Promise<{
+      ok: boolean
+      error: string | null
+      /** Lo que se ha llevado por delante: sesiones fijas de esos días (§F6) */
+      impact: ApiAbsenceImpact | null
+    }> => {
       try {
-        await add.mutateAsync(input)
-        return { ok: true, error: null }
+        const absence = await add.mutateAsync(input)
+
+        /*
+          Y se refrescan los trabajos: al cliente se le acaban de caer unas
+          sesiones, y al profesional le desaparecen de la agenda. Sin esto, la
+          pantalla de la que viene seguiría enseñándolas hasta que caduquen.
+        */
+        if (absence.impact.sessions > 0) {
+          void queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          void queryClient.invalidateQueries({ queryKey: ['pro', 'agenda'] })
+        }
+
+        return { ok: true, error: null, impact: absence.impact }
       } catch (error) {
-        return { ok: false, error: message(error) }
+        return { ok: false, error: message(error), impact: null }
+      }
+    },
+
+    /**
+     * Qué se llevaría por delante marcar esos días, **sin marcarlos**.
+     *
+     * Imperativo y no una consulta con clave: se pregunta al ir a confirmar, y
+     * quien mueve el selector de fechas cambia de día muchas veces antes de
+     * decidirse. Una consulta por cada toque sería una ráfaga al servidor para
+     * enseñar algo que nadie está mirando todavía.
+     *
+     * Solo para las propias: las de un empleado las marca su empresa, y el
+     * aviso previo de ese camino no existe todavía —al guardar sí se ve lo que
+     * se ha llevado, que es lo que devuelve `add`—.
+     */
+    checkImpact: async (
+      startsOn: string,
+      endsOn: string,
+    ): Promise<ApiAbsenceImpact | null> => {
+      if (employeeId) return null
+
+      try {
+        return await prosApi.absenceImpact(startsOn, endsOn)
+      } catch {
+        /*
+          Si falla, se sigue sin aviso previo. Bloquear unas vacaciones porque
+          no hemos podido contar unas sesiones sería peor: el servidor las
+          cancela y avisa igual, y quien marca sus días lo verá al guardar.
+        */
+        return null
       }
     },
     remove: async (id: string): Promise<{ ok: boolean; error: string | null }> => {

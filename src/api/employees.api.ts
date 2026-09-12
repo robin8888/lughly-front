@@ -9,6 +9,7 @@
 import { apiRequest } from './http'
 import type {
   ApiAbsence,
+  ApiCreatedAbsence,
   ApiAvailabilityCalendar,
   ApiAvailabilityWindow,
   ApiCalendarDay,
@@ -283,7 +284,7 @@ export const employeesApi = {
     id: string,
     payload: { startsOn: string; endsOn: string; reason?: string },
   ) =>
-    apiRequest<ApiAbsence>(`/v1/employees/${id}/absences`, {
+    apiRequest<ApiCreatedAbsence>(`/v1/employees/${id}/absences`, {
       method: 'POST',
       auth: true,
       body: payload,

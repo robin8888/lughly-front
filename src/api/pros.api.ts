@@ -584,6 +584,35 @@ export interface ApiAbsence {
 }
 
 /**
+ * Lo que unas vacaciones se llevan por delante
+ * (`CICLOS_DE_CONTRATACION.md` §F6).
+ *
+ * Para quien tiene contratos fijos, marcar unos días es un botón que cancela
+ * el trabajo de otra gente. Esto es lo que hay que enseñarle **antes** de
+ * confirmar: después sería enseñárselo tarde, y lo que tiene que poder es
+ * cambiar de semana.
+ */
+export interface ApiAbsenceImpact {
+  /** Cuántas sesiones fijas caen dentro de esos días */
+  sessions: number
+  /** Repartidas por contrato: con quién, y qué días de los suyos */
+  contracts: {
+    jobId: string
+    jobTitle: string
+    clientName: string
+    /** El oficio, para poder ofrecer buscar a otra persona para esos días */
+    trade: string
+    /** "AAAA-MM-DD", en orden */
+    days: string[]
+  }[]
+}
+
+/** Los días marcados, y lo que se han llevado por delante al marcarlos */
+export interface ApiCreatedAbsence extends ApiAbsence {
+  impact: ApiAbsenceImpact
+}
+
+/**
  * Un rato en el que cabe lo que se quiere contratar
  * (GET /v1/pros/:id/slots).
  *
@@ -802,8 +831,21 @@ export const prosApi = {
   /** Los días que ha marcado que no está */
   myAbsences: () => apiRequest<ApiAbsence[]>('/v1/pro/absences', { auth: true }),
 
+  /**
+   * Qué sesiones fijas se caerían si marcara esos días, sin marcar nada.
+   *
+   * Se pregunta al abrir el diálogo de confirmar, no al escribir las fechas:
+   * es una consulta por cada par de días y quien mueve el selector cambia de
+   * día muchas veces antes de decidirse.
+   */
+  absenceImpact: (startsOn: string, endsOn: string) =>
+    apiRequest<ApiAbsenceImpact>(
+      `/v1/pro/absences/impact?startsOn=${startsOn}&endsOn=${endsOn}`,
+      { auth: true },
+    ),
+
   addAbsence: (payload: { startsOn: string; endsOn: string; reason?: string }) =>
-    apiRequest<ApiAbsence>('/v1/pro/absences', {
+    apiRequest<ApiCreatedAbsence>('/v1/pro/absences', {
       method: 'POST',
       auth: true,
       body: payload,

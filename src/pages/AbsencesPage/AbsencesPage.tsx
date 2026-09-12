@@ -21,8 +21,10 @@ import { Input } from '@/components/atoms/Input'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { FormField } from '@/components/molecules/FormField'
 import { InfoCard } from '@/components/molecules/InfoCard'
+import { Dialog } from '@/components/organisms/Dialog'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
 import { useMyAbsences, useManageMyAbsences } from '@/hooks/domain/useMyAbsences'
+import type { ApiAbsenceImpact } from '@/api/pros.api'
 import { useIsEmployee } from '@/hooks/domain/useIsEmployee'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
@@ -56,18 +58,54 @@ export function AbsencesPage({
   const blocked = isEmployee && !isForEmployee
 
   const { data, isPending, isError, refetch } = useMyAbsences(!blocked, employeeId)
-  const { add, remove, isWorking } = useManageMyAbsences(employeeId)
+  const { add, remove, checkImpact, isWorking } = useManageMyAbsences(employeeId)
 
   const [from, setFrom] = useState(() => new Date())
   const [to, setTo] = useState(() => new Date())
   const [reason, setReason] = useState('')
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null)
+  /**
+   * Lo que estos días se van a llevar por delante, cuando hay algo
+   * (`CICLOS_DE_CONTRATACION.md` §F6).
+   *
+   * `null` es "todavía no se ha preguntado o no hay nada que avisar". Con algo
+   * dentro, la pantalla está esperando un sí: unas vacaciones son, para quien
+   * tiene contratos fijos, un botón que cancela el trabajo de otra gente, y
+   * eso no se pulsa sin verlo.
+   */
+  const [impact, setImpact] = useState<ApiAbsenceImpact | null>(null)
+  /** Mientras se pregunta qué se llevaría: el botón no puede quedarse mudo */
+  const [checking, setChecking] = useState(false)
 
   const absences = data ?? []
   const isBackwards = toIsoDate(to) < toIsoDate(from)
 
+  /**
+   * Antes de marcar, mirar qué se lleva por delante.
+   *
+   * Si no hay contratos fijos esos días —el caso normal— no se pregunta nada y
+   * se guarda directamente: un diálogo de confirmación para decir "no pasa
+   * nada" es un toque de más en cada vacación.
+   */
+  const handleAsk = async () => {
+    setChecking(true)
+
+    const posible = await checkImpact(toIsoDate(from), toIsoDate(to))
+
+    setChecking(false)
+
+    if (posible && posible.sessions > 0) {
+      setImpact(posible)
+      return
+    }
+
+    await handleAdd()
+  }
+
   const handleAdd = async () => {
-    const { ok, error } = await add({
+    setImpact(null)
+
+    const { ok, error, impact: caido } = await add({
       startsOn: toIsoDate(from),
       endsOn: toIsoDate(to),
       ...(reason.trim() !== '' && { reason: reason.trim() }),
@@ -79,7 +117,21 @@ export function AbsencesPage({
     }
 
     setReason('')
-    setNotice({ text: 'Guardado. Esos días no te llegará nada.', ok: true })
+
+    /*
+      Y lo que se ha caído se dice al guardar, no solo antes: es la confirmación
+      de que ha pasado de verdad, y es el único aviso que ve quien llega por el
+      camino de la empresa, que no tiene el previo.
+    */
+    setNotice({
+      text:
+        caido && caido.sessions > 0
+          ? `Guardado. Se han cancelado ${caido.sessions} ${
+              caido.sessions === 1 ? 'sesión fija' : 'sesiones fijas'
+            } y hemos avisado a ${caido.contracts.length === 1 ? 'su cliente' : 'sus clientes'}.`
+          : 'Guardado. Esos días no te llegará nada.',
+      ok: true,
+    })
   }
 
   /**
@@ -245,9 +297,9 @@ export function AbsencesPage({
 
           <Button
             fullWidth
-            loading={isWorking}
-            disabled={isBackwards || isWorking}
-            onPress={() => void handleAdd()}
+            loading={isWorking || checking}
+            disabled={isBackwards || isWorking || checking}
+            onPress={() => void handleAsk()}
             style={styles.save}
             testID="absences-add"
           >
@@ -297,6 +349,56 @@ export function AbsencesPage({
           </View>
         )}
       </FormScrollView>
+
+      {/*
+        El aviso de §F6: qué se lleva por delante marcar estos días.
+
+        Se enseña **antes** y con los días concretos, porque lo que se cancela
+        es el trabajo de otra persona: quien lee "tienes 3 sesiones fijas con
+        Lucía esa semana" todavía puede irse la siguiente.
+      */}
+      <Dialog
+        visible={impact !== null}
+        tone="danger"
+        title="Esos días tienes trabajo fijo"
+        message={
+          impact === null
+            ? ''
+            : `Se cancelan ${impact.sessions} ${
+                impact.sessions === 1 ? 'sesión' : 'sesiones'
+              } y se avisa a ${
+                impact.contracts.length === 1 ? 'quien la contrató' : 'quien las contrató'
+              }. No se les cobra nada.`
+        }
+        onDismiss={() => setImpact(null)}
+        actions={[
+          {
+            label: 'Volver',
+            variant: 'secondary',
+            onPress: () => setImpact(null),
+            testID: 'absences-impact-back',
+          },
+          {
+            label: isWorking ? 'Guardando…' : 'Marcar estos días',
+            disabled: isWorking,
+            onPress: () => void handleAdd(),
+            testID: 'absences-impact-confirm',
+          },
+        ]}
+        testID="absences-impact-dialog"
+      >
+        {/*
+          Y con quién y qué días, contrato por contrato: el número solo dice
+          cuánto, y lo que hace decidir es a quién se le deja tirado.
+        */}
+        <View style={styles.impact}>
+          {(impact?.contracts ?? []).map((contract) => (
+            <Text key={contract.jobId} style={styles.impactLine}>
+              {contract.clientName}: {contract.days.map(readable).join(', ')}
+            </Text>
+          ))}
+        </View>
+      </Dialog>
     </View>
   )
 }
