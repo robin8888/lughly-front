@@ -395,30 +395,77 @@ hoy llegaría al asignar, antes de confirmar).
 para «no vino»; si calla, `Charge VISIT RELEASED`. Si dice que no vino y
 Sergio no lo discute en 24 h, `NO_SHOW_PRO`, reembolso, marca. Si Pablo no
 estaba (foto y hora), `NO_SHOW_CLIENT`, se cobra.
-**Y un plazo que la v2 no tenía**: Sergio tiene **72 h** para presupuestar
-tras la visita; si no, `Job CLOSED` con la visita cobrada. `reassign-job` no
-se aplica a un trabajo con cobros liberados.
+**Y con esto se acaba el ciclo dentro de la app** (20 Septiembre 2026): la
+visita da el trabajo por terminado —cobrado, contado y valorable—, y el precio
+del arreglo llega como un documento por el chat. `reassign-job` no se aplica a
+un trabajo con cobros liberados.
 
-### Las 72 horas para presupuestar (12 Septiembre 2026)
+### El presupuesto sale de la app (20 Septiembre 2026)
 
-**La visita cerraba el trabajo, y con él la posibilidad de presupuestar.** Al
-darla por buena —o a las 24 h de silencio— el trabajo quedaba `COMPLETED`, y
-`CreateQuoteUseCase` no admite nada desde ahí: quien mandaba el precio al día
-siguiente se encontraba con que no podía. El presupuesto se iba por WhatsApp, y
-con él el resto del trato — que ahora es lo único que queda dentro de este
-ciclo, porque el arreglo ya se paga fuera.
+**Decisión de Robin, y es la que cierra este ciclo.** «Cuando el profesional
+tiene una cuota por visita y termina la visita, se cierra: ya él se encargará de
+presupuestar por su cuenta». Y, preguntado por qué queda entonces de
+presupuestar aquí: **«pasar presupuesto es solo que se envíe un documento a
+través de la aplicación, pero no implica cobro por parte de la app»**.
 
-Ahora la visita cobrada **deja el trabajo vivo y esperando precio**: vuelve a
-`CONTRACTED` con `quoteByAt` a 72 horas, y el barrido lo cierra si no llega
-nada. Con tres decisiones que no se deducen del código:
+Así que el presupuesto deja de ser un flujo —líneas tipadas, `QUOTED`, rechazar
+con motivo, reemitir la v2, aceptar, cita del arreglo— y pasa a ser lo que él
+dice: **un documento que el profesional le manda al cliente por el chat**, que
+ya admite PDF e imágenes. Lo que acuerden lo acuerdan ellos.
 
-- **Se mira el modo, no el tipo.** Un contrato fijo de limpieza también es
-  `JobType.QUOTE` —lo hereda del encargo directo— y sus sesiones no esperan
-  ningún presupuesto. `JobMode.QUOTE` es lo que dice qué se contrató.
-- **Una visita no es un trabajo terminado**: no sube el contador del
-  profesional ni abre la valoración. Lo que se ha hecho es ir a mirar.
-- **Y la visita sí se cobra y se libera**: el viaje se hizo (§C2b), pase lo que
-  pase con el presupuesto.
+**Es lo coherente con la decisión del 12**, y con la regla de que ningún camino
+vaya sin cobro. Desde que el arreglo se paga fuera, ese tramo de la app no
+vendía nada: mantenía un expediente gratis de una operación que ocurría en otro
+sitio, y de paso prometía una formalidad —«presupuesto aceptado»— que no
+sostenía ningún dinero nuestro.
+
+**Y por eso la visita vuelve a cerrar el trabajo.** Entre el 12 y el 20 de
+septiembre no lo cerraba: lo devolvía a `CONTRACTED` con 72 horas para
+presupuestar dentro de la app, porque desde `COMPLETED` no se podía emitir. Con
+el presupuesto fuera, ese plazo solo servía para dejar en el aire un trabajo
+hecho y cobrado. Ahora:
+
+- **La visita cierra, cobra y libera**, como cualquier otro trabajo (§C2b: el
+  viaje se hizo, pase lo que pase con el presupuesto).
+- **Cuenta como trabajo terminado y se puede valorar** — decisión de Robin del
+  mismo día. Ocho días estuvo sin contar, y era coherente mientras se esperaba
+  un arreglo detrás que contaría por los dos. Ya no viene ninguno: el cliente
+  pagó por que alguien fuera, y fue.
+- **`quoteByAt` se queda, con otro significado**: ya no es un plazo que mate
+  nada, sino **hasta cuándo sigue abierto el chat** de esa pareja para que el
+  documento pueda llegar. Quince días, la validez que el propio profesional le
+  pone a lo que ofrece (§C1).
+
+**Ese plazo del chat es la pieza que no se ve y sin la cual esto no funciona.**
+La regla del 8 de septiembre cierra el chat cuando el trabajo termina *y* el
+dinero ha salido; en una visita las dos cosas pasan **a la vez**, así que sin
+una tercera condición el hilo se callaría en el mismo instante en que se cobra
+—justo antes de que llegue lo que el cliente compró—. Vive en `chat-open.ts` y
+en la consulta de hilos, que son los dos sitios que tienen que decir lo mismo.
+
+**Lo que se borró**: `CreateQuoteUseCase`, `AcceptQuoteUseCase`,
+`RejectQuoteUseCase`, el dominio del presupuesto, los tres endpoints, la
+pantalla de presupuestar, la tarjeta del presupuesto en la ficha, y las tablas
+`quotes` y `quote_lines` con sus tipos. **Lo que se queda de fantasma**:
+`JobStatus.QUOTED` y `QUOTE_REJECTED`, porque quitar un valor de un tipo de
+Postgres obliga a recrearlo entero y lo usa la columna `status` de todos los
+trabajos. Las tablas sí se fueron: una tabla se borra sola, y dejarla haría
+creer a quien abra el esquema que el presupuesto sigue viviendo aquí.
+
+**Y en la ficha se dice, a los dos.** Al profesional, que la visita queda
+cobrada y que el presupuesto se manda por el chat, con la fecha hasta la que
+pueden escribirse. Al cliente, que la visita está pagada, que el precio le
+llegará por ahí, y **quién cobra el arreglo**: si cree que ya lo ha pagado, se
+planta delante del profesional sin dinero.
+
+---
+
+**Lo que sigue de §C5 y §C6 es historia**: cuenta cómo se construyó el
+presupuesto el 7 de septiembre y por qué dejó de cobrarse el 12. Se conserva
+porque las decisiones de dinero que hay debajo siguen valiendo —y porque de
+ellas salieron el reembolso y la transferencia parciales, que son los que hacen
+posible la rebaja de precio de §C9—, pero **nada de esto está en la app desde
+el 20 de septiembre de 2026**.
 
 **C5. Presupuesto.** `Quote v1` (líneas tipadas, visita −30, `validUntil`) →
 `Job QUOTED`. Pablo rechaza con motivo → `QUOTE_REJECTED`; Sergio emite v2 →

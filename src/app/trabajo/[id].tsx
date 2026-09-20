@@ -35,13 +35,7 @@ export default function JobDetailRoute() {
               },
             })
       }
-      /*
-       * Escribir el presupuesto, en pantalla aparte: son varias líneas con su
-       * cantidad y su precio, y meterlas aquí convertiría una pantalla de leer
-       * en un formulario largo que hay que recorrer para llegar a lo demás.
-       */
-      onQuote={(id) => router.push({ pathname: '/presupuestar', params: { id } })}
-      /* Para aceptar hay que tener tarjeta: si no la hay, se va a guardarla */
+      /* Para contratar hay que tener tarjeta: si no la hay, se va a guardarla */
       onAddPaymentMethod={() => router.push('/mis-pagos')}
       /*
         Se abre por quién, no por qué trabajo: la conversación con esa persona

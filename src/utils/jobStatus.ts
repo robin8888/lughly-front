@@ -27,16 +27,17 @@ const STATUS: Record<ApiJobStatus, StatusLook> = {
   /** Se llamaba `AWARDED` hasta el 22 Ago 2026; el rótulo no cambia, solo la clave */
   CONTRACTED: { label: 'Adjudicada', variant: 'accent2' },
   /**
-   * Se contrató la visita y ya hay presupuesto: falta que el cliente lo
-   * acepte o lo rechace. Mismo color que "te proponen un cambio": necesita
-   * que el cliente haga algo.
+   * **Fantasmas desde el 20 de septiembre de 2026**: el presupuesto salió de
+   * la app —es un documento que llega por el chat— y el servidor ya no escribe
+   * ninguno de los dos. El rótulo se queda porque el tipo de Postgres los
+   * conserva, y un estado sin rótulo se pinta en crudo en la tarjeta.
    */
   QUOTED: { label: 'Con presupuesto', variant: 'accent2' },
-  /** Rechazado, pero no cerrado del todo: vence a los 15 días sin uno nuevo */
   QUOTE_REJECTED: { label: 'Presupuesto rechazado', variant: 'outline' },
   IN_PROGRESS: { label: 'En curso', variant: 'available' },
   COMPLETED: { label: 'Terminada', variant: 'neutral' },
-  /** Cerrado sin arreglo: el presupuesto venció, o no llegó tras la visita */
+  /** Cerrado sin arreglo: hoy solo lo escribe una revisión resuelta a favor
+   * del cliente (§C9) */
   CLOSED: { label: 'Cerrada sin trato', variant: 'outline' },
   /** El cliente ha abierto una disputa sobre un cobro. Lo resuelve administración */
   DISPUTED: { label: 'En revisión', variant: 'urgency' },

@@ -159,6 +159,12 @@ añade:
   nada, el `Job` se cierra (`CLOSED`, no `EXPIRED`), la visita **ya está
   cobrada** y cuenta en su tasa. `reassign-job` —que hoy permite encargárselo
   a otro desde `EXPIRED`— **no se aplica** a un trabajo con cobros liberados.
+
+  > **Esto se construyó el 12 de septiembre de 2026 y se retiró el 20**
+  > (`CICLOS` §C5). El presupuesto dejó de ser un flujo de la app: es un
+  > documento que el profesional manda por el chat, y la visita cierra el
+  > trabajo en cuanto se da por buena. Lo que queda del plazo es cuánto sigue
+  > abierta esa conversación —quince días—, y ya no cierra nada.
 - **Plantón, en los dos sentidos, para todos los tipos de cita** (§6), no solo
   para la visita.
 - **Valorar la visita** no espera a `COMPLETED`: una `Review` cuelga de una

@@ -35,7 +35,6 @@ import { PhotoViewer } from '@/components/organisms/PhotoViewer'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { InfoCard } from '@/components/molecules/InfoCard'
 import { DateTimeField } from '@/components/molecules/DateTimeField'
-import { QuoteCard } from '@/components/organisms/QuoteCard'
 import { DisputeCard } from '@/components/organisms/DisputeCard'
 import {
   useJob,
@@ -46,8 +45,6 @@ import {
   useCompleteJob,
   useHoldJob,
   useReviewJob,
-  useRejectQuote,
-  useAcceptQuote,
   useCancelSession,
   useReschedule,
   useMarkFixed,
@@ -191,16 +188,8 @@ export interface JobDetailPageProps {
     otherAvatarUrl: string | null,
   ) => void
   /**
-   * Escribir el presupuesto, del lado profesional (`CICLOS` §C5).
-   *
-   * En pantalla aparte y no aquí dentro: son varias líneas con su cantidad y
-   * su precio, y meterlas en la ficha convertiría una pantalla de leer en un
-   * formulario largo que hay que recorrer para llegar a lo demás.
-   */
-  onQuote?: (jobId: string) => void
-  /**
-   * A guardar una tarjeta, para quien va a aceptar un presupuesto y no tiene
-   * ninguna. Sin esto, el aviso sería un callejón.
+   * A guardar una tarjeta, para quien va a contratar y no tiene ninguna. Sin
+   * esto, el aviso sería un callejón.
    */
   onAddPaymentMethod?: () => void
 }
@@ -210,7 +199,6 @@ export function JobDetailPage({
   onBack,
   onReassign,
   onOpenChat,
-  onQuote,
   onAddPaymentMethod,
 }: JobDetailPageProps) {
   const onScroll = useNavScrollHandler()
@@ -223,8 +211,6 @@ export function JobDetailPage({
   const { approveStart, isApproving } = useApproveStart()
   const { hold, isHolding } = useHoldJob()
   const { review, isReviewing } = useReviewJob()
-  const { rejectQuote, isRejecting } = useRejectQuote()
-  const { acceptQuote, isAccepting } = useAcceptQuote()
   const { cancelSession, isCancelling: isDroppingSession } = useCancelSession()
   const { proposeTime, acceptTime, isRescheduling } = useReschedule()
   const { markFixed, isMarkingFixed } = useMarkFixed()
@@ -258,11 +244,6 @@ export function JobDetailPage({
   const [viewingEvidence, setViewingEvidence] = useState<number | null>(null)
   /** El motivo que escribe el cliente cuando algo no ha quedado bien */
   const [holdReason, setHoldReason] = useState('')
-  /** Y el de por qué no le vale el presupuesto (`CICLOS` §C5) */
-  const [rejecting, setRejecting] = useState(false)
-  const [rejectReason, setRejectReason] = useState('')
-  /** Aceptarlo mueve dinero, así que se pregunta antes (§C6) */
-  const [accepting, setAccepting] = useState(false)
   /**
    * La sesión del contrato fijo que se está a punto de saltar, si alguna.
    *
@@ -528,37 +509,6 @@ export function JobDetailPage({
     !job.workFinishedAt
 
   /**
-   * El presupuesto vigente: el primero de la lista, que viene del más nuevo al
-   * más viejo. `null` en cualquier trabajo que no sea del ciclo de la visita.
-   */
-  const quote = job.quotes[0] ?? null
-
-  /**
-   * Presupuestar, del lado profesional (§C5).
-   *
-   * Se ofrece con el trabajo contratado o en marcha —ha ido o está yendo— y
-   * también después de un rechazo, que es de donde sale la v2: volver con otra
-   * versión más ajustada es el camino normal, no una excepción.
-   *
-   * Y con uno suyo encima de la mesa, para corregir una cifra mal puesta antes
-   * de que el cliente conteste. Son las mismas condiciones que comprueba el
-   * servidor, escritas aquí para que el botón no salga cuando pulsarlo daría
-   * error.
-   */
-  const canQuote =
-    job.viewer === 'pro' &&
-    job.type === 'QUOTE' &&
-    onQuote !== undefined &&
-    ['CONTRACTED', 'IN_PROGRESS', 'QUOTED', 'QUOTE_REJECTED'].includes(job.status)
-
-  /**
-   * Y contestarlo, del lado del cliente.
-   *
-   * Solo al que está pendiente y sin caducar: uno vencido ya no es un precio
-   * —el trabajo se cierra solo— y rechazarlo a posteriori pondría un motivo
-   * en un documento que ya no decidía nada.
-   */
-  /**
    * El reparo y la revisión (`CICLOS` §C9).
    *
    * Contestar al reparo es del lado profesional: volver y arreglarlo, o decir
@@ -588,54 +538,16 @@ export function JobDetailPage({
   const canOpenDispute = conReparo && job.retained > 0
   const enRevision = job.dispute !== null && job.dispute.resolvedAt === null
 
-  const canAnswerQuote =
-    job.viewer === 'client' &&
-    quote !== null &&
-    quote.status === 'SENT' &&
-    new Date(quote.validUntil) > new Date()
-
-  const doRejectQuote = (id: string) => {
-    const motivo = rejectReason.trim()
-    if (motivo.length < 5) return
-
-    void (async () => {
-      const { ok, error } = await rejectQuote(id, motivo)
-
-      if (!ok) {
-        Alert.alert(
-          'No se ha podido enviar',
-          error ?? 'Inténtalo de nuevo en un momento.',
-        )
-        return
-      }
-
-      setRejecting(false)
-      setRejectReason('')
-    })()
-  }
-
   /**
-   * Aceptar el presupuesto (`CICLOS` §C6).
+   * Una visita cerrada a la que todavía le falta el presupuesto (`CICLOS` §C5).
    *
-   * **Sin tarjeta y sin cobro desde el 12 de septiembre de 2026**: el arreglo
-   * se lo paga el cliente al profesional directamente. Lo que se firma aquí es
-   * el acuerdo, y lo que se abre es la cita para ir a hacerlo.
+   * Se mira contra el reloj y no solo contra el campo: `quoteByAt` se queda
+   * escrito en el trabajo para siempre, y lo que aquí importa es si ese plazo
+   * sigue vivo — porque es el mismo que mantiene abierto el chat, que es por
+   * donde tiene que llegar el documento.
    */
-  const doAcceptQuote = (id: string) => {
-    void (async () => {
-      const { ok, error } = await acceptQuote(id)
-
-      if (!ok) {
-        Alert.alert(
-          'No se ha podido aceptar',
-          error ?? 'Inténtalo de nuevo en un momento.',
-        )
-        return
-      }
-
-      setAccepting(false)
-    })()
-  }
+  const esperaPresupuesto =
+    job.quoteByAt !== null && new Date(job.quoteByAt) > new Date()
 
   /** «He vuelto y ya está arreglado»: el cliente recupera sus 24 horas */
   const doMarkFixed = (id: string) => {
@@ -1188,87 +1100,30 @@ export function JobDetailPage({
           </InfoCard>
         )}
 
-        {/*
-          El presupuesto, o los que haya (§C5).
-
-          **Todos y no solo el vigente**: el rechazado lleva el motivo, y ese
-          motivo es la mitad de la conversación —sin él, la v2 aparece de la
-          nada y nadie recuerda por qué la v1 no valía—. Del más nuevo al más
-          viejo, que es el orden en que se pregunta por ellos.
-        */}
-        {job.quotes.map((entry, index) => (
-          <QuoteCard
-            key={entry.id}
-            quote={entry}
-            testID={`job-detail-quote-${entry.version}`}
-          >
-            {/*
-              Contestar, solo bajo el vigente. Aceptar todavía no está: mueve
-              dinero y va con el paso siguiente (§C6). Rechazar sí, porque es
-              lo que desbloquea la v2 y no cuesta nada.
-            */}
-            {index === 0 && canAnswerQuote && (
-              <>
-                <Button
-                  fullWidth
-                  onPress={() => setAccepting(true)}
-                  loading={isAccepting}
-                  style={styles.quoteAction}
-                  testID="job-detail-quote-accept"
-                >
-                  {entry.total > 0
-                    ? `Aceptar ${formatAmount(entry.total)} €`
-                    : 'Aceptar'}
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onPress={() => setRejecting(true)}
-                  style={styles.quoteAction}
-                  testID="job-detail-quote-reject"
-                >
-                  No me vale, dile por qué
-                </Button>
-              </>
-            )}
-          </QuoteCard>
-        ))}
-
         {/**
-          * El plazo para presupuestar después de la visita (`CICLOS` §C5).
+          * La visita, cobrada y cerrada, con el presupuesto todavía por llegar
+          * (`CICLOS` §C5).
           *
-          * Lo ven los dos, y dice lo mismo a cada uno: al que tiene que
-          * escribirlo, cuánto le queda; al que espera, cuándo lo tendrá. Antes
-          * del 12 de septiembre de 2026 esto no existía porque la visita
-          * cerraba el trabajo — y con él, la posibilidad de presupuestar.
+          * Lo ven los dos y dice lo mismo a cada uno: que lo que se contrató
+          * —ir a verlo— está hecho y pagado, que el precio del arreglo llega
+          * por el chat, y hasta cuándo se pueden escribir. Lo último no es un
+          * detalle: pasada esa fecha el hilo se calla, y el profesional que lo
+          * mande el día después descubriría que no tiene por dónde.
+          *
+          * **Y se dice quién cobra el arreglo**, aquí también. Un cliente que
+          * crea que ya lo ha pagado se planta delante del profesional sin
+          * dinero.
+          *
+          * Solo mientras el plazo está vivo: la fecha se queda escrita en el
+          * trabajo para siempre, y enseñar «podéis escribiros hasta el 5 de
+          * octubre» en noviembre sería mentir.
           */}
-        {job.quoteByAt !== null && (
+        {esperaPresupuesto && job.quoteByAt !== null && (
           <Text style={styles.quoteDeadline} testID="job-detail-quote-deadline">
             {job.viewer === 'pro'
-              ? `Tienes hasta el ${formatJobWhen(job.quoteByAt)} para mandarle el presupuesto. Después, el trabajo se cierra con la visita cobrada.`
-              : `Te mandará el presupuesto antes del ${formatJobWhen(job.quoteByAt)}. Si no llega, el trabajo se cierra: la visita ya estaba pagada.`}
+              ? `La visita queda cobrada. Si le vas a pasar presupuesto, mándaselo por el chat: podéis escribiros hasta el ${formatJobWhen(job.quoteByAt)}. Lo que acordéis va entre vosotros — el arreglo no se paga por la app.`
+              : `La visita ya está pagada. El presupuesto te lo pasará por el chat, donde podéis escribiros hasta el ${formatJobWhen(job.quoteByAt)}. Si lo aceptas, el arreglo se lo pagas a él directamente.`}
           </Text>
-        )}
-
-        {/*
-          Y el botón de hacerlo, del lado del profesional. El texto cambia
-          según haya algo ya: "otro" después de un rechazo dice, sin explicarlo,
-          que reemitir es lo que toca.
-        */}
-        {canQuote && (
-          <Button
-            fullWidth
-            onPress={() => onQuote?.(job.id)}
-            style={styles.quoteAction}
-            testID="job-detail-quote"
-          >
-            {job.quotes.length === 0
-              ? 'Hacer el presupuesto'
-              : job.status === 'QUOTE_REJECTED'
-                ? 'Mandarle otro presupuesto'
-                : 'Cambiar el presupuesto'}
-          </Button>
         )}
 
         {/*
@@ -2127,93 +1982,6 @@ Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el s
         />
       </Dialog>
 
-      {/**
-        * Decir que no al presupuesto, con el motivo.
-        *
-        * **El motivo se exige**, y no por burocracia: es lo único que le dice
-        * al profesional qué cambiar en la versión siguiente. Un "no" a secas
-        * convierte reemitir en adivinar, y lo que sigue a un presupuesto
-        * rechazado sin motivo es casi siempre nada.
-        *
-        * Y se dice lo que **no** pasa al rechazar, que es lo que la gente teme:
-        * el trabajo no se cierra, y sigue pudiendo llegar otro precio.
-        */}
-      <Dialog
-        visible={rejecting}
-        title="¿Qué no te encaja?"
-        message="Se lo mandamos tal cual lo escribas. El trabajo no se cierra: puede mandarte otro presupuesto con lo que le digas. La visita que ya pagaste no se devuelve —el viaje se hizo—, pero se descuenta igual del próximo."
-        actions={[
-          {
-            label: isRejecting ? 'Enviando…' : 'Enviárselo',
-            onPress: () => doRejectQuote(job.id),
-            disabled: isRejecting || rejectReason.trim().length < 5,
-            testID: 'job-detail-quote-reject-confirm',
-          },
-          {
-            label: 'Volver',
-            variant: 'secondary',
-            onPress: () => setRejecting(false),
-            testID: 'job-detail-quote-reject-cancel',
-          },
-        ]}
-        onDismiss={() => setRejecting(false)}
-        testID="job-detail-quote-reject-dialog"
-      >
-        <Input
-          value={rejectReason}
-          onChangeText={setRejectReason}
-          placeholder="Ej. El material me parece caro, ¿hay otra marca?"
-          multiline
-          numberOfLines={3}
-          editable={!isRejecting}
-          testID="job-detail-quote-reject-reason"
-        />
-      </Dialog>
-
-      {/**
-        * Aceptar el presupuesto (§C6).
-        *
-        * **No se cobra nada aquí desde el 12 de septiembre de 2026**, y el
-        * diálogo lo dice con esas palabras. Es lo más importante de esta
-        * pantalla: un cliente que crea que ya ha pagado se planta delante del
-        * profesional sin dinero, y un profesional que espere una transferencia
-        * nuestra la espera para siempre.
-        *
-        * La cuenta entera sigue estando —la visita que ya pagó va descontada, y
-        * si no se dice parece que se le cobra dos veces el mismo viaje— porque
-        * lo que se acepta es ese número, aunque lo pague fuera.
-        */}
-      <Dialog
-        visible={accepting}
-        title="¿Aceptas el presupuesto?"
-        message={
-          quote === null
-            ? ''
-            : [
-                quote.visitCredit > 0
-                  ? `${formatAmount(quote.linesTotal)} € del arreglo, menos los ${formatAmount(quote.visitCredit)} € de la visita que ya pagaste: ${formatAmount(quote.total)} €.`
-                  : `Son ${formatAmount(quote.total)} €.`,
-                'Este importe se lo pagas directamente a quien hace el trabajo, como acordéis entre vosotros: Lughly no lo cobra ni lo retiene.',
-                'Aceptar cierra el acuerdo y abre la cita para que vaya.',
-              ].join('\n\n')
-        }
-        actions={[
-          {
-            label: isAccepting ? 'Aceptando…' : 'Aceptar el presupuesto',
-            onPress: () => doAcceptQuote(job.id),
-            disabled: isAccepting,
-            testID: 'job-detail-quote-accept-confirm',
-          },
-          {
-            label: 'Ahora no',
-            variant: 'secondary',
-            onPress: () => setAccepting(false),
-            testID: 'job-detail-quote-accept-cancel',
-          },
-        ]}
-        onDismiss={() => setAccepting(false)}
-        testID="job-detail-quote-accept-dialog"
-      />
     </View>
   )
 }

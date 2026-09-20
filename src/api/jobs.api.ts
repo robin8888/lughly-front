@@ -25,10 +25,13 @@ export type ApiJobStatus =
   /**
    * Se contrató una visita y el profesional ya emitió presupuesto; falta que
    * el cliente lo acepte o lo rechace. Real desde el 7 de septiembre de 2026,
-   * cuando se construyó `Quote` (§C5).
+   * cuando se construyó `Quote` (§C5), y **fantasma otra vez** desde el 20 de
+   * septiembre de 2026: el presupuesto salió de la app y es un documento que se
+   * manda por el chat. El servidor ya no lo escribe; se queda aquí porque el
+   * tipo de Postgres lo conserva.
    */
   | 'QUOTED'
-  /** El cliente rechazó el presupuesto. Igual que `QUOTED`, inalcanzable hoy */
+  /** El cliente rechazaba el presupuesto. Fantasma por lo mismo */
   | 'QUOTE_REJECTED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
@@ -285,8 +288,12 @@ export interface ApiJobDetail {
    */
   resultPhotos: { url: string; fullUrl: string }[]
   /**
-   * Hasta cuándo tiene el profesional para mandar el presupuesto tras la
-   * visita (§C5, 72 h). Nulo en todo lo que no sea eso.
+   * Hasta cuándo se espera el presupuesto de una visita ya cerrada (§C5).
+   * Nulo en todo lo que no sea una visita.
+   *
+   * **No vence nada**: el trabajo ya está cerrado y cobrado. Es hasta cuándo
+   * sigue abierto el chat con esa persona para que el documento pueda llegar,
+   * y es lo que la ficha usa para decirle a cada uno lo que le toca.
    */
   quoteByAt: string | null
   /**
@@ -328,18 +335,6 @@ export interface ApiJobDetail {
    * y se pagó. Vacío en cualquier trabajo que no nació de la carta.
    */
   serviceLines: { name: string; price: number }[]
-  /**
-   * Los presupuestos del trabajo, del más nuevo al más viejo
-   * (`CICLOS_DE_CONTRATACION.md` §C5).
-   *
-   * **Todos, no solo el vigente**, y los ven los dos lados: el rechazado lleva
-   * el motivo, y ese motivo es la mitad de la conversación —sin él la v2
-   * aparece de la nada—.
-   *
-   * Vacío en cualquier trabajo que no sea del ciclo de la visita: una reserva
-   * por horas o una urgencia tienen el precio pactado antes de moverse.
-   */
-  quotes: ApiJobQuote[]
   /**
    * El trabajo que no empezó a su hora, mientras se decide qué hacer
    * (`CICLOS_DE_CONTRATACION.md` §A9).
@@ -435,60 +430,6 @@ export interface ApiRescheduleResult {
   decideByAt: string | null
 }
 
-/** De qué es una línea. El tipo decide dinero, no es una etiqueta. */
-export type ApiQuoteLineKind =
-  /** Mano de obra: horas, desplazamientos, la faena */
-  | 'LABOUR'
-  /**
-   * Piezas y materiales. **El único tipo que se puede cobrar por adelantado**
-   * y el único que no se devuelve si el cliente cancela después de comprado.
-   */
-  | 'MATERIALS'
-  /** Lo demás: residuos, alquiler de maquinaria, permisos */
-  | 'OTHER'
-
-export type ApiQuoteStatus =
-  /** Emitido y esperando respuesta del cliente */
-  | 'SENT'
-  | 'ACCEPTED'
-  | 'REJECTED'
-  /** Se le pasó la validez sin respuesta */
-  | 'EXPIRED'
-  /** Llegó una versión posterior: deja de estar sobre la mesa, sin ser un "no" */
-  | 'SUPERSEDED'
-
-export interface ApiQuoteLine {
-  kind: ApiQuoteLineKind
-  concept: string
-  /** Se guardan los tres: «3 × 12,50 €» se entiende, «37,50 €» hay que creérselo */
-  quantity: number
-  unitPrice: number
-  amount: number
-}
-
-export interface ApiJobQuote {
-  id: string
-  /** v1, v2… Sube al reemitir después de un rechazo */
-  version: number
-  status: ApiQuoteStatus
-  lines: ApiQuoteLine[]
-  /** Suma de las líneas, antes de descontar la visita */
-  linesTotal: number
-  /**
-   * Lo que se descuenta por la visita ya pagada. Cero si no hubo.
-   * Congelado: es lo que el cliente pagó, no lo que el profesional cobra hoy.
-   */
-  visitCredit: number
-  /** Lo que el cliente paga al aceptar */
-  total: number
-  validUntil: string
-  /** Por qué dijo que no. Solo en los rechazados */
-  rejectionReason: string | null
-  rejectedAt: string | null
-  acceptedAt: string | null
-  createdAt: string
-}
-
 /** Cómo acabó una revisión: pagar, devolver o rebajar (§C9) */
 export type ApiDisputeOutcome = 'TO_PRO' | 'TO_CLIENT' | 'SPLIT'
 
@@ -532,25 +473,6 @@ export interface ApiJobEvidence {
   side: 'CLIENT' | 'PRO'
   note: string | null
   createdAt: string
-}
-
-export interface ApiAcceptedQuote {
-  jobId: string
-  quoteId: string
-  /**
-   * Lo acordado, con la visita ya descontada. **No es un cobro**: desde el 12
-   * de septiembre de 2026 el arreglo se lo paga el cliente al profesional
-   * directamente (§C6), y la app no lo retiene ni lo transfiere.
-   */
-  amount: number
-}
-
-/** Una línea tal y como se escribe en el formulario, sin importe todavía */
-export interface QuoteLinePayload {
-  kind: ApiQuoteLineKind
-  concept: string
-  quantity: number
-  unitPrice: number
 }
 
 export const jobsApi = {
@@ -788,58 +710,6 @@ export const jobsApi = {
    *
    * Devuelve la media del profesional ya recalculada.
    */
-  /**
-   * Emitir el presupuesto del trabajo (§C5). Lo llama el lado profesional.
-   *
-   * Cada emisión es una versión nueva y la anterior queda marcada: reemitir
-   * después de un rechazo es el camino normal, no un caso raro.
-   */
-  createQuote: (
-    jobId: string,
-    payload: {
-      lines: QuoteLinePayload[]
-      /** Cuántos días vale. Sin poner, quince */
-      validDays?: number
-    },
-  ) =>
-    apiRequest<{
-      quoteId: string
-      jobId: string
-      version: number
-      total: number
-      validUntil: string
-    }>(`/v1/jobs/${jobId}/quotes`, { method: 'POST', auth: true, body: payload }),
-
-  /**
-   * Rechazarlo, con el motivo.
-   *
-   * **No cierra el trabajo**: queda esperando otra versión quince días. El
-   * motivo se exige porque es lo único que le dice al profesional qué cambiar.
-   */
-  rejectQuote: (jobId: string, reason: string) =>
-    apiRequest<{
-      quoteId: string
-      jobId: string
-      status: ApiJobStatus
-      reissueByAt: string
-    }>(`/v1/jobs/${jobId}/quotes/reject`, {
-      method: 'POST',
-      auth: true,
-      body: { reason },
-    }),
-
-  /**
-   * Aceptar el presupuesto y poner el dinero (§C6).
-   *
-   * **El importe no viaja desde aquí**: se retiene `quote.total`, con la visita
-   * ya descontada. Mandar la cifra sería dejar elegir cuánto se paga.
-   */
-  acceptQuote: (jobId: string) =>
-    apiRequest<ApiAcceptedQuote>(`/v1/jobs/${jobId}/quotes/accept`, {
-      method: 'POST',
-      auth: true,
-    }),
-
   /**
    * «He vuelto y ya está arreglado», del lado profesional (`CICLOS` §C9).
    *

@@ -3166,6 +3166,57 @@ para que el cliente tenga sus 24 horas para discutirlo, y hubo que empezar a
 guardar la tarjeta al reservar por horas, que era lo que faltaba para poder
 cobrarla.
 
+## ✅ El presupuesto sale de la app: es un documento (20 Septiembre 2026)
+
+**Decisión de Robin**, y la que cierra el ciclo de la visita. Al leer el resumen
+de lo del 12 de septiembre lo corrigió de raíz: «cuando el profesional tiene una
+cuota por visita y termina la visita se cierra, ya que no puede presupuestar por
+medio de la app; ya él se encargará de presupuestar por su cuenta». Y después,
+lo que fija el alcance: **«pasar presupuesto es solo que se envíe un documento a
+través de la aplicación, pero no implica cobro por parte de la app»**.
+
+Hasta hoy el presupuesto no era un documento: era un **flujo** —líneas tipadas,
+`QUOTED`, rechazar con motivo, reemitir la v2, aceptar, y una cita del arreglo
+que nacía confirmada—. Sin dinero detrás desde el 12, pero con toda la
+maquinaria. Y era eso, y no el cobro, lo que obligaba a dejar el trabajo vivo 72
+horas después de la visita.
+
+### Qué queda
+
+**La visita cierra el trabajo**, como cualquier otro: cobra, libera, **cuenta en
+los trabajos terminados del profesional y se puede valorar** —lo segundo también
+decisión suya, y el motivo es que ya no viene ningún arreglo detrás que contara
+por los dos—. Y el presupuesto se manda **por el chat**, que ya admite PDF e
+imágenes desde que se construyeron los adjuntos.
+
+**La pieza que no se ve**: el chat se cierra cuando el trabajo termina y el
+dinero ha salido, y en una visita eso pasa **a la vez**. Sin una tercera
+condición, el hilo se callaría justo antes de que llegue lo que el cliente pagó.
+Así que el cierre de una visita deja `quoteByAt` a **quince días** —la validez
+que el propio profesional le pone a lo que ofrece— y mientras no venza se pueden
+escribir. Es lo único que queda de aquel plazo, y ya no mata nada.
+
+**Y la ficha lo dice, a los dos**: al profesional, que la visita queda cobrada y
+que el presupuesto va por el chat, con la fecha hasta la que se pueden escribir;
+al cliente, que la visita está pagada, que el precio le llega por ahí, y **quién
+cobra el arreglo** — un cliente que crea que ya lo ha pagado se planta delante
+del profesional sin dinero.
+
+### Qué se ha borrado
+
+Los tres casos de uso del presupuesto y su dominio, los tres endpoints, la
+pantalla de presupuestar, la tarjeta del presupuesto en la ficha y los diálogos
+de aceptar y rechazar, los hooks, los tipos del espejo de la API, y las tablas
+`quotes` y `quote_lines` con sus tipos de Postgres. **Se quedan de fantasma**
+`JobStatus.QUOTED` y `QUOTE_REJECTED`: quitar un valor de un tipo obliga a
+recrearlo entero y ese lo usa la columna `status` de todos los trabajos. Las
+tablas sí se fueron — una tabla se borra sola, y dejarla haría creer que el
+presupuesto sigue viviendo ahí.
+
+Migración `20260920100000_el_presupuesto_sale_de_la_app`. **Y en «Cómo
+funciona» también se ha corregido**: seguía diciendo «nada de pagar por fuera»,
+que dejó de ser verdad el 12 de septiembre y nadie había tocado.
+
 ## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
 
 Hoy es una pantalla de leer de corrido —`HowItWorksPage`: tres pasos y un botón
@@ -3205,4 +3256,4 @@ se dice aquí para qué son: sin esta nota, la siguiente limpieza se las lleva.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: el contrato fijo — 7 Septiembre 2026_
+_Última actualización: el presupuesto sale de la app — 20 Septiembre 2026_
