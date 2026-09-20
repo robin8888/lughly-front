@@ -3269,6 +3269,45 @@ enseña todavía en ninguna pantalla**. §6 la quiere de los últimos 12 meses, 
 es una consulta y una decisión de dónde ponerla; lo que no se puede es
 reconstruirla después si no se empieza a contar ahora.
 
+## ✅ Lo que salió de probarlo en el móvil (20 Septiembre 2026, tarde)
+
+Robin lo usó de verdad y aparecieron cinco cosas. Ninguna la habrían cogido las
+pruebas: todas son de camino, no de cálculo.
+
+**1. Cerrar sesión desde «Mi nivel» no parecía cerrar sesión.** `Stack.Protected`
+retira del navegador lo que está en su lista, y `mi-nivel` no estaba, así que la
+pantalla seguía montada con el rol ya en «cliente» y pintaba encima su aviso de
+cliente. Tercera vez que muerde lo mismo —antes el chat y las urgencias—, así
+que ahora lo comprueba `src/app.routes.test.ts` **contra el disco**. Con ella
+aparecieron otras tres rutas sin declarar.
+
+**2. Contratar un fijo no decía que el trabajador no podía.** El repaso de la
+agenda estaba detrás de un botón secundario; sin pulsarlo, la pantalla se
+quedaba muda y el botón de contratar no hacía nada. Ahora la agenda se mira sola
+al elegir, con un respiro de 400 ms, y se dice lo que pasa en los cuatro casos.
+
+**3. Y si la serie no empezaba el día pedido, tampoco.** Con septiembre
+comprometido y hueco en octubre, la app cogía la fecha del cliente, se la
+cambiaba en silencio y empezaba tres semanas más tarde. Ahora sale en rojo: qué
+día pidió, por qué no puede, y con cuál empezaría.
+
+**4. El cambio de persona era un callejón.** Le proponían a otro profesional y
+la ficha solo ofrecía cancelar: el botón de aceptar vivía en la tarjeta de Mis
+trabajos, que se mira por pestañas de tipo. Ahora está en la ficha, y el aviso
+lleva allí. Y **a quien van a mandar también se le pregunta**: se entera a la
+vez que el cliente y puede decir que no puede, por la misma puerta que cuando su
+empresa le asigna algo.
+
+**5. Las estrellas de valorar se cortaban.** `lineHeight: 18` clavado en el
+componente, y en ese modal se pintan a 34.
+
+### Y dos decisiones suyas del mismo rato
+
+- **La comisión no se le enseña al cliente**: paga un precio cerrado, no compra
+  un desglose del negocio. Se corta en el servidor, que manda `null`.
+- **El IVA va dentro del precio**: las tarifas son finales y cada profesional
+  declara su tipo —21 %, 10 % o exento con su motivo—.
+
 ## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
 
 Hoy es una pantalla de leer de corrido —`HowItWorksPage`: tres pasos y un botón
@@ -3308,4 +3347,4 @@ se dice aquí para qué son: sin esta nota, la siguiente limpieza se las lleva.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: cancelar tarde deja de ser gratis — 20 Septiembre 2026_
+_Última actualización: lo que salió de probarlo en el móvil — 20 Septiembre 2026_
