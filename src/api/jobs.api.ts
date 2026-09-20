@@ -329,6 +329,15 @@ export interface ApiJobDetail {
    * un trabajo contratado en septiembre conserva la comisión de septiembre.
    * Cero mientras no haya cobro, y cero en lo que se paga fuera de la app.
    */
+  /**
+   * **El IVA que lleva el precio.** No suma nada al total: lo parte. De 42 €
+   * al 21 % salen 34,71 de base y 7,29 de impuesto, y el cliente sigue
+   * pagando 42 €.
+   *
+   * Nulo mientras no haya precio. Con `rate` a cero el profesional está
+   * exento y `exemptionReason` dice por qué — hay que enseñarlo, no callarlo.
+   */
+  vat: ApiVatBreakdown | null
   commission: number
   /** Lo que le queda al profesional: lo cobrado menos la comisión */
   proNet: number
@@ -449,6 +458,19 @@ export interface ApiRescheduleResult {
   proposedAt: string | null
   /** Hasta cuándo hay para acordarla. `null` si ya está acordada */
   decideByAt: string | null
+}
+
+/** El impuesto que lleva dentro un precio final */
+export interface ApiVatBreakdown {
+  /** Lo que paga el cliente: **es el precio, no la base** */
+  total: number
+  base: number
+  /** Lo que de ese total es IVA. Cero si está exento */
+  vat: number
+  /** El tipo aplicado, para poder decir «IVA incluido (21 %)» */
+  rate: number
+  /** El motivo legal, solo cuando está exento */
+  exemptionReason: string | null
 }
 
 /** Cómo acabó una revisión: pagar, devolver o rebajar (§C9) */

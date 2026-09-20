@@ -109,10 +109,29 @@ export interface ApiBillingIdentity {
   legalForm: 'SELF_EMPLOYED' | 'COMPANY'
   taxId: string
   legalName: string
+  /**
+   * El IVA que llevan sus precios. **Sus tarifas son finales**: lo que teclea
+   * es lo que paga el cliente, y de ahí sale el impuesto.
+   *
+   * Veintiuno salvo que declare otra cosa. Cero es exento —clases
+   * particulares de materias curriculares, parte de los cuidados— y entonces
+   * `vatExemptionReason` dice por qué, que es lo que la ley obliga a citar en
+   * la factura.
+   */
+  vatRate: number
+  vatExemptionReason: string | null
 }
 
-export interface BillingIdentityPayload extends ApiBillingIdentity {
+export interface BillingIdentityPayload
+  extends Omit<ApiBillingIdentity, 'vatRate' | 'vatExemptionReason'> {
   taxIdKind: 'DNI' | 'NIF' | 'NIE' | 'CIF'
+  /**
+   * Opcionales a propósito: quien manda el formulario para corregir un NIF
+   * **conserva el IVA que tuviera**. Perderlo le devolvería a un 21 % que
+   * puede no ser el suyo, y eso saldría en su siguiente factura.
+   */
+  vatRate?: 21 | 10 | 0
+  vatExemptionReason?: string
 }
 
 export const paymentsApi = {

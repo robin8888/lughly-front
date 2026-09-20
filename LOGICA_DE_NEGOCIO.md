@@ -245,6 +245,11 @@ Se revisa el día 1 de cada mes sobre los 90 días anteriores, y **un plantón
 frena la subida**. El fijo de 0,40 € existe porque la pasarela cobra un fijo por
 operación.
 
+**El IVA va dentro del precio.** Las tarifas son finales: de 42 € al 21 % salen
+34,71 de base y 7,29 de impuesto, y el cliente paga 42 €. Cada profesional
+declara su tipo —21 %, 10 % o exento con el motivo— en sus datos fiscales, y la
+ficha lo desglosa. **No hay facturación todavía** (§13).
+
 **Se dice a los dos lados.** Desde el 20 de septiembre de 2026, la ficha de
 cada trabajo enseña —con las mismas cifras para el cliente y para el
 profesional— lo que se lleva Lughly y lo que le queda a quien lo hace; y el
@@ -428,9 +433,15 @@ Ordenados por lo que más urge.
 1. **No existen los Términos ni la política de privacidad.** En el registro se
    acepta un texto que no tiene documento detrás. Esto bloquea además la
    revisión interna del §8, que es una cláusula contractual.
-2. **No se dice el IVA en ninguna parte.** Ni en las tarifas que teclea el
-   profesional, ni en el desglose que ve el cliente. Hace falta decidir si lo
-   que escribe el profesional lo incluye, y enseñar precio final al consumidor.
+2. ~~**No se dice el IVA en ninguna parte.**~~ **Resuelto el 20 de septiembre de
+   2026**: las tarifas del profesional son **precios finales** —lo que teclea es
+   lo que paga el cliente— y cada profesional declara su tipo en sus datos
+   fiscales: general (21 %), reducido (10 %) o **exento con su motivo legal**,
+   que hacía falta porque las clases particulares de materias curriculares están
+   exentas (art. 20.Uno.10º LIVA) y parte de los cuidados también. El desglose
+   parte el precio en base e impuesto y lo enseña en la ficha. **Lo que sigue
+   pendiente es la factura**: ni la del profesional al cliente, ni la de la
+   comisión de Lughly al profesional, que lleva su propio 21 %.
 3. **No se recoge el consentimiento de ejecución anticipada** (arts. 102-108
    TRLGDCU). Sin él, un cliente podría desistir en 14 días de un servicio ya
    ejecutado. Hace falta una casilla al contratar y el texto que la sostenga.

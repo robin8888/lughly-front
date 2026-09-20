@@ -194,14 +194,18 @@ través de la Plataforma se obligan a canalizar por ella el pago de los servicio
 comprendidos en la cláusula 8.2. El incumplimiento reiterado podrá dar lugar a
 la suspensión de la cuenta.
 
-8.7. **Impuestos.** `[Pendiente: ver nota]`
+8.7. **Impuestos.** Los precios que publica el Profesional son **precios
+finales**: incluyen los impuestos que correspondan, y el Cliente paga
+exactamente el importe mostrado. La aplicación desglosa la base y el impuesto
+antes de confirmar. Cada Profesional declara el régimen que le corresponde —tipo
+general, reducido o exención, con indicación del precepto que la ampara—, y
+responde de su exactitud. La Comisión que percibe Lughly lleva su propio
+impuesto, que se refleja en la factura que Lughly emite al Profesional.
 
-> **Nota de revisión — IVA.** Hoy la app **no dice en ninguna parte si los
-> precios llevan IVA**. Frente a un consumidor hay que mostrar el precio final
-> con impuestos incluidos. Hay que decidir (a) si la tarifa que teclea el
-> Profesional se entiende con IVA incluido, (b) cómo se presenta el desglose, y
-> (c) el tratamiento de la comisión (factura de Lughly al Profesional, con su
-> propio IVA).
+> **Nota de revisión**: el desglose está construido desde el 20 de septiembre de
+> 2026. **La facturación no**: ni la del Profesional al Cliente —que es
+> obligación suya (6.4)— ni la de la Comisión de Lughly al Profesional. Esta
+> última hace falta para que él pueda deducirse ese IVA, y hoy no se emite.
 
 ## 9. Cancelaciones
 

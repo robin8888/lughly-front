@@ -1015,6 +1015,22 @@ export function JobDetailPage({
             {job.amount !== null && (
               <Fact label="Precio acordado" value={`${job.amount} €`} />
             )}
+            {/*
+              El impuesto, debajo del precio y no dentro: el precio ya lo
+              lleva —las tarifas de la app son finales— así que lo que falta
+              no es sumar, es decir cuánto de eso es IVA. A un consumidor hay
+              que enseñárselo, y a quien está exento hay que no inventárselo.
+            */}
+            {job.vat !== null && (
+              <Fact
+                label={job.vat.rate > 0 ? `IVA incluido (${job.vat.rate} %)` : 'IVA'}
+                value={
+                  job.vat.rate > 0
+                    ? `${formatAmount(job.vat.vat)} €`
+                    : (job.vat.exemptionReason ?? 'Exento')
+                }
+              />
+            )}
             {job.amount === null && job.maxBudget !== null && (
               <Fact label="Tu tope" value={`${job.maxBudget} €`} />
             )}

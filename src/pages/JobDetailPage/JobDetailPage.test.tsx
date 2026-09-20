@@ -267,6 +267,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     cancelFee: 0,
     commission: 0,
     proNet: 0,
+    vat: null,
     bookedMinutes: null,
     hourlyRate: null,
     holdReason: null,
@@ -966,6 +967,55 @@ describe('JobDetailPage: el contrato fijo', () => {
 
     expect(getByTestId('job-detail-break')).toBeTruthy()
     expect(getByText('Cancelar el contrato fijo')).toBeTruthy()
+  })
+})
+
+/**
+ * El IVA del precio (20 Septiembre 2026).
+ *
+ * Las tarifas de la app son **precios finales**, así que esto no suma nada:
+ * dice cuánto de lo que ya paga es impuesto. Lo que se ata aquí es que a un
+ * consumidor se le enseñe —lo exige la normativa de consumo— y que a quien
+ * está exento **no se le invente** un 21 % que no existe, que es lo que
+ * pasaría con un tipo global.
+ */
+describe('JobDetailPage: el IVA del precio', () => {
+  it('dice cuánto del precio es IVA', () => {
+    soporte.job = ficha({
+      amount: 42,
+      vat: { total: 42, base: 34.71, vat: 7.29, rate: 21, exemptionReason: null },
+    })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(screen.getByText('IVA incluido (21 %)')).toBeTruthy()
+    expect(screen.getByText('7,29 €')).toBeTruthy()
+  })
+
+  /* Y a un exento se le dice su motivo, que es lo que va en su factura */
+  it('y a un exento le dice por qué lo está', () => {
+    soporte.job = ficha({
+      amount: 25,
+      vat: {
+        total: 25,
+        base: 25,
+        vat: 0,
+        rate: 0,
+        exemptionReason: 'Clases particulares (art. 20.Uno.10º LIVA)',
+      },
+    })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(screen.getByText(/art. 20.Uno.10º LIVA/)).toBeTruthy()
+  })
+
+  it('sin precio todavía no hay impuesto que enseñar', () => {
+    soporte.job = ficha({ vat: null })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(screen.queryByText(/IVA incluido/)).toBeNull()
   })
 })
 

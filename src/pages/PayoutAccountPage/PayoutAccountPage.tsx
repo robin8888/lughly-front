@@ -89,6 +89,16 @@ export function PayoutAccountPage({ onBack }: PayoutAccountPageProps) {
   const [taxIdKind, setTaxIdKind] = useState<BillingTaxIdKind>('DNI')
   const [taxId, setTaxId] = useState('')
   const [legalName, setLegalName] = useState('')
+  /**
+   * El IVA que llevan sus precios.
+   *
+   * **Sus tarifas son precios finales**: lo que teclea en su oficio es lo que
+   * paga el cliente. Esto no cambia ninguna de ellas, dice cómo se parten —de
+   * 14 € al 21 % salen 11,57 de base y 2,43 de impuesto— y es lo que permite
+   * enseñarle al cliente el precio con impuestos, que es lo que exige la ley.
+   */
+  const [vatRate, setVatRate] = useState<21 | 10 | 0>(21)
+  const [vatExemptionReason, setVatExemptionReason] = useState('')
   /** Si está editando unos datos que ya estaban guardados */
   const [editing, setEditing] = useState(false)
 
@@ -100,6 +110,8 @@ export function PayoutAccountPage({ onBack }: PayoutAccountPageProps) {
     setTaxId(identity.taxId)
     setLegalName(identity.legalName)
     setTaxIdKind(identity.legalForm === 'COMPANY' ? 'CIF' : 'DNI')
+    setVatRate(identity.vatRate === 0 ? 0 : identity.vatRate === 10 ? 10 : 21)
+    setVatExemptionReason(identity.vatExemptionReason ?? '')
   }, [identity])
 
   /* Una sociedad se identifica con su CIF, y una persona nunca */
@@ -118,6 +130,8 @@ export function PayoutAccountPage({ onBack }: PayoutAccountPageProps) {
   const missing = [
     legalName.trim().length < 3 && 'el nombre fiscal',
     taxId.trim() === '' && `tu ${TAX_ID_LABELS[taxIdKind]}`,
+    /* Exento sin decir por qué es una factura mal emitida */
+    vatRate === 0 && vatExemptionReason.trim().length < 5 && 'por qué estás exento',
   ].filter((entry): entry is string => typeof entry === 'string')
 
   const canSave = missing.length === 0 && taxIdError === undefined && !isSaving
@@ -130,6 +144,8 @@ export function PayoutAccountPage({ onBack }: PayoutAccountPageProps) {
       taxIdKind,
       taxId: taxId.trim().toUpperCase(),
       legalName: legalName.trim(),
+      vatRate,
+      ...(vatRate === 0 && { vatExemptionReason: vatExemptionReason.trim() }),
     })
 
     if (saved) setEditing(false)
@@ -286,6 +302,53 @@ export function PayoutAccountPage({ onBack }: PayoutAccountPageProps) {
                 testID="payout-account-tax-id"
               />
             </FormField>
+
+            {/*
+              El IVA de sus precios. Va aquí y no en sus tarifas porque es un
+              dato **fiscal y único**: el mismo para todos sus oficios, y el que
+              va a salir en sus facturas.
+            */}
+            <FormField
+              label="IVA de tus precios"
+              hint="Tus tarifas son el precio final: el cliente paga lo que escribes, y el IVA va dentro."
+              error={fieldErrors.vatRate}
+            >
+              <Picker
+                options={[
+                  { value: '21', label: 'General, 21 %' },
+                  { value: '10', label: 'Reducido, 10 %' },
+                  { value: '0', label: 'Exento' },
+                ]}
+                value={String(vatRate)}
+                onChange={(value) => setVatRate(Number(value) as 21 | 10 | 0)}
+                title="Qué IVA llevan tus precios"
+                disabled={isSaving}
+                testID="payout-account-vat-rate"
+              />
+            </FormField>
+
+            {vatRate === 0 && (
+              /*
+                Y el motivo, que la ley obliga a citar en la factura. Se pide
+                aquí y no se rellena solo porque depende del oficio: una clase
+                particular y un servicio de cuidados se eximen por artículos
+                distintos.
+              */
+              <FormField
+                label="Por qué estás exento"
+                hint="Se escribe tal cual en tus facturas. Ej.: «Clases particulares, art. 20.Uno.10º LIVA»."
+                error={fieldErrors.vatExemptionReason}
+              >
+                <Input
+                  value={vatExemptionReason}
+                  onChangeText={setVatExemptionReason}
+                  placeholder="Clases particulares, art. 20.Uno.10º LIVA"
+                  editable={!isSaving}
+                  error={Boolean(fieldErrors.vatExemptionReason)}
+                  testID="payout-account-vat-reason"
+                />
+              </FormField>
+            )}
 
             <Button
               fullWidth
