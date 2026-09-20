@@ -48,12 +48,12 @@ const CLIENTE: HowItWorksStep[] = [
   {
     image: 'albertPiensa',
     title: 'Elige cómo contratarle',
-    body: 'Por horas, a precio cerrado si tiene carta de servicios, o pidiéndole que vaya a verlo y te haga un presupuesto. Cada profesional ofrece lo suyo, y el precio lo ves antes de aceptar.',
+    body: 'Por horas, a precio cerrado si tiene carta de servicios, o pidiéndole que vaya a verlo: pagas la visita y él te pasa después el presupuesto del arreglo. Cada profesional ofrece lo suyo, y lo que cuesta lo ves antes de aceptar.',
   },
   {
     image: 'albertIdea',
     title: 'Paga por la app, y no antes de tiempo',
-    body: 'El dinero se retiene al contratar y no llega al profesional hasta que el trabajo está hecho y tú lo das por bueno. Nada de pagar por fuera: si algo va mal, el cobro sigue en Lughly.',
+    body: 'El dinero se retiene al contratar y no llega al profesional hasta que el trabajo está hecho y tú lo das por bueno. Así van las horas, la carta de servicios, la visita y las urgencias. Un arreglo presupuestado no: ese se lo pagas tú a él directamente.',
   },
   {
     image: 'albert',
