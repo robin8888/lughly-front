@@ -51,6 +51,7 @@ import {
   useOpenDispute,
   useAddEvidence,
 } from '@/hooks/domain/useJob'
+import { useRespondSubstitute } from '@/hooks/domain/useInbox'
 import { StarRating } from '@/components/atoms/StarRating'
 import { Checkbox } from '@/components/atoms/Checkbox'
 import { overtimeNow } from '@/utils/overtime'
@@ -128,7 +129,7 @@ function whatIsHappening(job: ApiJobDetail): string {
         return `${quien} lo ha asignado y falta que quien va a ir lo confirme. Te avisaremos en cuanto esté cerrado.`
       }
       if (job.appointmentStatus === 'SUBSTITUTE_PROPOSED') {
-        return `${quien} propone mandar a ${job.substituteProName ?? 'otra persona'}. Decides tú: puedes aceptarlo o cancelar sin coste, desde Mis trabajos.`
+        return `${quien} propone mandar a ${job.substituteProName ?? 'otra persona'}. Decides tú: aceptas, o se cancela y no se te cobra nada.`
       }
       return `Esperando la respuesta de ${quien}. Si no contesta en el plazo, quedarás libre para encargárselo a otro.`
     case 'CONTRACTED':
@@ -216,6 +217,7 @@ export function JobDetailPage({
   const { markFixed, isMarkingFixed } = useMarkFixed()
   const { openDispute, isOpeningDispute } = useOpenDispute()
   const { addEvidence, isAddingEvidence } = useAddEvidence()
+  const { respond: respondSubstitute, isResponding } = useRespondSubstitute()
 
   /**
    * Todo el estado va **aquí arriba, con el resto de hooks**, y no junto a lo
@@ -442,6 +444,59 @@ export function JobDetailPage({
    * Por eso pide motivo y no se resuelve con un toque: ver `breaking`.
    */
   const canBreak = job.status === 'CONTRACTED'
+
+  /**
+   * Le proponen a otra persona y tiene que decir (`assign-job`, el camino del
+   * sustituto).
+   *
+   * **Faltaba aquí**, y lo encontró Robin probándolo: el botón de aceptar solo
+   * estaba en la tarjeta de Mis trabajos, y la ficha —que es donde entra
+   * cualquiera desde el aviso— solo ofrecía cancelar y un texto que la mandaba
+   * a otra pantalla. El camino se acababa ahí: quien quería aceptar no tenía
+   * cómo, y lo único que podía pulsar era tirar el encargo.
+   */
+  const decideSustituto =
+    job.viewer === 'client' && job.appointmentStatus === 'SUBSTITUTE_PROPOSED'
+
+  const responderSustituto = (accept: boolean) => {
+    const enviar = () => {
+      void respondSubstitute(job.id, accept).then(({ ok, error }) => {
+        if (!ok) {
+          Alert.alert(
+            'No se ha podido enviar tu respuesta',
+            error ?? 'Inténtalo de nuevo en un momento.',
+          )
+          return
+        }
+
+        if (accept) {
+          Alert.alert(
+            'Cambio aceptado',
+            `${job.substituteProName ?? 'Quien va a ir'} hará el trabajo. Ya tiene la dirección y la fecha.`,
+          )
+        }
+      })
+    }
+
+    /*
+      Aceptar no pregunta: es confirmar lo que la pantalla acaba de explicar, y
+      un diálogo en medio solo añade un toque. Rechazar sí, porque **cancela el
+      encargo** — y eso no se deshace.
+    */
+    if (accept) {
+      enviar()
+      return
+    }
+
+    Alert.alert(
+      'Cancelar el encargo',
+      `Si no aceptas a ${job.substituteProName ?? 'esa persona'}, el encargo se cancela y no se te cobra nada. Podrás buscar a otro profesional.`,
+      [
+        { text: 'Volver', style: 'cancel' },
+        { text: 'Cancelar el encargo', style: 'destructive', onPress: enviar },
+      ],
+    )
+  }
 
   /**
    * Lo que le va a costar cancelar, dicho **antes** de pulsar
@@ -1528,6 +1583,35 @@ export function JobDetailPage({
               Falta algo
             </Button>
 
+          </>
+        )}
+
+        {/*
+          Aceptar o no al sustituto, arriba de todo lo demás: mientras esto
+          esté sin contestar, es lo único que hay que hacer en esta pantalla.
+        */}
+        {decideSustituto && (
+          <>
+            <Button
+              fullWidth
+              onPress={() => responderSustituto(true)}
+              disabled={isResponding}
+              style={styles.bids}
+              testID="job-detail-substitute-accept"
+            >
+              {`Aceptar a ${job.substituteProName ?? 'quien proponen'}`}
+            </Button>
+
+            <Button
+              variant="secondary"
+              fullWidth
+              onPress={() => responderSustituto(false)}
+              disabled={isResponding}
+              style={styles.quoteAction}
+              testID="job-detail-substitute-decline"
+            >
+              No me vale: cancelar el encargo
+            </Button>
           </>
         )}
 

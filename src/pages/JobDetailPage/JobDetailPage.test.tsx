@@ -209,6 +209,33 @@ jest.mock('@/components/molecules/PhotoPicker', () => {
   }
 })
 
+/*
+  El sustituto: la respuesta del cliente a «te proponen a otra persona». Se
+  finge entero porque el de verdad arrastra el cliente de consultas, y lo que
+  hay que comprobar aquí es que **el botón exista y llame**, no cómo viaja.
+
+  Con su almacén dentro de la fábrica: `jest.mock` no deja mirar fuera.
+*/
+jest.mock('@/hooks/domain/useInbox', () => {
+  const answers: { jobId: string; accept: boolean }[] = []
+
+  return {
+    answers,
+    useRespondSubstitute: () => ({
+      respond: (jobId: string, accept: boolean) => {
+        answers.push({ jobId, accept })
+
+        return Promise.resolve({ ok: true, result: null, error: null })
+      },
+      isResponding: false,
+    }),
+  }
+})
+
+const { answers: substituteAnswers } = jest.requireMock('@/hooks/domain/useInbox') as {
+  answers: { jobId: string; accept: boolean }[]
+}
+
 jest.mock('@/hooks/ui/useCompactNav', () => ({ useNavScrollHandler: () => undefined }))
 jest.mock('@/hooks/ui/useTabBarClearance', () => ({ useTabBarClearance: () => 0 }))
 
@@ -1016,6 +1043,74 @@ describe('JobDetailPage: el IVA del precio', () => {
     render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
     expect(screen.queryByText(/IVA incluido/)).toBeNull()
+  })
+})
+
+/**
+ * Aceptar a quien te mandan en lugar de a quien pediste.
+ *
+ * **Lo encontró Robin probándolo**: Leticia contrata a un electricista, la
+ * empresa le asigna el trabajo a otro, a ella le llega el aviso… y en la ficha
+ * solo tenía «cancelar». El botón de aceptar existía únicamente en la tarjeta
+ * de Mis trabajos, y la ficha —donde entra cualquiera desde el aviso— la
+ * mandaba a buscarlo a otra pantalla. El camino se acababa ahí: lo único que
+ * podía pulsar era tirar el encargo.
+ */
+describe('JobDetailPage: le proponen a otra persona', () => {
+  const propuesta = {
+    viewer: 'client' as const,
+    status: 'PENDING_PRO' as const,
+    appointmentStatus: 'SUBSTITUTE_PROPOSED' as const,
+    substituteProName: 'Julián',
+  }
+
+  beforeEach(() => {
+    substituteAnswers.length = 0
+  })
+
+  it('puede aceptar desde la ficha, con el nombre de quien le mandan', () => {
+    soporte.job = ficha(propuesta)
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-substitute-accept')).toBeTruthy()
+    expect(screen.getByText('Aceptar a Julián')).toBeTruthy()
+  })
+
+  it('y al aceptar se manda la respuesta', () => {
+    soporte.job = ficha(propuesta)
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    fireEvent.press(getByTestId('job-detail-substitute-accept'))
+
+    expect(substituteAnswers).toEqual([{ jobId: 'job-1', accept: true }])
+  })
+
+  /* Y la otra salida sigue estando, pero ya no es la única */
+  it('rechazar sigue ahí, y avisa de que cancela el encargo', () => {
+    soporte.job = ficha(propuesta)
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-substitute-decline')).toBeTruthy()
+  })
+
+  /* Al profesional no le toca decidir esto */
+  it('al lado profesional no se le ofrece', () => {
+    soporte.job = ficha({ ...propuesta, viewer: 'pro' })
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-substitute-accept')).toBeNull()
+  })
+
+  /* Y sin propuesta encima de la mesa, tampoco */
+  it('sin cambio de persona no sale nada', () => {
+    soporte.job = ficha({ viewer: 'client', status: 'PENDING_PRO' })
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-substitute-accept')).toBeNull()
   })
 })
 
