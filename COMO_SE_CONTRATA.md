@@ -308,6 +308,16 @@ y `WorkLog` cuelga de la `Appointment`, no del `Job`.
 | Profesional no aparece | devolución + marca | devolución + marca | devolución + marca + guardia fuera | devolución de lo no hecho + marca |
 | Cliente no está | se cobra el mínimo | se cobra la visita | se cobra la salida | se cobra la cita como mínimo |
 
+> **Construido el 20 de septiembre de 2026**, salvo las dos filas de «a
+> mitad» y la de «cliente no está». La tabla vive en código en
+> `domain/late-cancel.ts` y la aplica `cancel-contract`; una sesión suelta de
+> un contrato fijo ya la tenía desde el 12 (§F7). Y **la penalización se le
+> transfiere al profesional**: hasta ese día una sesión cancelada tarde
+> capturaba el mínimo y el dinero se quedaba en la plataforma para siempre,
+> porque lo único que libera dinero es cerrar un trabajo y un trabajo
+> cancelado no se cierra nunca. De la «marca en ficha» se cuenta ya
+> (`ProProfile.cancelledJobs`), pero **todavía no se enseña**.
+
 «Marca en ficha» es un contador visible de cancelaciones y plantones del
 profesional en los últimos 12 meses. «Guardia fuera» apaga `availableNow` y
 exige volver a encenderlo.

@@ -3217,6 +3217,58 @@ Migración `20260920100000_el_presupuesto_sale_de_la_app`. **Y en «Cómo
 funciona» también se ha corregido**: seguía diciendo «nada de pagar por fuera»,
 que dejó de ser verdad el 12 de septiembre y nadie había tocado.
 
+## ✅ Cancelar tarde deja de ser gratis (20 Septiembre 2026)
+
+Romper un trabajo ya contratado existía desde el 12 de septiembre, pero
+**devolvía todo**: cancelar la tarde antes de que alguien fuera a tu casa
+costaba cero, y quien había apartado la mañana se quedaba sin venderla y sin
+cobrarla. Lo dice el propio comentario que había en el código —«el día que haya
+penalizaciones por cancelar tarde, se descuentan aquí»—, y hoy es ese día.
+
+### La tabla de §6, en código
+
+Vive en `domain/late-cancel.ts` con sus pruebas, porque la miran dos sitios que
+tienen que decir lo mismo: el cobro y el aviso que la ficha enseña **antes** de
+pulsar. Son cuatro plazos porque son cuatro cosas distintas las que se pierden:
+
+- **Horas y carta**: gratis con más de 24 h. Después, el mínimo del profesional
+  o el servicio más barato de los contratados — el hueco se pierde igual
+  reservara uno o cinco.
+- **La visita**: gratis con más de 4 h, porque media hora se recoloca esa misma
+  tarde. Después, entera: no tiene más precio que el desplazamiento.
+- **La urgencia**: nunca gratis. Cuando el trabajo está contratado el cerrajero
+  ya va conduciendo, así que se cobra la salida — las horas que iba a trabajar
+  allí, no.
+- **Si cancela el profesional**: devolución íntegra aunque falten dos horas.
+  Quien deja el hueco no cobra por dejarlo, y lo que le queda es la marca.
+
+### Y el agujero que había debajo
+
+**La penalización no llegaba al profesional.** Cancelar tarde una sesión de un
+contrato fijo capturaba el mínimo desde el 12 de septiembre, y ahí se quedaba:
+el cobro pasaba a `PAID` —«el dinero está en la plataforma»— y lo único que
+libera dinero en toda la app es cerrar un trabajo, sobre `COMPLETED`. Un
+trabajo cancelado no llega nunca ahí. Se le cobraba al cliente y no lo veía
+nadie más.
+
+Ahora los dos pasos van juntos en una pieza sola (`SettleCancelFeeUseCase`), y
+**si la transferencia no puede salir se devuelve**: no hay ningún «luego»
+—ningún barrido recoge un trabajo cancelado— y quedarnos con una penalización
+que no podemos pagarle a nadie es lo único que no puede pasar.
+
+### Lo que se cerró de paso
+
+El atajo del contrato fijo: cancelar la sesión de mañana cuesta el mínimo, así
+que romper el acuerdo entero la noche antes salía gratis. Ahora cuesta lo mismo
+que si la hubiera cancelado suelta, y solo por la sesión que está dentro de su
+plazo.
+
+Y **la marca de quien cancela** (`ProProfile.cancelledJobs`, migración
+`20260920160000_la_marca_de_quien_cancela`): se cuenta desde hoy y **no se
+enseña todavía en ninguna pantalla**. §6 la quiere de los últimos 12 meses, que
+es una consulta y una decisión de dónde ponerla; lo que no se puede es
+reconstruirla después si no se empieza a contar ahora.
+
 ## 📌 Pendiente: «Cómo funciona», por pasos (decidido 7 Septiembre 2026)
 
 Hoy es una pantalla de leer de corrido —`HowItWorksPage`: tres pasos y un botón
@@ -3256,4 +3308,4 @@ se dice aquí para qué son: sin esta nota, la siguiente limpieza se las lleva.
 **🐜 Lughly** — Un experto para cada trabajo
 **Próximo paso**: Día 1 - LoginPage
 
-_Última actualización: el presupuesto sale de la app — 20 Septiembre 2026_
+_Última actualización: cancelar tarde deja de ser gratis — 20 Septiembre 2026_

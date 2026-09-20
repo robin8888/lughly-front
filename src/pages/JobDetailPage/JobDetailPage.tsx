@@ -444,6 +444,26 @@ export function JobDetailPage({
   const canBreak = job.status === 'CONTRACTED'
 
   /**
+   * Lo que le va a costar cancelar, dicho **antes** de pulsar
+   * (`COMO_SE_CONTRATA` §6).
+   *
+   * La cifra viene del servidor —es la misma cuenta que después cobra— y aquí
+   * solo se envuelve en palabras. Decirlo antes no es cortesía: es la
+   * diferencia entre una penalización y un cargo sorpresa, y lo segundo acaba
+   * en una reclamación aunque el importe sea correcto.
+   *
+   * Cuando sale gratis **también se dice**. Quien tiene una cancelación
+   * delante da por hecho que le va a costar algo, y callarlo hace que no
+   * cancele: se limita a no aparecer, que es justo lo que esto viene a evitar.
+   */
+  const costeDeCancelar =
+    job.viewer !== 'client'
+      ? ''
+      : job.cancelFee > 0
+        ? ` Cancelar ahora cuesta ${formatAmount(job.cancelFee)} €: es lo que ya no puede recuperar de ese hueco. El resto se te devuelve.`
+        : ' Avisas con tiempo, así que no te cuesta nada.'
+
+  /**
    * El día del trabajo, del lado de quien lo hace.
    *
    * Empezar pide la cita confirmada y terminar pide haber empezado: son las
@@ -1563,8 +1583,8 @@ export function JobDetailPage({
                 job.sessions.filter((session) => session.status !== 'CANCELLED').length
               } sesiones y el acuerdo se acaba. Si solo no puedes un día, cancela esa sesión y el contrato sigue.`
             : job.viewer === 'client'
-              ? 'Hay alguien que ha apartado ese rato para ti. Cuéntale qué ha pasado: lo va a leer.'
-              : 'El cliente contaba contigo. Cuéntale qué ha pasado: lo va a leer, y cancelar sin explicación cuenta como un plantón.'
+              ? `Hay alguien que ha apartado ese rato para ti. Cuéntale qué ha pasado: lo va a leer.${costeDeCancelar}`
+              : 'El cliente contaba contigo. Se le devuelve todo, aunque falten dos horas: quien deja el hueco no cobra por dejarlo. Cuéntale qué ha pasado, y ten en cuenta que queda anotado en tu ficha.'
         }
         onDismiss={() => setBreaking(false)}
         actions={[
@@ -1614,6 +1634,17 @@ export function JobDetailPage({
                   el cargo, así que "se te ha devuelto" le mandaría a buscar al
                   banco algo que no existe.
                 */
+                /*
+                  La penalización primero, cuando la hay: es lo que va a
+                  buscar quien acaba de cancelar tarde, y leer «se te han
+                  devuelto 28 €» sin saber que se han quedado otros 28 se
+                  entiende como un error nuestro.
+                */
+                const multa =
+                  result.fee > 0
+                    ? ` Se han cobrado ${formatAmount(result.fee)} € por avisar con poco margen, y van para quien tenía apartado el rato.`
+                    : ''
+
                 const dinero =
                   result.releasedCharges > 0
                     ? ' Parte del importe ya se había liberado al profesional: escríbenos y lo revisamos.'
@@ -1631,7 +1662,7 @@ export function JobDetailPage({
 
                 Alert.alert(
                   job.recurrence ? 'Contrato cancelado' : 'Trabajo cancelado',
-                  `Hemos avisado a la otra parte.${sesiones}${dinero}`,
+                  `Hemos avisado a la otra parte.${sesiones}${multa}${dinero}`,
                 )
               })()
             },

@@ -297,6 +297,16 @@ export interface ApiJobDetail {
    */
   quoteByAt: string | null
   /**
+   * Lo que le costaría al cliente cancelar este trabajo **ahora mismo**
+   * (`COMO_SE_CONTRATA` §6). Cero si sale gratis, si ya no está contratado, o
+   * si quien mira es el profesional: su cancelación no le cuesta dinero al
+   * cliente, le cuesta una marca en su ficha.
+   *
+   * Lo calcula el servidor y no la app, y es la misma cuenta que después cobra
+   * de verdad. Con dos relojes, el aviso diría «gratis» encima de un cargo.
+   */
+  cancelFee: number
+  /**
    * Lo reservado y la tarifa, para ofrecerle cobrar el rato de más al terminar
    * (§A6). Solo del lado profesional y solo en reservas por horas.
    */
@@ -635,6 +645,12 @@ export const jobsApi = {
     apiRequest<{
       jobId: string
       status: ApiJobStatus
+      /**
+       * Lo que se le ha cobrado al cliente por cancelar tarde (§6), y que va
+       * entero a quien se quedó con el hueco. Cero si avisó con tiempo o si
+       * quien cancela es el profesional.
+       */
+      fee: number
       refunded: number
       voided: number
       releasedCharges: number

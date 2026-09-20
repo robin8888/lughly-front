@@ -264,6 +264,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     resultPhotos: [],
     retained: 77,
     quoteByAt: null,
+    cancelFee: 0,
     bookedMinutes: null,
     hourlyRate: null,
     holdReason: null,
@@ -963,6 +964,54 @@ describe('JobDetailPage: el contrato fijo', () => {
 
     expect(getByTestId('job-detail-break')).toBeTruthy()
     expect(getByText('Cancelar el contrato fijo')).toBeTruthy()
+  })
+})
+
+/**
+ * Lo que cuesta cancelar, dicho antes de pulsar
+ * (`COMO_SE_CONTRATA` §6, 20 Septiembre 2026).
+ *
+ * Es la diferencia entre una penalización y un cargo sorpresa. Lo segundo
+ * acaba en una reclamación aunque el importe sea el correcto, y el número lo
+ * pone el servidor: aquí solo se comprueba que **se lee**, y que se lee lo que
+ * toca a cada lado.
+ */
+describe('JobDetailPage: lo que cuesta cancelar', () => {
+  it('al cliente se le dice la cifra antes de confirmar', () => {
+    soporte.job = ficha({ viewer: 'client', status: 'CONTRACTED', cancelFee: 28 })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-break'))
+
+    expect(screen.getByText(/Cancelar ahora cuesta 28,00 €/)).toBeTruthy()
+  })
+
+  /**
+   * Y cuando sale gratis **también se dice**. Quien tiene una cancelación
+   * delante da por hecho que le va a costar algo, y callarlo hace que no
+   * cancele: se limita a no aparecer, que es lo que esto viene a evitar.
+   */
+  it('y cuando no cuesta nada, también se dice', () => {
+    soporte.job = ficha({ viewer: 'client', status: 'CONTRACTED', cancelFee: 0 })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-break'))
+
+    expect(screen.getByText(/no te cuesta nada/)).toBeTruthy()
+  })
+
+  /* Al profesional no se le habla de cifras: lo suyo es la marca en su ficha */
+  it('al profesional se le dice que queda anotado, no lo que cuesta', () => {
+    soporte.job = ficha({ viewer: 'pro', status: 'CONTRACTED', cancelFee: 0 })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    fireEvent.press(getByTestId('job-detail-break'))
+
+    expect(screen.getByText(/queda anotado en tu ficha/)).toBeTruthy()
+    expect(screen.queryByText(/Cancelar ahora cuesta/)).toBeNull()
   })
 })
 
