@@ -250,6 +250,44 @@ describe('RecurringBookingPage', () => {
     expect(screen.queryByTestId('recurring-book')).toBeNull()
   })
 
+  /**
+   * **El segundo fallo, encontrado por Robin el mismo día.**
+   *
+   * Pedir desde el 21 de septiembre a alguien que tiene el mes comprometido no
+   * deja la serie vacía —en octubre sí hay hueco—, así que no saltaba ningún
+   * aviso y el contrato **empezaba tres semanas más tarde sin decir nada**. El
+   * cliente elegía una fecha y la app, callando, le daba otra.
+   */
+  it('avisa cuando la serie no empezaría el día pedido', async () => {
+    soporte.days = [
+      dia('2026-09-21', false, [], 'busy'),
+      dia('2026-09-28', false, [], 'busy'),
+      dia('2026-10-05', true),
+    ]
+
+    abrir()
+    await elegirLunes()
+
+    const aviso = screen.getByTestId('recurring-status')
+
+    /* La fecha que pidió y por qué no puede */
+    expect(aviso).toHaveTextContent(/21 de septiembre/)
+    expect(aviso).toHaveTextContent(/ya tiene otro trabajo a esa hora/)
+    /* Y la que de verdad va a contratar */
+    expect(aviso).toHaveTextContent(/empezaríais el/)
+    expect(aviso).toHaveTextContent(/5 de octubre/)
+  })
+
+  /* Y si empieza cuando ha pedido, no se le da la matraca */
+  it('sin retraso en el arranque no dice nada de fechas', async () => {
+    soporte.days = [dia('2026-09-21', true), dia('2026-09-28', true)]
+
+    abrir()
+    await repasar()
+
+    expect(screen.queryByText(/empezaríais el/)).toBeNull()
+  })
+
   it('si no queda ningún día, no se ofrece contratar', async () => {
     soporte.days = [dia('2026-09-07', false, [], 'away'), dia('2026-09-14', false, [], 'closed')]
 

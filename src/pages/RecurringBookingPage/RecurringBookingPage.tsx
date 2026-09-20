@@ -271,6 +271,35 @@ export function RecurringBookingPage({
   /** Si lo que se enseña corresponde a lo que hay elegido ahora mismo */
   const repasoAlDia = result !== null && !stale && !isChecking
 
+  /** El primer día que de verdad va a haber, con lo elegido ahora */
+  const primeroQueCabe = useMemo(
+    () =>
+      dias.find((day) => {
+        const move = moves[day.date]
+
+        if (move === null) return false
+        if (move !== undefined) return true
+
+        return day.fits
+      }) ?? null,
+    [dias, moves],
+  )
+
+  /**
+   * Los días que se caen **antes de que la serie arranque de verdad**.
+   *
+   * Es el caso que faltaba, y el que Robin encontró probándolo: pedir desde
+   * el 21 de septiembre a alguien que tiene el mes comprometido no dejaba la
+   * serie vacía —en octubre sí hay hueco—, así que no saltaba ningún aviso y
+   * el contrato **empezaba tres semanas más tarde sin decir nada**. El cliente
+   * elegía una fecha y la app, callando, le daba otra.
+   */
+  const caidosAlPrincipio = useMemo(() => {
+    if (primeroQueCabe === null) return []
+
+    return dias.slice(0, dias.indexOf(primeroQueCabe))
+  }, [dias, primeroQueCabe])
+
   /** Sin número no hay portal al que ir, y sin código postal tampoco */
   const direccionLista =
     address !== null && detail.number.trim() !== '' && isPostcode(detail.postcode)
@@ -438,6 +467,19 @@ export function RecurringBookingPage({
         ) : checkError !== null ? (
           <Text style={[styles.status, styles.statusBad]} testID="recurring-status">
             {checkError}
+          </Text>
+        ) : caidosAlPrincipio.length > 0 && primeroQueCabe !== null ? (
+          /*
+            No está vacío, pero **no empieza cuando ha pedido**. Se dice con
+            las dos fechas y el motivo: sin la primera no sabe qué ha fallado,
+            y sin la segunda no sabe qué va a contratar.
+          */
+          <Text style={[styles.status, styles.statusBad]} testID="recurring-status">
+            {`${nombre} no puede el ${formatIsoDayLong(caidosAlPrincipio[0]!.date)}: ${
+              caidosAlPrincipio[0]!.miss
+                ? MISS_TEXT[caidosAlPrincipio[0]!.miss!]
+                : 'no le cabe'
+            }. Con lo que has elegido, empezaríais el ${formatIsoDayLong(primeroQueCabe.date)}.`}
           </Text>
         ) : cuentan === 0 ? (
           /*
