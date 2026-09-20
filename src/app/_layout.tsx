@@ -201,7 +201,6 @@ export default function RootLayout() {
               <Stack.Screen name="mis-ausencias" />
               <Stack.Screen name="mis-recargos" />
               <Stack.Screen name="mis-festivos" />
-              <Stack.Screen name="presupuestar" />
               <Stack.Screen name="fijo" />
               <Stack.Screen name="trabajo/[id]" />
               {/*
@@ -218,6 +217,17 @@ export default function RootLayout() {
               <Stack.Screen name="pro/[id]" />
               <Stack.Screen name="mis-pagos" />
               <Stack.Screen name="contratar-carta" />
+              <Stack.Screen name="reservar-horas" />
+              {/*
+                La cartera y el nivel, que faltaban. Se entra a las dos desde
+                Mi cuenta, y sin declararlas aquí **no se retiraban al cerrar
+                sesión**: quien pasaba por su nivel y después cerraba desde Mi
+                cuenta se quedaba mirando «Los niveles son del profesional» —la
+                pantalla seguía montada, y sin sesión su rol ya era el de
+                cliente—. Parecía que no se había cerrado la sesión.
+              */}
+              <Stack.Screen name="mi-cobro" />
+              <Stack.Screen name="mi-nivel" />
               {/*
                 El chat, igual que `urgencia/[id]`: sin declarar aquí, el
                 navegador no sabe que tiene que retirarla al cerrar sesión.

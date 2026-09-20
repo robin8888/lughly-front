@@ -10,8 +10,13 @@
      * - `geojson`: el espacio de nombres `GeoJSON`, que antes llegaba de
      *   rebote por los tipos de MapLibre y ya no, porque el paquete se carga
      *   con `require` para poder sobrevivir sin el módulo nativo
+     * - `node`: **solo para una prueba**, `app.routes.test.ts`, que lee
+     *   `src/app` del disco para comprobar que todas las pantallas están
+     *   declaradas en el navegador. Es lo que evita el fallo de cerrar sesión
+     *   con una pantalla sin declarar, y no hay forma de comprobarlo sin
+     *   mirar los ficheros. En código de app no se usa nada de Node.
      */
-    "types": ["jest", "geojson"],
+    "types": ["jest", "geojson", "node"],
     "paths": {
       "@/*": ["./src/*"]
     }
