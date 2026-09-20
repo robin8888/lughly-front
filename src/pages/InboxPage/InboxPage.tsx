@@ -422,6 +422,27 @@ export function InboxPage({
                         Te lo ha asignado tu empresa
                       </Text>
                     </Pressable>
+                  ) : job.proposedToMe ? (
+                    /**
+                     * **A él le proponen ir**, y decide el cliente. No puede
+                     * aceptarlo —no es suyo—, pero sí decir que no puede, que
+                     * es lo que faltaba: antes se enteraba de que tenía el
+                     * jueves cogido cuando ya estaba cerrado.
+                     */
+                    <Pressable
+                      onPress={() => setConfirming(job)}
+                      style={styles.primaryChoice}
+                      accessibilityRole="button"
+                      testID={`inbox-${job.id}-proposed`}
+                    >
+                      <Text style={styles.primaryChoiceText}>
+                        ¿Puedes hacerlo?
+                      </Text>
+                      <Text style={styles.primaryChoiceHint}>
+                        Tu empresa propone mandarte. Lo acepta el cliente; si no
+                        puedes, dilo ahora.
+                      </Text>
+                    </Pressable>
                   ) : isProposed ? (
                     /**
                      * Ya se propuso a alguien y toca esperar. Se deja a la

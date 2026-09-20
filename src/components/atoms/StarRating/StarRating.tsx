@@ -59,7 +59,13 @@ export function StarRating({
               <Text
                 style={[
                   styles.star,
-                  { fontSize: size },
+                  /*
+                    El alto de línea sale del tamaño y no de una constante: el
+                    glifo de la estrella se sale de su caja si la línea es más
+                    baja que él, y se ve cortado. El 1,2 da aire arriba y abajo
+                    sin separar las estrellas entre sí.
+                  */
+                  { fontSize: size, lineHeight: Math.round(size * 1.2) },
                   filled ? styles.filled : styles.empty,
                 ]}
               >

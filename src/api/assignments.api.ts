@@ -182,6 +182,14 @@ export interface ApiInboxItem {
   requestedProName: string
   /** A quién se ha propuesto en su lugar, si ya se propuso */
   substituteProName: string | null
+  /**
+   * Si **a quien mira** es a quien proponen mandar.
+   *
+   * Lo decide el servidor: el mismo encargo se lee de dos maneras según quién
+   * lo abra —la empresa ve «has propuesto a Julián» y Julián ve «te han
+   * propuesto»—, y esa cuenta no debe repetirse aquí.
+   */
+  proposedToMe: boolean
   photoCount: number
   /**
    * Las fotos que adjuntó el cliente. `url` es la reducida —para la tira— y

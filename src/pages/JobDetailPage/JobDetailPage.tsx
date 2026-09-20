@@ -2083,24 +2083,34 @@ Sale en su ficha, con tu nombre y la inicial de tu apellido. Es lo que mira el s
         onDismiss={() => setReviewing(false)}
         testID="job-detail-review-dialog"
       >
-        <StarRating
-          rating={rating}
-          interactive
-          onChange={setRating}
-          size={32}
-          testID="job-detail-review-stars"
-        />
+        {/*
+          Las dos cosas en su propio bloque y con aire entre ellas: el diálogo
+          pone sus hijos uno detrás de otro sin separación, así que las
+          estrellas quedaban pegadas al campo de la reseña.
+        */}
+        <View style={styles.reviewForm}>
+          <View style={styles.reviewStars}>
+            <StarRating
+              rating={rating}
+              interactive
+              onChange={setRating}
+              size={34}
+              testID="job-detail-review-stars"
+            />
+          </View>
 
-        <Input
-          value={reviewComment}
-          onChangeText={setReviewComment}
-          placeholder="Si quieres, cuenta cómo fue (opcional)"
-          multiline
-          numberOfLines={3}
-          maxLength={1000}
-          editable={!isReviewing}
-          testID="job-detail-review-comment"
-        />
+          <Input
+            value={reviewComment}
+            onChangeText={setReviewComment}
+            placeholder="Si quieres, cuenta cómo fue (opcional)"
+            multiline
+            numberOfLines={3}
+            maxLength={1000}
+            editable={!isReviewing}
+            style={styles.reviewComment}
+            testID="job-detail-review-comment"
+          />
+        </View>
       </Dialog>
 
       {/**

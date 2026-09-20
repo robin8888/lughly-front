@@ -269,6 +269,22 @@ export const styles = StyleSheet.create({
   },
 
   /** Lo contratado de la carta, copiado al pedirlo */
+  /* La valoración del modal: estrellas arriba, reseña debajo, con aire */
+  reviewForm: {
+    width: '100%',
+    gap: 14,
+    marginTop: 18,
+  },
+  reviewStars: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  /* Que se vean las tres líneas que promete, también en Android */
+  reviewComment: {
+    minHeight: 88,
+    textAlignVertical: 'top',
+  },
+
   /* El reparto del dinero: lo leen los dos lados en la misma tarjeta */
   commission: {
     marginTop: 14,

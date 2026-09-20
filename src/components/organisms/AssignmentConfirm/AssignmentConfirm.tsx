@@ -62,10 +62,17 @@ export function AssignmentConfirm({
   const isAssigned = job.appointmentStatus === 'PENDING_WORKER'
 
   /**
+   * Y lo que le **proponen**: ahí decide el cliente, así que él solo puede
+   * decir que no puede. Va directo al motivo, porque preguntarle si puede
+   * sobra cuando la única respuesta que cabe es «no».
+   */
+  const isProposedToMe = job.proposedToMe
+
+  /**
    * Un encargo sin asignar entra ya explicando: su "sí" es elegir quién va, y
    * eso se decide en la lista, no aquí.
    */
-  const explaining = !isAssigned || asked
+  const explaining = !isAssigned || isProposedToMe || asked
   const isWorking = isConfirming || isDeclining
 
   const close = () => {
@@ -80,9 +87,10 @@ export function AssignmentConfirm({
       Dos caminos porque son dos preguntas distintas al servidor: confirmar lo
       asignado, o rechazar lo encargado. Lo que se escribe es lo mismo.
     */
-    const { ok, error: failed } = isAssigned
-      ? await confirm(job.id, accept, accept ? undefined : reason.trim())
-      : await decline(job.id, reason.trim())
+    const { ok, error: failed } =
+      isAssigned || isProposedToMe
+        ? await confirm(job.id, accept, accept ? undefined : reason.trim())
+        : await decline(job.id, reason.trim())
 
     if (!ok) {
       setError(failed ?? 'No hemos podido enviar tu respuesta.')
@@ -101,7 +109,7 @@ export function AssignmentConfirm({
         tone="danger"
         title="¿Por qué no puedes?"
         message={
-          isAssigned
+          isAssigned || isProposedToMe
             ? 'Se lo decimos a tu empresa para que mande a otro. Al cliente no se le enseña lo que escribas aquí.'
             : 'Al cliente le diremos que no puedes y quedará libre para buscar a otro, pero no verá lo que escribas aquí.'
         }
