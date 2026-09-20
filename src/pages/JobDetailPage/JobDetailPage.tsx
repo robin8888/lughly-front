@@ -1043,29 +1043,29 @@ export function JobDetailPage({
           </View>
 
           {/**
-            * En qué se va el dinero, dicho a los dos (decisión de Robin, 20 de
-            * septiembre de 2026).
+            * Lo que cobra de verdad quien hace el trabajo, y lo que se queda
+            * Lughly. **Solo para él.**
             *
-            * Las mismas dos cifras para el cliente y para el profesional, y en
-            * el mismo sitio. Para él es lo que va a ingresar de verdad, que es
-            * lo único que le importa de un encargo; para el cliente es saber
-            * qué parte de lo suyo es nuestra — y es lo que hace creíble que
-            * cobramos por traer el encargo y no por el arreglo.
+            * Se enseñó también al cliente durante unas horas del 20 de
+            * septiembre de 2026, y Robin lo quitó el mismo día: él paga un
+            * precio, no compra un desglose de nuestro negocio, y partírselo
+            * delante solo consigue que el precio parezca hinchado.
             *
-            * Solo cuando hay cobro. Antes de que exista sería una cuenta sobre
-            * un dinero que todavía no ha puesto nadie, y en lo que se paga
-            * fuera de la app —un presupuesto— la respuesta honrada es que de
-            * ahí no nos llevamos nada.
+            * No hace falta preguntar el rol aquí: **el servidor manda `null` a
+            * quien no le toca**, que es el sitio correcto para decidirlo — lo
+            * que no es suyo ni siquiera viaja.
+            *
+            * Y solo cuando hay cobro: antes sería una cuenta sobre un dinero
+            * que todavía no ha puesto nadie, y en lo que se paga fuera de la
+            * app —un presupuesto— la respuesta honrada es cero.
             */}
-          {job.commission > 0 && (
+          {job.commission !== null && job.commission > 0 && (
             <View style={styles.commission} testID="job-detail-commission">
-              <Text style={styles.commissionTitle}>Cómo se reparte</Text>
+              <Text style={styles.commissionTitle}>Lo que cobras</Text>
               <View style={styles.commissionRow}>
-                <Text style={styles.commissionLabel}>
-                  {job.viewer === 'pro' ? 'Recibes' : 'Para el profesional'}
-                </Text>
+                <Text style={styles.commissionLabel}>Recibes</Text>
                 <Text style={styles.commissionValue}>
-                  {formatAmount(job.proNet)} €
+                  {formatAmount(job.proNet ?? 0)} €
                 </Text>
               </View>
               <View style={styles.commissionRow}>
@@ -1075,9 +1075,8 @@ export function JobDetailPage({
                 </Text>
               </View>
               <Text style={styles.commissionNote}>
-                {job.viewer === 'pro'
-                  ? 'Se descuenta al transferirte el dinero. La comisión quedó fijada al cobrar, así que no cambia aunque subas de nivel después.'
-                  : 'Tú no pagas nada aparte: la comisión sale de lo que ya has pagado, y el resto es del profesional.'}
+                Se descuenta al transferirte el dinero. La comisión quedó fijada
+                al cobrar, así que no cambia aunque subas de nivel después.
               </Text>
             </View>
           )}

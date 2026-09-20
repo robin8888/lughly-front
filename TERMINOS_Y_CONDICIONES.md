@@ -185,8 +185,8 @@ transfiere. **Es distinta según lo que se cobre**: la visita de presupuesto y l
 salida de urgencia llevan un porcentaje mayor que el trabajo por horas, la carta
 o las horas trabajadas de una urgencia, porque en aquellas lo que se retribuye
 es la intermediación misma. La comisión vigente y sus tramos se muestran en el
-perfil del Profesional, y el importe concreto de cada encargo se muestra
-**a las dos partes** en la ficha del trabajo. La comisión aplicable **queda
+perfil del Profesional, y el importe concreto de cada encargo se le muestra
+**a él** en la ficha del trabajo. La comisión aplicable **queda
 fijada en el momento del cobro** y no se altera después.
 
 8.6. **Desintermediación.** El Cliente y el Profesional que se hayan conocido a

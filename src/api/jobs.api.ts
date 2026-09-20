@@ -322,14 +322,6 @@ export interface ApiJobDetail {
    */
   retained: number
   /**
-   * **Lo que se lleva Lughly de este trabajo, y lo que le queda a quien lo
-   * hace.** Lo ven los dos lados y con las mismas cifras.
-   *
-   * Sale de la comisión **congelada en cada cobro**, no de la tarifa de hoy:
-   * un trabajo contratado en septiembre conserva la comisión de septiembre.
-   * Cero mientras no haya cobro, y cero en lo que se paga fuera de la app.
-   */
-  /**
    * **El IVA que lleva el precio.** No suma nada al total: lo parte. De 42 €
    * al 21 % salen 34,71 de base y 7,29 de impuesto, y el cliente sigue
    * pagando 42 €.
@@ -338,9 +330,21 @@ export interface ApiJobDetail {
    * exento y `exemptionReason` dice por qué — hay que enseñarlo, no callarlo.
    */
   vat: ApiVatBreakdown | null
-  commission: number
+  /**
+   * **Lo que se lleva Lughly de este trabajo, y lo que le queda a quien lo
+   * hace. Solo del lado profesional** — `null` si quien mira es el cliente.
+   *
+   * Él paga un precio, no compra un desglose de nuestro negocio: enseñárselo
+   * solo consigue que el precio parezca hinchado. Lo decide el servidor, que
+   * ni siquiera lo manda.
+   *
+   * Sale de la comisión **congelada en cada cobro**, no de la tarifa de hoy:
+   * un trabajo contratado en septiembre conserva la comisión de septiembre.
+   * Cero mientras no haya cobro, y cero en lo que se paga fuera de la app.
+   */
+  commission: number | null
   /** Lo que le queda al profesional: lo cobrado menos la comisión */
-  proNet: number
+  proNet: number | null
   /**
    * Por qué el cliente no lo da por bueno todavía, si ha dicho algo.
    *

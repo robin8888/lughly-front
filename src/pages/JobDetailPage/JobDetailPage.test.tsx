@@ -1020,20 +1020,18 @@ describe('JobDetailPage: el IVA del precio', () => {
 })
 
 /**
- * En qué se va el dinero, dicho a los dos
- * (decisión de Robin, 20 Septiembre 2026).
+ * Lo que cobra el profesional, y solo él.
  *
- * «Que tanto trabajador como cliente sepan cuánto se lleva de comisión la
- * plataforma». Lo que se ata aquí es que **sea la misma cifra para los dos**
- * —una comisión que cada lado ve distinta es una reclamación esperando— y que
- * no aparezca donde no hay cobro, que sería una cuenta sobre dinero que nadie
- * ha puesto.
+ * Se enseñó también al cliente durante unas horas del 20 de septiembre de 2026
+ * y **Robin lo quitó el mismo día**: «cuando se contrata a un trabajador no
+ * debe salir en la pantalla del cliente cuánto va a ganar Lughly, eso no le
+ * interesa al cliente». Lo que se ata aquí es que no vuelva: el servidor manda
+ * `null` a quien no le toca, y la pantalla no tiene que preguntarle el rol a
+ * nadie.
  */
-describe('JobDetailPage: cómo se reparte el dinero', () => {
-  const conCobro = { commission: 4.9, proNet: 25.1 }
-
-  it('al profesional le dice lo que recibe y lo que se lleva Lughly', () => {
-    soporte.job = ficha({ viewer: 'pro', ...conCobro })
+describe('JobDetailPage: lo que cobra el profesional', () => {
+  it('le dice lo que recibe y lo que se lleva Lughly', () => {
+    soporte.job = ficha({ viewer: 'pro', commission: 4.9, proNet: 25.1 })
 
     const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
@@ -1043,28 +1041,18 @@ describe('JobDetailPage: cómo se reparte el dinero', () => {
     expect(screen.getByText('4,90 €')).toBeTruthy()
   })
 
-  it('y al cliente, las mismas dos cifras', () => {
-    soporte.job = ficha({ viewer: 'client', ...conCobro })
+  /* Al cliente no le llega la cifra, así que no hay nada que pintar */
+  it('al cliente no se le enseña nada de eso', () => {
+    soporte.job = ficha({ viewer: 'client', commission: null, proNet: null })
 
-    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 
-    expect(getByTestId('job-detail-commission')).toBeTruthy()
-    expect(screen.getByText('Para el profesional')).toBeTruthy()
-    expect(screen.getByText('25,10 €')).toBeTruthy()
-    expect(screen.getByText('4,90 €')).toBeTruthy()
+    expect(queryByTestId('job-detail-commission')).toBeNull()
+    expect(screen.queryByText(/Comisión de Lughly/)).toBeNull()
   })
 
-  /* Y no se le dice al cliente que pague nada aparte: sale de lo ya pagado */
-  it('al cliente se le aclara que no paga nada encima', () => {
-    soporte.job = ficha({ viewer: 'client', ...conCobro })
-
-    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
-
-    expect(screen.getByText(/no pagas nada aparte/)).toBeTruthy()
-  })
-
-  it('sin cobro todavía no hay reparto que enseñar', () => {
-    soporte.job = ficha({ commission: 0, proNet: 0 })
+  it('sin cobro todavía no hay nada que enseñar', () => {
+    soporte.job = ficha({ viewer: 'pro', commission: 0, proNet: 0 })
 
     const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
 

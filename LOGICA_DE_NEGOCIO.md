@@ -250,11 +250,14 @@ operación.
 declara su tipo —21 %, 10 % o exento con el motivo— en sus datos fiscales, y la
 ficha lo desglosa. **No hay facturación todavía** (§13).
 
-**Se dice a los dos lados.** Desde el 20 de septiembre de 2026, la ficha de
-cada trabajo enseña —con las mismas cifras para el cliente y para el
-profesional— lo que se lleva Lughly y lo que le queda a quien lo hace; y el
-profesional tiene además la pantalla de su nivel con las dos escalas. La cifra
-sale de la **comisión congelada en cada cobro**, no de la tarifa vigente.
+**Se le dice al profesional, y solo a él.** La ficha de cada trabajo le enseña
+lo que va a recibir y lo que se queda Lughly, y tiene además la pantalla de su
+nivel con las dos escalas. La cifra sale de la **comisión congelada en cada
+cobro**, no de la tarifa vigente.
+
+**Al cliente no se le enseña**, y es una decisión expresa del titular: él paga
+un precio cerrado, no compra un desglose del negocio de la plataforma. El
+servidor no se lo manda siquiera.
 
 > ⚠️ **Punto para el abogado.** La comisión se le descuenta al profesional de lo
 > que cobra. **No se emite factura de la comisión** hoy, ni hay identificación
