@@ -322,6 +322,17 @@ export interface ApiJobDetail {
    */
   retained: number
   /**
+   * **Lo que se lleva Lughly de este trabajo, y lo que le queda a quien lo
+   * hace.** Lo ven los dos lados y con las mismas cifras.
+   *
+   * Sale de la comisión **congelada en cada cobro**, no de la tarifa de hoy:
+   * un trabajo contratado en septiembre conserva la comisión de septiembre.
+   * Cero mientras no haya cobro, y cero en lo que se paga fuera de la app.
+   */
+  commission: number
+  /** Lo que le queda al profesional: lo cobrado menos la comisión */
+  proNet: number
+  /**
    * Por qué el cliente no lo da por bueno todavía, si ha dicho algo.
    *
    * Con esto puesto el cierre automático por silencio está apagado: quien ha

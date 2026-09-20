@@ -1026,6 +1026,46 @@ export function JobDetailPage({
             )}
           </View>
 
+          {/**
+            * En qué se va el dinero, dicho a los dos (decisión de Robin, 20 de
+            * septiembre de 2026).
+            *
+            * Las mismas dos cifras para el cliente y para el profesional, y en
+            * el mismo sitio. Para él es lo que va a ingresar de verdad, que es
+            * lo único que le importa de un encargo; para el cliente es saber
+            * qué parte de lo suyo es nuestra — y es lo que hace creíble que
+            * cobramos por traer el encargo y no por el arreglo.
+            *
+            * Solo cuando hay cobro. Antes de que exista sería una cuenta sobre
+            * un dinero que todavía no ha puesto nadie, y en lo que se paga
+            * fuera de la app —un presupuesto— la respuesta honrada es que de
+            * ahí no nos llevamos nada.
+            */}
+          {job.commission > 0 && (
+            <View style={styles.commission} testID="job-detail-commission">
+              <Text style={styles.commissionTitle}>Cómo se reparte</Text>
+              <View style={styles.commissionRow}>
+                <Text style={styles.commissionLabel}>
+                  {job.viewer === 'pro' ? 'Recibes' : 'Para el profesional'}
+                </Text>
+                <Text style={styles.commissionValue}>
+                  {formatAmount(job.proNet)} €
+                </Text>
+              </View>
+              <View style={styles.commissionRow}>
+                <Text style={styles.commissionLabel}>Comisión de Lughly</Text>
+                <Text style={styles.commissionValue}>
+                  {formatAmount(job.commission)} €
+                </Text>
+              </View>
+              <Text style={styles.commissionNote}>
+                {job.viewer === 'pro'
+                  ? 'Se descuenta al transferirte el dinero. La comisión quedó fijada al cobrar, así que no cambia aunque subas de nivel después.'
+                  : 'Tú no pagas nada aparte: la comisión sale de lo que ya has pagado, y el resto es del profesional.'}
+              </Text>
+            </View>
+          )}
+
           {/*
             Lo contratado de la carta, si nació de ahí: copiado al pedirlo,
             así que sigue enseñando lo que se vio y se pagó aunque el

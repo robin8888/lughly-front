@@ -26,10 +26,10 @@ let mockCargando = false
 let mockError = false
 
 const mockLadder: ApiCommissionLevelState['ladder'] = [
-  { level: 'WORKER', name: 'Obrera', from: 0, rate: 10, fixedFee: 0.4, current: true },
-  { level: 'FORAGER', name: 'Forrajera', from: 1000, rate: 8, fixedFee: 0.4, current: false },
-  { level: 'SOLDIER', name: 'Soldado', from: 3000, rate: 6, fixedFee: 0.4, current: false },
-  { level: 'QUEEN', name: 'Reina', from: 6000, rate: 4, fixedFee: 0.4, current: false },
+  { level: 'WORKER', name: 'Obrera', from: 0, rate: 10, visitRate: 15, fixedFee: 0.4, current: true },
+  { level: 'FORAGER', name: 'Forrajera', from: 1000, rate: 8, visitRate: 13, fixedFee: 0.4, current: false },
+  { level: 'SOLDIER', name: 'Soldado', from: 3000, rate: 6, visitRate: 11, fixedFee: 0.4, current: false },
+  { level: 'QUEEN', name: 'Reina', from: 6000, rate: 4, visitRate: 9, fixedFee: 0.4, current: false },
 ]
 
 const mockBase: ApiCommissionLevelState = {
@@ -137,16 +137,31 @@ describe('MyLevelPage', () => {
       <MyLevelPage onBack={() => {}} onOpenWallet={() => {}} />,
     )
 
-    expect(getByTestId('level-step-WORKER')).toHaveTextContent(/10 % \+ 0,40 €/)
-    expect(getByTestId('level-step-QUEEN')).toHaveTextContent(/4 % \+ 0,40 €/)
+    /*
+      Los dos números de cada fila desde el 20 de septiembre de 2026: el del
+      trabajo y el de la visita. Enseñar solo el primero le prometería un 4 %
+      en la pantalla donde de su próxima visita se llevan un 9 %.
+    */
+    expect(getByTestId('level-step-WORKER')).toHaveTextContent(/10 % · 15 %/)
+    expect(getByTestId('level-step-QUEEN')).toHaveTextContent(/4 % · 9 %/)
     expect(getByTestId('level-step-SOLDIER')).toHaveTextContent(/Desde 3000,00 €/)
     expect(getByTestId('level-step-WORKER')).toHaveTextContent(/Al empezar/)
+  })
+
+  /** Y el suyo, arriba, con las dos cifras y el fijo que se les suma */
+  it('dice las dos comisiones del nivel en el que está', () => {
+    const { getByTestId } = render(
+      <MyLevelPage onBack={() => {}} onOpenWallet={() => {}} />,
+    )
+
+    expect(getByTestId('level-rate')).toHaveTextContent(/10 % \+ 0,40 €/)
+    expect(getByTestId('level-visit-rate')).toHaveTextContent(/15 % \+ 0,40 €/)
   })
 
   it('si el servidor cambiara las tasas, la pantalla las enseñaría sin tocarla', () => {
     mockEstado = {
       ladder: mockLadder.map((step) =>
-        step.level === 'QUEEN' ? { ...step, rate: 3.5, fixedFee: 0.5 } : step,
+        step.level === 'QUEEN' ? { ...step, rate: 3.5, visitRate: 8.5, fixedFee: 0.5 } : step,
       ),
     }
 
@@ -154,7 +169,7 @@ describe('MyLevelPage', () => {
       <MyLevelPage onBack={() => {}} onOpenWallet={() => {}} />,
     )
 
-    expect(getByTestId('level-step-QUEEN')).toHaveTextContent(/3,50 % \+ 0,50 €/)
+    expect(getByTestId('level-step-QUEEN')).toHaveTextContent(/3,50 % · 8,50 %/)
   })
 
   /**

@@ -121,6 +121,14 @@ export const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.heading,
     fontSize: theme.typography.sizes.body,
     color: theme.colors.text,
+    marginBottom: 4,
+  },
+  /* Qué es cada número de la fila: sin esto, "10 % · 15 %" no se entiende */
+  ladderNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.4,
+    color: theme.colors.textSoft,
     marginBottom: 10,
   },
   ladder: {

@@ -269,6 +269,43 @@ export const styles = StyleSheet.create({
   },
 
   /** Lo contratado de la carta, copiado al pedirlo */
+  /* El reparto del dinero: lo leen los dos lados en la misma tarjeta */
+  commission: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.hairline,
+    gap: 6,
+  },
+  commissionTitle: {
+    fontFamily: theme.typography.fonts.heading,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.text,
+  },
+  commissionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 12,
+  },
+  commissionLabel: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSoft,
+    flexShrink: 1,
+  },
+  commissionValue: {
+    fontFamily: theme.typography.fonts.heading,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.text,
+  },
+  commissionNote: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    lineHeight: theme.typography.sizes.small * 1.4,
+    color: theme.colors.textSoft,
+  },
+
   serviceLines: {
     marginTop: 10,
     paddingTop: 10,

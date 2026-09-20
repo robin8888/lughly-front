@@ -227,16 +227,29 @@ periodo en el que se resuelven los reparos y las reclamaciones.
 Se queda de cada cobro y **se congela en el momento de cobrar**: cambiar la
 comisión después no altera cobros ya hechos.
 
-| Nivel | Comisión | Cómo se llega |
-|---|---|---|
-| Obrera | 10 % + 0,40 € | De partida |
-| Forrajera | 8 % + 0,40 € | 1.000 € liberados en 90 días |
-| Soldado | 6 % + 0,40 € | 3.000 € |
-| Reina | 4 % + 0,40 € | 6.000 € |
+| Nivel | Del trabajo | De la visita y la salida | Cómo se llega |
+|---|---|---|---|
+| Obrera | 10 % + 0,40 € | 15 % + 0,40 € | De partida |
+| Forrajera | 8 % + 0,40 € | 13 % + 0,40 € | 1.000 € liberados en 90 días |
+| Soldado | 6 % + 0,40 € | 11 % + 0,40 € | 3.000 € |
+| Reina | 4 % + 0,40 € | 9 % + 0,40 € | 6.000 € |
+
+**Dos escalas desde el 20 de septiembre de 2026.** La visita para presupuesto y
+la salida de urgencia llevan cinco puntos más porque no son trabajo del
+profesional: son el servicio que presta la propia plataforma —encontrarle a
+alguien que se desplace, y encontrárselo de madrugada—. Las horas trabajadas de
+una urgencia (`URGENT_HOURS`) se quedan en la escala normal por lo mismo, al
+revés: eso sí es su trabajo.
 
 Se revisa el día 1 de cada mes sobre los 90 días anteriores, y **un plantón
 frena la subida**. El fijo de 0,40 € existe porque la pasarela cobra un fijo por
 operación.
+
+**Se dice a los dos lados.** Desde el 20 de septiembre de 2026, la ficha de
+cada trabajo enseña —con las mismas cifras para el cliente y para el
+profesional— lo que se lleva Lughly y lo que le queda a quien lo hace; y el
+profesional tiene además la pantalla de su nivel con las dos escalas. La cifra
+sale de la **comisión congelada en cada cobro**, no de la tarifa vigente.
 
 > ⚠️ **Punto para el abogado.** La comisión se le descuenta al profesional de lo
 > que cobra. **No se emite factura de la comisión** hoy, ni hay identificación

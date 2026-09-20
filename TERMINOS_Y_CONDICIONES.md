@@ -181,9 +181,13 @@ Profesional lo dio por terminado sin que el Cliente diga nada.
 
 8.5. **Comisión.** Lughly percibe del Profesional una comisión sobre cada cobro,
 que se aplica sobre el importe del servicio y se descuenta de lo que se le
-transfiere. La comisión vigente se muestra en su perfil y puede variar según el
-volumen facturado. La comisión aplicable **queda fijada en el momento del cobro**
-y no se altera después.
+transfiere. **Es distinta según lo que se cobre**: la visita de presupuesto y la
+salida de urgencia llevan un porcentaje mayor que el trabajo por horas, la carta
+o las horas trabajadas de una urgencia, porque en aquellas lo que se retribuye
+es la intermediación misma. La comisión vigente y sus tramos se muestran en el
+perfil del Profesional, y el importe concreto de cada encargo se muestra
+**a las dos partes** en la ficha del trabajo. La comisión aplicable **queda
+fijada en el momento del cobro** y no se altera después.
 
 8.6. **Desintermediación.** El Cliente y el Profesional que se hayan conocido a
 través de la Plataforma se obligan a canalizar por ella el pago de los servicios

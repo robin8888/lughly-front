@@ -59,8 +59,16 @@ export interface ApiLevelStep {
   name: string
   /** Lo que hay que facturar en la ventana para estar aquí */
   from: number
-  /** Porcentaje, no fracción: 10 son diez por ciento */
+  /** Del trabajo —horas, carta, urgencia trabajada—. 10 son diez por ciento */
   rate: number
+  /**
+   * Y el de **la visita y la salida de urgencia**, más alto desde el 20 de
+   * septiembre de 2026: ahí no se cobra el trabajo del profesional, se cobra
+   * lo que hace la plataforma —encontrarle el encargo, y encontrárselo de
+   * madrugada—. Enseñar solo `rate` le prometería un 4 % en una pantalla
+   * donde de su próxima visita se van a llevar un 9 %.
+   */
+  visitRate: number
   /** Lo que se suma al porcentaje, en euros */
   fixedFee: number
   current: boolean

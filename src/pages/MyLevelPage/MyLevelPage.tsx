@@ -42,6 +42,18 @@ function readableRate(step: ApiLevelStep): string {
   return `${formatRate(step.rate)} % + ${formatAmount(step.fixedFee)} €`
 }
 
+/**
+ * Y la de la visita y la salida de urgencia, que es otra.
+ *
+ * Se enseñan las dos juntas desde que dejaron de ser la misma (20 de
+ * septiembre de 2026). Callar la segunda sería enseñarle un 4 % en la pantalla
+ * que existe justo para que sepa lo que paga, y que de su próxima visita se
+ * lleven un 9 %.
+ */
+function readableVisitRate(step: ApiLevelStep): string {
+  return `${formatRate(step.visitRate)} % + ${formatAmount(step.fixedFee)} €`
+}
+
 /** Sin decimales cuando no hacen falta: "8 %", no "8,00 %" */
 function formatRate(rate: number): string {
   return Number.isInteger(rate) ? String(rate) : formatAmount(rate)
@@ -151,9 +163,16 @@ export function MyLevelPage({ onBack, onOpenWallet }: MyLevelPageProps) {
             {data.name}
           </Text>
           {current && (
-            <Text style={styles.hereRate} testID="level-rate">
-              Pagas {readableRate(current)} de cada cobro
-            </Text>
+            <>
+              <Text style={styles.hereRate} testID="level-rate">
+                Pagas {readableRate(current)} de las horas, la carta y las
+                urgencias trabajadas
+              </Text>
+              <Text style={styles.hereRate} testID="level-visit-rate">
+                Y {readableVisitRate(current)} de la visita y de la salida de
+                urgencia, que es lo que te traemos nosotros
+              </Text>
+            </>
           )}
         </InfoCard>
 
@@ -198,6 +217,11 @@ export function MyLevelPage({ onBack, onOpenWallet }: MyLevelPageProps) {
 
         {/* La escalera entera: el incentivo es ver adónde lleva */}
         <Text style={styles.ladderTitle}>Los niveles</Text>
+        <Text style={styles.ladderNote}>
+          El primer número es de tu trabajo; el segundo, de la visita y de la
+          salida de urgencia. A todos se les suma {formatAmount(data.ladder[0]?.fixedFee ?? 0)} €
+          por cobro.
+        </Text>
 
         <View style={styles.ladder} testID="level-ladder">
           {data.ladder.map((step) => (
@@ -211,7 +235,7 @@ export function MyLevelPage({ onBack, onOpenWallet }: MyLevelPageProps) {
                   {step.name}
                 </Text>
                 <Text style={[styles.stepRate, step.current && styles.stepRateCurrent]}>
-                  {readableRate(step)}
+                  {formatRate(step.rate)} % · {formatRate(step.visitRate)} %
                 </Text>
               </View>
 
@@ -235,6 +259,12 @@ export function MyLevelPage({ onBack, onOpenWallet }: MyLevelPageProps) {
           <Text style={styles.explainLine}>
             Un plantón en esos {data.windowDays} días no te baja de nivel, pero para
             la subida hasta la siguiente revisión.
+          </Text>
+          <Text style={styles.explainLine}>
+            La visita y la salida de urgencia llevan una comisión más alta que el
+            resto. No es lo mismo: ahí lo que cobramos es haberte traído el
+            encargo —y a las tres de la mañana, haberte encontrado—, no tu
+            trabajo, que es lo que cobras tú por horas.
           </Text>
           <Text style={styles.explainLine}>
             La comisión de cada cobro se fija cuando se cobra. Si subes de nivel, lo

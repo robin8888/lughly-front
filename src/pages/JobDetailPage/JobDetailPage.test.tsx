@@ -265,6 +265,8 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     retained: 77,
     quoteByAt: null,
     cancelFee: 0,
+    commission: 0,
+    proNet: 0,
     bookedMinutes: null,
     hourlyRate: null,
     holdReason: null,
@@ -964,6 +966,59 @@ describe('JobDetailPage: el contrato fijo', () => {
 
     expect(getByTestId('job-detail-break')).toBeTruthy()
     expect(getByText('Cancelar el contrato fijo')).toBeTruthy()
+  })
+})
+
+/**
+ * En qué se va el dinero, dicho a los dos
+ * (decisión de Robin, 20 Septiembre 2026).
+ *
+ * «Que tanto trabajador como cliente sepan cuánto se lleva de comisión la
+ * plataforma». Lo que se ata aquí es que **sea la misma cifra para los dos**
+ * —una comisión que cada lado ve distinta es una reclamación esperando— y que
+ * no aparezca donde no hay cobro, que sería una cuenta sobre dinero que nadie
+ * ha puesto.
+ */
+describe('JobDetailPage: cómo se reparte el dinero', () => {
+  const conCobro = { commission: 4.9, proNet: 25.1 }
+
+  it('al profesional le dice lo que recibe y lo que se lleva Lughly', () => {
+    soporte.job = ficha({ viewer: 'pro', ...conCobro })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-commission')).toBeTruthy()
+    expect(screen.getByText('Recibes')).toBeTruthy()
+    expect(screen.getByText('25,10 €')).toBeTruthy()
+    expect(screen.getByText('4,90 €')).toBeTruthy()
+  })
+
+  it('y al cliente, las mismas dos cifras', () => {
+    soporte.job = ficha({ viewer: 'client', ...conCobro })
+
+    const { getByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(getByTestId('job-detail-commission')).toBeTruthy()
+    expect(screen.getByText('Para el profesional')).toBeTruthy()
+    expect(screen.getByText('25,10 €')).toBeTruthy()
+    expect(screen.getByText('4,90 €')).toBeTruthy()
+  })
+
+  /* Y no se le dice al cliente que pague nada aparte: sale de lo ya pagado */
+  it('al cliente se le aclara que no paga nada encima', () => {
+    soporte.job = ficha({ viewer: 'client', ...conCobro })
+
+    render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(screen.getByText(/no pagas nada aparte/)).toBeTruthy()
+  })
+
+  it('sin cobro todavía no hay reparto que enseñar', () => {
+    soporte.job = ficha({ commission: 0, proNet: 0 })
+
+    const { queryByTestId } = render(<JobDetailPage jobId="job-1" onBack={() => {}} />)
+
+    expect(queryByTestId('job-detail-commission')).toBeNull()
   })
 })
 
