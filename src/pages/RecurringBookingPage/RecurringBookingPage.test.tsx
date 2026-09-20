@@ -110,11 +110,23 @@ const abrir = () =>
     />,
   )
 
-/** Elige el lunes y pide el repaso, que es por donde se entra siempre */
+/**
+ * Elige el lunes y espera a que la agenda conteste **sola**.
+ *
+ * Ya no hay botón que pulsar: hasta el 20 de septiembre de 2026 lo había, y
+ * quien no lo veía se quedaba sin saber que el profesional no podía ningún día.
+ */
 const repasar = async () => {
   fireEvent.press(screen.getByTestId('recurring-weekday-1'))
-  fireEvent.press(screen.getByTestId('recurring-check'))
   await screen.findByTestId('recurring-review')
+}
+
+/** Y lo mismo cuando no va a quedar ningún día: entonces no hay repaso */
+const elegirLunes = async () => {
+  fireEvent.press(screen.getByTestId('recurring-weekday-1'))
+  await waitFor(() =>
+    expect(screen.getByTestId('recurring-status')).toHaveTextContent(/no puede|Marta puede/),
+  )
 }
 
 beforeEach(() => {
@@ -124,11 +136,42 @@ beforeEach(() => {
 })
 
 describe('RecurringBookingPage', () => {
-  it('sin días elegidos no se puede mirar la agenda', () => {
+  it('sin días elegidos, dice qué hay que hacer', () => {
     abrir()
 
-    expect(screen.getByTestId('recurring-check').props.accessibilityState.disabled).toBe(
-      true,
+    expect(screen.getByTestId('recurring-status')).toHaveTextContent(
+      'Elige los días y te decimos cuáles puede Marta.',
+    )
+  })
+
+  /**
+   * **El fallo del 20 de septiembre de 2026**, encontrado por Robin usándolo.
+   *
+   * Con la agenda de alguien comprometida, quien elegía lunes, miércoles y
+   * viernes a las diez no veía **nada**: ni los días que no caben, ni la
+   * dirección, ni un botón apagado. El repaso estaba detrás de un botón
+   * secundario que nadie pulsaba.
+   */
+  it('si no puede ningún día, se dice sin que haya que pedirlo', async () => {
+    soporte.days = [dia('2026-09-21', false, [], 'busy'), dia('2026-09-23', false, [], 'busy')]
+
+    abrir()
+    await elegirLunes()
+
+    expect(screen.getByTestId('recurring-status')).toHaveTextContent(
+      /Marta no puede ningún día de los que has elegido a las 10:00/,
+    )
+    /* Y se le dice qué puede hacer, que no es evidente */
+    expect(screen.getByTestId('recurring-status')).toHaveTextContent(/otra hora/)
+  })
+
+  /** Mientras se mira, se dice que se está mirando */
+  it('avisa de que está mirando la agenda', () => {
+    abrir()
+    fireEvent.press(screen.getByTestId('recurring-weekday-1'))
+
+    expect(screen.getByTestId('recurring-status')).toHaveTextContent(
+      'Mirando la agenda de Marta…',
     )
   })
 
@@ -211,9 +254,8 @@ describe('RecurringBookingPage', () => {
     soporte.days = [dia('2026-09-07', false, [], 'away'), dia('2026-09-14', false, [], 'closed')]
 
     abrir()
-    await repasar()
+    await elegirLunes()
 
-    expect(screen.getByText('No queda ningún día')).toBeTruthy()
     expect(screen.queryByTestId('recurring-book')).toBeNull()
     expect(screen.queryByTestId('recurring-address')).toBeNull()
   })

@@ -6,13 +6,23 @@
  * semana —buscar, rellenar, elegir hueco, pagar—: ciento cuarenta veces al año
  * para un acuerdo que se toma una vez.
  *
- * ## Dos pasos en una pantalla, y en este orden
+ * ## La agenda se mira sola, en cuanto hay algo que mirar
  *
- * Primero se elige —qué días, a qué hora, cuánto y desde cuándo— y después se
- * **repasa**, con la respuesta del servidor día a día. El repaso no es un
- * resumen de cortesía: es la única regla de §F0 puesta en pantalla —**en ningún
- * momento se le dice al cliente que tiene un día que el profesional no
- * tiene**—, y es donde se ve qué se cae y qué se puede mover.
+ * Se elige —qué días, a qué hora, cuánto y desde cuándo— y el servidor
+ * contesta **solo**, día a día, sin que haya que pedírselo. Esa respuesta es la
+ * única regla de §F0 puesta en pantalla: **en ningún momento se le dice al
+ * cliente que tiene un día que el profesional no tiene**.
+ *
+ * **Hasta el 20 de septiembre de 2026 había que pulsar un botón** para verla, y
+ * lo encontró Robin usándolo: quien elegía lunes, miércoles y viernes a las
+ * diez con alguien que tenía septiembre entero comprometido **no se enteraba de
+ * nada** —el botón de contratar no estaba apagado, simplemente no hacía nada al
+ * pulsarlo, porque sin repaso no hay días que contratar—. Un botón que no
+ * responde y una pantalla que calla son la misma cosa vista dos veces: el
+ * cliente no sabe qué ha hecho mal.
+ *
+ * Se pregunta con un respiro de por medio y no en cada toque, porque cada
+ * cambio de hora dispararía una consulta a la agenda de otro.
  *
  * ## Y un día que choca no se tira: se ofrece otra hora
  *
@@ -29,7 +39,7 @@
  * exactamente lo mismo y no cuesta nada.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { FormScrollView } from '@/components/templates/FormScrollView'
@@ -114,6 +124,14 @@ function proximosDias(): { value: string; label: string }[] {
   return days
 }
 
+/**
+ * El respiro antes de preguntarle a la agenda.
+ *
+ * Suficiente para que probar tres horas seguidas sea una consulta y no tres, y
+ * poco para que la respuesta parezca inmediata al dejar de tocar.
+ */
+const MIRAR_TRAS_MS = 400
+
 export interface RecurringBookingPageProps {
   proId: string | undefined
   tradeSlug: string
@@ -162,7 +180,27 @@ export function RecurringBookingPage({
    */
   const [moves, setMoves] = useState<Record<string, string | null>>({})
 
+  /**
+   * Que lo elegido ha cambiado y lo que se enseña ya no vale.
+   *
+   * Hace falta aparte de `isChecking` porque entre cambiar la hora y que salga
+   * la consulta hay un respiro, y en ese rato el repaso de la hora anterior
+   * sigue en pantalla. Enseñarlo sería lo mismo que el fallo que esto arregla:
+   * decirle que tiene doce días a una hora que ya no ha pedido.
+   */
+  const [stale, setStale] = useState(false)
+  /** Si la agenda no se ha podido mirar. Se dice en la pantalla, no en un aviso */
+  const [checkError, setCheckError] = useState<string | null>(null)
+
   const card = methods?.[0] ?? null
+  /**
+   * Su nombre de pila: es con quien se habla en toda la pantalla.
+   *
+   * Con red: más abajo hay una salida por `!pro`, pero los hooks van todos
+   * arriba —React los cuenta— así que esto se calcula antes de saber si hay
+   * ficha.
+   */
+  const nombre = pro?.name.split(' ')[0] ?? ''
   const dias = result?.days ?? []
 
   const toggleDay = (weekday: number) =>
@@ -186,28 +224,52 @@ export function RecurringBookingPage({
     [dias, moves],
   )
 
-  const repasar = () => {
-    if (weekdays.length === 0) return
+  /**
+   * Mirar la agenda en cuanto hay días elegidos, y cada vez que cambie algo.
+   *
+   * El retardo es lo que hace que esto no sea una consulta por toque: quien
+   * prueba tres horas seguidas dispara una sola. Y el `cancelado` de la
+   * limpieza evita el error clásico de esto —una respuesta lenta de la hora
+   * anterior pisando a la de ahora—.
+   *
+   * El fallo **no sale en un aviso**: se dice en la pantalla. Un `Alert` que
+   * salta solo al cambiar de hora es peor que el problema que avisa.
+   */
+  useEffect(() => {
+    if (weekdays.length === 0) return undefined
 
-    void (async () => {
-      const { ok, error } = await check({
-        weekdays,
-        from,
-        durationMin: Number(durationMin),
-        startsOn,
-      })
+    let cancelado = false
 
-      if (!ok) {
-        Alert.alert(
-          'No hemos podido mirar su agenda',
-          error ?? 'Inténtalo de nuevo en un momento.',
-        )
-      }
+    setStale(true)
 
-      // Lo elegido antes deja de valer: es de otra hora o de otros días
-      setMoves({})
-    })()
-  }
+    const espera = setTimeout(() => {
+      void (async () => {
+        const { ok, error } = await check({
+          weekdays,
+          from,
+          durationMin: Number(durationMin),
+          startsOn,
+        })
+
+        if (cancelado) return
+
+        setCheckError(ok ? null : (error ?? 'No hemos podido mirar su agenda.'))
+        /* Lo movido antes era de otra hora o de otros días */
+        setMoves({})
+        setStale(false)
+      })()
+    }, MIRAR_TRAS_MS)
+
+    return () => {
+      cancelado = true
+      clearTimeout(espera)
+    }
+    /* `check` viene de una mutación y cambia de identidad en cada render */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekdays, from, durationMin, startsOn])
+
+  /** Si lo que se enseña corresponde a lo que hay elegido ahora mismo */
+  const repasoAlDia = result !== null && !stale && !isChecking
 
   /** Sin número no hay portal al que ir, y sin código postal tampoco */
   const direccionLista =
@@ -360,24 +422,41 @@ export function RecurringBookingPage({
           />
         </FormField>
 
-        <Button
-          fullWidth
-          variant="secondary"
-          onPress={repasar}
-          loading={isChecking}
-          disabled={weekdays.length === 0}
-          style={styles.check}
-          testID="recurring-check"
-        >
-          {result ? 'Volver a mirar su agenda' : 'Ver qué días puede'}
-        </Button>
+        {/*
+          Lo que está pasando con la agenda, pegado a lo que se acaba de
+          elegir. Sin esto, cambiar la hora no tiene respuesta visible y la
+          pantalla parece rota.
+        */}
+        {weekdays.length === 0 ? (
+          <Text style={styles.status} testID="recurring-status">
+            {`Elige los días y te decimos cuáles puede ${nombre}.`}
+          </Text>
+        ) : !repasoAlDia ? (
+          <Text style={styles.status} testID="recurring-status">
+            {`Mirando la agenda de ${nombre}…`}
+          </Text>
+        ) : checkError !== null ? (
+          <Text style={[styles.status, styles.statusBad]} testID="recurring-status">
+            {checkError}
+          </Text>
+        ) : cuentan === 0 ? (
+          /*
+            **El caso del fallo.** Con la agenda de alguien comprometida, aquí
+            no había nada: ni esto, ni un botón apagado. Se dice qué pasa y qué
+            se puede hacer, porque las tres salidas —otra hora, otros días, más
+            adelante— no son evidentes para quien acaba de elegir.
+          */
+          <Text style={[styles.status, styles.statusBad]} testID="recurring-status">
+            {`${nombre} no puede ningún día de los que has elegido a las ${from}. Prueba a otra hora, con otros días, o empezando más adelante.`}
+          </Text>
+        ) : null}
 
         {/*
           El repaso: la pantalla de §F2. No es un resumen de cortesía, es la
           única regla de §F0 puesta delante — lo que encaja, lo que no y por
           qué, y qué se puede mover.
         */}
-        {result && (
+        {repasoAlDia && cuentan > 0 && (
           <View testID="recurring-review">
             <InfoCard style={styles.summary}>
               <Text style={styles.summaryTitle}>
@@ -418,7 +497,12 @@ export function RecurringBookingPage({
           La dirección y la tarjeta, al final: no hacen falta para mirar la
           agenda, y pedirlas antes convierte una pregunta en un formulario.
         */}
-        {result && cuentan > 0 && (
+        {/*
+          La dirección y la tarjeta solo cuando hay días que contratar, y
+          **solo con el repaso al día**: con uno viejo se le pedirían los datos
+          para una serie que ya no es la que ha elegido.
+        */}
+        {repasoAlDia && cuentan > 0 && (
           <>
             <FormField label="¿Dónde?">
               <AddressInput
@@ -446,7 +530,14 @@ export function RecurringBookingPage({
                 fullWidth
                 onPress={contratar}
                 loading={isBooking}
-                disabled={!direccionLista}
+                /*
+                  Apagado **también sin días**, que es lo que faltaba: antes el
+                  botón se pintaba encendido y al pulsarlo no pasaba nada,
+                  porque `contratar` se paraba solo al ver que no había ninguna
+                  sesión. Un botón que no responde no se distingue de una app
+                  rota.
+                */
+                disabled={!direccionLista || cuentan === 0}
                 style={styles.book}
                 testID="recurring-book"
               >

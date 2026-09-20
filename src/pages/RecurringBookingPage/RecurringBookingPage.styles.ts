@@ -81,8 +81,17 @@ export const styles = StyleSheet.create({
   rowItem: {
     flex: 1,
   },
-  check: {
-    marginTop: 8,
+  /* Lo que pasa con la agenda, pegado a lo que se acaba de elegir */
+  status: {
+    marginTop: 12,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.body,
+    lineHeight: theme.typography.sizes.body * 1.45,
+    color: theme.colors.textSoft,
+  },
+  /* Y cuando la respuesta es que no: se lee distinto, no solo se lee */
+  statusBad: {
+    color: theme.colors.urgency,
   },
   summary: {
     marginTop: 16,
