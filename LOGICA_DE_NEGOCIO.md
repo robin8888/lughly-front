@@ -1,6 +1,7 @@
 # Lughly — cómo funciona, para revisión jurídica
 
-**Fecha: 20 de septiembre de 2026.** Este documento describe lo que la
+**Fecha: 3 de octubre de 2026** (primera versión: 20 de septiembre de 2026).
+Este documento describe lo que la
 aplicación **hace hoy**, no lo que se pensó hacer ni lo que se hará. Está
 escrito para que un abogado pueda redactar o revisar los Términos y
 Condiciones, la política de privacidad y el análisis de responsabilidad, sin
@@ -32,6 +33,17 @@ análisis:
    cobro se hace a nombre de la plataforma y después se transfiere al
    profesional menos la comisión (ver §6). Esto es lo que más pesa a la hora de
    decidir si una plataforma es «mera intermediaria».
+
+**Lughly misma, hoy, es un autónomo — el propio titular — y no una sociedad.**
+Hay plan de constituirse en empresa cuando haya beneficio que lo justifique,
+pero mientras tanto «Lughly» es un nombre comercial sobre su NIF personal, no
+un CIF. Esto no cambia el análisis de los dos puntos de arriba, pero sí cambia
+quién firma lo que haya que firmar: las facturas de la comisión y de la
+tarifa de servicio (§6) salen a nombre del titular con su NIF, el epígrafe de
+IAE es el suyo de autónomo, y es su IRPF —no un Impuesto de Sociedades— el que
+recoge este ingreso. El día que se constituya en sociedad, hay que revisar
+todo lo anterior: sucesión de contratos con Stripe y proveedores, el titular
+que aparece en Términos y facturas, y si cambia algo de lo que dice §11.
 
 ### Los cuatro papeles
 
@@ -259,10 +271,39 @@ cobro**, no de la tarifa vigente.
 un precio cerrado, no compra un desglose del negocio de la plataforma. El
 servidor no se lo manda siquiera.
 
+### La tarifa de servicio del cliente (3 de octubre de 2026)
+
+Aparte de la comisión, hay un segundo cargo que **sí paga el cliente y sí se
+le enseña**: el 7 % de lo que cuesta el servicio, con un mínimo de 1,50 € y un
+tope de 10 €. No sale del precio del profesional, se suma por encima — lo que
+el cliente paga es el precio del profesional **más** esta tarifa, y lo que el
+profesional recibe no cambia.
+
+Es un cargo de Lughly por su propio servicio —encontrar a alguien, retener el
+pago hasta que acepta, sostener el chat, resolver una disputa si la hay— y por
+eso lleva su **propio IVA al 21 % general**, no el tipo que el profesional
+declaró para el suyo: son dos prestaciones distintas, a dos partes distintas,
+cada una con su propio régimen.
+
+No se cobra sobre el adelanto de material (no es un servicio, es un reembolso
+de lo que el profesional ya pagó en una ferretería) ni sobre los añadidos
+—rato de más, extras de la carta— porque esos no son una contratación nueva,
+son la misma cita que ha durado más y ya pagó su tarifa.
+
+Al cancelar tarde, se devuelve entera aunque se retenga parte del precio como
+penalización: si el trabajo no llega a hacerse, no hay servicio que la
+sostenga.
+
+**Se ve antes de contratar solo en uno de los cuatro caminos** (por horas, que
+es el único que ya calculaba un presupuesto en el servidor antes de pulsar).
+En visita, carta y urgencia el cliente ve el precio del profesional sin este
+desglose delante — es una pantalla pendiente de construir, no una decisión de
+ocultarlo.
+
 > ⚠️ **Punto para el abogado.** La comisión se le descuenta al profesional de lo
-> que cobra. **No se emite factura de la comisión** hoy, ni hay identificación
-> fiscal de Lughly en ninguna pantalla, ni se dice si los precios llevan IVA
-> (§13).
+> que cobra. La tarifa de servicio se le añade al cliente. **No se emite
+> factura de ninguna de las dos** hoy, ni hay identificación fiscal de Lughly
+> en ninguna pantalla (§13).
 
 ---
 
@@ -442,31 +483,98 @@ Ordenados por lo que más urge.
    fiscales: general (21 %), reducido (10 %) o **exento con su motivo legal**,
    que hacía falta porque las clases particulares de materias curriculares están
    exentas (art. 20.Uno.10º LIVA) y parte de los cuidados también. El desglose
-   parte el precio en base e impuesto y lo enseña en la ficha. **Lo que sigue
-   pendiente es la factura**: ni la del profesional al cliente, ni la de la
-   comisión de Lughly al profesional, que lleva su propio 21 %.
-3. **No se recoge el consentimiento de ejecución anticipada** (arts. 102-108
-   TRLGDCU). Sin él, un cliente podría desistir en 14 días de un servicio ya
-   ejecutado. Hace falta una casilla al contratar y el texto que la sostenga.
-4. **Falta la identificación del prestador** exigida por el art. 10 LSSI:
-   denominación, NIF, domicilio, correo de contacto y datos registrales. No
-   aparecen en ninguna pantalla.
-5. **El enlace de la plataforma europea de resolución de litigios en línea ya no
+   parte el precio en base e impuesto y lo enseña en la ficha. Y desde el 3 de
+   octubre hay una segunda cifra con su propio IVA: la tarifa de servicio del
+   cliente, al 21 % general de Lughly (§6).
+3. **Las dos facturas de Lughly están construidas; la del profesional,
+   decidido que no, todavía.** Eran tres, a tres partes distintas:
+   - ~~La de Lughly al profesional, por la comisión que se le descuenta.~~
+     ~~La de Lughly al cliente, por la tarifa de servicio (§6).~~ **Hechas el
+     3 de octubre de 2026**: se emiten solas al liberar el cobro
+     (`IssueChargeInvoicesUseCase`, backend). Son dos ventas distintas de
+     Lughly, cada una a su parte —la intermediación que le vende al
+     profesional (la comisión) no es la misma que la que le vende al cliente
+     (la tarifa de servicio)—, así que son dos facturas, no una repartida en
+     dos. **Proveedor: Holded** —Veri\*Factu en todos sus planes de autónomo,
+     API incluida, 15 €/mes—, confirmado contra su propia página de precios.
+     Pendiente una factura de prueba contra su cuenta real antes de depender
+     de esto, ver `PENDIENTE_PARA_PRODUCCION.md`. Mientras no se active,
+     `console` solo las imprime y el arranque falla si eso sigue así en
+     producción.
+   - **La del profesional al cliente, por el servicio, sigue sin construirse
+     — decidido así a propósito.** Es obligación suya, no de Lughly, y se
+     decidió no ofrecerla desde la plataforma todavía: añadir esa pieza es
+     **facturación por mandato** (art. 5 RD 1619/2012, emitir en nombre y
+     por cuenta de un tercero con su conformidad previa), que es la parte
+     más cara de las tres. Mientras tanto basta con que la ficha del trabajo
+     siga enseñando el precio y el IVA, y que los Términos digan que la
+     factura es su responsabilidad.
+
+   Desde el 29 de diciembre de 2023 (RD 1007/2023, que desarrolla la Ley
+   11/2021 antifraude) **no vale cualquier factura**: el software que la emite
+   tiene que cumplir el reglamento de **Veri*Factu** —registro inalterable,
+   trazable y, si no se opta por la modalidad voluntaria de envío inmediato a
+   la AEAT, con huella (hash) encadenada entre facturas y código QR en cada
+   una—. Entra en vigor de forma escalonada por tipo de obligado, y con una
+   fecha distinta para un autónomo que para una sociedad — ver §1, porque
+   Lughly hoy es lo primero.
+4. **DAC7 (Directiva (UE) 2021/514, transpuesta en España): obligación de
+   información de plataformas digitales.** Lughly pone en contacto a
+   profesionales con clientes a cambio de una comisión, que es exactamente el
+   supuesto que cubre: hay que identificar y verificar a cada profesional (NIF,
+   IBAN, dirección — el alta ya pide parte de esto) y declarar una vez al año
+   a la AEAT, por profesional, cuánto facturó a través de la plataforma y
+   cuántas operaciones hizo (**Modelo 238**), además de entregarle a él copia
+   de lo declarado. Ya está anotado en `PENDIENTE_PARA_PRODUCCION.md`; aquí
+   queda el motivo jurídico. No existe hoy ninguna exportación de estos datos.
+5. ~~**No se recoge el consentimiento de ejecución anticipada**~~ **Resuelto
+   el 3 de octubre de 2026** (arts. 97.1.i y 103.a TRLGDCU): las cuatro rutas
+   que cobran al contratar —por horas, por la carta, por visita, y pedir una
+   urgencia a alguien concreto— exigen `executionConsent: true` y lo guardan
+   con fecha en `Job.executionConsentAt`, igual que `termsAcceptedAt` en el
+   alta. En las tres con pantalla propia es una casilla que hay que marcar;
+   en la urgencia, que se decide con una alerta nativa sin más hueco, es el
+   propio botón "Sí, avisarle" el que lo dice y lo acepta.
+
+   **Queda fuera, y a propósito**: el contrato fijo semanal (`book-recurring`)
+   no cobra nada al contratar —el dinero va por sesión, 24 h antes de cada
+   una—, así que el consentimiento de "empieza ya y pierdes el desistimiento"
+   no encaja igual: un contrato continuado se puede desistir en los primeros
+   14 días descontando lo ya disfrutado (art. 108 TRLGDCU), no se pierde el
+   derecho entero de golpe. Necesita su propio texto, no una copia de este.
+6. **Falta la identificación del prestador** exigida por el art. 10 LSSI (Ley
+   34/2002, de servicios de la sociedad de la información y de comercio
+   electrónico): denominación, NIF, domicilio, correo de contacto y datos
+   registrales. No aparecen en ninguna pantalla. La misma ley exige además
+   **acusar recibo de cada pedido por vía electrónica** (art. 28) — aquí, cada
+   trabajo contratado — y eso tampoco está escrito como obligación en ningún
+   sitio, aunque el chat y los avisos cumplan la función de hecho.
+7. **El enlace de la plataforma europea de resolución de litigios en línea ya no
    sirve**: la ODR europea cerró en julio de 2025. Conviene decidir qué se
    ofrece en su lugar (sistema arbitral de consumo, u otro).
-6. **Los oficios regulados no exigen habilitación.** Está marcado quién lo es,
+8. **Los oficios regulados no exigen habilitación.** Está marcado quién lo es,
    pero no se impide ofrecer el oficio sin acreditarla.
-7. **No se comprueba la mayoría de edad.**
-8. **No se pide seguro de responsabilidad civil** a los profesionales.
-9. **No hay borrado de cuenta** ni plazos de conservación (§12).
-10. **Obligaciones de plataforma del Reglamento (UE) 2022/2065 (DSA)**: canal de
+9. **No se comprueba la mayoría de edad.**
+10. **No se pide seguro de responsabilidad civil** a los profesionales.
+11. **No hay borrado de cuenta** ni plazos de conservación (§12).
+12. **Obligaciones de plataforma del Reglamento (UE) 2022/2065 (DSA)**: canal de
     notificación de contenidos ilícitos, motivación de las suspensiones,
     trazabilidad de los profesionales (art. 30), punto de contacto. Hay
     suspensión de cuentas y un canal de soporte, pero no están articulados como
     los exige el reglamento.
-11. **Art. 97.3 TRLGDCU (mercados en línea)**: hay que informar al consumidor de
+13. **Art. 97.3 TRLGDCU (mercados en línea)**: hay que informar al consumidor de
     **si el tercero es o no empresario**, y de cómo se reparten las obligaciones
     entre el tercero y la plataforma. Hoy no se dice.
+14. ~~**Posible «drip pricing» en tres de los cuatro caminos de contratar**~~
+    **Resuelto el 3 de octubre de 2026** (Directiva (UE) 2019/2161 «Omnibus»,
+    transpuesta en el art. 97 TRLGDCU): los cuatro caminos —por horas, visita,
+    carta y urgencia— enseñan ahora la tarifa de servicio y el total real
+    antes de pulsar, cada uno con su propio presupuesto de servidor
+    (`QuoteCartaUseCase` es nuevo; `GetProUseCase` y
+    `ListUrgencyProsUseCase` ya llevaban el precio y solo les faltaba la
+    tarifa). La carta sigue sin enseñarla en la tarjeta del directorio —solo
+    en la pantalla de confirmar—, que es donde ya vivía el resto del
+    desglose antes de hoy.
 
 ---
 

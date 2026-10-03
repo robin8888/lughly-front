@@ -3,8 +3,10 @@
 > ## ⚠️ BORRADOR PARA REVISIÓN JURÍDICA
 >
 > Redactado el 20 de septiembre de 2026 por el equipo técnico sobre la lógica
-> real de la aplicación (ver `LOGICA_DE_NEGOCIO.md`). **No es asesoramiento
-> jurídico y no debe publicarse sin que lo revise un abogado.**
+> real de la aplicación (ver `LOGICA_DE_NEGOCIO.md`), actualizado el 3 de
+> octubre de 2026 con la tarifa de servicio y el consentimiento de ejecución
+> anticipada. **No es asesoramiento jurídico y no debe publicarse sin que lo
+> revise un abogado.**
 >
 > Los campos entre `[corchetes]` son datos que hay que rellenar. Los recuadros
 > «**Nota de revisión**» señalan los puntos donde hace falta una decisión
@@ -194,18 +196,37 @@ través de la Plataforma se obligan a canalizar por ella el pago de los servicio
 comprendidos en la cláusula 8.2. El incumplimiento reiterado podrá dar lugar a
 la suspensión de la cuenta.
 
-8.7. **Impuestos.** Los precios que publica el Profesional son **precios
+8.7. **Tarifa de servicio.** Además del precio del Profesional, el Cliente
+paga a Lughly una tarifa de servicio por el uso de la Plataforma —encontrar
+al Profesional, retener el pago hasta que lo acepta, sostener la
+comunicación entre las partes y dar soporte si hay una reclamación—. Es un
+**7 % del precio del servicio, con un mínimo de 1,50 € y un máximo de
+10 €**, se muestra desglosada antes de confirmar, y **se suma al precio del
+Profesional: nunca sale de él**. No se aplica sobre el adelanto de material
+ni sobre los añadidos a un encargo ya contratado. Si el Cliente cancela en
+plazo o el Profesional no acepta, se devuelve junto con el resto del
+importe; si se cancela tarde, se devuelve en todo caso, porque entonces no
+queda ningún servicio que la sostenga (cláusula 9).
+
+8.8. **Impuestos.** Los precios que publica el Profesional son **precios
 finales**: incluyen los impuestos que correspondan, y el Cliente paga
 exactamente el importe mostrado. La aplicación desglosa la base y el impuesto
 antes de confirmar. Cada Profesional declara el régimen que le corresponde —tipo
 general, reducido o exención, con indicación del precepto que la ampara—, y
-responde de su exactitud. La Comisión que percibe Lughly lleva su propio
-impuesto, que se refleja en la factura que Lughly emite al Profesional.
+responde de su exactitud. Tanto la Comisión que percibe Lughly del
+Profesional como la Tarifa de servicio que paga el Cliente (cláusula 8.7)
+llevan el impuesto general de Lughly, reflejado en las facturas que Lughly
+emite a cada uno.
 
-> **Nota de revisión**: el desglose está construido desde el 20 de septiembre de
-> 2026. **La facturación no**: ni la del Profesional al Cliente —que es
-> obligación suya (6.4)— ni la de la Comisión de Lughly al Profesional. Esta
-> última hace falta para que él pueda deducirse ese IVA, y hoy no se emite.
+> **Nota de revisión**: el desglose está construido desde el 20 de septiembre
+> de 2026, y la tarifa de servicio desde el 3 de octubre. **La facturación
+> está construida pero no activada**: el sistema para emitir la factura de la
+> Comisión al Profesional y la de la Tarifa de servicio al Cliente existe
+> (`IssueChargeInvoicesUseCase`), pero todavía no corre contra una cuenta
+> real — falta confirmar con el proveedor elegido que cumple Veri\*Factu para
+> un autónomo (`PENDIENTE_PARA_PRODUCCION.md`) antes de activarlo. La factura
+> del Profesional al Cliente, que es obligación suya (6.4), sigue sin
+> construirse.
 
 ## 9. Cancelaciones
 
@@ -259,10 +280,15 @@ proporcional a lo ya prestado.
 10.3. El desistimiento se comunicará por `[correo/formulario]`, o mediante el
 formulario del anexo `[I]`.
 
-> **Nota de revisión — bloqueante.** La app **no recoge hoy** esa solicitud
-> expresa ni el reconocimiento de la pérdida del derecho. Sin la casilla en la
-> pantalla de contratación, esta cláusula no se sostiene: hay que construirla
-> antes de publicar los términos.
+> **Nota de revisión — resuelta el 3 de octubre de 2026.** La solicitud
+> expresa y el reconocimiento de la pérdida del derecho ya se recogen: las
+> cuatro rutas que cobran al contratar —por horas, por la carta, por visita,
+> y pedir una urgencia a alguien concreto— exigen marcar una casilla (o,
+> en la urgencia, pulsar el botón que lo dice expresamente) antes de poder
+> pagar, y la fecha queda guardada en `Job.executionConsentAt`. **Sigue
+> pendiente** el canal del párrafo 10.3 (`[correo/formulario]`) y el
+> consentimiento del contrato fijo semanal, que es distinto porque no cobra
+> de golpe — ver `LOGICA_DE_NEGOCIO.md` §13.5.
 
 ## 11. Ejecución, conformidad y liberación del pago
 
@@ -449,7 +475,13 @@ que el de usar la aplicación conforme a estas condiciones.
 
 El tratamiento de los datos personales se rige por la **Política de
 Privacidad**, disponible en `[enlace]`, que forma parte integrante de estas
-condiciones. `[Pendiente de redacción: ver LOGICA_DE_NEGOCIO.md §12.]`
+condiciones.
+
+> **Nota de revisión**: el borrador de la Política de Privacidad ya existe
+> (`POLITICA_DE_PRIVACIDAD.md`, 3 de octubre de 2026), con el mismo aviso de
+> «no publicar sin revisión» que este documento. Sigue pendiente publicarla
+> con un enlace real y rellenar sus propios huecos, que son más que los de
+> este documento — ver su propio anexo final.
 
 ## 18. Duración, modificación y baja
 
@@ -487,17 +519,33 @@ de `[  ]`.
 
 ## Anexo — Lo que falta antes de poder publicar esto
 
-Por orden de dependencia. Los cinco primeros bloquean la publicación.
+Por orden de dependencia. Los tres primeros bloquean la publicación.
 
-1. **Rellenar los datos del prestador** (cláusula 1) — art. 10 LSSI.
-2. **Redactar la Política de Privacidad** (cláusula 17).
-3. **Construir la casilla de ejecución anticipada** en la pantalla de
-   contratación (cláusula 10.2).
-4. **Decidir el tratamiento del IVA** y mostrar precio final (cláusula 8.7).
-5. **Construir la baja de cuenta** (cláusula 18.3).
-6. Decidir la adhesión o no al Sistema Arbitral de Consumo (12.7) y qué se
+1. **Rellenar los datos del prestador** (cláusula 1) — art. 10 LSSI. Bloquea
+   también `POLITICA_DE_PRIVACIDAD.md`, que necesita los mismos datos.
+2. **Terminar la Política de Privacidad** (cláusula 17): el borrador ya
+   existe (`POLITICA_DE_PRIVACIDAD.md`), pero su propio anexo tiene cuatro
+   puntos bloqueantes propios —sobre todo, firmar el contrato de encargado
+   de tratamiento con cada proveedor y fijar los plazos de conservación, que
+   hoy no existen en ningún sitio de la aplicación.
+3. **Construir la baja de cuenta** (cláusula 18.3) — es la misma pieza que
+   pide `POLITICA_DE_PRIVACIDAD.md` para el derecho de supresión, y hoy no
+   existe en ningún sitio de la app.
+4. Decidir la adhesión o no al Sistema Arbitral de Consumo (12.7) y qué se
    ofrece en lugar de la ODR europea, cerrada.
-7. Decidir si se exige habilitación acreditada en los oficios regulados (6.2) y
+5. Decidir si se exige habilitación acreditada en los oficios regulados (6.2) y
    seguro de responsabilidad civil (6.5).
-8. Revisar las obligaciones del Reglamento (UE) 2022/2065 (DSA) y el art. 97.3
+6. Revisar las obligaciones del Reglamento (UE) 2022/2065 (DSA) y el art. 97.3
    TRLGDCU sobre mercados en línea, listadas en `LOGICA_DE_NEGOCIO.md` §13.
+7. **Confirmar con el proveedor de facturación que cumple Veri\*Factu** para
+   un autónomo español (cláusula 8.8) antes de activar la emisión real de
+   facturas — ver `PENDIENTE_PARA_PRODUCCION.md`.
+
+### Resuelto desde que se escribió este anexo (20 de septiembre de 2026)
+
+- ~~Construir la casilla de ejecución anticipada~~ — **hecho el 3 de octubre
+  de 2026**, cláusula 10.2.
+- ~~Decidir el tratamiento del IVA y mostrar precio final~~ — **hecho el 20
+  de septiembre de 2026**, cláusula 8.8.
+- **La tarifa de servicio** (cláusula 8.7) es nueva desde el 3 de octubre de
+  2026 y no estaba en el borrador original — ya está incorporada.
