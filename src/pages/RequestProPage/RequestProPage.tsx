@@ -37,6 +37,7 @@ import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
+import { Checkbox } from '@/components/atoms/Checkbox'
 import { Input } from '@/components/atoms/Input'
 import { AddressInput } from '@/components/molecules/AddressInput'
 import type { ApiGeocodeMatch } from '@/api/geocode.api'
@@ -108,6 +109,12 @@ export function RequestProPage({
   const [preferredDate, setPreferredDate] = useState<Date | null>(null)
   const [maxBudget, setMaxBudget] = useState('')
   const [photos, setPhotos] = useState<PickedImage[]>([])
+  /**
+   * Que acepta que la visita empiece antes de los 14 días de
+   * desistimiento (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026).
+   * Sin esto, el servidor rechaza la solicitud.
+   */
+  const [executionConsent, setExecutionConsent] = useState(false)
 
   /**
    * Los oficios suyos por los que **se puede pedir presupuesto**: los que
@@ -141,6 +148,8 @@ export function RequestProPage({
 
   const chosenTradeEntry = quotableTrades.find((entry) => entry.slug === chosenTrade)
   const visitFee = chosenTradeEntry?.visitFee ?? null
+  const visitServiceFee = chosenTradeEntry?.visitServiceFee ?? null
+  const visitGrandTotal = chosenTradeEntry?.visitGrandTotal ?? visitFee
 
   const method = methods?.[0] ?? null
 
@@ -234,13 +243,14 @@ export function RequestProPage({
       qué el botón está apagado.
     */
     method === null && 'una tarjeta guardada',
+    !executionConsent && 'aceptar que el trabajo empiece ya',
   ].filter((entrada): entrada is string => typeof entrada === 'string')
 
   const canSend = missing.length === 0 && !isRequesting
 
   const handleSend = async () => {
     reset()
-    if (!chosenTrade || !method) return
+    if (!chosenTrade || !method || !executionConsent) return
 
     const budget = Number(maxBudget.replace(',', '.'))
 
@@ -267,6 +277,7 @@ export function RequestProPage({
         Number.isFinite(budget) &&
         budget > 0 && { maxBudget: budget }),
       paymentMethodId: method.id,
+      executionConsent: true,
     }, photos)
 
     if (!sent) return
@@ -399,7 +410,28 @@ export function RequestProPage({
               <Text style={styles.lineLabel}>
                 Visita para presupuesto{chosenTradeEntry ? ` · ${chosenTradeEntry.label}` : ''}
               </Text>
-              <Money amount={visitFee} style={styles.total} />
+              <Money amount={visitFee} style={styles.lineAmount} />
+            </View>
+
+            {/*
+              La tarifa de servicio (3 de octubre de 2026): se suma por
+              encima de la visita, nunca sale de ella, y por eso va en su
+              propia línea — igual que en reservar por horas.
+            */}
+            {visitServiceFee !== null && (
+              <View style={styles.line}>
+                <Text style={styles.lineLabel}>Tarifa de servicio</Text>
+                <Money amount={visitServiceFee} style={styles.lineAmount} />
+              </View>
+            )}
+
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Money
+                amount={visitGrandTotal ?? visitFee}
+                style={styles.total}
+                testID="request-visit-total"
+              />
             </View>
 
             <Text style={styles.note}>
@@ -627,6 +659,26 @@ export function RequestProPage({
           recibe quien quede asignado al trabajo.
         </Text>
 
+        {/*
+          El consentimiento a empezar antes de los 14 días de desistimiento
+          (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026). Pedir
+          presupuesto es contratar un desplazamiento, y ese servicio ya
+          empieza en cuanto se retiene.
+        */}
+        <View style={styles.consentBox}>
+          <Checkbox
+            checked={executionConsent}
+            onChange={setExecutionConsent}
+            disabled={isRequesting}
+            testID="request-execution-consent"
+          >
+            <Text style={styles.consentText}>
+              Acepto que el trabajo empiece antes de que acaben los 14 días en
+              los que podría desistir, y que una vez hecho pierdo ese
+              derecho.
+            </Text>
+          </Checkbox>
+        </View>
 
         <Button
           fullWidth
@@ -638,7 +690,7 @@ export function RequestProPage({
         >
           {visitFee === null
             ? 'Pedir presupuesto'
-            : `Pedir la visita · ${formatAmount(visitFee)} €`}
+            : `Pedir la visita · ${formatAmount(visitGrandTotal ?? visitFee)} €`}
         </Button>
 
         {/**

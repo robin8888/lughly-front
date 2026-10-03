@@ -8,9 +8,23 @@
  * no debería parecer lo segundo.
  */
 
-import { fireEvent, render } from '@testing-library/react-native'
+import { fireEvent, render, screen } from '@testing-library/react-native'
 import { ProDirectoryCard } from './ProDirectoryCard'
 import type { ApiPro } from '@/api/pros.api'
+
+/**
+ * La tarifa de servicio (3 de octubre de 2026) se pide al servidor; aquí se
+ * simula sin data por defecto, para que estas pruebas sigan comprobando el
+ * total **antes** de que llegue —que es `cartaTotal`, el cálculo local— y
+ * una prueba aparte comprueba qué pasa cuando sí llega.
+ */
+let mockCartaQuote: { total: number; serviceFee: number; grandTotal: number } | undefined
+
+jest.mock('@/hooks/domain/useCartaQuote', () => ({
+  useCartaQuote: (_proId: string | undefined, query: unknown) => ({
+    data: query ? mockCartaQuote : undefined,
+  }),
+}))
 
 function makePro(photos: string[]): ApiPro {
   return {
@@ -63,6 +77,10 @@ const url = (n: number) => `/v1/media/pro-photos/foto-${n}.webp`
 const noopHireCarta = () => {}
 
 describe('ProDirectoryCard', () => {
+  beforeEach(() => {
+    mockCartaQuote = undefined
+  })
+
   it('sin fotos no dibuja la tira: la tarjeta queda como antes', () => {
     const { queryByTestId, getByText } = render(
       <ProDirectoryCard pro={makePro([])} onPress={() => {}} onHireCarta={noopHireCarta} />,
@@ -142,6 +160,26 @@ describe('ProDirectoryCard', () => {
     fireEvent.press(getByTestId('pro-card-carta-service-svc-2'))
 
     expect(getByText('100,00€')).toBeTruthy()
+  })
+
+  /**
+   * El botón de aquí lleva a `HireCartaPage`, que desde el 3 de octubre de
+   * 2026 cobra la tarifa de servicio además del precio. Sin esto, la tarjeta
+   * prometía un número que la siguiente pantalla no cumplía.
+   */
+  it('con la tarifa ya calculada, se ve aparte y el botón pide el total con ella', () => {
+    mockCartaQuote = { total: 35, serviceFee: 2.45, grandTotal: 37.45 }
+
+    render(
+      <ProDirectoryCard pro={makeProConCarta()} onPress={() => {}} onHireCarta={noopHireCarta} />,
+    )
+
+    fireEvent.press(screen.getByTestId('pro-card-carta-toggle'))
+
+    expect(screen.getByTestId('pro-card-carta-total')).toHaveTextContent('37,45€')
+    expect(screen.getByTestId('pro-card-carta-hire')).toHaveTextContent('37,45 €', {
+      exact: false,
+    })
   })
 
   it('contratar desde la tarjeta manda el profesional, el oficio y lo marcado', () => {

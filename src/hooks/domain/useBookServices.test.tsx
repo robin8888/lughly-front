@@ -36,6 +36,7 @@ const PAYLOAD = {
   city: 'Madrid',
   addressLine: 'Calle Mayor 1',
   paymentMethodId: 'pm_1',
+  executionConsent: true as const,
 }
 
 const RETENIDO = {

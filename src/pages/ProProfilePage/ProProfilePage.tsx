@@ -37,7 +37,8 @@ import { Dialog } from '@/components/organisms/Dialog'
 import { EmptyState } from '@/components/molecules/EmptyState'
 import { ReviewList } from '@/components/organisms/ReviewList'
 import { useProProfile } from '@/hooks/domain/useProProfile'
-import type { ApiPro } from '@/api/pros.api'
+import { useCartaQuote } from '@/hooks/domain/useCartaQuote'
+import type { ApiPro, ApiProTrade } from '@/api/pros.api'
 import { surchargesSummary } from '@/utils/surcharges'
 import { ApiError, API_BASE_URL } from '@/api'
 import { formatDate, parseIsoDate } from '@/utils/dates'
@@ -61,6 +62,93 @@ const TOP_RATED_MIN_REVIEWS = 20
  * vacaciones, que es la clase de detalle por el que un cliente se planta en una
  * puerta cerrada.
  */
+/**
+ * La carta de un oficio, con su total de verdad.
+ *
+ * Aparte y no inline en el `.map()` de oficios porque pide la tarifa de
+ * servicio con `useCartaQuote`, y un profesional puede tener carta en más de
+ * un oficio a la vez —todas visibles, sin desplegable que las oculte, a
+ * diferencia de la tarjeta del directorio—: llamar al hook dentro del propio
+ * `.map()` lo llamaría una vez por oficio dentro del mismo render, que las
+ * reglas de los hooks no permiten. Como componente propio, cada carta es su
+ * propia instancia y cada una llama al suyo sin problema.
+ *
+ * Sin esto, el botón de aquí prometía un precio que `HireCartaPage` —la
+ * pantalla a la que lleva `onHire`— ya no cumplía: ahí sí lleva la tarifa
+ * desde el 3 de octubre de 2026.
+ */
+function TradeCartaBlock({
+  proId,
+  trade,
+  selected,
+  onToggleService,
+  onHire,
+  canHire,
+}: {
+  proId: string
+  trade: ApiProTrade
+  selected: string[]
+  onToggleService: (serviceId: string) => void
+  onHire: (serviceIds: string[]) => void
+  canHire: boolean
+}) {
+  const services = trade.services ?? []
+  const selectedItems = services.filter((service) => selected.includes(service.id))
+  /**
+   * Un servicio de la carta ya lleva el desplazamiento metido en su precio:
+   * no es "visita + arreglo", es un precio cerrado de puerta a puerta. La
+   * visita solo se cobra aparte cuando no se marca ningún servicio.
+   */
+  const total =
+    selectedItems.length > 0
+      ? selectedItems.reduce((sum, service) => sum + service.price, 0)
+      : (trade.visitFee ?? 0)
+
+  const { data: quote } = useCartaQuote(proId, { tradeSlug: trade.slug, serviceIds: selected })
+  const grandTotal = quote?.grandTotal ?? total
+
+  return (
+    <View style={styles.cartaBlock} testID={`pro-carta-${trade.slug}`}>
+      {services.length > 0 && (
+        <View style={styles.cartaServices}>
+          {services.map((service) => (
+            <Checkbox
+              key={service.id}
+              checked={selected.includes(service.id)}
+              onChange={() => onToggleService(service.id)}
+              testID={`pro-carta-service-${service.id}`}
+            >
+              {`${service.name} · ${formatAmount(service.price)} €`}
+            </Checkbox>
+          ))}
+        </View>
+      )}
+
+      {quote && (
+        <View style={styles.cartaServiceFeeRow}>
+          <Text style={styles.cartaTotalLabel}>Tarifa de servicio</Text>
+          <Money amount={quote.serviceFee} style={styles.cartaTotalLabel} />
+        </View>
+      )}
+
+      <View style={styles.cartaTotalRow}>
+        <Text style={styles.cartaTotalLabel}>Total</Text>
+        <Money amount={grandTotal} style={styles.cartaTotal} testID={`pro-carta-total-${trade.slug}`} />
+      </View>
+
+      {canHire && (
+        <Button
+          onPress={() => onHire(selected)}
+          style={styles.cartaHire}
+          testID={`pro-carta-hire-${trade.slug}`}
+        >
+          Contratar por {formatAmount(grandTotal)} €
+        </Button>
+      )}
+    </View>
+  )
+}
+
 function formatAbsentUntil(lastDayOut: string): string {
   const last = parseIsoDate(lastDayOut)
 
@@ -600,21 +688,7 @@ export function ProProfilePage({
             */}
             {pro.trades.map((trade) => {
               const hasCarta = trade.visitFee != null
-              const services = trade.services ?? []
               const selected = selectedServices[trade.slug] ?? []
-              const selectedServiceItems = services.filter((service) =>
-                selected.includes(service.id),
-              )
-              /**
-               * Un servicio de la carta ya lleva el desplazamiento metido en
-               * su precio: no es "visita + arreglo", es un precio cerrado de
-               * puerta a puerta. La visita solo se cobra aparte cuando no se
-               * marca ningún servicio —ahí sí es lo único que se contrata.
-               */
-              const total =
-                selectedServiceItems.length > 0
-                  ? selectedServiceItems.reduce((sum, service) => sum + service.price, 0)
-                  : (trade.visitFee ?? 0)
 
               return (
                 <View key={trade.slug} style={styles.tradeBlock}>
@@ -648,37 +722,14 @@ export function ProProfilePage({
                     dentro y la visita deja de cobrarse aparte.
                   */}
                   {hasCarta && (
-                    <View style={styles.cartaBlock} testID={`pro-carta-${trade.slug}`}>
-                      {services.length > 0 && (
-                        <View style={styles.cartaServices}>
-                          {services.map((service) => (
-                            <Checkbox
-                              key={service.id}
-                              checked={selected.includes(service.id)}
-                              onChange={() => toggleService(trade.slug, service.id)}
-                              testID={`pro-carta-service-${service.id}`}
-                            >
-                              {`${service.name} · ${formatAmount(service.price)} €`}
-                            </Checkbox>
-                          ))}
-                        </View>
-                      )}
-
-                      <View style={styles.cartaTotalRow}>
-                        <Text style={styles.cartaTotalLabel}>Total</Text>
-                        <Money amount={total} style={styles.cartaTotal} />
-                      </View>
-
-                      {pro.acceptsBookings && (
-                        <Button
-                          onPress={() => onHireCarta(trade.slug, selected)}
-                          style={styles.cartaHire}
-                          testID={`pro-carta-hire-${trade.slug}`}
-                        >
-                          Contratar por {formatAmount(total)} €
-                        </Button>
-                      )}
-                    </View>
+                    <TradeCartaBlock
+                      proId={pro.id}
+                      trade={trade}
+                      selected={selected}
+                      onToggleService={(serviceId) => toggleService(trade.slug, serviceId)}
+                      onHire={(serviceIds) => onHireCarta(trade.slug, serviceIds)}
+                      canHire={pro.acceptsBookings}
+                    />
                   )}
                 </View>
               )

@@ -41,6 +41,15 @@ jest.mock('@/components/organisms/ReviewList', () => ({
   ReviewList: () => null,
 }))
 
+/**
+ * La tarifa de servicio (3 de octubre de 2026) se pide al servidor; aquí se
+ * simula sin data por defecto, para que estas pruebas sigan comprobando el
+ * total local de la carta tal y como lo hacían antes de hoy.
+ */
+jest.mock('@/hooks/domain/useCartaQuote', () => ({
+  useCartaQuote: () => ({ data: undefined }),
+}))
+
 function perfil(trades: Record<string, unknown>[]) {
   return {
     id: 'pro-1',

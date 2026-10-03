@@ -58,6 +58,15 @@ export interface ApiProTrade {
    * carta (servicios a precio fijo, además de la visita).
    */
   visitFee?: number | null
+  /**
+   * La tarifa de servicio (3 de octubre de 2026) sobre `visitFee`, y
+   * `visitFee + visitServiceFee` ya sumado. **Solo en la ficha completa**
+   * (igual que `services`), no en el listado del directorio — ahí
+   * `visitFee` es solo una etiqueta de la tarjeta, no el precio final antes
+   * de pulsar.
+   */
+  visitServiceFee?: number | null
+  visitGrandTotal?: number | null
   /** Solo viene relleno en la ficha completa, no en el listado del directorio */
   services?: ApiServiceItem[]
 }
@@ -701,7 +710,15 @@ export interface ApiHoursQuote {
   base: number
   /** El que se aplica, o `null` si es una hora normal de un día laborable */
   surcharge: ApiAppliedSurcharge | null
+  /** Lo que recibe el profesional. No lleva la tarifa de servicio */
   total: number
+  /**
+   * La tarifa de servicio: el 7 % de `total`, entre 1,50 € y 10 €. Se suma
+   * por encima, no sale de `total` — lo que cobra el profesional no cambia.
+   */
+  serviceFee: number
+  /** `total` + `serviceFee`: lo que de verdad se retiene en la tarjeta */
+  grandTotal: number
   /** Lo preguntado, tal cual */
   startAt: string
   durationMin: number
@@ -710,6 +727,19 @@ export interface ApiHoursQuote {
     hold: string
     freeCancellation: string
   }
+}
+
+/**
+ * El desglose de contratar la carta de un profesional, antes de pagar
+ * (POST /v1/pros/:id/carta-quote). Es la misma cuenta que cobra book-services.
+ */
+export interface ApiCartaQuote {
+  /** Lo que recibe el profesional: la visita sola, o la suma de los servicios marcados */
+  total: number
+  /** La tarifa de servicio sobre `total` */
+  serviceFee: number
+  /** `total` + `serviceFee`: lo que de verdad se retiene en la tarjeta */
+  grandTotal: number
 }
 
 export const prosApi = {
@@ -911,6 +941,20 @@ export const prosApi = {
    * lista, y meterla en la dirección obliga a inventarse un formato que hay que
    * partir a mano.
    */
+  /**
+   * Cuánto costaría contratar la carta: la visita sola, o la suma de los
+   * servicios marcados, con la tarifa de servicio ya sumada. No reserva nada.
+   *
+   * Va por POST y no por GET aunque no cree nada, igual que
+   * `recurrenceCheck`: los servicios marcados son una lista.
+   */
+  cartaQuote: (proId: string, payload: { tradeSlug: string; serviceIds: string[] }) =>
+    apiRequest<ApiCartaQuote>(`/v1/pros/${proId}/carta-quote`, {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
   recurrenceCheck: (
     proId: string,
     payload: {

@@ -15,6 +15,7 @@ import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
+import { Checkbox } from '@/components/atoms/Checkbox'
 import { Input } from '@/components/atoms/Input'
 import { AddressInput } from '@/components/molecules/AddressInput'
 import type { ApiGeocodeMatch } from '@/api/geocode.api'
@@ -32,6 +33,7 @@ import { InfoCard } from '@/components/molecules/InfoCard'
 import { useProProfile } from '@/hooks/domain/useProProfile'
 import { usePaymentMethods } from '@/hooks/domain/usePaymentMethods'
 import { useBookServices } from '@/hooks/domain/useBookServices'
+import { useCartaQuote } from '@/hooks/domain/useCartaQuote'
 import { useNavScrollHandler } from '@/hooks/ui/useCompactNav'
 import { useTabBarClearance } from '@/hooks/ui/useTabBarClearance'
 import { formatLongDateTime, startOfToday, toIsoDateTime } from '@/utils/dates'
@@ -73,6 +75,12 @@ export function HireCartaPage({
   const [detail, setDetail] = useState<AddressDetail>(EMPTY_ADDRESS_DETAIL)
   const [preferredDate, setPreferredDate] = useState<Date | null>(null)
   const [cityTouched, setCityTouched] = useState(false)
+  /**
+   * Que acepta que el trabajo empiece antes de los 14 días de
+   * desistimiento (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026).
+   * Sin esto, el servidor rechaza la reserva.
+   */
+  const [executionConsent, setExecutionConsent] = useState(false)
 
   /*
    * La ciudad se rellena una vez con la del profesional, como punto de
@@ -98,6 +106,20 @@ export function HireCartaPage({
       ? services.reduce((sum, service) => sum + service.price, 0)
       : (trade?.visitFee ?? 0)
 
+  /**
+   * La tarifa de servicio (3 de octubre de 2026) sobre `total`, pedida al
+   * servidor y no sumada aquí: tiene un mínimo y un tope por cobro, no por
+   * línea, y sumar el de cada servicio por separado cobraría de más en
+   * cuanto se marque más de uno. Mientras no llega, el total de abajo sigue
+   * siendo `total` —lo que de verdad cuesta el servicio no cambia—, solo le
+   * falta la tarifa encima.
+   */
+  const { data: quote } = useCartaQuote(
+    proId,
+    trade ? { tradeSlug, serviceIds } : null,
+  )
+  const grandTotal = quote?.grandTotal ?? total
+
   const method = methods?.[0] ?? null
   const canSubmit =
     trade?.visitFee != null &&
@@ -107,10 +129,11 @@ export function HireCartaPage({
     detail.number.trim() !== '' &&
     isPostcode(detail.postcode) &&
     method !== null &&
+    executionConsent &&
     !isBooking
 
   const handleBook = async () => {
-    if (!method) return
+    if (!method || !executionConsent) return
 
     const result = await book({
       tradeSlug,
@@ -120,6 +143,7 @@ export function HireCartaPage({
       addressLine: composeAddressLine(address!, detail),
       ...(preferredDate && { preferredDate: toIsoDateTime(preferredDate) }),
       paymentMethodId: method.id,
+      executionConsent: true,
     })
 
     if (result) onBooked(result.jobId)
@@ -195,9 +219,21 @@ export function HireCartaPage({
             </View>
           ))}
 
+          {/*
+            La tarifa de servicio: se suma por encima de `total`, nunca sale
+            de él — lo que recibe el profesional no cambia. Mientras no llega
+            la respuesta del servidor, no se enseña una cifra adivinada.
+          */}
+          {quote && (
+            <View style={styles.line}>
+              <Text style={styles.lineLabel}>Tarifa de servicio</Text>
+              <Money amount={quote.serviceFee} style={styles.lineAmount} />
+            </View>
+          )}
+
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Money amount={total} style={styles.total} />
+            <Money amount={grandTotal} style={styles.total} testID="hire-carta-total" />
           </View>
 
           {/*
@@ -290,6 +326,25 @@ export function HireCartaPage({
           />
         </FormField>
 
+        {/*
+          El consentimiento a empezar antes de los 14 días de desistimiento
+          (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026).
+        */}
+        <View style={styles.consentBox}>
+          <Checkbox
+            checked={executionConsent}
+            onChange={setExecutionConsent}
+            disabled={isBooking}
+            testID="hire-carta-execution-consent"
+          >
+            <Text style={styles.consentText}>
+              Acepto que el trabajo empiece antes de que acaben los 14 días en
+              los que podría desistir, y que una vez hecho pierdo ese
+              derecho.
+            </Text>
+          </Checkbox>
+        </View>
+
         <Button
           fullWidth
           loading={isBooking}
@@ -298,7 +353,7 @@ export function HireCartaPage({
           style={styles.submit}
           testID="hire-carta-submit"
         >
-          Contratar por {formatAmount(total)} €
+          Contratar por {formatAmount(grandTotal)} €
         </Button>
       </FormScrollView>
     </View>

@@ -85,7 +85,13 @@ export function UrgencyProsPage({
    * primera hora va dentro: quien abre una puerta en veinte minutos cobra la
    * salida entera, porque lo que ha vendido es venir a las tres de la mañana.
    */
-  const choose = (proId: string, name: string, rate: number) => {
+  const choose = (
+    proId: string,
+    name: string,
+    rate: number,
+    grandTotal: number,
+    serviceFee: number,
+  ) => {
     if (!jobId) return
 
     /*
@@ -107,16 +113,18 @@ export function UrgencyProsPage({
 
     Alert.alert(
       `¿Llamamos a ${name}?`,
-      `Cobra ${rate} €/h. Se apartan ${formatAmount(rate)} € de salida —la primera hora va incluida— y solo se cobran si acepta. Si tarda más de una hora, el rato de más se cobra al cerrar.
+      `Cobra ${rate} €/h. Se apartan ${formatAmount(grandTotal)} € —la salida, con la primera hora incluida, más la tarifa de servicio de ${formatAmount(serviceFee)} €— y solo se cobran si acepta. Si tarda más de una hora, el rato de más se cobra al cerrar.
 
-Tiene cinco minutos para contestar; si no lo hace, se suelta el dinero y podrás elegir a otro.`,
+Tiene cinco minutos para contestar; si no lo hace, se suelta el dinero y podrás elegir a otro.
+
+Al pulsar "Sí, avisarle" aceptas que el trabajo empiece antes de que acaben los 14 días en los que podrías desistir, y que una vez hecho pierdes ese derecho.`,
       [
         { text: 'Volver', style: 'cancel' },
         {
           text: 'Sí, avisarle',
           onPress: () => {
             void (async () => {
-              const { ok, error } = await ask(jobId, proId, method.id)
+              const { ok, error } = await ask(jobId, proId, method.id, true)
 
               if (!ok) {
                 Alert.alert(
@@ -236,7 +244,9 @@ Tiene cinco minutos para contestar; si no lo hace, se suelta el dinero y podrás
             return (
             <Pressable
               key={pro.id}
-              onPress={() => choose(pro.id, pro.name, pro.urgencyRate)}
+              onPress={() =>
+                choose(pro.id, pro.name, pro.urgencyRate, pro.grandTotal, pro.serviceFee)
+              }
               disabled={isAsking || declined}
               accessibilityRole="button"
               accessibilityState={{ disabled: declined }}

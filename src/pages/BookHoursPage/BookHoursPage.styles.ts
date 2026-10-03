@@ -246,6 +246,15 @@ export const styles = StyleSheet.create({
     opacity: 0.85,
     marginBottom: 8,
   },
+  consentBox: {
+    marginTop: 10,
+  },
+  consentText: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.text,
+  },
   submit: {
     marginTop: 4,
   },

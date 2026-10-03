@@ -239,6 +239,11 @@ export const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 8,
   },
+  cartaServiceFeeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   cartaTotalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

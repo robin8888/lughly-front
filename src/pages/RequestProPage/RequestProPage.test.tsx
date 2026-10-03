@@ -30,6 +30,9 @@ const PRO = {
       label: 'Electricidad',
       hourlyRate: null,
       visitFee: 75,
+      /* 75 € × 7 % */
+      visitServiceFee: 5.25,
+      visitGrandTotal: 80.25,
     },
   ],
   employerName: null,
@@ -170,11 +173,59 @@ describe('RequestProPage: qué falta para poder enviar', () => {
       'Gotea desde hace una semana y no para.',
     )
     fireEvent.changeText(screen.getByTestId('request-city'), 'Madrid')
+    fireEvent.press(screen.getByTestId('request-execution-consent'))
 
     const falta = screen.getByTestId('request-missing')
 
     expect(falta).toHaveTextContent(/^Falta la dirección/)
     expect(falta).not.toHaveTextContent(/la descripción/)
     expect(screen.getByTestId('request-send')).toBeDisabled()
+  })
+
+  /**
+   * La tarifa de servicio (3 de octubre de 2026) va en su propia línea, y
+   * el botón pide el total con ella dentro — no la visita sola, que es lo
+   * que de verdad se retiene en la tarjeta.
+   */
+  it('la tarifa de servicio se ve aparte, y el botón pide el total con ella', () => {
+    abrir()
+
+    expect(screen.getByTestId('request-visit-summary')).toHaveTextContent(
+      'Tarifa de servicio',
+      { exact: false },
+    )
+    expect(screen.getByTestId('request-visit-total')).toHaveTextContent('80,25€')
+    expect(screen.getByTestId('request-send')).toHaveTextContent('80,25 €', {
+      exact: false,
+    })
+  })
+
+  /**
+   * El consentimiento a empezar antes de los 14 días de desistimiento
+   * (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026): sin marcarlo, el
+   * botón sigue apagado aunque todo lo demás esté relleno.
+   */
+  it('sin aceptar que el trabajo empiece ya, no se puede enviar', () => {
+    abrir()
+
+    fireEvent.changeText(screen.getByTestId('request-title'), 'Cambiar el grifo')
+    fireEvent.changeText(
+      screen.getByTestId('request-description'),
+      'Gotea desde hace una semana y no para.',
+    )
+    fireEvent.changeText(screen.getByTestId('request-city'), 'Madrid')
+
+    expect(screen.getByTestId('request-missing')).toHaveTextContent(
+      'aceptar que el trabajo empiece ya',
+      { exact: false },
+    )
+    expect(screen.getByTestId('request-send')).toBeDisabled()
+
+    fireEvent.press(screen.getByTestId('request-execution-consent'))
+
+    expect(screen.getByTestId('request-missing')).not.toHaveTextContent(
+      'aceptar que el trabajo empiece ya',
+      { exact: false },
+    )
   })
 })

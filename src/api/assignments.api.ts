@@ -40,6 +40,13 @@ export interface RequestProPayload {
    * convenza. Antes era gratis.
    */
   paymentMethodId: string
+  /**
+   * Que acepta que el trabajo empiece antes de los 14 días de
+   * desistimiento. Sin esto, el servidor rechaza el encargo — pedir
+   * presupuesto es contratar un desplazamiento, y ese servicio ya empieza
+   * en cuanto se retiene.
+   */
+  executionConsent: true
 }
 
 /** Cuerpo de POST /v1/pros/:id/book-services */
@@ -52,6 +59,8 @@ export interface BookServicesPayload {
   preferredDate?: string
   /** La tarjeta guardada en la que se retiene, y con la que se cobrará (`paymentsApi.methods()`) */
   paymentMethodId: string
+  /** Que acepta que el trabajo empiece antes de los 14 días de desistimiento */
+  executionConsent: true
 }
 
 /** Lo que devuelve contratar la carta: ya cobrado, encargo enviado */
@@ -100,6 +109,8 @@ export interface BookHoursPayload {
   note?: string
   /** La tarjeta guardada en la que se retiene (`paymentsApi.methods()`) */
   paymentMethodId: string
+  /** Que acepta que el trabajo empiece antes de los 14 días de desistimiento */
+  executionConsent: true
 }
 
 /**

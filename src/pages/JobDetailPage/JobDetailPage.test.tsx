@@ -290,6 +290,7 @@ function ficha(cambios: Partial<ApiJobDetail>): ApiJobDetail {
     photos: [],
     resultPhotos: [],
     retained: 77,
+    serviceFee: 0,
     quoteByAt: null,
     cancelFee: 0,
     commission: 0,

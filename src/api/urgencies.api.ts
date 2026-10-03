@@ -39,6 +39,16 @@ export interface ApiUrgencyPro {
   tradeLabel: string
   /** Lo que cobra la hora por atender esta urgencia */
   urgencyRate: number
+  /**
+   * Lo que se retiene al pedirla: la salida, una hora a `urgencyRate`. Antes
+   * esta lista solo daba el €/h y la app se inventaba la salida asumiendo
+   * que vale lo mismo que una hora — ya no hace falta asumirlo.
+   */
+  callout: number
+  /** La tarifa de servicio (3 de octubre de 2026) sobre `callout` */
+  serviceFee: number
+  /** `callout` + `serviceFee`: lo que de verdad se retiene en la tarjeta */
+  grandTotal: number
   rating: number
   reviewCount: number
   verified: boolean

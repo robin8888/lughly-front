@@ -322,6 +322,19 @@ export interface ApiJobDetail {
    */
   retained: number
   /**
+   * **La tarifa de servicio** (3 de octubre de 2026): el 7 % de lo que cuesta
+   * el servicio, entre 1,50 € y 10 €, que paga el cliente **por encima** del
+   * precio del profesional.
+   *
+   * A los dos lados, a diferencia de `commission`: esto no es lo que se lleva
+   * Lughly del trabajo del profesional, es un cargo del cliente, y
+   * ocultárselo sería esconderle una parte de lo que de verdad paga.
+   *
+   * Cero en los cobros que no la llevan —el material, los añadidos— y cero
+   * en lo que se paga fuera de la app.
+   */
+  serviceFee: number
+  /**
    * **El IVA que lleva el precio.** No suma nada al total: lo parte. De 42 €
    * al 21 % salen 34,71 de base y 7,29 de impuesto, y el cliente sigue
    * pagando 42 €.
@@ -553,7 +566,13 @@ export const jobsApi = {
    * móvil, y si el banco pidiera autenticar la tarjeta no habría nadie a quien
    * pedírsela.
    */
-  askUrgency: (jobId: string, proId: string, paymentMethodId: string) =>
+  askUrgency: (
+    jobId: string,
+    proId: string,
+    paymentMethodId: string,
+    /** Que acepta que el trabajo empiece antes de los 14 días de desistimiento */
+    executionConsent: true,
+  ) =>
     apiRequest<{
       jobId: string
       status: ApiJobStatus
@@ -566,7 +585,7 @@ export const jobsApi = {
     }>(`/v1/jobs/${jobId}/urgency-request`, {
       method: 'POST',
       auth: true,
-      body: { proId, paymentMethodId },
+      body: { proId, paymentMethodId, executionConsent },
     }),
 
   /** La ficha completa de un trabajo, para quien tiene algo que ver con él */

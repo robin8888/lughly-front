@@ -38,6 +38,7 @@ import { Icon } from '@/components/atoms/Icon'
 import { Money, formatAmount } from '@/components/atoms/Money'
 import { API_BASE_URL } from '@/api'
 import type { ApiPro } from '@/api/pros.api'
+import { useCartaQuote } from '@/hooks/domain/useCartaQuote'
 import { theme } from '@/theme'
 import { styles } from './ProDirectoryCard.styles'
 
@@ -134,6 +135,22 @@ export function ProDirectoryCard({
     selectedCartaServices.length > 0
       ? selectedCartaServices.reduce((sum, service) => sum + service.price, 0)
       : (featuredTrade?.visitFee ?? 0)
+
+  /**
+   * La tarifa de servicio sobre `cartaTotal`, pedida al servidor solo
+   * mientras la carta está desplegada —cada tarjeta de la lista preguntando
+   * de entrada sería una llamada por profesional que nadie va a mirar—. Sin
+   * esto, el botón de aquí prometía un precio que `HireCartaPage` —la
+   * pantalla a la que lleva— ya no cumplía: ahí sí lleva la tarifa desde el
+   * 3 de octubre de 2026.
+   */
+  const { data: cartaQuote } = useCartaQuote(
+    showCarta && hasCarta ? pro.id : undefined,
+    showCarta && hasCarta && featuredTrade
+      ? { tradeSlug: featuredTrade.slug, serviceIds: selectedServices }
+      : null,
+  )
+  const cartaGrandTotal = cartaQuote?.grandTotal ?? cartaTotal
 
   const toggleService = (serviceId: string) => {
     setSelectedServices((current) =>
@@ -408,9 +425,20 @@ export function ProDirectoryCard({
                 ))}
               </View>
 
+              {cartaQuote && (
+                <View style={styles.cartaServiceFeeRow}>
+                  <Text style={styles.cartaTotalLabel}>Tarifa de servicio</Text>
+                  <Money amount={cartaQuote.serviceFee} style={styles.cartaTotalLabel} />
+                </View>
+              )}
+
               <View style={styles.cartaTotalRow}>
                 <Text style={styles.cartaTotalLabel}>Total</Text>
-                <Money amount={cartaTotal} style={styles.cartaTotal} />
+                <Money
+                  amount={cartaGrandTotal}
+                  style={styles.cartaTotal}
+                  testID="pro-card-carta-total"
+                />
               </View>
 
               {/*
@@ -432,7 +460,7 @@ export function ProDirectoryCard({
                   style={styles.cartaHire}
                   testID="pro-card-carta-hire"
                 >
-                  Contratar por {formatAmount(cartaTotal)} €
+                  Contratar por {formatAmount(cartaGrandTotal)} €
                 </Button>
               ) : null}
             </View>

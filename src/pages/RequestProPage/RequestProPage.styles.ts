@@ -117,6 +117,25 @@ export const styles = StyleSheet.create({
     flexShrink: 1,
     paddingRight: 12,
   },
+  lineAmount: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.cardDivider,
+  },
+  totalLabel: {
+    fontFamily: theme.typography.fonts.bodySemiBold,
+    fontSize: theme.typography.sizes.small,
+    color: theme.colors.cardText,
+  },
   total: {
     fontFamily: theme.typography.fonts.bodyBold,
     fontSize: theme.typography.sizes.h5,
@@ -145,6 +164,15 @@ export const styles = StyleSheet.create({
     color: theme.colors.cardText,
     opacity: 0.85,
     marginBottom: 8,
+  },
+  consentBox: {
+    marginTop: 10,
+  },
+  consentText: {
+    fontFamily: theme.typography.fonts.body,
+    fontSize: theme.typography.sizes.tiny,
+    lineHeight: theme.typography.sizes.tiny * 1.5,
+    color: theme.colors.text,
   },
   send: {
     marginTop: 16,

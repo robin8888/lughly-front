@@ -53,6 +53,9 @@ const QUOTE = {
   base: 75,
   surcharge: null,
   total: 75,
+  /* 75 € × 7 % */
+  serviceFee: 5.25,
+  grandTotal: 80.25,
   startAt: '2026-09-03T08:00:00.000Z',
   durationMin: 60,
   terms: {
@@ -209,8 +212,23 @@ describe('BookHoursPage', () => {
     expect(screen.getByTestId('book-hours-when')).toHaveTextContent(
       'jueves, 3 de septiembre, de 10:00 a 11:00',
     )
-    expect(screen.getByTestId('book-hours-total')).toHaveTextContent('75,00€')
-    expect(screen.getByTestId('book-hours-submit')).toHaveTextContent('Reservar por 75,00 €')
+    expect(screen.getByTestId('book-hours-total')).toHaveTextContent('80,25€')
+    expect(screen.getByTestId('book-hours-submit')).toHaveTextContent('Reservar por 80,25 €')
+  })
+
+  /**
+   * La tarifa de servicio (3 de octubre de 2026) va en su propia línea, no
+   * mezclada en el precio del profesional: es un cargo del cliente, no del
+   * trabajo, y esconderla sería justo el fallo que esto viene a evitar.
+   */
+  it('la tarifa de servicio se ve aparte, antes de pulsar', () => {
+    abrir()
+    fireEvent.press(screen.getByTestId('book-hours-slot-2026-09-03T08:00:00.000Z'))
+
+    expect(screen.getByTestId('book-hours-quote')).toHaveTextContent('Tarifa de servicio', {
+      exact: false,
+    })
+    expect(screen.getByTestId('book-hours-quote')).toHaveTextContent('5,25', { exact: false })
   })
 
   /**
@@ -331,6 +349,7 @@ describe('BookHoursPage', () => {
     // El número y el código postal, que es lo que se pide en España
     fireEvent.changeText(screen.getByTestId('book-hours-address-number'), '14')
     fireEvent.changeText(screen.getByTestId('book-hours-address-postcode'), '28013')
+    fireEvent.press(screen.getByTestId('book-hours-execution-consent'))
 
     fireEvent.press(screen.getByTestId('book-hours-submit'))
 
@@ -343,9 +362,39 @@ describe('BookHoursPage', () => {
         durationMin: 60,
         addressLine: 'Calle Mayor 14, 28013 Madrid',
         paymentMethodId: 'pm_1',
+        executionConsent: true,
       }),
     )
     expect(mockBook.mock.calls[0][0]).not.toHaveProperty('total')
+  })
+
+  /**
+   * El consentimiento a empezar antes de los 14 días de desistimiento
+   * (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026): sin marcarlo, el
+   * botón sigue apagado aunque todo lo demás esté relleno.
+   */
+  it('sin aceptar que el trabajo empiece ya, no se puede reservar', () => {
+    abrir()
+
+    fireEvent.press(screen.getByTestId('book-hours-slot-2026-09-03T08:00:00.000Z'))
+    fireEvent.changeText(screen.getByTestId('book-hours-city'), 'Madrid')
+    fireEvent(screen.getByTestId('book-hours-address'), 'onChange', {
+      label: 'Calle Mayor, Madrid',
+      city: 'Madrid',
+      postcode: '28013',
+    })
+    fireEvent.changeText(screen.getByTestId('book-hours-address-number'), '14')
+    fireEvent.changeText(screen.getByTestId('book-hours-address-postcode'), '28013')
+
+    expect(screen.getByTestId('book-hours-missing')).toHaveTextContent(
+      'aceptar que el trabajo empiece ya',
+      { exact: false },
+    )
+    expect(screen.getByTestId('book-hours-submit')).toBeDisabled()
+
+    fireEvent.press(screen.getByTestId('book-hours-execution-consent'))
+
+    expect(screen.getByTestId('book-hours-submit')).not.toBeDisabled()
   })
 })
 

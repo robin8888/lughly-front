@@ -35,6 +35,7 @@ import { View, Text, ActivityIndicator, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { FormScrollView } from '@/components/templates/FormScrollView'
 import { Button } from '@/components/atoms/Button'
+import { Checkbox } from '@/components/atoms/Checkbox'
 import { Input } from '@/components/atoms/Input'
 import { Money, formatAmount } from '@/components/atoms/Money'
 import { Avatar } from '@/components/atoms/Avatar'
@@ -130,6 +131,12 @@ export function BookHoursPage({
    * geocodificador no sabe y quien va necesita para llamar al timbre */
   const [detail, setDetail] = useState<AddressDetail>(EMPTY_ADDRESS_DETAIL)
   const [note, setNote] = useState('')
+  /**
+   * Que acepta que el trabajo empiece antes de los 14 días de
+   * desistimiento (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026).
+   * Sin esto, el servidor rechaza la reserva.
+   */
+  const [executionConsent, setExecutionConsent] = useState(false)
 
   /**
    * Solo los oficios que cobra por hora.
@@ -260,6 +267,7 @@ export function BookHoursPage({
     address !== null && !isPostcode(detail.postcode) && 'el código postal',
     method === null && 'una tarjeta guardada',
     startAt !== null && quote === undefined && 'saber el precio',
+    !executionConsent && 'aceptar que el trabajo empiece ya',
   ].filter((entry): entry is string => typeof entry === 'string')
 
   const canBook = missing.length === 0 && !isBooking
@@ -278,7 +286,7 @@ export function BookHoursPage({
 
   const handleBook = async () => {
     reset()
-    if (!chosenTrade || !startAt || !method) return
+    if (!chosenTrade || !startAt || !method || !executionConsent) return
 
     const booked = await book({
       tradeSlug: chosenTrade,
@@ -289,6 +297,7 @@ export function BookHoursPage({
       addressLine: composeAddressLine(address!, detail),
       ...(note.trim() !== '' && { note: note.trim() }),
       paymentMethodId: method.id,
+      executionConsent: true,
     })
 
     if (booked) onBooked(booked.jobId)
@@ -712,10 +721,21 @@ export function BookHoursPage({
                   )}
                 </View>
 
+                {/*
+                  La tarifa de servicio (3 de octubre de 2026): se suma por
+                  encima del precio del profesional, nunca sale de él, y por
+                  eso va en su propia línea y no mezclada en el total de
+                  arriba.
+                */}
+                <View style={styles.line}>
+                  <Text style={styles.lineLabel}>Tarifa de servicio</Text>
+                  <Money amount={quote.serviceFee} style={styles.lineAmount} />
+                </View>
+
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>Total</Text>
                   <Money
-                    amount={quote.total}
+                    amount={quote.grandTotal}
                     style={styles.total}
                     testID="book-hours-total"
                   />
@@ -760,6 +780,27 @@ export function BookHoursPage({
           </InfoCard>
         )}
 
+        {/*
+          El consentimiento a empezar antes de los 14 días de desistimiento
+          (TRLGDCU arts. 97.1.i y 103.a, 3 de octubre de 2026). Sin esto,
+          quien cancela un trabajo ya hecho y pagado podría reclamar el
+          dinero de vuelta hasta 14 días después.
+        */}
+        <View style={styles.consentBox}>
+          <Checkbox
+            checked={executionConsent}
+            onChange={setExecutionConsent}
+            disabled={isBooking}
+            testID="book-hours-execution-consent"
+          >
+            <Text style={styles.consentText}>
+              Acepto que el trabajo empiece antes de que acaben los 14 días en
+              los que podría desistir, y que una vez hecho pierdo ese
+              derecho.
+            </Text>
+          </Checkbox>
+        </View>
+
         <Button
           fullWidth
           loading={isBooking}
@@ -768,7 +809,7 @@ export function BookHoursPage({
           style={styles.submit}
           testID="book-hours-submit"
         >
-          {quote ? `Reservar por ${formatAmount(quote.total)} €` : 'Reservar'}
+          {quote ? `Reservar por ${formatAmount(quote.grandTotal)} €` : 'Reservar'}
         </Button>
 
         {/**

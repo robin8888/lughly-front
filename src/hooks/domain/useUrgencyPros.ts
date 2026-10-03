@@ -46,22 +46,24 @@ export function useAskUrgency() {
       jobId,
       proId,
       paymentMethodId,
+      executionConsent,
     }: {
       jobId: string
       proId: string
       paymentMethodId: string
-    }) => jobsApi.askUrgency(jobId, proId, paymentMethodId),
+      executionConsent: true
+    }) => jobsApi.askUrgency(jobId, proId, paymentMethodId, executionConsent),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['jobs'] })
     },
   })
 
   return {
-    ask: async (jobId: string, proId: string, paymentMethodId: string) => {
+    ask: async (jobId: string, proId: string, paymentMethodId: string, executionConsent: true) => {
       try {
         return {
           ok: true as const,
-          result: await mutation.mutateAsync({ jobId, proId, paymentMethodId }),
+          result: await mutation.mutateAsync({ jobId, proId, paymentMethodId, executionConsent }),
           error: null,
         }
       } catch (error) {
